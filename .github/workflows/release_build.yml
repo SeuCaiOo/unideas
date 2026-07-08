@@ -10,6 +10,17 @@ on:
         required: false
         type: string
         default: 'Melhorias e correções gerais'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag existente para rodar o build/release (ex: 0.0.1, sem o "v")'
+        required: true
+        type: string
+      release_notes:
+        description: 'Novidades desta versão (aparece no Firebase App Distribution)'
+        required: false
+        type: string
+        default: 'Melhorias e correções gerais'
 
 jobs:
   build-and-release:

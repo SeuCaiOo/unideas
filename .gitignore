@@ -1,0 +1,50 @@
+# Gradle / build
+.gradle
+build/
+bin/
+gen/
+out/
+release/
+
+# Local configuration
+/local.properties
+local.properties
+signing.properties
+
+# Android Studio / IntelliJ
+*.iml
+/.idea/
+
+# Native build
+/captures
+.externalNativeBuild
+.cxx
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / profiling
+*.log
+*.hprof
+.attach_pid*
+
+# Build artifacts
+*.aab
+*.apk
+output-metadata.json
+
+# Keystore / signing
+*.jks
+*.keystore
+
+# Google Services (Firebase etc.)
+google-services.json
+
+# Claude Code — local/personal state (skills, settings.json and docs are versioned)
+.claude/memory/
+.claude/plans/
+.claude/settings.local.json

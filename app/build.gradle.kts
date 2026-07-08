@@ -79,6 +79,18 @@ android {
     }
 }
 
+// Distinguishable APK filenames (unideas-v<version>[-debug].apk) instead of the
+// generic app-debug.apk/app-release.apk — several apps/variants can end up
+// side by side on a device or in a Downloads folder.
+androidComponents {
+    onVariants { variant ->
+        val suffix = if (variant.buildType == "debug") "-debug" else ""
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("unideas-v${android.defaultConfig.versionName}$suffix.apk")
+        }
+    }
+}
+
 detekt {
     config.setFrom(
         files(

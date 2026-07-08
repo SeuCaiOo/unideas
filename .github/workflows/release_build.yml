@@ -64,14 +64,29 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
+      - name: Fetch changelog from Release Drafter's draft
+        id: draft_notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DRAFT_TAG=$(gh release list --repo ${{ github.repository }} --json tagName,isDraft --jq '[.[] | select(.isDraft)][0].tagName // empty')
+          if [ -n "$DRAFT_TAG" ]; then
+            echo "Using notes from Release Drafter's draft: $DRAFT_TAG"
+            gh release view "$DRAFT_TAG" --repo ${{ github.repository }} --json body --jq '.body' > release_notes.md
+            gh release delete "$DRAFT_TAG" --repo ${{ github.repository }} --yes
+          else
+            echo "No Release Drafter draft found, falling back to the plain release notes input."
+            echo "${{ inputs.release_notes }}" > release_notes.md
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
-          files: app/build/outputs/apk/release/app-release.apk
+          files: app/build/outputs/apk/release/unideas-v${{ inputs.version }}.apk
           draft: true
           prerelease: false
-          generate_release_notes: true
+          body_path: release_notes.md
 
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -79,5 +94,5 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           token: ${{ secrets.FIREBASE_TOKEN }}
           groups: alpha-testers
-          file: app/build/outputs/apk/release/app-release.apk
+          file: app/build/outputs/apk/release/unideas-v${{ inputs.version }}.apk
           releaseNotes: "${{ inputs.release_notes }}"

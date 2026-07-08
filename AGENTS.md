@@ -52,7 +52,8 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 
 ## Release automation
 
-`prepare_release.yml` (workflow_dispatch, run manually from `main`) bumps `versionCode`/`versionName` in `app/build.gradle.kts`, commits, tags (`vX.Y.Z`), then calls `release_build.yml`, which builds a signed release APK, creates a draft GitHub Release (with auto-generated notes) and uploads to Firebase App Distribution (group `alpha-testers`). `release-drafter.yml` keeps a draft changelog up to date on every push to `main`, categorized by label via `.github/changelog-drafter.yml`.
+`prepare_release.yml` (workflow_dispatch, run manually from `main`) bumps `versionCode`/`versionName` in `app/build.gradle.kts`, commits, tags (`vX.Y.Z`), then calls `release_build.yml`, which builds a signed release APK, creates a draft GitHub Release and uploads to Firebase App Distribution (group `alpha-testers`). `release-drafter.yml` keeps a draft changelog up to date on every push to `main`, categorized by label via `.github/changelog-drafter.yml` — `release_build.yml` reuses that draft's body for the real release's notes (then deletes the draft) instead of GitHub's native auto-generated notes, to avoid a redundant "New Contributors" section on a single-dev repo.
+- **APK naming**: `androidComponents.onVariants` in `app/build.gradle.kts` renames output APKs to `unideas-v<versionName>.apk` (`unideas-v<versionName>-debug.apk` for debug) instead of the generic `app-release.apk` — makes builds identifiable once several versions/apps pile up on a device or in Downloads.
 
 ### Secrets (GitHub Actions)
 

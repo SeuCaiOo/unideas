@@ -76,6 +76,16 @@ gh pr edit <number> --add-label "<label>"
 
 If the PR closes a GitHub issue, add `Closes #<issue>` to the PR body — but this project hasn't decided yet whether it will use GitHub Issues/Project board for day-to-day work (see item 9 of the bootstrap guide), so treat this as optional, not a required step.
 
+### 7. Auto-merge (PRs targeting `main`)
+
+`main` has branch protection requiring the `Quality Gate` check (from `main_build.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). For the periodic `dev` → `main` release PR, enable auto-merge right after creating it so it merges by itself once CI passes, instead of waiting around:
+
+```bash
+gh pr merge <number> --auto --merge
+```
+
+Use `--merge` (merge commit) to match the existing convention (see PR #2). This is **not** needed for feature → `dev` PRs — `dev` has no branch protection yet.
+
 ## PR Template sections (fill in PT-BR)
 
 - **Descrição**: o que foi feito e por quê

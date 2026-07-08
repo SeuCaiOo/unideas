@@ -76,15 +76,17 @@ gh pr edit <number> --add-label "<label>"
 
 If the PR closes a GitHub issue, add `Closes #<issue>` to the PR body — but this project hasn't decided yet whether it will use GitHub Issues/Project board for day-to-day work (see item 9 of the bootstrap guide), so treat this as optional, not a required step.
 
-### 7. Auto-merge (PRs targeting `main`)
+### 7. Auto-merge (PRs targeting `dev`)
 
-`main` has branch protection requiring the `Quality Gate` check (from `main_build.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). For the periodic `dev` → `main` release PR, enable auto-merge right after creating it so it merges by itself once CI passes, instead of waiting around:
+`dev` has branch protection requiring the `Quality Gate` check (from `dev_checks.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). Enable auto-merge right after creating a feature → `dev` PR so it merges by itself once CI passes, instead of waiting around:
 
 ```bash
 gh pr merge <number> --auto --merge
 ```
 
-Use `--merge` (merge commit) to match the existing convention (see PR #2). This is **not** needed for feature → `dev` PRs — `dev` has no branch protection yet.
+Use `--merge` (merge commit) to match the existing convention.
+
+`main` is **deliberately not** auto-merged: it has no branch protection and merges there (the periodic `dev` → `main` release PR) are manual, matching a stricter review since `main_build.yml` runs the full signed release build. Don't run `gh pr merge --auto` on a PR targeting `main`.
 
 ## PR Template sections (fill in PT-BR)
 
@@ -100,3 +102,4 @@ Use `--merge` (merge commit) to match the existing convention (see PR #2). This 
 | PR targeting `main` directly | Feature branches always target `dev` |
 | Commit message in PT-BR | Must be in English |
 | Push to `main`/`dev` directly | No hook blocks this yet (item 1 of the bootstrap guide is pending) — follow this manually until git hooks are ported |
+| Running `gh pr merge --auto` on a `main`-targeting PR | Auto-merge is only for `dev`; `main` merges are manual and reviewed |

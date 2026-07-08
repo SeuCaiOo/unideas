@@ -4,6 +4,8 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 // Release signing: prefers CI env vars (STORE_FILE_PATH/STORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD),
@@ -70,6 +72,63 @@ android {
         resValues = true
         buildConfig = true
     }
+    lint {
+        abortOnError = false
+    }
+}
+
+detekt {
+    config.setFrom(
+        files(
+            "$rootDir/config/detekt/detekt.yml",
+            "$rootDir/config/detekt/detekt-compose.yml"
+        )
+    )
+    toolVersion = libs.versions.detekt.get()
+    buildUponDefaultConfig = true
+    ignoreFailures = true
+    parallel = true
+    autoCorrect = true
+}
+
+kover {
+    reports {
+        total {
+            log { onCheck = true }
+            html { onCheck = true }
+            xml { onCheck = true }
+        }
+        filters {
+            excludes {
+                classes(
+                    "*BuildConfig*",
+                    // App entry points
+                    "*Application*",
+                    "*Activity*",
+                    "*PreviewProvider",
+                    // Compose generated classes
+                    "*ComposableSingletons*",
+                    // ViewModels (not tested by project convention)
+                    "*ViewModel*",
+                )
+
+                packages(
+                    "*.ui.theme",
+                )
+
+                annotatedBy(
+                    "androidx.compose.runtime.Composable",
+                    "androidx.compose.ui.tooling.preview.Preview",
+                    "androidx.compose.ui.tooling.preview.PreviewLightDark"
+                )
+            }
+        }
+        verify {
+            rule("Rule of coverage minimum for the project") {
+                minBound(70)
+            }
+        }
+    }
 }
 
 dependencies {
@@ -93,4 +152,6 @@ dependencies {
 
     // Debug-only tooling
     debugImplementation(libs.bundles.composeDebug)
+
+    detektPlugins(libs.bundles.detekt)
 }

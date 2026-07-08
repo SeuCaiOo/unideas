@@ -25,10 +25,11 @@ Run all commands from the repo root using the Gradle wrapper.
 ./gradlew test --tests "com.seucaio.unideas.ExampleUnitTest"   # run a single unit test class
 ./gradlew connectedAndroidTest  # run instrumented tests (app/src/androidTest), needs a device/emulator
 ./gradlew lint                  # Android lint
+./gradlew detekt                # static analysis (autocorrects formatting; see Code quality below)
+./gradlew koverVerify            # test coverage check (fails if below the min bound)
+./gradlew koverHtmlReport        # HTML coverage report (app/build/reports/kover/)
 ./gradlew clean                 # clean build outputs
 ```
-
-There is no dedicated ktlint/detekt config in this repo; rely on Android Studio/`./gradlew lint` for static checks.
 
 ## Architecture
 
@@ -48,3 +49,9 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 - `release` builds are signed via `signingConfigs.release` in `app/build.gradle.kts`, which reads `STORE_FILE_PATH`/`STORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD` env vars (CI) with a fallback to a local, gitignored `signing.properties`. The local keystore is `unideas-release.jks` (gitignored) — back both up somewhere safe; losing them blocks future signed updates on the same app.
 - `release` builds run R8 (`optimization.enable = true`), which requires `android.r8.gradual.support=true` in `gradle.properties` (AGP 9's new declarative build-type DSL).
 - `buildFeatures.buildConfig = true` is enabled so `BuildConfig.VERSION_NAME`/`VERSION_CODE` are generated for the app module.
+
+## Code quality
+
+- **Detekt**: configured in `app/build.gradle.kts`, config from `config/detekt/detekt.yml` (generated baseline) + `config/detekt/detekt-compose.yml` (Compose-specific rules, via the `detekt-compose-rules` plugin). `autoCorrect = true` fixes formatting issues (imports, final newline, etc.) in place; `ignoreFailures = true` means `./gradlew detekt` never fails the build — read the console output/HTML report (`app/build/reports/detekt/`) to catch real issues.
+- **Kover**: configured in `app/build.gradle.kts`. Excludes `BuildConfig`/`Application`/`Activity`/`*ViewModel*`/`ui.theme` and anything annotated `@Composable`/`@Preview`/`@PreviewLightDark` from coverage — only real logic (use cases, repositories, mappers, ViewModels' non-Composable logic once introduced) counts. `koverVerify` enforces a 70% minimum; adjust `minBound` in `app/build.gradle.kts` as the codebase matures.
+- **Lint**: `abortOnError = false` in `app/build.gradle.kts` — `./gradlew lint` reports but doesn't fail the build; check `app/build/reports/lint-results-debug.html`.

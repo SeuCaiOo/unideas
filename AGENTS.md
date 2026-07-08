@@ -55,3 +55,21 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 - **Detekt**: configured in `app/build.gradle.kts`, config from `config/detekt/detekt.yml` (generated baseline) + `config/detekt/detekt-compose.yml` (Compose-specific rules, via the `detekt-compose-rules` plugin). `autoCorrect = true` fixes formatting issues (imports, final newline, etc.) in place; `ignoreFailures = true` means `./gradlew detekt` never fails the build — read the console output/HTML report (`app/build/reports/detekt/`) to catch real issues.
 - **Kover**: configured in `app/build.gradle.kts`. Excludes `BuildConfig`/`Application`/`Activity`/`*ViewModel*`/`ui.theme` and anything annotated `@Composable`/`@Preview`/`@PreviewLightDark` from coverage — only real logic (use cases, repositories, mappers, ViewModels' non-Composable logic once introduced) counts. `koverVerify` enforces a 70% minimum; adjust `minBound` in `app/build.gradle.kts` as the codebase matures.
 - **Lint**: `abortOnError = false` in `app/build.gradle.kts` — `./gradlew lint` reports but doesn't fail the build; check `app/build/reports/lint-results-debug.html`.
+
+## Running & inspecting the app (`android` CLI)
+
+Prefer the `android` CLI over raw `adb` for deploying and inspecting the app — it wraps `adb`/`aapt`/emulator control with commands purpose-built for this workflow.
+
+```
+android emulator list                              # list AVDs (add --long for status/API level)
+android emulator start <avd-name>                  # boot an emulator, blocks until ready
+android emulator stop <avd-name>                    # graceful shutdown (omit name if only one is running)
+android run --apks=<path-to-apk> --activity=<pkg>.<Activity>   # install + launch (activity name WITHOUT the debug applicationIdSuffix)
+android screen capture -o <path.png>                # screenshot; -a annotates UI elements with bounding boxes
+android layout -p                                    # dump the current on-screen view tree as JSON (text + coordinates)
+android describe                                     # locate build artifacts (APK paths, etc.) for a project
+```
+
+Notes learned by using it on this project:
+- `--activity` takes the manifest-declared component name (e.g. `com.seucaio.unideas.MainActivity`), not the suffixed `applicationId` — the debug variant still installs as `com.seucaio.unideas.debug`, but the activity class name is unaffected.
+- The local AVD (`Resizable_Experimental_API_34`) needs a few GB of free disk to boot; if `android emulator start` fails with "not enough disk space", check `df -h /home` before assuming it's a CLI bug — the culprit here was stale `~/.gradle/caches/<old-version>` folders (safe to delete; Gradle re-downloads on demand).

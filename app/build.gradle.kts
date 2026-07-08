@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
+    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 // Release signing: prefers CI env vars (STORE_FILE_PATH/STORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD),
@@ -143,6 +145,11 @@ dependencies {
 
     // Compose UI
     implementation(libs.bundles.composeUi)
+
+    // Firebase
+    implementation(platform(libs.google.firebase.bom))
+    implementation(libs.google.firebase.crashlytics)
+    implementation(libs.google.firebase.analytics)
 
     // Unit tests (JVM)
     testImplementation(libs.junit)

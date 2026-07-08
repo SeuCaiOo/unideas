@@ -8,7 +8,7 @@ description: >
 
 Fluxo completo para transformar uma ideia bruta em um item documentado e rastreado no GitHub.
 
-Diferente do GymLog (que usa `docs/IMPROVEMENTS.md` versionado no repo), o unideas guarda esse guia em um **Artifact online** — decisão do usuário: evita o problema de o arquivo "se perder" ao trocar de branch, já que edições acontecem fora do fluxo normal de commits de feature.
+O unideas guarda esse guia em um **Artifact online**, não em arquivo versionado — edições acontecem fora do fluxo normal de commits de feature, então não fica preso a nenhuma branch específica.
 
 **Artifact "unideas — Improvements":** https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667
 

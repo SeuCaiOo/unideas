@@ -79,6 +79,8 @@ jobs:
 
   build-and-release:
     needs: bump-version
+    permissions:
+      contents: write
     uses: ./.github/workflows/release_build.yml
     with:
       version: ${{ needs.bump-version.outputs.new_version }}

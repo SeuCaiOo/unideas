@@ -1,15 +1,18 @@
 #!/bin/sh
 
 # ============================================================
-# Bloqueia push direto pra main — checa o ref REMOTO sendo
-# empurrado (via stdin), não o branch atualmente checked out.
-# Isso evita falso positivo ao empurrar tags enquanto HEAD
-# está em main.
+# Bloqueia push pra main a partir de outra branch (ex: feature
+# tentando `git push origin HEAD:main`) — não bloqueia mudanças
+# pontuais commitadas direto em main, nem pushes de tags. Checa
+# o ref REMOTO sendo empurrado (via stdin) contra o branch local
+# atual, não só o nome do ref.
 # ============================================================
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
 while read local_ref local_sha remote_ref remote_sha; do
-    if [ "$remote_ref" = "refs/heads/main" ]; then
-        echo "❌ Push direto para 'main' não é permitido."
-        echo "   Abra um PR a partir de outra branch."
+    if [ "$remote_ref" = "refs/heads/main" ] && [ "$current_branch" != "main" ]; then
+        echo "❌ Push para 'main' a partir da branch '$current_branch' não é permitido."
+        echo "   Abra um PR a partir dessa branch em vez disso."
         exit 1
     fi
 done

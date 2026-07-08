@@ -56,6 +56,12 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 - **Kover**: configured in `app/build.gradle.kts`. Excludes `BuildConfig`/`Application`/`Activity`/`*ViewModel*`/`ui.theme` and anything annotated `@Composable`/`@Preview`/`@PreviewLightDark` from coverage — only real logic (use cases, repositories, mappers, ViewModels' non-Composable logic once introduced) counts. `koverVerify` enforces a 70% minimum; adjust `minBound` in `app/build.gradle.kts` as the codebase matures.
 - **Lint**: `abortOnError = false` in `app/build.gradle.kts` — `./gradlew lint` reports but doesn't fail the build; check `app/build/reports/lint-results-debug.html`.
 
+## Commits & branches
+
+- **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/), in English — `type: short description` (e.g. `feat: add login screen`, `build: add Firebase Crashlytics and Analytics`). Types used so far: `feat`, `fix`, `build`, `chore`, `ci`, `docs`. Not enforced by a hook yet — followed by convention.
+- **Branches**: feature branches are cut from `dev` and target `dev` in their PR; `dev` periodically opens a PR into `main`. `main` stays the GitHub default branch. Never push directly to `main`.
+- **PRs**: use the `open-pr` skill (`.claude/skills/open-pr/`) — PR titles in English, description body in Portuguese, diff compared against the target branch only (`git log dev..HEAD`, never `main`). Fill in `.github/PULL_REQUEST_TEMPLATE.md`.
+
 ## Running & inspecting the app (`android` CLI)
 
 Prefer the `android` CLI over raw `adb` for deploying and inspecting the app — it wraps `adb`/`aapt`/emulator control with commands purpose-built for this workflow.

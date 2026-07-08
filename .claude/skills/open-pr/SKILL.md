@@ -74,7 +74,7 @@ Then apply the label:
 gh pr edit <number> --add-label "<label>"
 ```
 
-If the PR closes a GitHub issue, add `Closes #<issue>` to the PR body — but this project hasn't decided yet whether it will use GitHub Issues/Project board for day-to-day work (see item 9 of the bootstrap guide), so treat this as optional, not a required step.
+If the PR closes a GitHub issue, add `Closes #<issue>` to the PR body — or, if the work started via `/start-feature`, let `/finish-issue` handle that linking step instead.
 
 ### 7. Auto-merge (PRs targeting `dev`)
 

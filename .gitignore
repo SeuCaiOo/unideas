@@ -43,6 +43,7 @@ output-metadata.json
 
 # Google Services (Firebase etc.)
 google-services.json
+firebase.json
 
 # Claude Code — local/personal state (skills, settings.json and docs are versioned)
 .claude/memory/

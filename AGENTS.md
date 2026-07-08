@@ -50,6 +50,33 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 - `release` builds run R8 (`optimization.enable = true`), which requires `android.r8.gradual.support=true` in `gradle.properties` (AGP 9's new declarative build-type DSL).
 - `buildFeatures.buildConfig = true` is enabled so `BuildConfig.VERSION_NAME`/`VERSION_CODE` are generated for the app module.
 
+## Release automation
+
+`prepare_release.yml` (workflow_dispatch, run manually from `main`) bumps `versionCode`/`versionName` in `app/build.gradle.kts`, commits, tags (`vX.Y.Z`), then calls `release_build.yml`, which builds a signed release APK, creates a draft GitHub Release (with auto-generated notes) and uploads to Firebase App Distribution (group `alpha-testers`). `release-drafter.yml` keeps a draft changelog up to date on every push to `main`, categorized by label via `.github/changelog-drafter.yml`.
+
+### Secrets (GitHub Actions)
+
+Required in `Settings → Secrets → Actions`:
+
+| Secret | How to generate |
+|---|---|
+| `GOOGLE_SERVICES_JSON` | `base64 -w 0 app/google-services.json` |
+| `KEYSTORE_BASE64` | `base64 -w 0 unideas-release.jks` |
+| `STORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias |
+| `KEY_PASSWORD` | Key password |
+| `FIREBASE_APP_ID` | `firebase apps:list` (Android app, release variant — `com.seucaio.unideas`, not `.debug`) |
+| `FIREBASE_TOKEN` | `firebase login:ci` |
+| `GH_PAT` | GitHub → Settings → Developer settings → Personal access tokens (scope `repo`) — needed because commits/tags pushed with the default `GITHUB_TOKEN` don't trigger other workflows (e.g. `release-drafter`) |
+
+### Versioning (SemVer)
+
+| Version | Phase | Description |
+|---|---|---|
+| `0.0.x` | Alpha | Pre-MVP builds distributed via Firebase App Distribution |
+| `0.1.0` | MVP | Feature-complete for the first real milestone |
+| `1.0.0` | Production | Validated, secure, stable |
+
 ## Code quality
 
 - **Detekt**: configured in `app/build.gradle.kts`, config from `config/detekt/detekt.yml` (generated baseline) + `config/detekt/detekt-compose.yml` (Compose-specific rules, via the `detekt-compose-rules` plugin). `autoCorrect = true` fixes formatting issues (imports, final newline, etc.) in place; `ignoreFailures = true` means `./gradlew detekt` never fails the build — read the console output/HTML report (`app/build/reports/detekt/`) to catch real issues.

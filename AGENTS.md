@@ -58,9 +58,23 @@ As the app grows beyond the template, prefer keeping screens/composables organiz
 
 ## Commits & branches
 
-- **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/), in English — `type: short description` (e.g. `feat: add login screen`, `build: add Firebase Crashlytics and Analytics`). Types used so far: `feat`, `fix`, `build`, `chore`, `ci`, `docs`. Not enforced by a hook yet — followed by convention.
-- **Branches**: feature branches are cut from `dev` and target `dev` in their PR; `dev` periodically opens a PR into `main`. `main` stays the GitHub default branch. Never push directly to `main`.
+- **Commit messages**: [Conventional Commits](https://www.conventionalcommits.org/), in English — `type: short description` (e.g. `feat: add login screen`, `build: add Firebase Crashlytics and Analytics`). Types used so far: `feat`, `fix`, `build`, `chore`, `ci`, `docs`. Enforced by the `commit-msg` git hook (see below).
+- **Branches**: feature branches are cut from `dev` and target `dev` in their PR; `dev` periodically opens a PR into `main`. `main` stays the GitHub default branch. Never push directly to `main` — enforced by the `pre-push` git hook.
 - **PRs**: use the `open-pr` skill (`.claude/skills/open-pr/`) — PR titles in English, description body in Portuguese, diff compared against the target branch only (`git log dev..HEAD`, never `main`). Fill in `.github/PULL_REQUEST_TEMPLATE.md`.
+
+## Git Hooks
+
+Hooks live in `.githooks/` and are activated per clone with:
+
+```bash
+./gradlew installGitHooks
+```
+
+| Hook | When | What it does |
+|---|---|---|
+| `pre-commit` | Before commit | Detekt (autoCorrect) on staged `.kt` files + blocks `google-services.json` |
+| `commit-msg` | On commit | Validates Conventional Commits format |
+| `pre-push` | Before push | Kotlin compilation check + Detekt + blocks push to `main` |
 
 ## Running & inspecting the app (`android` CLI)
 

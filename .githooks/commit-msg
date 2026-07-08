@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# ============================================================
+# Valida o formato Conventional Commits
+# Exemplos válidos:
+#   feat: adiciona tela de login
+#   fix(auth): corrige crash no login
+#   chore!: remove dependência legada
+# ============================================================
+
+commit_msg=$(cat "$1")
+
+# Ignora commits automáticos (merge, revert, fixup)
+echo "$commit_msg" | grep -qE "^(Merge|Revert|fixup!|squash!)" && exit 0
+
+pattern="^(feat|fix|chore|docs|style|refactor|test|build|ci|perf|revert)(\(.+\))?!?: .{1,}$"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo "❌ Mensagem de commit inválida."
+    echo ""
+    echo "   Use o formato: tipo(escopo): descrição"
+    echo ""
+    echo "   Tipos permitidos:"
+    echo "     feat     → nova funcionalidade"
+    echo "     fix      → correção de bug"
+    echo "     chore    → manutenção, configs"
+    echo "     docs     → documentação"
+    echo "     style    → formatação, sem lógica"
+    echo "     refactor → refatoração"
+    echo "     test     → testes"
+    echo "     build    → build system, dependências"
+    echo "     ci       → pipelines de CI"
+    echo "     perf     → melhorias de performance"
+    echo "     revert   → reverter commit"
+    echo ""
+    echo "   Exemplos:"
+    echo "     feat: adiciona tela de login"
+    echo "     fix(login): corrige crash ao entrar"
+    echo "     chore: atualiza dependências"
+    exit 1
+fi
+
+exit 0

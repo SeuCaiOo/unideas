@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# ============================================================
+# Bloqueia o commit se google-services.json estiver staged
+# ============================================================
+if git diff --cached --name-only | grep -q "google-services.json"; then
+    echo "❌ Arquivo 'google-services.json' não pode ser commitado."
+    echo "   Adicione-o ao .gitignore e remova com: git rm --cached app/google-services.json"
+    exit 1
+fi
+
+# ============================================================
+# Roda Detekt com autoCorrect nos arquivos Kotlin staged
+# ============================================================
+STAGED_KOTLIN=$(git diff --cached --name-only | grep "\.kt$")
+
+if [ -n "$STAGED_KOTLIN" ]; then
+    echo "🔍 Rodando Detekt..."
+    ./gradlew detekt --daemon
+
+    DETEKT_EXIT=$?
+
+    # Re-staged apenas os arquivos que já estavam staged e foram corrigidos pelo autoCorrect
+    echo "$STAGED_KOTLIN" | xargs -r git add
+
+    if [ $DETEKT_EXIT -ne 0 ]; then
+        echo "❌ Detekt encontrou erros. Corrija antes de commitar."
+        exit 1
+    fi
+
+    echo "✅ Detekt concluído."
+fi
+
+exit 0

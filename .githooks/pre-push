@@ -1,0 +1,31 @@
+#!/bin/sh
+
+protected_branch="main"
+current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+if [ "$current_branch" = "$protected_branch" ]; then
+    echo "❌ Push direto para '$protected_branch' não é permitido."
+    echo "   Abra um PR a partir de outra branch."
+    exit 1
+fi
+
+echo "🔨 Validando compilação antes do push..."
+./gradlew compileDebugKotlin -x processDebugGoogleServices --daemon --quiet
+
+if [ $? -ne 0 ]; then
+    echo "❌ Build falhou! Corrija os erros antes de fazer push."
+    exit 1
+fi
+
+echo "✅ Build OK."
+
+echo "🔍 Rodando Detekt em todo o projeto..."
+./gradlew detekt --daemon
+
+if [ $? -ne 0 ]; then
+    echo "❌ Detekt encontrou erros. Corrija antes de fazer push."
+    exit 1
+fi
+
+echo "✅ Detekt OK."
+exit 0

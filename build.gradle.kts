@@ -7,3 +7,13 @@ plugins {
     alias(libs.plugins.google.gms.google.services) apply false
     alias(libs.plugins.google.firebase.crashlytics) apply false
 }
+
+tasks.register<Exec>("installGitHooks") {
+    description = "Configura o git para usar os hooks de .githooks/"
+    commandLine(
+        "bash", "-c",
+        "git config core.hooksPath .githooks && " +
+        "chmod +x .githooks/pre-commit .githooks/commit-msg .githooks/pre-push && " +
+        "echo '✅ Git hooks instalados: pre-commit, commit-msg, pre-push.'"
+    )
+}

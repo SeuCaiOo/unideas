@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE '^git commit|&&[[:space:]]*git commit|;[[:space:]]*git commit'; then branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$branch\" != \"main\" ] && [ \"$branch\" != \"dev\" ]; then echo '{\"decision\": \"block\", \"reason\": \"Commits em branches de feature/issue devem ser feitos pelo usuário, para permitir revisão antes do commit. Peça explicitamente ao usuário para fazer o commit. (Em main/dev isso não se aplica.)\"}'; fi; fi",
+            "statusMessage": "Verificando comando git..."
+          },
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE '^git push'; then changed_kt=$(git diff origin/dev --name-only 2>/dev/null | grep -cE '\\.kt$' || echo 0); changed_docs=$(git diff origin/dev --name-only 2>/dev/null | grep -cE '^docs/|^CLAUDE\\.md|^AGENTS\\.md' || echo 0); if [ \"$changed_kt\" -gt 0 ] && [ \"$changed_docs\" -eq 0 ]; then echo '{\"systemMessage\": \"⚠️ Docs possivelmente desatualizadas: há arquivos .kt modificados neste branch mas nenhum arquivo de docs (docs/, CLAUDE.md, AGENTS.md) foi alterado. Considere rodar /review-and-update-docs antes do push.\"}'; fi; fi",
+            "statusMessage": "Verificando docs antes do push..."
+          }
+        ]
+      }
+    ]
+  }
+}

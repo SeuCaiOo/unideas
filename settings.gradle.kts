@@ -24,3 +24,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "unideas"
 include(":app")
+include(":domain")
+include(":data")
+include(":core:common")
+include(":core:ui")
+include(":core:backup")
+include(":feature:home")
+include(":feature:items")
+include(":feature:sections")
+include(":feature:tags")
+include(":feature:settings")

@@ -33,15 +33,17 @@ Run all commands from the repo root using the Gradle wrapper.
 
 ## Architecture
 
-- `app/src/main/java/com/seucaio/unideas/` — app code. `MainActivity.kt` is the single entry point (`ComponentActivity`) and hosts the Compose tree via `setContent`.
-- `app/src/main/java/com/seucaio/unideas/ui/theme/` — Compose theming (`Theme.kt`, `Color.kt`, `Type.kt`) exposing `UnideasTheme { ... }`, applied at the root of `setContent`.
-- `app/src/main/java/com/seucaio/unideas/ui/components/` — small reusable composables not tied to a single screen, e.g. `AppVersionFooter` (shows `BuildConfig.VERSION_NAME`, mounted as the `Scaffold` bottom bar to visually confirm which build is running).
-- `app/src/test/` — local JUnit unit tests (run on JVM).
-- `app/src/androidTest/` — instrumented tests (run on device/emulator, use Espresso/Compose test APIs).
-- Dependency versions are centralized in `gradle/libs.versions.toml` (version catalog) and referenced from `app/build.gradle.kts` via `libs.*`. Add new dependencies there rather than hardcoding coordinates in the module build file. Related libraries are grouped into `[bundles]` (`composeUi`, `composeDebug`, `androidTest`).
-- `settings.gradle.kts` declares the single `:app` module; add new Gradle modules here if the project grows beyond one module.
+Multi-module, MVI, no KMP — see `docs/ARCHITECTURE.md` for the full breakdown (module dependency direction, conventions, Room schema draft, Google Drive backup approach).
 
-As the app grows beyond the template, prefer keeping screens/composables organized under `ui/` (mirroring the existing `ui/theme/` and `ui/components/` convention) rather than dumping everything in the root package.
+- `:app` — entry point, Koin DI wiring, `MainActivity.kt` (`ComponentActivity`) hosts the Compose tree via `setContent`. Still has the template's `ui/theme/` (`Theme.kt`/`Color.kt`/`Type.kt`, exposing `UnideasTheme { ... }`) and `ui/components/` (`AppVersionFooter`) — these are slated to move into `:core:ui` as that module gets real content, not yet done.
+- `:domain` — models + use cases, pure Kotlin/Android, no Compose.
+- `:data` — Room, DataStore, repository implementations.
+- `:core:common` — shared utilities, no Compose.
+- `:core:ui` — shared theme/components (currently empty — see above).
+- `:core:backup` — Google Drive backup/restore, self-contained (mirrors the GymLog reference project's `GoogleSignIn` + Drive API pattern, not Firebase Auth).
+- `:feature:home` / `:feature:items` / `:feature:sections` / `:feature:tags` / `:feature:settings` — one per screen area. Depend on `:domain` + `:core:ui` only, never on `:data` directly (implementations are Koin-injected from `:app`).
+- `app/src/test/` — local JUnit unit tests (run on JVM). `app/src/androidTest/` — instrumented tests.
+- Dependency versions are centralized in `gradle/libs.versions.toml` (version catalog) and referenced via `libs.*` from every module's `build.gradle.kts`. Add new dependencies there rather than hardcoding coordinates.
 
 ## Build variants & signing
 

@@ -11,7 +11,7 @@ description: Use when opening a pull request in the unideas project — covers b
 - PR description body: **PT-BR**
 - PR title: **English**, `type: short description` (add `#number` prefix only if the work is tied to a GitHub issue: `type: #number short description`)
 - PR target: **`dev`**, never `main` directly. `main` only receives PRs from `dev` (release), not from feature branches.
-- Assignee: always **`SeuCaiOo`** (único dev do projeto)
+- Assignee: whoever opens the PR (`gh pr create --assignee "@me"`) — don't hardcode a username, since another dev may work on this project in the future
 - Diff: compare commits only against the **target branch** (`git log dev..HEAD`), never against `main`
 
 ## Step-by-step
@@ -66,7 +66,7 @@ gh pr create \
   --head <branch> \
   --title "<EN title>" \
   --body "$(cat .github/PULL_REQUEST_TEMPLATE.md)" \
-  --assignee SeuCaiOo
+  --assignee "@me"
 ```
 
 Then apply the label:

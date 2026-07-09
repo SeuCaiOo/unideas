@@ -28,8 +28,8 @@ android {
         applicationId = "com.seucaio.unideas"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.0.1"
+        versionCode = 2
+        versionName = "0.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -76,6 +76,18 @@ android {
     }
     lint {
         abortOnError = false
+    }
+}
+
+// Distinguishable APK filenames (unideas-v<version>[-debug].apk) instead of the
+// generic app-debug.apk/app-release.apk — several apps/variants can end up
+// side by side on a device or in a Downloads folder.
+androidComponents {
+    onVariants { variant ->
+        val suffix = if (variant.buildType == "debug") "-debug" else ""
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("unideas-v${android.defaultConfig.versionName}$suffix.apk")
+        }
     }
 }
 

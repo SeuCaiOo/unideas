@@ -41,7 +41,7 @@ If docs are already up to date (last commit is a `docs:` commit, or no meaningfu
 
 ### 0. Move closed issues/PRs to "Done"
 
-The unideas project board is simplified (only `Todo` / `In Progress` / `Done`, no `In Review`) — `finish-issue` deliberately doesn't move the card, so this step is where stale cards get swept to Done. Before starting, check for recently closed issues or merged PRs whose project card isn't in "Done" yet:
+The unideas project board has two staging levels before work starts — `Backlog` (everything captured/specced) and `Todo` (the prioritized subset, promoted manually) — then `In Progress` / `Done` (no `In Review`). `finish-issue` deliberately doesn't move the card, so this step is where stale cards get swept to Done. Before starting, check for recently closed issues or merged PRs whose project card isn't in "Done" yet:
 
 ```bash
 gh issue list --state closed --json number,title,projectItems
@@ -64,6 +64,7 @@ mutation {
 
 Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users/SeuCaiOo/projects/4):
 - Status field ID: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
+- Backlog option ID: `19386e88`
 - Todo option ID: `f75ad846`
 - In Progress option ID: `47fc9ee4`
 - Done option ID: `98236657`

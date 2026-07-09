@@ -1,7 +1,7 @@
 ---
 name: add-improvement
 description: >
-  Use when the user brings a new idea, improvement, complaint, or observation about the unideas app — UI, UX, flow, architecture, or anything else. This skill guides the full refinement-to-issue flow: listen, refine conversationally, validate the summary with the user, document it in the "unideas — Improvements" artifact, then create the GitHub issue and move it to Todo on the project board. Use this skill whenever the user says "tenho uma ideia", "quero melhorar", "está feio", "percebi um problema", "quero mudar", or describes anything that would become a new improvement item — even if they don't say "add-improvement" explicitly.
+  Use when the user brings a new idea, improvement, complaint, or observation about the unideas app — UI, UX, flow, architecture, or anything else. This skill guides the full refinement-to-issue flow: listen, refine conversationally, validate the summary with the user, document it in the "unideas — Improvements" artifact, then create the GitHub issue and move it to Backlog on the project board. Use this skill whenever the user says "tenho uma ideia", "quero melhorar", "está feio", "percebi um problema", "quero mudar", or describes anything that would become a new improvement item — even if they don't say "add-improvement" explicitly.
 ---
 
 # Add Improvement — unideas Workflow
@@ -64,9 +64,9 @@ Use `/new-issue` para criar a issue com:
 
 `new-issue` já cuida de vincular ao GitHub Project (#4) — não repita esse passo aqui.
 
-### 6. Mover a issue para "Todo"
+### 6. Mover a issue para "Backlog"
 
-O item entra no board via `new-issue` sem status definido (fica em branco até ser movido). Mova explicitamente para **Todo**:
+O board tem dois níveis de espera: **Backlog** (tudo que é capturado e especificado) e **Todo** (o subconjunto priorizado, o que vem a seguir — promovido manualmente quando vira prioridade). Um item novo entra via `new-issue` sem status (fica em branco) e deve ir para **Backlog**:
 
 ```bash
 gh api graphql -f query="
@@ -75,16 +75,16 @@ mutation {
     projectId: \"PVT_kwHOAVNuW84Bcrp8\"
     itemId: \"<ITEM_ID>\"
     fieldId: \"PVTSSF_lAHOAVNuW84Bcrp8zhXSou4\"
-    value: { singleSelectOptionId: \"f75ad846\" }
+    value: { singleSelectOptionId: \"19386e88\" }
   }) { projectV2Item { id } }
 }"
 ```
 
-(Status field ID e opção "Todo" do projeto #4 — mesmos IDs usados em `new-issue`/`start-feature`/`finish-issue`.)
+(Status field ID e opção "Backlog" do projeto #4. Promover Backlog→Todo é manual, quando o item vira prioridade — não é responsabilidade desta skill.)
 
-### 7. Mover a entrada no Artifact para "Issues criadas (Todo)"
+### 7. Mover a entrada no Artifact para "Issues criadas (Backlog)"
 
-Repita o passo 4 (ler o estado atual via WebFetch, editar, republicar): mova a entrada da seção **"Novas ideias (sem issue)"** para **"Issues criadas (Todo)"**, adicionando o número da issue ao título:
+Repita o passo 4 (ler o estado atual via WebFetch, editar, republicar): mova a entrada da seção **"Novas ideias (sem issue)"** para **"Issues criadas (Backlog)"**, adicionando o número da issue ao título:
 
 ```markdown
 ### #<N> — [mesmo título de antes]
@@ -100,7 +100,7 @@ O conteúdo da entrada não muda — só o título ganha o número e a entrada m
 
 - Artifact de melhorias: https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667
 - Projeto GitHub: `PVT_kwHOAVNuW84Bcrp8` (https://github.com/users/SeuCaiOo/projects/4), field Status: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
-- Opções de Status: Todo `f75ad846` · In Progress `47fc9ee4` · Done `98236657`
+- Opções de Status: Backlog `19386e88` · Todo `f75ad846` · In Progress `47fc9ee4` · Done `98236657`
 - Assignee padrão: `@me`
 
 ## Common mistakes
@@ -109,5 +109,5 @@ O conteúdo da entrada não muda — só o título ganha o número e a entrada m
 |---|---|
 | Editar o Artifact sem ler o estado atual antes | Sempre `WebFetch` a URL primeiro — outra sessão pode ter mudado o conteúdo |
 | Criar uma issue sem passar pelo Artifact primeiro | Sempre documentar a ideia antes de criar a issue — é o registro histórico da decisão |
-| Deixar a issue sem mover para "Todo" | `new-issue` não define status sozinho — sempre rodar o passo 6 |
+| Deixar a issue sem mover para "Backlog" | `new-issue` não define status sozinho — sempre rodar o passo 6 |
 | Assumir que screenshots existem | O unideas não tem `docs/screenshots/` ainda — rode o app ao vivo se precisar de referência visual |

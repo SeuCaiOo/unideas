@@ -78,7 +78,7 @@ This links the PR to the issue on GitHub — merging it will close the issue aut
 PR: <pr-url>
 ```
 
-**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` (no `In Review`) — the card is deliberately left in "In Progress" here. It gets swept to "Done" automatically the next time `/start-feature` runs (step 0), once the issue is closed by the merge.
+**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. It gets swept to "Done" automatically the next time `/start-feature` runs (step 0), once the issue is closed by the merge.
 
 ---
 

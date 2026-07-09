@@ -35,7 +35,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.coroutines.android)
 
-    // Google Drive backup (mirrors the same pattern used in the GymLog reference project)
+    // Google Drive backup (scoped GoogleSignIn + Drive API, not Firebase Auth)
     implementation(libs.google.auth.identity)
     implementation(libs.google.drive.api)
     implementation(libs.google.http.client.android)

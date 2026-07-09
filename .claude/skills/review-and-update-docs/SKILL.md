@@ -61,7 +61,8 @@ Current doc set (grows as the project grows — add rows here as new docs are cr
 | File | Update when |
 |---|---|
 | `CLAUDE.md` | Stack, commands, architecture/package layout, or project state changed |
-| `AGENTS.md` | **Always mirror CLAUDE.md** — any change to `CLAUDE.md` must be replicated to `AGENTS.md` (same content, same structure, only the intro line differs) |
+| `AGENTS.md` | Nothing to do — it's a **symlink to `CLAUDE.md`** (single source of truth). Never convert it back to a copy. |
+| `.claude/rules/*` | A per-layer coding convention changed (rules are path-scoped: `domain/**`, `data/**`, `feature/**`) |
 | `README.md` | Stack table, getting-started steps, or app description changed |
 | `docs/*` | Once a `docs/` folder exists: update the specific doc whose topic changed (architecture, features, testing, etc.) |
 | `.claude/skills/*.md` | A skill's instructions became stale |
@@ -109,4 +110,5 @@ Do NOT flag: personal style preferences, trivial naming, or things that are corr
 | Flagging things that aren't really issues | Apply the "concrete negative impact" test |
 | Rewriting doc sections that are still accurate | Edit only the stale parts |
 | Missing issues because a file wasn't read | Read every changed/new file, not just the diff summary |
-| Updating `CLAUDE.md` but forgetting `AGENTS.md` | They must always stay in sync |
+| Turning `AGENTS.md` back into a copy of `CLAUDE.md` | It's a symlink — edit only `CLAUDE.md` |
+| Bloating `CLAUDE.md` with procedural/reference detail | Keep it lean (always-on); put procedures in `docs/` or `.claude/rules/` and link |

@@ -1,58 +1,234 @@
 # Arquitetura
 
-Documento técnico — complementa a planta de produto (artifact privado do usuário, "unideas — Planta do Produto"), que cobre o quê/por quê. Aqui é o como: estrutura de módulos, convenções, schema.
+Documento técnico — complementa a planta de produto (artifact privado do usuário, "unideas — Planta do Produto"), que cobre o **quê**/**por quê**. Aqui é o **como**: estrutura de módulos, pacotes, schema, DI e convenções de datas.
+
+Docs relacionados:
+- [`FLOW.md`](FLOW.md) — fluxos de navegação entre as telas
+- [`CONVENTIONS.md`](CONVENTIONS.md) — convenções de código, contrato MVI, testes, boas práticas
+- [`BLUEPRINT.md`](BLUEPRINT.md) — inventário completo de classes/telas a construir + ordem de implementação
 
 ## Padrão
 
-MVI (Model-View-Intent): cada tela expõe um `ViewModel` que recebe `Intent`/`Action` explícitas da UI e emite um `UiState` imutável único, via `StateFlow`. Eventos pontuais (navegação, snackbars) via `Channel`/`Flow` separado (`UiAction`/`Event`), não pelo `UiState`.
+**MVI (Model-View-Intent)** + **Clean Architecture**. Cada tela expõe um `ViewModel` que:
+- recebe `Event` explícitas da UI (`onEvent(event)`),
+- emite um único `UiState` imutável via `StateFlow` (derivado por `combine`, nunca `collect` manual no `init`),
+- dispara ações one-shot (navegação, snackbar) via `UiAction` num `Channel(Channel.BUFFERED)` exposto como `receiveAsFlow()` — **nunca** pelo `UiState`.
+
+MVVM fica registrado como variação possível pra telas triviais no futuro, mas o padrão do MVP é MVI.
 
 Sem KMP — Android nativo puro (`com.android.application`/`com.android.library`, sem `commonMain`/`androidMain`).
+
+Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 
 ## Módulos
 
 ```
-:app                    — entry point, DI wiring (Koin), NavHost
-:domain                 — modelos + use cases, puro Kotlin/Android, sem Compose
-:data                    — Room, DataStore, implementações de repositório
-:core:common            — utilitários compartilhados (sem Compose)
-:core:ui                — tema, componentes Compose compartilhados
-:core:backup            — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
-:feature:home            — Home (Painel de Prioridades, abas Tarefas/Anotações, Todas as Prioridades)
-:feature:items           — Criar/Editar Item, Detalhe do Item
-:feature:sections        — Gerenciar Seções
-:feature:tags            — Gerenciar Tags
-:feature:settings        — Configurações (usa :core:backup)
+:app                 — entry point, DI wiring (Koin startKoin), NavHost central, MainActivity
+:domain              — models, enums, repository interfaces, use cases. Kotlin puro, sem Android/Room/Compose/Koin
+:data                — Room (entities, DAOs, database, migrations, converters), mappers, impl de repositório, DataModule
+:core:common         — utilitários Kotlin puros (extensions, constantes). Sem Compose
+:core:ui             — UnideasTheme + componentes Compose compartilhados. Depende de :core:common via `api`
+:core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
+:feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
+:feature:items       — Criar/Editar Item + Detalhe do Item
+:feature:sections    — Gerenciar Seções
+:feature:tags        — Gerenciar Tags
+:feature:settings    — Configurações (usa :core:backup)
 ```
 
 ### Direção de dependência
 
 ```
-:feature:*  ──depends on──>  :domain, :core:ui  (settings também depende de :core:backup)
-:data       ──depends on──>  :domain, :core:common
-:core:backup ──depends on──> :domain, :core:common, :core:ui
-:app        ──depends on──>  tudo (wiring)
+:core:common  ←  :data
+:core:common  ←  :core:ui (api)  ←  :feature:*
+:domain       ←  :data
+:domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
+:domain, :core:common, :core:ui  ←  :core:backup
+:feature:settings  →  :core:backup
+tudo  ←  :app  (faz o wiring de DI e navegação)
 ```
 
-`:feature:*` nunca depende de `:data` diretamente — só de `:domain` (interfaces/use cases). A implementação concreta é injetada via Koin no `:app`.
+Regra dura: **`:feature:*` nunca depende de `:data` diretamente** — só de `:domain` (interfaces + use cases). A implementação concreta do repositório é injetada via Koin no `:app`. Isso mantém as features testáveis e desacopladas da persistência.
 
-## Convenções
+## Estrutura de pacotes por módulo
 
-- Namespace: `com.seucaio.unideas.<módulo>` (ex.: `com.seucaio.unideas.feature.home`)
-- `compileSdk = 37`, `minSdk = 24`, Java 11, desugaring habilitado em módulos com dependência de coleções/APIs modernas
-- Detekt: `config/detekt/detekt.yml` sempre; `+ detekt-compose.yml` nos módulos com Compose
-- Testes: JUnit + MockK + coroutines-test; `:domain` e `:data` têm `testFixtures` habilitado pra fakes compartilhados
+Namespace base: `com.seucaio.unideas`. Cada módulo tem seu sufixo.
+
+### `:domain` — `com.seucaio.unideas.domain`
+
+```
+domain/
+├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
+│   ├── Item.kt
+│   ├── ItemType.kt          — enum TASK | NOTE
+│   ├── Recurrence.kt        — enum NONE | DAILY | WEEKLY | MONTHLY
+│   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
+│   ├── Section.kt
+│   ├── Tag.kt
+│   └── outcome/             — resultados ricos de operações (ver CONVENTIONS.md)
+│       ├── DeletionStatus.kt   — Deleted | BlockedByLinkedItems(count)
+│       └── SaveResult.kt
+├── repository/       — interfaces (contratos), sem implementação
+│   ├── ItemRepository.kt
+│   ├── SectionRepository.kt
+│   └── TagRepository.kt
+└── usecase/
+    ├── item/         — Create/Edit/Delete/Complete/GetItems/GetItemDetail/GetPriorityItems
+    ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
+    └── tag/          — Get/Add/Delete (delete verifica vínculo antes)
+```
+
+### `:data` — `com.seucaio.unideas.data`
+
+```
+data/
+├── local/
+│   ├── entity/       — @Entity Room (datas como Long epoch millis)
+│   │   ├── ItemEntity.kt
+│   │   ├── SectionEntity.kt
+│   │   ├── TagEntity.kt
+│   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
+│   ├── dao/          — ItemDao, SectionDao, TagDao (retornam Flow)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder)
+│   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
+│   └── relation/     — POJOs @Relation/@Embedded (ex: ItemWithTags) — joins no Room, nunca em memória
+├── mapper/           — extension functions Entity ↔ Domain
+└── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl
+```
+
+### `:core:common` — `com.seucaio.unideas.core.common`
+
+```
+core/common/
+├── extensions/       — Kotlin extensions puros (Boolean.orFalse, String.EMPTY, Long.toLocalDate, etc.)
+└── util/             — Constants (defaults, chaves), sem Android
+```
+
+### `:core:ui` — `com.seucaio.unideas.core.ui`
+
+```
+core/ui/
+├── theme/            — UnideasTheme, Color, Type (Material 3, dark, acento teal)
+└── components/       — composables compartilhados entre features:
+    ├── UnideasTopBar.kt
+    ├── UnideasLoadingContent.kt
+    ├── UnideasErrorContent.kt
+    ├── UnideasEmptyContent.kt          — estado vazio com texto orientador
+    ├── UnideasListItem.kt
+    ├── DeleteConfirmationDialog.kt
+    ├── UrgencyIndicator.kt             — cor de prazo (vermelho/âmbar) — uso EXCLUSIVO de prazo
+    └── TagChip.kt / SectionDropdown.kt
+```
+
+### `:feature:*` — `com.seucaio.unideas.feature.<nome>`
+
+Uma pasta por tela; `Screen` + `PreviewProvider` na raiz da tela, contrato do ViewModel em `viewmodel/`.
+
+```
+feature/items/
+├── navigation/
+│   ├── ItemsNavGraph.kt
+│   └── ItemsRoute.kt        — @Serializable, type-safe
+├── form/                    — Criar/Editar Item (tela única)
+│   ├── ItemFormScreen.kt
+│   ├── ItemFormPreviewProvider.kt
+│   └── viewmodel/
+│       ├── ItemFormUiState.kt
+│       ├── ItemFormUiAction.kt
+│       ├── ItemFormEvent.kt
+│       └── ItemFormViewModel.kt
+└── detail/                  — Detalhe do Item
+    ├── ItemDetailScreen.kt
+    ├── ItemDetailPreviewProvider.kt
+    └── viewmodel/ ...
+```
+
+O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md).
 
 ## Persistência (Room) — schema
 
-Ainda não implementado — entra na primeira issue que tocar `:domain`/`:data`. Rascunho conceitual (baseado na seção 4 da planta de produto):
+Datas armazenadas como **`Long` (epoch millis)** na entity; convertidas pra `LocalDate`/`LocalDateTime` no domínio via mappers (`coreLibraryDesugaring` habilita `java.time` no minSdk 24).
 
-- `Item` (id, tipo [Tarefa|Anotação], título, descrição, seçãoId?, dataVencimento?, recorrência?, concluídoEm?, criadoEm)
-- `Section` (id, nome)
-- `Tag` (id, nome)
-- `ItemTag` (tabela de junção — Item ↔ Tag, N:N)
+### `ItemEntity` → tabela `items`
+```
+id: Long                 PK autoincrement
+type: String             TASK | NOTE (enum via TypeConverter)
+title: String            obrigatório (não vazio)
+description: String?      opcional, multilinha
+sectionId: Long?          FK → sections.id (SET NULL on delete — mas exclusão é bloqueada antes, ver regra)
+dueDate: Long?            epoch millis, opcional
+recurrence: String        NONE | DAILY | WEEKLY | MONTHLY (default NONE; só válido se dueDate != null)
+completedAt: Long?        epoch millis; != null = concluída (só faz sentido pra TASK)
+createdAt: Long           epoch millis, preenchido na criação
+```
 
-Exclusão de `Section`/`Tag` com itens vinculados é bloqueada na camada de `domain` (use case verifica antes de delegar ao repositório), não uma constraint de FK que falha silenciosamente.
+### `SectionEntity` → tabela `sections`
+```
+id: Long                 PK autoincrement
+name: String             obrigatório, único
+```
+
+### `TagEntity` → tabela `tags`
+```
+id: Long                 PK autoincrement
+name: String             obrigatório, único
+```
+
+### `ItemTagCrossRef` → tabela `item_tag` (junção N:N)
+```
+itemId: Long             FK → items.id (CASCADE on delete)
+tagId: Long              FK → tags.id  (CASCADE on delete)
+PK composta (itemId, tagId)
+```
+
+### Regras de integridade na camada de domínio (não no FK)
+- **Excluir `Section`/`Tag` com itens vinculados é BLOQUEADO** — o use case (`DeleteSectionUseCase`/`DeleteTagUseCase`) conta os vínculos e retorna `DeletionStatus.BlockedByLinkedItems(count)` **antes** de delegar ao repositório. Não é uma constraint de FK que falha silenciosamente; o usuário vê quantos itens estão vinculados.
+- **Recorrência "renasce ao concluir"**: `CompleteItemUseCase`, ao concluir um item com `recurrence != NONE`, marca o atual como concluído E gera uma nova instância com a próxima `dueDate` (calculada por `Recurrence`). Não é regra computada em tela — é geração de novo registro.
+- **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável).
+
+## DI — estrutura Koin
+
+`appModule` é o único ponto de entrada no `startKoin`, agregando os demais via `includes(...)`.
+
+```
+:app/di/
+├── AppModule.kt          — includes(dataModule, domainModule, backupModule, presentationModule)
+├── DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind())
+├── DomainModule.kt       — Use Cases (factoryOf)
+├── BackupModule.kt       — repos + use cases de :core:backup
+└── PresentationModule.kt — ViewModels de todos os :feature:* (viewModelOf)
+```
+
+| Tipo | Escopo | DSL |
+|---|---|---|
+| `UnideasDatabase` | `single` | `single { UnideasDatabase.getInstance(androidApplication()) }` |
+| DAO | `single` | `single { get<UnideasDatabase>().itemDao() }` |
+| Repository | `single` | `singleOf(::ItemRepositoryImpl).bind<ItemRepository>()` |
+| Use Case | `factory` | `factoryOf(::GetPriorityItemsUseCase)` |
+| ViewModel | por VM | `viewModelOf(::HomeViewModel)` |
+
+`UnideasDatabase` mantém singleton manual (`@Volatile` + `synchronized`) via `getInstance(context)` além do registro Koin, garantindo instância única mesmo fora do grafo de DI (ex: testes instrumentados).
 
 ## Backup (Google Drive)
 
-Segue exatamente o padrão do projeto de referência GymLog: `GoogleSignIn` (Play Services, escopo Drive) → `GoogleSignInAccount` → constrói cliente `com.google.api.services.drive.Drive`. Não é o mesmo login usado por Firebase Auth (que este projeto nem usa hoje). Estrutura de classes em `:core:backup`: `BackupRepository` + use cases (`BuildDriveServiceUseCase`, `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`) + `BackupViewModel`/`UiState`/`UiAction`/`Event`.
+Fluxo próprio e separado, específico pro Drive (**não** reaproveita Google Sign-In do Firebase Auth — este app não tem login geral):
+
+`GoogleSignIn` (Play Services, escopo Drive) → `GoogleSignInAccount` → constrói cliente `com.google.api.services.drive.Drive` operando na pasta `appDataFolder`.
+
+Estrutura em `:core:backup`:
+- `GoogleAuthRepository` / `BackupRepository` (interfaces + impl auto-contidas no módulo)
+- Use cases: `GetSignInIntentUseCase`, `BuildDriveServiceUseCase`, `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
+- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet`/seção na tela de Configurações.
+
+Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+
+## Convenção de datas
+
+| Camada | Tipo | Motivo |
+|---|---|---|
+| Entity (Room) | `Long` (epoch millis) | nativo, sem converter, ordenável |
+| Domain model | `LocalDate` / `LocalDateTime` | type-safe, legível na lógica |
+| Mapper | extensions em `:core:common` | `Long.toLocalDate()` / `LocalDate.toEpochMilli()` |
+| UI (picker) | `Long.toLocalDateUtc()` | Material3 DatePicker retorna **UTC midnight** — converter diferente do banco |
+
+`coreLibraryDesugaring` habilitado nos módulos que usam `java.time`.

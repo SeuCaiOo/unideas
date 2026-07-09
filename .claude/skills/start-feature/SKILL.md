@@ -39,28 +39,40 @@ Look for recent merges (PRs merged into the base branch) since the last `docs:` 
 
 If docs are already up to date (last commit is a `docs:` commit, or no meaningful `.kt` changes since last docs update), skip this step and move on.
 
-### 0. Move closed issues/PRs to "Done"
+### 0. Move merged-into-dev issues to "Done"
 
-The unideas project board has two staging levels before work starts — `Backlog` (everything captured/specced) and `Todo` (the prioritized subset, promoted manually) — then `In Progress`, `Done` (merged into dev), and `Released` (shipped on main in a generated version). No `In Review`. `finish-issue` deliberately doesn't move the card, so this step is where stale cards get swept to Done. (Moving `Done → Released` happens at release time — manual for now.) Before starting, check for recently closed issues or merged PRs whose project card isn't in "Done" yet:
+The unideas project board has two staging levels before work starts — `Backlog` (everything captured/specced) and `Todo` (the prioritized subset, promoted manually) — then `In Progress`, `Done`, and `Released`. No `In Review`. `finish-issue` deliberately doesn't move the card, so this step is where stale cards get swept to Done.
+
+**Done criterion: the issue's PR merged into `dev`** — NOT "the GitHub issue is closed". Feature PRs always target `dev`, never the repo's default branch (`main`), so GitHub's `Closes #N` auto-close never fires on merge — waiting for `state:closed` would leave cards stuck in "In Progress" forever. `Released` is the separate, later step for "shipped in an actual generated version" (`0.0.x`/`0.1.0`, moved manually at release time) — don't conflate the two.
+
+Check for merged PRs (into `dev`) referencing an issue not yet in "Done":
 
 ```bash
-gh issue list --state closed --json number,title,projectItems
-gh pr list --state merged --json number,title,projectItems
+gh pr list --base dev --state merged --json number,title,body,mergedAt --limit 30
 ```
 
-For each item still not in "Done", update the Status field:
+For each merged PR, extract the issue number from its `Closes #<N>` line in the body. For each such issue:
 
 ```bash
+# 1. Close the issue now if still open (don't wait for the dev->main release)
+gh issue close <N> --comment "Mergeado em \`dev\` via #<PR>. Fecho aqui — o board rastreia \"já está numa versão gerada\" separadamente, na coluna Released."
+
+# 2. Move its board card to Done
+ISSUE_NODE_ID=$(gh api repos/SeuCaiOo/unideas/issues/<N> --jq '.node_id')
+ITEM_ID=$(gh api graphql -f query="
+{ node(id: \"$ISSUE_NODE_ID\") { ... on Issue { projectItems(first: 5) { nodes { id } } } } }" --jq '.data.node.projectItems.nodes[0].id')
 gh api graphql -f query="
 mutation {
   updateProjectV2ItemFieldValue(input: {
     projectId: \"PVT_kwHOAVNuW84Bcrp8\"
-    itemId: \"<ITEM_ID>\"
+    itemId: \"$ITEM_ID\"
     fieldId: \"PVTSSF_lAHOAVNuW84Bcrp8zhXSou4\"
     value: { singleSelectOptionId: \"98236657\" }
   }) { projectV2Item { id } }
 }"
 ```
+
+Skip issues already closed (already handled by a previous run).
 
 Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users/SeuCaiOo/projects/4):
 - Status field ID: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
@@ -70,7 +82,7 @@ Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users
 - Done option ID: `98236657`
 - Released option ID: `edd7e261`
 
-Report what was moved before continuing.
+Report what was moved (and which issues closed) before continuing.
 
 ### 1. Fetch issue data
 

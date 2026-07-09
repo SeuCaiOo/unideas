@@ -21,6 +21,12 @@ android {
     testFixtures {
         enable = true
     }
+
+    lint {
+        // Lint doesn't apply coreLibraryDesugaring to the testFixtures component and
+        // reports false-positive NewApi errors on java.time there. Main sources stay linted.
+        ignoreTestFixturesSources = true
+    }
 }
 
 dependencies {

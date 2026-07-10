@@ -110,7 +110,7 @@ core/common/
 
 ```
 core/ui/
-├── theme/            — UnideasTheme, Color, Type (Material 3, dark, acento teal)
+├── theme/            — UnideasTheme, Color, Type (Material 3, light + dark, acento teal)
 └── components/       — composables compartilhados entre features:
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
@@ -119,7 +119,8 @@ core/ui/
     ├── UnideasListItem.kt
     ├── DeleteConfirmationDialog.kt
     ├── UrgencyIndicator.kt             — cor de prazo (vermelho/âmbar) — uso EXCLUSIVO de prazo
-    └── TagChip.kt / SectionDropdown.kt
+    ├── TagChip.kt / SectionDropdown.kt
+    └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```
 
 ### `:feature:*` — `com.seucaio.unideas.feature.<nome>`

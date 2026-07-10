@@ -8,10 +8,11 @@ import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.domain.usecase.section.RenameSectionUseCase
 import com.seucaio.unideas.feature.sections.R
+import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.mockk
+import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -28,13 +29,21 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SectionsViewModelTest {
 
-    private val getSections: GetSectionsUseCase = mockk()
-    private val addSection: AddSectionUseCase = mockk()
-    private val renameSection: RenameSectionUseCase = mockk()
-    private val deleteSection: DeleteSectionUseCase = mockk()
+    @MockK
+    private lateinit var getSections: GetSectionsUseCase
+
+    @MockK
+    private lateinit var addSection: AddSectionUseCase
+
+    @MockK
+    private lateinit var renameSection: RenameSectionUseCase
+
+    @MockK
+    private lateinit var deleteSection: DeleteSectionUseCase
 
     @Before
     fun setUp() {
+        MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
     }
 
@@ -49,7 +58,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `uiState emits Success with the sections from the flow`() = runTest {
+    fun `when the flow emits sections should update uiState to Success`() = runTest {
         val sections = SectionStub.sections()
         every { getSections() } returns flowOf(sections)
         val vm = SectionsViewModel(getSections, addSection, renameSection, deleteSection)
@@ -60,7 +69,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `uiState emits Error when the flow throws`() = runTest {
+    fun `when the flow throws should emit Error`() = runTest {
         every { getSections() } returns flow { throw IllegalStateException("boom") }
         val vm = SectionsViewModel(getSections, addSection, renameSection, deleteSection)
 
@@ -70,7 +79,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnAddClicked happy path calls the use case without emitting an action`() = runTest {
+    fun `when OnAddClicked with a valid name should call the use case without emitting an action`() = runTest {
         val vm = viewModel()
         coEvery { addSection.invoke("Trabalho") } returns Result.success(1L)
 
@@ -80,7 +89,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnAddClicked with blank name emits a name-required snackbar`() = runTest {
+    fun `when OnAddClicked with blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         coEvery { addSection.invoke("") } returns Result.failure(IllegalArgumentException("Name is required"))
 
@@ -91,7 +100,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnRenameClicked happy path calls the use case`() = runTest {
+    fun `when OnRenameClicked with a valid name should call the use case`() = runTest {
         val vm = viewModel()
         val section = SectionStub.section(name = "renomeada")
         coEvery { renameSection.invoke(section) } returns Result.success(Unit)
@@ -102,7 +111,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnRenameClicked with blank name emits a name-required snackbar`() = runTest {
+    fun `when OnRenameClicked with blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         val section = SectionStub.section(name = "")
         coEvery { renameSection.invoke(section) } returns Result.failure(IllegalArgumentException("Name is required"))
@@ -114,7 +123,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnDeleteClicked blocked by linked items emits a snackbar with the count`() = runTest {
+    fun `when OnDeleteClicked is blocked by linked items should emit a snackbar with the count`() = runTest {
         val vm = viewModel()
         coEvery { deleteSection.invoke(1L) } returns Result.success(DeletionStatus.BlockedByLinkedItems(3))
 
@@ -125,7 +134,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `OnDeleteClicked completed does not emit an action`() = runTest {
+    fun `when OnDeleteClicked completes should not emit an action`() = runTest {
         val vm = viewModel()
         coEvery { deleteSection.invoke(1L) } returns Result.success(DeletionStatus.Deleted)
 
@@ -135,7 +144,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `unexpected repository failure emits ShowError with the exception message`() = runTest {
+    fun `when the repository fails unexpectedly should emit ShowError with the exception message`() = runTest {
         val vm = viewModel()
         coEvery { deleteSection.invoke(1L) } returns Result.failure(IllegalStateException("boom"))
 

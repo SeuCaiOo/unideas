@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tag_name_required">Name is required</string>
+    <string name="tag_delete_blocked">%1$d items are linked to this tag</string>
+    <string name="tags_load_error">Couldn\'t load tags</string>
+</resources>

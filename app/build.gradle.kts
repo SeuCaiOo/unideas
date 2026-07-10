@@ -155,6 +155,7 @@ dependencies {
     kover(project(":data"))
     kover(project(":core:common"))
     kover(project(":feature:sections"))
+    kover(project(":feature:tags"))
 
     // Compose BOM — aligns versions for every Compose artifact below
     implementation(platform(libs.androidx.compose.bom))

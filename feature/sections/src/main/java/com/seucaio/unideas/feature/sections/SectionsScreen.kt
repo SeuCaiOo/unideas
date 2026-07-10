@@ -41,6 +41,7 @@ import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Section
+import com.seucaio.unideas.feature.sections.viewmodel.SectionsDialogState
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsEvent
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsUiAction
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsUiState
@@ -84,9 +85,6 @@ private fun SectionsContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
-    var showAddDialog by remember { mutableStateOf(false) }
-    var sectionToRename by remember { mutableStateOf<Section?>(null) }
-    var sectionToDelete by remember { mutableStateOf<Section?>(null) }
 
     Scaffold(
         topBar = {
@@ -96,42 +94,19 @@ private fun SectionsContent(
             // FAB only once we have a definitive answer (empty or with data) — not while
             // loading or errored, since there's nothing to add a section to yet.
             if (uiState is SectionsUiState.Success) {
-                FloatingActionButton(onClick = { showAddDialog = true }) {
+                FloatingActionButton(onClick = { onEvent(SectionsEvent.OnAddClicked) }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sections_add))
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        SectionsBody(
-            uiState = uiState,
-            padding = padding,
-            onEvent = onEvent,
-            onRenameClick = { sectionToRename = it },
-            onDeleteClick = { sectionToDelete = it },
-        )
+        SectionsBody(uiState = uiState, padding = padding, onEvent = onEvent)
     }
 
-    SectionsDialogs(
-        showAddDialog = showAddDialog,
-        onAddDismiss = { showAddDialog = false },
-        onAddConfirm = { name ->
-            onEvent(SectionsEvent.OnAddClicked(name))
-            showAddDialog = false
-        },
-        sectionToRename = sectionToRename,
-        onRenameDismiss = { sectionToRename = null },
-        onRenameConfirm = { section, newName ->
-            onEvent(SectionsEvent.OnRenameClicked(section, newName))
-            sectionToRename = null
-        },
-        sectionToDelete = sectionToDelete,
-        onDeleteDismiss = { sectionToDelete = null },
-        onDeleteConfirm = { section ->
-            onEvent(SectionsEvent.OnDeleteClicked(section.id))
-            sectionToDelete = null
-        },
-    )
+    if (uiState is SectionsUiState.Success) {
+        SectionsDialogs(dialog = uiState.dialog, onEvent = onEvent)
+    }
 }
 
 @Composable
@@ -139,8 +114,6 @@ private fun SectionsBody(
     uiState: SectionsUiState,
     padding: PaddingValues,
     onEvent: (SectionsEvent) -> Unit,
-    onRenameClick: (Section) -> Unit,
-    onDeleteClick: (Section) -> Unit,
 ) {
     when (uiState) {
         is SectionsUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
@@ -156,7 +129,7 @@ private fun SectionsBody(
             } else {
                 LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
                     items(uiState.sections, key = { it.id }) { section ->
-                        SectionRow(section = section, onRenameClick = onRenameClick, onDeleteClick = onDeleteClick)
+                        SectionRow(section = section, onEvent = onEvent)
                     }
                 }
             }
@@ -167,8 +140,7 @@ private fun SectionsBody(
 @Composable
 private fun SectionRow(
     section: Section,
-    onRenameClick: (Section) -> Unit,
-    onDeleteClick: (Section) -> Unit,
+    onEvent: (SectionsEvent) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -184,14 +156,14 @@ private fun SectionRow(
                         text = { Text(stringResource(R.string.section_rename_action)) },
                         onClick = {
                             menuExpanded = false
-                            onRenameClick(section)
+                            onEvent(SectionsEvent.OnRenameClicked(section))
                         },
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.section_delete_action)) },
                         onClick = {
                             menuExpanded = false
-                            onDeleteClick(section)
+                            onEvent(SectionsEvent.OnDeleteClicked(section))
                         },
                     )
                 }
@@ -202,42 +174,33 @@ private fun SectionRow(
 
 @Composable
 private fun SectionsDialogs(
-    showAddDialog: Boolean,
-    onAddDismiss: () -> Unit,
-    onAddConfirm: (String) -> Unit,
-    sectionToRename: Section?,
-    onRenameDismiss: () -> Unit,
-    onRenameConfirm: (Section, String) -> Unit,
-    sectionToDelete: Section?,
-    onDeleteDismiss: () -> Unit,
-    onDeleteConfirm: (Section) -> Unit,
+    dialog: SectionsDialogState,
+    onEvent: (SectionsEvent) -> Unit,
 ) {
-    if (showAddDialog) {
-        NameInputDialog(
-            title = stringResource(R.string.sections_add),
-            label = stringResource(R.string.sections_add_label),
-            onConfirm = onAddConfirm,
-            onDismiss = onAddDismiss,
-        )
-    }
-
-    sectionToRename?.let { section ->
-        NameInputDialog(
-            title = stringResource(R.string.sections_rename),
-            label = stringResource(R.string.sections_rename_label),
-            initialValue = section.name,
-            onConfirm = { newName -> onRenameConfirm(section, newName) },
-            onDismiss = onRenameDismiss,
-        )
-    }
-
-    sectionToDelete?.let { section ->
-        DeleteConfirmationDialog(
-            titleRes = R.string.section_delete_confirm_title,
-            messageRes = R.string.section_delete_confirm_message,
-            onDismiss = onDeleteDismiss,
-            onConfirm = { onDeleteConfirm(section) },
-        )
+    when (dialog) {
+        is SectionsDialogState.None -> Unit
+        is SectionsDialogState.Add ->
+            NameInputDialog(
+                title = stringResource(R.string.sections_add),
+                label = stringResource(R.string.sections_add_label),
+                onConfirm = { name -> onEvent(SectionsEvent.OnAddConfirmClicked(name)) },
+                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
+            )
+        is SectionsDialogState.Rename ->
+            NameInputDialog(
+                title = stringResource(R.string.sections_rename),
+                label = stringResource(R.string.sections_rename_label),
+                initialValue = dialog.section.name,
+                onConfirm = { newName -> onEvent(SectionsEvent.OnRenameConfirmClicked(newName)) },
+                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
+            )
+        is SectionsDialogState.Delete ->
+            DeleteConfirmationDialog(
+                titleRes = R.string.section_delete_confirm_title,
+                messageRes = R.string.section_delete_confirm_message,
+                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
+                onConfirm = { onEvent(SectionsEvent.OnDeleteConfirmClicked) },
+            )
     }
 }
 

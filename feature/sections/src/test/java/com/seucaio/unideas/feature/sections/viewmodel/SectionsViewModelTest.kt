@@ -58,7 +58,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `when the flow emits sections should update uiState to Success`() = runTest {
+    fun `when the flow emits sections should update uiState to Success with no dialog`() = runTest {
         val sections = SectionStub.sections()
         every { getSections() } returns flowOf(sections)
         val vm = SectionsViewModel(getSections, addSection, renameSection, deleteSection)
@@ -90,71 +90,126 @@ class SectionsViewModelTest {
         vm.uiState.test {
             assertEquals(SectionsUiState.Error(R.string.sections_load_error), awaitItem())
             vm.onEvent(SectionsEvent.OnRetryClicked)
+            assertEquals(SectionsUiState.Loading, awaitItem())
             assertEquals(SectionsUiState.Success(sections), awaitItem())
         }
     }
 
     @Test
-    fun `when OnAddClicked with a valid name should call the use case without emitting an action`() = runTest {
+    fun `when OnAddClicked should show the Add dialog`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnAddClicked)
+            val state = awaitItem() as SectionsUiState.Success
+            assertEquals(SectionsDialogState.Add, state.dialog)
+        }
+    }
+
+    @Test
+    fun `when OnAddConfirmClicked with a valid name should call the use case and dismiss the dialog`() = runTest {
         val vm = viewModel()
         coEvery { addSection.invoke("Trabalho") } returns Result.success(1L)
 
-        vm.onEvent(SectionsEvent.OnAddClicked("Trabalho"))
-
+        vm.uiState.test {
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnAddClicked)
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnAddConfirmClicked("Trabalho"))
+            val state = awaitItem() as SectionsUiState.Success
+            assertEquals(SectionsDialogState.None, state.dialog)
+        }
         coVerify(exactly = 1) { addSection.invoke("Trabalho") }
     }
 
     @Test
-    fun `when OnAddClicked with blank name should emit a name-required snackbar`() = runTest {
+    fun `when OnAddConfirmClicked with blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         coEvery { addSection.invoke("") } returns Result.failure(IllegalArgumentException("Name is required"))
 
         vm.action.test {
-            vm.onEvent(SectionsEvent.OnAddClicked(""))
+            vm.onEvent(SectionsEvent.OnAddConfirmClicked(""))
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_name_required), awaitItem())
         }
     }
 
     @Test
-    fun `when OnRenameClicked with a valid name should call the use case`() = runTest {
+    fun `when OnRenameClicked should show the Rename dialog with the section`() = runTest {
         val vm = viewModel()
-        val section = SectionStub.section(name = "renomeada")
-        coEvery { renameSection.invoke(section) } returns Result.success(Unit)
+        val section = SectionStub.section()
 
-        vm.onEvent(SectionsEvent.OnRenameClicked(SectionStub.section(), "renomeada"))
-
-        coVerify(exactly = 1) { renameSection.invoke(section) }
+        vm.uiState.test {
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnRenameClicked(section))
+            val state = awaitItem() as SectionsUiState.Success
+            assertEquals(SectionsDialogState.Rename(section), state.dialog)
+        }
     }
 
     @Test
-    fun `when OnRenameClicked with blank name should emit a name-required snackbar`() = runTest {
+    fun `when OnRenameConfirmClicked with a valid name should call the use case`() = runTest {
         val vm = viewModel()
-        val section = SectionStub.section(name = "")
-        coEvery { renameSection.invoke(section) } returns Result.failure(IllegalArgumentException("Name is required"))
+        val section = SectionStub.section()
+        val renamed = section.copy(name = "renomeada")
+        coEvery { renameSection.invoke(renamed) } returns Result.success(Unit)
+
+        vm.onEvent(SectionsEvent.OnRenameClicked(section))
+        vm.onEvent(SectionsEvent.OnRenameConfirmClicked("renomeada"))
+
+        coVerify(exactly = 1) { renameSection.invoke(renamed) }
+    }
+
+    @Test
+    fun `when OnRenameConfirmClicked with blank name should emit a name-required snackbar`() = runTest {
+        val vm = viewModel()
+        val section = SectionStub.section()
+        val blank = section.copy(name = "")
+        coEvery { renameSection.invoke(blank) } returns Result.failure(IllegalArgumentException("Name is required"))
+
+        vm.onEvent(SectionsEvent.OnRenameClicked(section))
 
         vm.action.test {
-            vm.onEvent(SectionsEvent.OnRenameClicked(SectionStub.section(), ""))
+            vm.onEvent(SectionsEvent.OnRenameConfirmClicked(""))
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_name_required), awaitItem())
         }
     }
 
     @Test
-    fun `when OnDeleteClicked is blocked by linked items should emit a snackbar with the count`() = runTest {
+    fun `when OnDeleteClicked should show the Delete dialog with the section`() = runTest {
         val vm = viewModel()
+        val section = SectionStub.section()
+
+        vm.uiState.test {
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnDeleteClicked(section))
+            val state = awaitItem() as SectionsUiState.Success
+            assertEquals(SectionsDialogState.Delete(section), state.dialog)
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmClicked is blocked by linked items should emit a snackbar with the count`() = runTest {
+        val vm = viewModel()
+        val section = SectionStub.section(id = 1L)
         coEvery { deleteSection.invoke(1L) } returns Result.success(DeletionStatus.BlockedByLinkedItems(3))
 
+        vm.onEvent(SectionsEvent.OnDeleteClicked(section))
+
         vm.action.test {
-            vm.onEvent(SectionsEvent.OnDeleteClicked(1L))
+            vm.onEvent(SectionsEvent.OnDeleteConfirmClicked)
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_delete_blocked, listOf(3)), awaitItem())
         }
     }
 
     @Test
-    fun `when OnDeleteClicked completes should not emit an action`() = runTest {
+    fun `when OnDeleteConfirmClicked completes should not emit an action`() = runTest {
         val vm = viewModel()
+        val section = SectionStub.section(id = 1L)
         coEvery { deleteSection.invoke(1L) } returns Result.success(DeletionStatus.Deleted)
 
-        vm.onEvent(SectionsEvent.OnDeleteClicked(1L))
+        vm.onEvent(SectionsEvent.OnDeleteClicked(section))
+        vm.onEvent(SectionsEvent.OnDeleteConfirmClicked)
 
         coVerify(exactly = 1) { deleteSection.invoke(1L) }
     }
@@ -162,11 +217,28 @@ class SectionsViewModelTest {
     @Test
     fun `when the repository fails unexpectedly should emit ShowError with the exception message`() = runTest {
         val vm = viewModel()
+        val section = SectionStub.section(id = 1L)
         coEvery { deleteSection.invoke(1L) } returns Result.failure(IllegalStateException("boom"))
 
+        vm.onEvent(SectionsEvent.OnDeleteClicked(section))
+
         vm.action.test {
-            vm.onEvent(SectionsEvent.OnDeleteClicked(1L))
+            vm.onEvent(SectionsEvent.OnDeleteConfirmClicked)
             assertEquals(SectionsUiAction.ShowError("boom"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnDialogDismissed should hide the dialog`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnAddClicked)
+            skipItems(1)
+            vm.onEvent(SectionsEvent.OnDialogDismissed)
+            val state = awaitItem() as SectionsUiState.Success
+            assertEquals(SectionsDialogState.None, state.dialog)
         }
     }
 }

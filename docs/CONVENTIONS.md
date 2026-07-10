@@ -162,6 +162,14 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 
 ---
 
+## Logging
+
+- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Árvore plantada só em build debug (`UnideasApplication`, guardado por `BuildConfig.DEBUG`) — nada é logado em release.
+- Módulos que precisam logar adicionam `implementation(libs.timber)` no próprio `build.gradle.kts` (`:app` já tem).
+- Log de debug temporário e pontual (adicionado só pra rastrear um bug específico e removido depois) pode seguir usando `Log.d` mesmo — não precisa Timber pra algo descartável em minutos.
+
+---
+
 ## Antes de abrir o PR (checklist)
 
 **Rodar `./gradlew clean` sempre antes de `koverVerify`/`detekt`** — cache stale nesse setup multi-módulo já mascarou uma cobertura real (o número reportado não batia com o `report.xml` real). Projeto é pequeno, o clean custa segundos; não pular.

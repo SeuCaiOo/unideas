@@ -35,6 +35,9 @@ coroutines = "1.10.2"
 # Desugaring
 desugar = "2.1.5"
 
+# Logging
+timber = "5.0.1"
+
 # Google Drive backup
 googleAuth = "20.7.0"
 googleDrive = "v3-rev20231128-2.0.0"
@@ -87,6 +90,9 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Desugaring
 android-desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
+
+# Logging
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 # DataStore
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

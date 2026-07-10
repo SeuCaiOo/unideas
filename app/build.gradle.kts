@@ -181,6 +181,9 @@ dependencies {
     // DI (Koin)
     implementation(libs.koin.android)
 
+    // Logging
+    implementation(libs.timber)
+
     // Firebase
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.crashlytics)

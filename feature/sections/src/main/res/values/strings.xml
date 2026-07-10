@@ -3,4 +3,15 @@
     <string name="section_name_required">Name is required</string>
     <string name="section_delete_blocked">%1$d items are linked to this section</string>
     <string name="sections_load_error">Couldn\'t load sections</string>
+    <string name="sections_title">Sections</string>
+    <string name="sections_empty">No sections yet. Tap + to create one.</string>
+    <string name="sections_add">Add section</string>
+    <string name="sections_add_label">Section name</string>
+    <string name="sections_rename">Rename section</string>
+    <string name="sections_rename_label">Section name</string>
+    <string name="section_options">Section options</string>
+    <string name="section_rename_action">Rename</string>
+    <string name="section_delete_action">Delete</string>
+    <string name="section_delete_confirm_title">Delete section?</string>
+    <string name="section_delete_confirm_message">This action cannot be undone.</string>
 </resources>

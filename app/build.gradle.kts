@@ -160,6 +160,9 @@ dependencies {
     kover(project(":feature:settings"))
 
     implementation(project(":core:ui"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":feature:sections"))
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Compose BOM — aligns versions for every Compose artifact below
@@ -170,9 +173,16 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
 
     // Compose UI
     implementation(libs.bundles.composeUi)
+
+    // DI (Koin)
+    implementation(libs.koin.android)
+
+    // Logging
+    implementation(libs.timber)
 
     // Firebase
     implementation(platform(libs.google.firebase.bom))

@@ -5,15 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.components.AppVersionFooter
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
+import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,37 +18,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UnideasTheme {
-                Scaffold(
+                val navController = rememberNavController()
+                // SectionsRoute.List is a placeholder startDestination until Home (#27) exists —
+                // no back stack to pop yet, so no back button (null) until Home takes over as root.
+                NavHost(
+                    navController = navController,
+                    startDestination = SectionsRoute.List,
                     modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        AppVersionFooter(
-                            versionName = BuildConfig.VERSION_NAME,
-                            modifier = Modifier.padding(16.dp),
-                        )
-                    }
-                ) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                ) {
+                    sectionsNavGraph(onNavigateBack = null)
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun GreetingPreview() {
-    UnideasTheme {
-        Greeting("Android")
     }
 }

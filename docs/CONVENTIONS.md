@@ -99,10 +99,10 @@ val uiState: StateFlow<UiState> = combine(_internalState, itemsFlow) { internal,
 - Consumir `UiAction` num `LaunchedEffect` que faz `collect`; resolver `@StringRes` com `LocalResources.current` (não `LocalContext` — não invalida em mudança de config). Callbacks de navegação e o effect capturado em `LaunchedEffect(Unit)` devem usar `rememberUpdatedState` pra evitar stale closure.
 - `when (uiState)` cobrindo `Loading`/`Error`/`Success`; usar `UnideasLoadingContent`/`UnideasErrorContent`/`UnideasEmptyContent` do `:core:ui` — **nunca reimplementar inline**. `Error` em feature: `stringResource(uiState.messageRes)`.
 - **Design System primeiro**: antes de criar UI inline, checar `:core:ui`. Componentes compartilhados (topbar, list item, dialogs, chips, indicador de urgência) moram lá.
-- **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel.
-- **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`).
+- **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel. **Exceção:** qual dialog de entidade (criar/renomear/excluir) está aberto, e sobre qual item, mora no `UiState` (ex.: `Success.dialog: XDialogState`), não em `remember` local — permite que o `PreviewProvider` simule os cenários com dialog aberto, não só as três variantes de `UiState`. Confirmado em `SectionsViewModel`/`SectionsUiState` (#42).
+- **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`) **e** os estados de dialog de entidade quando aplicável (ver exceção acima).
 
-### Regras visuais (planta: Material 3, dark, acento teal)
+### Regras visuais (planta: Material 3, light + dark, acento teal)
 
 - Toque mínimo 48dp.
 - Sem dividers entre itens de lista — usar espaçamento vertical (8/12dp).
@@ -162,9 +162,19 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 
 ---
 
+## Logging
+
+- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Árvore plantada só em build debug (`UnideasApplication`, guardado por `BuildConfig.DEBUG`) — nada é logado em release.
+- Módulos que precisam logar adicionam `implementation(libs.timber)` no próprio `build.gradle.kts` (`:app` já tem).
+- Log de debug temporário e pontual (adicionado só pra rastrear um bug específico e removido depois) pode seguir usando `Log.d` mesmo — não precisa Timber pra algo descartável em minutos.
+
+---
+
 ## Antes de abrir o PR (checklist)
 
 **Rodar `./gradlew clean` sempre antes de `koverVerify`/`detekt`** — cache stale nesse setup multi-módulo já mascarou uma cobertura real (o número reportado não batia com o `report.xml` real). Projeto é pequeno, o clean custa segundos; não pular.
+
+**Nunca rodar `./gradlew build` numa branch de feature — usar `assembleDebug`.** `build` roda a árvore de tasks inteira (debug + release, lint/testes das duas variantes, R8, dex — tudo) e leva minutos; `assembleDebug` gera só o necessário pra instalar e testar manualmente num device/emulador, muito mais rápido, e só piora conforme o projeto cresce. `build` é reservado pra `main` (branch de release) — só ali a árvore de release completa precisa rodar de fato.
 
 ```bash
 ./gradlew clean          # sempre primeiro, antes de detekt/koverVerify
@@ -172,6 +182,7 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 ./gradlew koverVerify    # cobertura ok
 ./gradlew detekt         # sem warnings novos (ignoreFailures=true — ler o report)
 ./gradlew lint           # ler o report (abortOnError=false)
+./gradlew assembleDebug  # gera o APK debug pra testar manualmente — NUNCA `build` numa feature branch
 ```
 
 Fluxo: `/new-issue` → `/start-feature` → implementação → `/finish-issue` → `/open-pr` (target `dev`, nunca `main`).

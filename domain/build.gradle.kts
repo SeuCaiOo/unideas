@@ -32,6 +32,7 @@ android {
 dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.coroutines.android)
+    implementation(libs.koin.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

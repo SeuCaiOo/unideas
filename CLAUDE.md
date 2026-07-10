@@ -15,6 +15,8 @@ Run from repo root via the Gradle wrapper.
 
 **Always run `./gradlew clean` right before `detekt` or `koverVerify`.** Both tasks are cache-sensitive across this multi-module setup — a stale build/configuration cache can report a coverage percentage or lint state that doesn't match the actual code (seen firsthand: `koverVerify` failed at 31% from stale cache when the real, post-clean number was well above the 70% minimum). The project is small, so the clean costs a few extra seconds — cheap insurance against chasing a phantom failure. Don't skip it to save time.
 
+**Never run `./gradlew build` while developing on a feature branch — use `assembleDebug` instead.** `build` runs the full task graph (debug + release, both variants' lint/tests, R8, dex, everything) and takes minutes; `assembleDebug` builds only what's needed to install and manually test on a device/emulator, in a fraction of the time, and only grows slower as the project does. `build` is reserved for `main` (the release branch) — that's the one place the full release graph actually needs to run.
+
 ```
 ./gradlew clean                 # run first, always, before detekt/koverVerify
 ./gradlew build                 # full build

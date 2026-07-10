@@ -166,12 +166,15 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 
 **Rodar `./gradlew clean` sempre antes de `koverVerify`/`detekt`** — cache stale nesse setup multi-módulo já mascarou uma cobertura real (o número reportado não batia com o `report.xml` real). Projeto é pequeno, o clean custa segundos; não pular.
 
+**Nunca rodar `./gradlew build` numa branch de feature — usar `assembleDebug`.** `build` roda a árvore de tasks inteira (debug + release, lint/testes das duas variantes, R8, dex — tudo) e leva minutos; `assembleDebug` gera só o necessário pra instalar e testar manualmente num device/emulador, muito mais rápido, e só piora conforme o projeto cresce. `build` é reservado pra `main` (branch de release) — só ali a árvore de release completa precisa rodar de fato.
+
 ```bash
 ./gradlew clean          # sempre primeiro, antes de detekt/koverVerify
 ./gradlew test           # unit tests passando
 ./gradlew koverVerify    # cobertura ok
 ./gradlew detekt         # sem warnings novos (ignoreFailures=true — ler o report)
 ./gradlew lint           # ler o report (abortOnError=false)
+./gradlew assembleDebug  # gera o APK debug pra testar manualmente — NUNCA `build` numa feature branch
 ```
 
 Fluxo: `/new-issue` → `/start-feature` → implementação → `/finish-issue` → `/open-pr` (target `dev`, nunca `main`).

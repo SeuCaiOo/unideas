@@ -93,7 +93,8 @@ data/
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ex: ItemWithTags) — joins no Room, nunca em memória
 ├── mapper/           — extension functions Entity ↔ Domain
-└── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl
+├── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl
+└── di/               — DataModule.kt (Koin, local ao módulo — ver seção DI abaixo)
 ```
 
 ### `:core:common` — `com.seucaio.unideas.core.common`
@@ -188,15 +189,15 @@ PK composta (itemId, tagId)
 
 ## DI — estrutura Koin
 
-`appModule` é o único ponto de entrada no `startKoin`, agregando os demais via `includes(...)`.
+Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, não centralizada em `:app` (diferente do GymLog, onde tudo ficava em `:app/di/`; decisão deliberada aqui: cada camada é dona da sua fiação). `AppModule.kt` (`:app`) é o único ponto de entrada no `startKoin`, só agregando os demais via `includes(...)`.
 
 ```
-:app/di/
-├── AppModule.kt          — includes(dataModule, domainModule, backupModule, presentationModule)
-├── DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind())
-├── DomainModule.kt       — Use Cases (factoryOf)
-├── BackupModule.kt       — repos + use cases de :core:backup
-└── PresentationModule.kt — ViewModels de todos os :feature:* (viewModelOf)
+data/di/DataModule.kt              — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
+domain/di/DomainModule.kt          — Use Cases (factoryOf) — ainda não existe, chega com B1/B2/B3
+core/backup/di/BackupModule.kt     — repos + use cases de :core:backup — ainda não existe, chega com E1
+feature/*/di/PresentationModule.kt — ViewModels de cada :feature:* (viewModelOf) — ainda não existe, chega com D1+
+
+:app/di/AppModule.kt — includes(dataModule, domainModule, backupModule, ...todos os PresentationModule de :feature:*)
 ```
 
 | Tipo | Escopo | DSL |

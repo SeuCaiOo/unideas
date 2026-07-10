@@ -107,14 +107,9 @@ This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial p
 
 See the sync done for #21/#5 in this project's history for a worked example of the exact edits.
 
-**Local branch cleanup**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Locally, clean up what's now stale:
+**Remote-only cleanup, never local**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Nothing to do here on the remote side.
 
-```bash
-git fetch --prune origin   # drop local refs to remote branches GitHub already deleted
-git branch --merged dev | grep -v -E "^\*|main|dev" | xargs -r git branch -d
-```
-
-`git branch -d` (lowercase) refuses to delete anything not fully merged, so this is safe even if run speculatively.
+**Do NOT delete local feature branches** (`git branch -d`), even ones already merged. The user explicitly wants them kept locally as a debugging safety net — if a merged change turns out buggy later, the local branch is how you go back and see exactly what that PR's state was, without depending on GitHub still having it (it won't, remote is auto-deleted) or reconstructing it from commit SHAs. `git fetch --prune origin` (dropping stale *remote-tracking* refs, not local branches) is fine and harmless if you want to run it, but skip local `git branch -d` entirely — this was done by mistake twice in this project's history and had to be reverted both times.
 
 Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users/SeuCaiOo/projects/4):
 - Status field ID: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`

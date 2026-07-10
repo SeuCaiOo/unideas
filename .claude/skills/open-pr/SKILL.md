@@ -40,7 +40,16 @@ No hook local ainda aplica isso automaticamente (git hooks continuam pendentes �
 ```
 **Always `clean` first** — stale build/configuration cache in this multi-module setup can report a coverage number that doesn't match reality (confirmed: a "failing" 31% turned out to be cache staleness, real number was well above minimum post-clean). The project is small; the extra seconds are cheap insurance against chasing a phantom failure.
 
-**Must pass before opening PR.** If it fails after a clean run, add missing tests first. `dev_checks.yml` (CI) enforces the same check on the PR.
+**Must pass before the PR is opened ready-for-review** (Draft is fine either way — see step 3.5). If it fails after a clean run, add missing tests first. `dev_checks.yml` (CI) enforces the same check on the PR.
+
+### 3.5. Validate DoD — decides Draft vs. ready
+
+Run the `finish-issue` skill now, **before** creating the PR, if the issue is tied to a numbered GitHub issue. It reconciles the issue's DoD/Checklist against the real diff and updates the checkboxes. This is a pre-merge gate, not post-merge bookkeeping — don't defer it to after the PR exists.
+
+- **DoD fully green** → proceed to step 6 and open the PR as ready-for-review with auto-merge enabled directly.
+- **DoD not yet green** (e.g. opening early for CI feedback on a long task, or something is still genuinely missing) → open the PR as **Draft** in step 6, skip auto-merge, and come back to `finish-issue` later to promote it (`gh pr ready` + `gh pr merge --auto --merge`) once DoD passes.
+
+No linked issue (ad-hoc chore/fix) → skip this step, there's no DoD to validate.
 
 ### 4. Check what's in this PR
 ```bash
@@ -66,6 +75,7 @@ Apply the label on GitHub before requesting review.
 
 ### 6. Open PR
 
+DoD green (step 3.5) → open ready-for-review:
 ```bash
 gh pr create \
   --base dev \
@@ -73,6 +83,17 @@ gh pr create \
   --title "<EN title>" \
   --body "$(cat .github/PULL_REQUEST_TEMPLATE.md)" \
   --assignee "@me"
+```
+
+DoD not yet green → open as **Draft** instead (same command plus `--draft`), and skip step 7 (auto-merge) until `finish-issue` promotes it later:
+```bash
+gh pr create \
+  --base dev \
+  --head <branch> \
+  --title "<EN title>" \
+  --body "$(cat .github/PULL_REQUEST_TEMPLATE.md)" \
+  --assignee "@me" \
+  --draft
 ```
 
 Then apply the label:
@@ -87,9 +108,11 @@ Always include `Closes #<issue>` in the PR body at creation time (in the `gh pr 
 
 If the sidebar link seems missing right after opening the PR, wait a few minutes before assuming it failed — it's a webhook/indexing delay, not a broken mechanism. The branch itself is separately linked at creation time via `createLinkedBranch` in `/start-feature` step 3.
 
-### 7. Auto-merge (PRs targeting `dev`)
+### 7. Auto-merge (PRs targeting `dev`, DoD already green)
 
-`dev` has branch protection requiring the `Quality Gate` check (from `dev_checks.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). Enable auto-merge right after creating a feature → `dev` PR so it merges by itself once CI passes, instead of waiting around:
+**Skip this step entirely if the PR was opened as Draft in step 6** — GitHub refuses to merge a Draft regardless, and enabling auto-merge on one just means it fires the moment someone marks it ready, bypassing the DoD gate. Come back to it via `finish-issue` once DoD passes.
+
+`dev` has branch protection requiring the `Quality Gate` check (from `dev_checks.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). Enable auto-merge right after creating a ready feature → `dev` PR so it merges by itself once CI passes, instead of waiting around:
 
 ```bash
 gh pr merge <number> --auto --merge
@@ -114,3 +137,5 @@ Use `--merge` (merge commit) to match the existing convention.
 | Commit message in PT-BR | Must be in English |
 | Push to `main`/`dev` directly | No hook blocks this yet (item 1 of the bootstrap guide is pending) — follow this manually until git hooks are ported |
 | Running `gh pr merge --auto` on a `main`-targeting PR | Auto-merge is only for `dev`; `main` merges are manual and reviewed |
+| Validating DoD after the PR is already open/mergeable | Run `finish-issue` (step 3.5) before opening a ready PR — DoD is a pre-merge gate, not something to check after the fact |
+| Enabling auto-merge on a Draft PR | Skip step 7 for Drafts; promote via `finish-issue` (`gh pr ready` + `gh pr merge --auto`) once DoD passes |

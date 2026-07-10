@@ -1,84 +1,72 @@
 ---
 name: finish-issue
-description: Use after opening a PR — validates DoD against what was implemented, updates issue checkboxes, and links the PR to the issue.
+description: Validates DoD against what was implemented and updates issue checkboxes — run BEFORE a PR is created ready-for-review (or before promoting an already-open Draft PR). This is the gate that decides whether a PR is allowed to leave Draft state / get auto-merge enabled.
 ---
 
 # Finish Issue — unideas Workflow
 
-## Usage
+## When to run this
 
-```
-/finish-issue #<issue-number> #<pr-number>
-```
+DoD validation is a **pre-merge gate**, not post-merge bookkeeping — it must happen before a PR becomes mergeable, not after. Two entry points, same skill either way:
 
-Invoke after `/open-pr`, once the PR is open and all work is committed.
+1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which creates the PR already as ready-for-review + auto-merge (no need to open a Draft first).
+2. **A Draft PR is already open** (opened early for CI feedback while still coding) → run this once you believe the work is complete. If it passes, promote the PR: `gh pr ready <number>` + `gh pr merge <number> --auto --merge`.
+
+**A PR must never get auto-merge enabled before this skill reports done.** If DoD isn't ready yet but you want CI feedback or visibility, open/keep the PR as **Draft** (`gh pr create --draft` — see `open-pr` step 6) — GitHub natively blocks merging a Draft, which is exactly the "can be open, can't be merged" gate this project wants, with no custom tooling needed.
 
 ---
 
 ## Step-by-step
 
-### 1. Fetch issue and PR data
-
+### 1. Fetch issue (and PR, if one already exists)
 ```bash
 gh issue view <issue-number> --json number,title,body,state
-gh pr view <pr-number> --json number,title,url,headRefName
+gh pr view <pr-number> --json number,title,url,headRefName,isDraft   # only if a PR already exists
 ```
 
-### 2. Validate DoD
+### 2. Reconcile DoD against the real diff
 
-Parse the **Definition of Done** section from the issue body.
-Look for checkboxes: `- [ ]` (unchecked) vs `- [x]` (checked).
+Compare the issue's Checklist/DoD section against `git log dev..HEAD` / `git diff dev..HEAD`. Every item lands in one of three buckets:
 
-For each DoD item, verify if it was actually completed based on the commits and PR content.
+- **Done as written** → will be checked `[x]` in step 3.
+- **Not done** → STOP (see below), don't open/promote the PR yet.
+- **Scope changed** — implementation did more, less, or something different than the item's original wording describes. **Do not silently rewrite the checklist.** Report the discrepancy to the user (original wording vs. what was actually built) and wait for explicit confirmation before editing the issue body — this follows the same "validate before permanent" rule used for issues/PRs elsewhere in this project. Only after confirmation, reword the item to match reality, then check it off.
 
-**If any DoD item cannot be confirmed as done → STOP and report:**
-
+**If any item is genuinely not done → STOP and report:**
 ```
 ⚠️ DoD incompleto para a issue #N.
 
 Itens não concluídos:
   - [ ] Testes unitários escritos e passando
 
-Conclua os itens antes de finalizar.
+Conclua os itens antes de abrir/promover o PR.
 ```
 
-**Only proceed if ALL DoD items are done.**
+**Only proceed to step 3 once every item is either checked or reconciled-and-checked.**
 
 ### 3. Update issue checkboxes
 
-Mark all Checklist and DoD items as checked in the issue body:
-
 ```bash
 gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
-# Replace - [ ] with - [x] for completed items
+# check completed items; reword any reconciled items per step 2 (only after user confirmation)
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
 
-### 4. Link PR to issue
+### 4. Gate the PR
 
-Add `Closes #<issue-number>` to the PR body via `gh pr edit`:
-
+- **No PR yet** → hand off to `/open-pr`; it creates the PR directly as ready-for-review with auto-merge enabled, since DoD is already green.
+- **Draft PR already open** → promote it now:
 ```bash
-gh pr edit <pr-number> --body "$(gh pr view <pr-number> --json body --jq '.body')
-
-Closes #<issue-number>"
+gh pr ready <pr-number>
+gh pr merge <pr-number> --auto --merge
 ```
-
-This links the PR to the issue on GitHub for traceability. Note: it will **not** auto-close the issue on merge — `Closes #N` only auto-closes when merging into the repo's default branch (`main`), and this PR targets `dev`. `start-feature` step 0 closes the issue explicitly once the PR merges into `dev`.
 
 ### 5. Report
-
 ```
-✅ Issue #N finalizada:
-
-- ✅ DoD validado — todos os itens concluídos
-- ✅ Checkboxes atualizados na issue
-- ✅ PR #M vinculado à issue
-
-PR: <pr-url>
+✅ DoD validado para a issue #N — pronto para PR/merge.
 ```
 
-**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. Once the PR merges into `dev`, `start-feature` step 0 closes the issue, sweeps its card to "Done", syncs the parent epic (if any), and syncs the **"unideas — Improvements"** artifact (URL in `.claude/skills/add-improvement/SKILL.md`) — all in the same pass, next time `/start-feature` runs. `finish-issue` itself doesn't touch the artifact; that's deliberately deferred to merge time. `Released` is a separate, later step for when the work ships in an actual generated version.
+**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card stays in "In Progress" here, even with DoD green and the PR mergeable. The sweep to "Done" (closing the issue, moving the card, syncing the parent epic and the **"unideas — Improvements"** artifact) happens later, once the PR has actually merged into `dev`, on the next `/start-feature` run — that's a fact-check against reality (did it merge?), not a self-assessment, so it's kept separate from this skill. `Released` is a further, later step tied to an actual shipped version.
 
 ---
 
@@ -86,7 +74,8 @@ PR: <pr-url>
 
 | Mistake | Fix |
 |---|---|
+| Validating DoD after the PR already merged | Validate before the PR is created ready (or before a Draft is promoted) — this is a pre-merge gate, not post-merge bookkeeping |
 | Marking DoD done without checking commits | Confirm each item against the real diff (`git log dev..HEAD`) |
-| Skipping checkbox update | Always update the issue — makes future audits easier |
-| Not linking PR to issue | `Closes #N` in the PR body is required for traceability — it does NOT auto-close on merge (dev isn't the default branch); `start-feature` step 0 closes it explicitly |
-| Trying to move the card to "In Review" | That column doesn't exist on this board; leave it in "In Progress" |
+| Rewriting checklist wording without asking | Scope drift must be confirmed with the user before the issue body changes |
+| Enabling auto-merge before DoD passes | Never run `gh pr merge --auto` (or `gh pr ready`) until this skill reports done |
+| Treating "DoD green" as "move card to Done" | Card movement waits for the actual merge, checked by `/start-feature`'s next run — not by this skill |

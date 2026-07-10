@@ -158,11 +158,14 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Present
 
 ## Antes de abrir o PR (checklist)
 
+**Rodar `./gradlew clean` sempre antes de `koverVerify`/`detekt`** — cache stale nesse setup multi-módulo já mascarou uma cobertura real (o número reportado não batia com o `report.xml` real). Projeto é pequeno, o clean custa segundos; não pular.
+
 ```bash
-./gradlew test          # unit tests passando
-./gradlew koverVerify   # cobertura ok
-./gradlew detekt        # sem warnings novos (ignoreFailures=true — ler o report)
-./gradlew lint          # ler o report (abortOnError=false)
+./gradlew clean          # sempre primeiro, antes de detekt/koverVerify
+./gradlew test           # unit tests passando
+./gradlew koverVerify    # cobertura ok
+./gradlew detekt         # sem warnings novos (ignoreFailures=true — ler o report)
+./gradlew lint           # ler o report (abortOnError=false)
 ```
 
 Fluxo: `/new-issue` → `/start-feature` → implementação → `/finish-issue` → `/open-pr` (target `dev`, nunca `main`).

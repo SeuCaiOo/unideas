@@ -13,17 +13,19 @@ Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no X
 
 Run from repo root via the Gradle wrapper.
 
+**Always run `./gradlew clean` right before `detekt` or `koverVerify`.** Both tasks are cache-sensitive across this multi-module setup — a stale build/configuration cache can report a coverage percentage or lint state that doesn't match the actual code (seen firsthand: `koverVerify` failed at 31% from stale cache when the real, post-clean number was well above the 70% minimum). The project is small, so the clean costs a few extra seconds — cheap insurance against chasing a phantom failure. Don't skip it to save time.
+
 ```
+./gradlew clean                 # run first, always, before detekt/koverVerify
 ./gradlew build                 # full build
 ./gradlew assembleDebug         # build debug APK
 ./gradlew installDebug          # build + install debug APK on device/emulator
 ./gradlew test                  # local unit tests (JVM)
 ./gradlew test --tests "com.seucaio.unideas.ExampleUnitTest"   # single unit test class
 ./gradlew connectedAndroidTest  # instrumented tests (needs device/emulator)
-./gradlew detekt                # static analysis (autocorrects; ignoreFailures — read the report)
-./gradlew koverVerify           # coverage check (fails below min bound)
+./gradlew detekt                # static analysis (autocorrects; ignoreFailures — read the report) — clean first
+./gradlew koverVerify           # coverage check (fails below min bound) — clean first
 ./gradlew lint                  # Android lint (reports only)
-./gradlew clean                 # clean build outputs
 ```
 
 ## Architecture

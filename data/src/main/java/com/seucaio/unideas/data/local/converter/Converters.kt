@@ -20,25 +20,29 @@ class Converters {
 
     @TypeConverter
     fun fromRecurrence(value: Recurrence): String = when (value) {
-        Recurrence.None -> "NONE"
-        Recurrence.Daily -> "DAILY"
-        Recurrence.Weekly -> "WEEKLY"
-        Recurrence.Monthly -> "MONTHLY"
+        Recurrence.None -> NONE
+        Recurrence.Daily -> DAILY
+        Recurrence.Weekly -> WEEKLY
+        Recurrence.Monthly -> MONTHLY
         is Recurrence.EveryNDays -> "$EVERY_N_DAYS_PREFIX${value.days}"
     }
 
     @TypeConverter
     fun toRecurrence(value: String): Recurrence = when {
-        value == "NONE" -> Recurrence.None
-        value == "DAILY" -> Recurrence.Daily
-        value == "WEEKLY" -> Recurrence.Weekly
-        value == "MONTHLY" -> Recurrence.Monthly
+        value == NONE -> Recurrence.None
+        value == DAILY -> Recurrence.Daily
+        value == WEEKLY -> Recurrence.Weekly
+        value == MONTHLY -> Recurrence.Monthly
         value.startsWith(EVERY_N_DAYS_PREFIX) ->
             Recurrence.EveryNDays(value.removePrefix(EVERY_N_DAYS_PREFIX).toInt())
         else -> error("Unknown recurrence: $value")
     }
 
     private companion object {
+        const val NONE = "NONE"
+        const val DAILY = "DAILY"
+        const val WEEKLY = "WEEKLY"
+        const val MONTHLY = "MONTHLY"
         const val EVERY_N_DAYS_PREFIX = "EVERY_N_DAYS:"
     }
 }

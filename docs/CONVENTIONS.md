@@ -142,7 +142,7 @@ Ver [`ARCHITECTURE.md`](ARCHITECTURE.md#di--estrutura-koin). Resumo:
 
 ## Testes
 
-Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Presentation (ViewModels/Screens) é ignorada na cobertura por ora** — vários ViewModels serão refatorados depois que o app estabilizar; testar agora é desperdício. O que **precisa** de teste:
+Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a #41, ViewModels entram no *gate* de cobertura** — o filtro `*ViewModel*` foi removido das exclusões e cada módulo `:feature:*` com um ViewModel testado precisa aplicar o plugin `kover` e ser adicionado à agregação em `app/build.gradle.kts` (`kover(project(":feature:..."))`) , como feito para `:feature:sections` (100% de cobertura no módulo). Screens/Composables continuam excluídas (`annotatedBy(Composable/Preview/PreviewLightDark)`, `*PreviewProvider`) — só a lógica (ViewModel) é cobrada. O que **precisa** de teste:
 
 | Alvo | Como | Mínimo |
 |---|---|---|
@@ -150,8 +150,11 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Present
 | Repository | MockK — mocka o DAO, verifica delegação + `toDomain`/`toEntity` | happy path por método público |
 | Mapper | `test` puro | round-trip `toDomain()`/`toEntity()`, campo a campo |
 | DAO | `Room.inMemoryDatabaseBuilder` (`androidTest`) | inserir/ler/deletar + queries com Flow |
+| ViewModel | MockK (use cases) + **Turbine** (`Flow`/`StateFlow` de `uiState`/`action`) | `Loading`→`Success`, `Error` (flow lança), cada `Event` (happy path + falha) |
 
 - Stubs compartilhados: `domain/src/testFixtures/` (domain models) via `testFixtures(project(":domain"))`; entity stubs em `data/src/test/`.
+- **Turbine** (`app.cash.turbine:turbine`, `libs.turbine`) é o padrão pra testar `Flow`/`StateFlow` de ViewModel — `flow.test { awaitItem() ... }` em vez de `.first()`/coleta manual. Adicionar como `testImplementation` em cada `:feature:*` que ganhar um ViewModel testado.
+- `Dispatchers.setMain(UnconfinedTestDispatcher())` em `@Before` / `Dispatchers.resetMain()` em `@After` — evita que `viewModelScope.launch` rode num dispatcher diferente do `runTest`.
 - **Rodar `./gradlew koverVerify` antes de abrir PR** — a CI falha se cair abaixo do mínimo. O `pre-push` não valida cobertura; é responsabilidade do dev.
 
 ---

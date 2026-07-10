@@ -46,6 +46,7 @@ junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 mockk = "1.14.0"
+turbine = "1.2.1"
 
 [libraries]
 # AndroidX
@@ -105,6 +106,9 @@ coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 
 # MockK
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+
+# Turbine
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 # Google Drive Backup
 google-auth-identity = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "googleAuth" }

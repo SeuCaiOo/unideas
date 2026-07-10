@@ -70,7 +70,8 @@ Contrato de cada tela (arquivos em `feature/<tela>/viewmodel/`):
 
 ### Regras inegociáveis
 
-- **`uiState` derivado por `combine(...)`**, unindo `InternalState` (campos de UI) + flows de domínio. Evite `init { collect { ... } }` manual.
+- **`uiState` derivado por `combine(...)`**, unindo `InternalState` (campos de UI) + flows de domínio. Evite `init { collect { ... } }` manual. **Exceção:** tela sem nenhum estado só-de-UI (sem filtro, sem seleção — ex: lista de gerenciamento simples) pode derivar `uiState` direto do flow de domínio (`.map`/`.catch`/`.stateIn`), sem `combine`/`InternalState` vazio só pra seguir a forma. Confirmado em `SectionsViewModel`/`TagsViewModel` (#41/#43).
+- **`UiAction` via `Channel(Channel.BUFFERED)`** (não o default RENDEZVOUS) — evita bloquear o `send` se o coletor (Screen) não estiver pronto exatamente na hora do envio.
 - **`combine` é transformação pura — sem efeitos colaterais.** Nunca `_action.send(...)` nem suspending dentro do bloco. Efeitos (navegação, snackbar) vão em handlers do `onEvent` ou em `LaunchedEffect` na Screen.
 - **Proibido join manual em memória.** Dados relacionados chegam prontos do use case (Room `@Relation`/SQL join na camada data). ViewModel é "burro": mapeia domínio → UI.
 - **Proibido `.value = ...`** — sempre `.update { it.copy(...) }` (atomicidade).

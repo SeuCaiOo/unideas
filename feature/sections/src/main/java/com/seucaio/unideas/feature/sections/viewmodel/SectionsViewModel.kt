@@ -31,7 +31,7 @@ class SectionsViewModel(
         .catch { emit(SectionsUiState.Error(R.string.sections_load_error)) }
         .stateIn(viewModelScope, WhileSubscribed(5_000), SectionsUiState.Loading)
 
-    private val _action = Channel<SectionsUiAction>()
+    private val _action = Channel<SectionsUiAction>(Channel.BUFFERED)
     val action: Flow<SectionsUiAction> = _action.receiveAsFlow()
 
     fun onEvent(event: SectionsEvent) {

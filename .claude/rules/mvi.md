@@ -8,12 +8,12 @@ paths:
 
 Each screen: `UiState` (sealed: Loading/Success/Error), `UiAction` (one-shot via `Channel(BUFFERED)`, `receiveAsFlow()`), `Event` (user intents), `ViewModel`. Full detail: `docs/CONVENTIONS.md`.
 
-- `uiState` derived via `combine(InternalState, domainFlows)` — no manual `collect` in `init`.
+- `uiState` derived via `combine(InternalState, domainFlows)` — no manual `collect` in `init`. **Exception:** a screen with no UI-only state (no filter, no selection — e.g. a flat manage-list screen) may derive `uiState` directly from the domain flow (`.map`/`.catch`/`.stateIn`), skipping `combine`/`InternalState` entirely rather than declaring an empty placeholder state. Confirmed for `SectionsViewModel`/`TagsViewModel` (#41/#43).
 - `combine` is pure — never `_action.send(...)` or suspend inside it. Side effects go in `onEvent` handlers / `LaunchedEffect` in the Screen.
 - No manual joins in the ViewModel — data arrives ready from the use case.
 - No `.value = ...` (use `.update { it.copy(...) }`); no `(uiState.value as? Success)` cast; no `Context`/`AndroidViewModel` (encapsulate in a repository).
 - No hardcoded UI strings — `@StringRes` for snackbars, `e.message.orEmpty()` for errors.
 - `:feature:*` depends only on `:domain` + `:core:ui`, never `:data`.
 - Reuse `:core:ui` components (TopBar/Loading/Error/Empty/ListItem/dialogs) — don't reimplement inline. Red/amber only for due-date urgency.
-- ViewModels/Composables are excluded from coverage — no required tests for them yet.
+- ViewModels are tested (MockK + Turbine) and gated by `koverVerify` since #41 — each `:feature:*` with a tested ViewModel needs the `kover` plugin applied and added to `app/build.gradle.kts`'s aggregation. Composables/Screens stay excluded (no required tests for them yet).
 - Screen: `koinViewModel()` + `collectAsStateWithLifecycle()`; resolve `@StringRes` via `LocalResources.current`; wrap nav callbacks in `rememberUpdatedState`.

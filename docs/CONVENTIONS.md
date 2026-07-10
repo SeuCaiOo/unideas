@@ -151,11 +151,13 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 | Repository | MockK — mocka o DAO, verifica delegação + `toDomain`/`toEntity` | happy path por método público |
 | Mapper | `test` puro | round-trip `toDomain()`/`toEntity()`, campo a campo |
 | DAO | `Room.inMemoryDatabaseBuilder` (`androidTest`) | inserir/ler/deletar + queries com Flow |
-| ViewModel | MockK (use cases) + **Turbine** (`Flow`/`StateFlow` de `uiState`/`action`) | `Loading`→`Success`, `Error` (flow lança), cada `Event` (happy path + falha) |
+| ViewModel | MockK (use cases, `@MockK` + `MockKAnnotations.init(this)`) + **Turbine** (`Flow`/`StateFlow` de `uiState`/`action`) | `Loading`→`Success`, `Error` (flow lança), cada `Event` (happy path + falha) |
 
 - Stubs compartilhados: `domain/src/testFixtures/` (domain models) via `testFixtures(project(":domain"))`; entity stubs em `data/src/test/`.
 - **Turbine** (`app.cash.turbine:turbine`, `libs.turbine`) é o padrão pra testar `Flow`/`StateFlow` de ViewModel — `flow.test { awaitItem() ... }` em vez de `.first()`/coleta manual. Adicionar como `testImplementation` em cada `:feature:*` que ganhar um ViewModel testado.
 - `Dispatchers.setMain(UnconfinedTestDispatcher())` em `@Before` / `Dispatchers.resetMain()` em `@After` — evita que `viewModelScope.launch` rode num dispatcher diferente do `runTest`.
+- **Testes de ViewModel usam `@MockK` + `MockKAnnotations.init(this)`** (em vez de `= mockk()` inline) — mais legível com vários mocks (um por use case injetado). `:domain`/`:data` continuam com `= mockk()` inline; não é retrofit, só o padrão novo pra ViewModel a partir da #43.
+- **Nome de teste de ViewModel: `` `when <condição/evento> should <comportamento esperado>` ``** — variante enxuta de Given-When-Then (sem "given", condição embutida no "when"), sem vírgula. Ex.: `` `when OnDeleteClicked completes should not emit an action` ``. `:domain`/`:data` continuam com a frase descritiva direta (`` `invoke fails when the repository throws` ``) — não é retrofit, só o padrão novo pra ViewModel a partir da #43.
 - **Rodar `./gradlew koverVerify` antes de abrir PR** — a CI falha se cair abaixo do mínimo. O `pre-push` não valida cobertura; é responsabilidade do dev.
 
 ---

@@ -16,4 +16,5 @@ Each screen: `UiState` (sealed: Loading/Success/Error), `UiAction` (one-shot via
 - `:feature:*` depends only on `:domain` + `:core:ui`, never `:data`.
 - Reuse `:core:ui` components (TopBar/Loading/Error/Empty/ListItem/dialogs) — don't reimplement inline. Red/amber only for due-date urgency.
 - ViewModels are tested (MockK + Turbine) and gated by `koverVerify` since #41 — each `:feature:*` with a tested ViewModel needs the `kover` plugin applied and added to `app/build.gradle.kts`'s aggregation. Composables/Screens stay excluded (no required tests for them yet).
+- ViewModel tests: mock fields via `@MockK` + `MockKAnnotations.init(this)` (not inline `= mockk()`). Test names: `` `when <condition/event> should <expected behavior>` `` (no comma, no "given") — since #43.
 - Screen: `koinViewModel()` + `collectAsStateWithLifecycle()`; resolve `@StringRes` via `LocalResources.current`; wrap nav callbacks in `rememberUpdatedState`.

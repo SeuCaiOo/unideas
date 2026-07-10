@@ -8,10 +8,11 @@ import com.seucaio.unideas.domain.usecase.tag.DeleteTagUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.domain.usecase.tag.RenameTagUseCase
 import com.seucaio.unideas.feature.tags.R
+import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.mockk
+import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -28,13 +29,21 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagsViewModelTest {
 
-    private val getTags: GetTagsUseCase = mockk()
-    private val addTag: AddTagUseCase = mockk()
-    private val renameTag: RenameTagUseCase = mockk()
-    private val deleteTag: DeleteTagUseCase = mockk()
+    @MockK
+    private lateinit var getTags: GetTagsUseCase
+
+    @MockK
+    private lateinit var addTag: AddTagUseCase
+
+    @MockK
+    private lateinit var renameTag: RenameTagUseCase
+
+    @MockK
+    private lateinit var deleteTag: DeleteTagUseCase
 
     @Before
     fun setUp() {
+        MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
     }
 
@@ -49,7 +58,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `uiState emits Success with the tags from the flow`() = runTest {
+    fun `when the flow emits tags should update uiState to Success`() = runTest {
         val tags = TagStub.tags()
         every { getTags() } returns flowOf(tags)
         val vm = TagsViewModel(getTags, addTag, renameTag, deleteTag)
@@ -60,7 +69,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `uiState emits Error when the flow throws`() = runTest {
+    fun `when the flow throws should emit Error`() = runTest {
         every { getTags() } returns flow { throw IllegalStateException("boom") }
         val vm = TagsViewModel(getTags, addTag, renameTag, deleteTag)
 
@@ -70,7 +79,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnAddClicked happy path calls the use case without emitting an action`() = runTest {
+    fun `when OnAddClicked with a valid name should call the use case without emitting an action`() = runTest {
         val vm = viewModel()
         coEvery { addTag.invoke("urgente") } returns Result.success(1L)
 
@@ -80,7 +89,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnAddClicked with blank name emits a name-required snackbar`() = runTest {
+    fun `when OnAddClicked with blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         coEvery { addTag.invoke("") } returns Result.failure(IllegalArgumentException("Name is required"))
 
@@ -91,7 +100,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnRenameClicked happy path calls the use case`() = runTest {
+    fun `when OnRenameClicked with a valid name should call the use case`() = runTest {
         val vm = viewModel()
         val tag = TagStub.tag(name = "renomeada")
         coEvery { renameTag.invoke(tag) } returns Result.success(Unit)
@@ -102,7 +111,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnRenameClicked with blank name emits a name-required snackbar`() = runTest {
+    fun `when OnRenameClicked with blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         val tag = TagStub.tag(name = "")
         coEvery { renameTag.invoke(tag) } returns Result.failure(IllegalArgumentException("Name is required"))
@@ -114,7 +123,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnDeleteClicked blocked by linked items emits a snackbar with the count`() = runTest {
+    fun `when OnDeleteClicked is blocked by linked items should emit a snackbar with the count`() = runTest {
         val vm = viewModel()
         coEvery { deleteTag.invoke(1L) } returns Result.success(DeletionStatus.BlockedByLinkedItems(3))
 
@@ -125,7 +134,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `OnDeleteClicked completed does not emit an action`() = runTest {
+    fun `when OnDeleteClicked completes should not emit an action`() = runTest {
         val vm = viewModel()
         coEvery { deleteTag.invoke(1L) } returns Result.success(DeletionStatus.Deleted)
 
@@ -135,7 +144,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `unexpected repository failure emits ShowError with the exception message`() = runTest {
+    fun `when the repository fails unexpectedly should emit ShowError with the exception message`() = runTest {
         val vm = viewModel()
         coEvery { deleteTag.invoke(1L) } returns Result.failure(IllegalStateException("boom"))
 

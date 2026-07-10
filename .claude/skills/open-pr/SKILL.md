@@ -35,9 +35,12 @@ No hook local ainda aplica isso automaticamente (git hooks continuam pendentes â
 
 ### 3. Verify test coverage
 ```bash
+./gradlew clean
 ./gradlew koverVerify
 ```
-**Must pass before opening PR.** If it fails, add missing tests first. `dev_checks.yml` (CI) enforces the same check on the PR.
+**Always `clean` first** â€” stale build/configuration cache in this multi-module setup can report a coverage number that doesn't match reality (confirmed: a "failing" 31% turned out to be cache staleness, real number was well above minimum post-clean). The project is small; the extra seconds are cheap insurance against chasing a phantom failure.
+
+**Must pass before opening PR.** If it fails after a clean run, add missing tests first. `dev_checks.yml` (CI) enforces the same check on the PR.
 
 ### 4. Check what's in this PR
 ```bash

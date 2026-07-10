@@ -61,13 +61,14 @@ domain/
 ├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
 │   ├── Item.kt
 │   ├── ItemType.kt          — enum TASK | NOTE
-│   ├── Recurrence.kt        — enum NONE | DAILY | WEEKLY | MONTHLY
+│   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
 │   ├── Section.kt
 │   ├── Tag.kt
 │   └── outcome/             — resultados ricos de operações (ver CONVENTIONS.md)
 │       ├── DeletionStatus.kt   — Deleted | BlockedByLinkedItems(count)
-│       └── SaveResult.kt
+│       ├── SaveResult.kt
+│       └── CompletionResult.kt — Completed | CompletedAndRenewed(newItemId)
 ├── repository/       — interfaces (contratos), sem implementação
 │   ├── ItemRepository.kt
 │   ├── SectionRepository.kt
@@ -75,7 +76,7 @@ domain/
 └── usecase/
     ├── item/         — Create/Edit/Delete/Complete/GetItems/GetItemDetail/GetPriorityItems
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
-    └── tag/          — Get/Add/Delete (delete verifica vínculo antes)
+    └── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
 ```
 
 ### `:data` — `com.seucaio.unideas.data`
@@ -184,7 +185,7 @@ PK composta (itemId, tagId)
 
 ### Regras de integridade na camada de domínio (não no FK)
 - **Excluir `Section`/`Tag` com itens vinculados é BLOQUEADO** — o use case (`DeleteSectionUseCase`/`DeleteTagUseCase`) conta os vínculos e retorna `DeletionStatus.BlockedByLinkedItems(count)` **antes** de delegar ao repositório. Não é uma constraint de FK que falha silenciosamente; o usuário vê quantos itens estão vinculados.
-- **Recorrência "renasce ao concluir"**: `CompleteItemUseCase`, ao concluir um item com `recurrence != NONE`, marca o atual como concluído E gera uma nova instância com a próxima `dueDate` (calculada por `Recurrence`). Não é regra computada em tela — é geração de novo registro.
+- **Recorrência "renasce ao concluir"**: `CompleteItemUseCase`, ao concluir um item com `recurrence` diferente de `Recurrence.None`, marca o atual como concluído E gera uma nova instância com a próxima `dueDate` (calculada a partir da data de vencimento **original**, via `recurrence.nextDueDate(...)`). Não é regra computada em tela — é geração de novo registro.
 - **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável).
 
 ## DI — estrutura Koin

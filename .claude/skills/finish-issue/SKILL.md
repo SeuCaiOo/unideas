@@ -1,6 +1,6 @@
 ---
 name: finish-issue
-description: Validates DoD against what was implemented and updates issue checkboxes — run BEFORE a PR is created ready-for-review (or before promoting an already-open Draft PR). This is the gate that decides whether a PR is allowed to leave Draft state / get auto-merge enabled.
+description: Validates DoD against what was implemented and updates issue checkboxes — this is Claude's self-check, run before opening a PR or before asking the user whether an open Draft PR can be promoted. It never decides Draft-vs-ready itself; that's always the user's explicit call.
 ---
 
 # Finish Issue — unideas Workflow
@@ -9,10 +9,10 @@ description: Validates DoD against what was implemented and updates issue checkb
 
 DoD validation is a **pre-merge gate**, not post-merge bookkeeping — it must happen before a PR becomes mergeable, not after. Two entry points, same skill either way:
 
-1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which creates the PR already as ready-for-review + auto-merge (no need to open a Draft first).
-2. **A Draft PR is already open** (opened early for CI feedback while still coding) → run this once you believe the work is complete. If it passes, promote the PR: `gh pr ready <number>` + `gh pr merge <number> --auto --merge`.
+1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which opens the PR as **Draft** (always — see `open-pr` step 6, no exception for DoD status).
+2. **A Draft PR is already open** (opened early for CI feedback while still coding, or just because every PR opens Draft now) → run this once you believe the work is complete.
 
-**A PR must never get auto-merge enabled before this skill reports done.** If DoD isn't ready yet but you want CI feedback or visibility, open/keep the PR as **Draft** (`gh pr create --draft` — see `open-pr` step 6) — GitHub natively blocks merging a Draft, which is exactly the "can be open, can't be merged" gate this project wants, with no custom tooling needed.
+**This skill validates whether the work is done. It never decides whether the PR gets promoted to ready or gets auto-merge armed — that is the user's call, always, asked explicitly, with zero exceptions.** DoD passing is Claude's self-check that the checklist matches the diff; it is not the user having looked at the code. Confirmed the hard way: PR #38 (issue #24) got auto-merge armed the instant it opened, leaving no review window at all — the user then made explicit that Draft vs. ready is their decision alone, not something DoD status can authorize.
 
 ---
 
@@ -44,6 +44,8 @@ Conclua os itens antes de abrir/promover o PR.
 
 **Only proceed to step 3 once every item is either checked or reconciled-and-checked.**
 
+If this issue is a parent/epic (has sub-issues), also reconcile *its own* body checklist once every sub-issue is done — an epic's checklist is its DoD too, even though it has no PR of its own and often isn't labeled "DoD" the same way a leaf issue's is. See `start-feature`'s Parent epic sync step for the mechanics; don't close an epic on `subIssuesSummary` alone without also checking off its own body.
+
 ### 3. Update issue checkboxes
 
 ```bash
@@ -52,21 +54,22 @@ gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
 
-### 4. Gate the PR
+### 4. Report — and ask, don't act, on promotion
 
-- **No PR yet** → hand off to `/open-pr`; it creates the PR directly as ready-for-review with auto-merge enabled (since DoD is already green) and syncs the Improvements artifact in the same pass (`open-pr` step 6.5).
-- **Draft PR already open** → promote it now, then sync the Improvements artifact (same mechanics as `open-pr` step 6.5 — it was skipped at Draft-creation time since DoD wasn't green yet):
+```
+✅ DoD validado para a issue #N.
+```
+
+**Don't sync the Improvements artifact yet — that waits for the ready-promotion moment, not DoD passing.** DoD green only means Claude's self-check passed; the user might still ask for changes before agreeing to ship. Marking the artifact "done" now, only to have the user request edits while the PR sits in Draft, would leave it lying about the actual state.
+
+If a PR already exists (Draft, per `open-pr` step 6), ask the user now: "DoD validado — quer que eu marque a PR como ready e habilite auto-merge, ou prefere olhar o código primeiro?" Only on an explicit yes, do all three together (mechanics in `open-pr` step 7): promote, arm auto-merge, sync the artifact.
 ```bash
 gh pr ready <pr-number>
 gh pr merge <pr-number> --auto --merge
 ```
+If no PR exists yet, hand off to `/open-pr` — it opens the PR as Draft and asks this same question itself (step 7), syncing the artifact at that point too.
 
-### 5. Report
-```
-✅ DoD validado para a issue #N — pronto para PR/merge.
-```
-
-**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card stays in "In Progress" here, even with DoD green and the PR mergeable. The sweep to "Done" (closing the issue, moving the card, syncing the parent epic and the **"unideas — Improvements"** artifact) happens later, once the PR has actually merged into `dev`, on the next `/start-feature` run — that's a fact-check against reality (did it merge?), not a self-assessment, so it's kept separate from this skill. `Released` is a further, later step tied to an actual shipped version.
+**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card stays in "In Progress" here, even with DoD green and the PR promoted. The sweep to "Done" (closing the issue, moving the card, syncing the parent epic) happens later, once the PR has actually merged into `dev`, on the next `/start-feature` run — that's a fact-check against reality (did it merge?), not a self-assessment, so it's kept separate from this skill. `Released` is a further, later step tied to an actual shipped version.
 
 ---
 
@@ -74,8 +77,11 @@ gh pr merge <pr-number> --auto --merge
 
 | Mistake | Fix |
 |---|---|
-| Validating DoD after the PR already merged | Validate before the PR is created ready (or before a Draft is promoted) — this is a pre-merge gate, not post-merge bookkeeping |
+| Validating DoD after the PR already merged | Validate before the PR is created (or before a Draft is promoted) — this is a pre-merge gate, not post-merge bookkeeping |
 | Marking DoD done without checking commits | Confirm each item against the real diff (`git log dev..HEAD`) |
 | Rewriting checklist wording without asking | Scope drift must be confirmed with the user before the issue body changes |
-| Enabling auto-merge before DoD passes | Never run `gh pr merge --auto` (or `gh pr ready`) until this skill reports done |
+| Promoting a Draft to ready, or arming auto-merge, because "DoD passed" | Never on Claude's own initiative — always ask, every time, no exception |
+| Closing a parent epic on `subIssuesSummary` alone | Its own body checklist is its DoD too — reconcile it (step 2) before closing |
 | Treating "DoD green" as "move card to Done" | Card movement waits for the actual merge, checked by `/start-feature`'s next run — not by this skill |
+| Syncing the Improvements artifact right after DoD passes, while the PR is still Draft | Wait for the user's explicit go-ahead to promote — sync happens together with `gh pr ready` (`open-pr` step 7), not before |
+| Waiting for `/start-feature` to sync the Improvements artifact | Sync it at the ready-promotion moment (step 4 / `open-pr` step 7), not at the next `/start-feature` run |

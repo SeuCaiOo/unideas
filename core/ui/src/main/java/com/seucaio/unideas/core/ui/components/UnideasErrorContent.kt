@@ -13,16 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.core.ui.R
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 
-/** Uses the M3 `error`/`errorContainer` role — a separate semantic from due-date urgency colors. */
+/**
+ * Full-screen error state — title is generic and owned by this component; [messageRes]
+ * is the caller's specific failure description. No back button here — the screen's own
+ * TopBar already has one. No FAB either: an error/loading screen has no data yet, so
+ * there's nothing else actionable on it besides retrying.
+ * Uses the M3 `error`/`errorContainer` role — a separate semantic from due-date urgency colors.
+ */
 @Composable
 fun UnideasErrorContent(
     @StringRes messageRes: Int,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    onRetry: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -30,14 +38,20 @@ fun UnideasErrorContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
+            text = stringResource(R.string.error_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+        )
+        Text(
             text = stringResource(messageRes),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp),
         )
-        if (onRetry != null) {
-            Button(onClick = onRetry, modifier = Modifier.padding(top = 16.dp)) {
-                Text(stringResource(android.R.string.ok))
-            }
+        Button(onClick = onRetry, modifier = Modifier.padding(top = 24.dp)) {
+            Text(stringResource(R.string.error_action_retry))
         }
     }
 }
@@ -45,16 +59,6 @@ fun UnideasErrorContent(
 @PreviewLightDark
 @Composable
 private fun UnideasErrorContentPreview() {
-    UnideasTheme {
-        Surface {
-            UnideasErrorContent(messageRes = android.R.string.ok)
-        }
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun UnideasErrorContentWithRetryPreview() {
     UnideasTheme {
         Surface {
             UnideasErrorContent(messageRes = android.R.string.ok, onRetry = {})

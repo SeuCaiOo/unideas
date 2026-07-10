@@ -46,6 +46,7 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/), **English**, `type: short description` (`feat`, `fix`, `build`, `chore`, `ci`, `docs`). Enforced by the `commit-msg` hook.
 - **Branches**: feature branches cut from `dev`, target `dev`; `dev` periodically PRs into `main` (default branch). Never push directly to `main` (pre-push hook). PRs via the `open-pr` skill — title EN, body PT, diff vs the target branch (`git log dev..HEAD`).
+- **Push confirmation**: on a feature branch, following the `open-pr`/`finish-issue` flow, Claude pushes without asking — the plan/PR checkpoints already validated the work. A direct commit on `main`/`dev` (the "commit pontual" exception, unreviewed by a PR) may still be pushed by Claude, but only after explicit user confirmation for that specific push — nothing in that commit went through a review gate, and undoing it once it's on a shared branch means a rebase. Enforced by a `PreToolUse`/`Bash` hook in `.claude/settings.json` (asks only when `git push` runs from `main`/`dev`).
 
 ## Conventions & rules
 

@@ -122,12 +122,17 @@ kover {
                     "*PreviewProvider",
                     // Compose generated classes
                     "*ComposableSingletons*",
+                    // Koin modules
+                    "*Module*",
                     // ViewModels (not tested by project convention)
                     "*ViewModel*",
                 )
 
                 packages(
                     "*.ui.theme",
+                    "*.local.dao",
+                    "*.local.database",
+                    "*.local.converter",
                 )
 
                 annotatedBy(
@@ -137,10 +142,21 @@ kover {
                 )
             }
         }
+        verify {
+            rule("Rule of coverage minimum for the project") {
+                minBound(70)
+            }
+        }
     }
 }
 
 dependencies {
+    // Aggregates coverage from real-logic modules into :app's koverVerify —
+    // :app itself holds only entry points/Composables, all excluded above.
+    kover(project(":domain"))
+    kover(project(":data"))
+    kover(project(":core:common"))
+
     // Compose BOM — aligns versions for every Compose artifact below
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))

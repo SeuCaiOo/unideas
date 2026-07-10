@@ -24,7 +24,7 @@ object ItemStub {
         description: String? = null,
         sectionId: Long? = null,
         dueDate: LocalDate? = TODAY.plusDays(2),
-        recurrence: Recurrence = Recurrence.NONE,
+        recurrence: Recurrence = Recurrence.None,
         completedAt: LocalDateTime? = null,
         createdAt: LocalDateTime = CREATED_AT,
         tags: List<Tag> = emptyList(),
@@ -62,7 +62,7 @@ object ItemStub {
         task(id = id, title = "Tarefa vencida", dueDate = TODAY.minusDays(1))
 
     fun recurringTask(id: Long = 4L): Item =
-        task(id = id, title = "Tarefa recorrente", recurrence = Recurrence.WEEKLY)
+        task(id = id, title = "Tarefa recorrente", recurrence = Recurrence.Weekly)
 
     fun completedTask(id: Long = 5L): Item =
         task(id = id, title = "Tarefa concluída", completedAt = TODAY.atTime(9, 30))

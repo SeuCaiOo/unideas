@@ -87,7 +87,7 @@ class TagDaoTest {
     private fun task(): ItemEntity = ItemEntity(
         type = ItemType.TASK,
         title = "tarefa",
-        recurrence = Recurrence.NONE,
+        recurrence = Recurrence.None,
         createdAt = 1_000L,
     )
 }

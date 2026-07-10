@@ -35,7 +35,7 @@ data class ItemEntity(
     val description: String? = null,
     val sectionId: Long? = null,
     val dueDate: Long? = null,
-    val recurrence: Recurrence = Recurrence.NONE,
+    val recurrence: Recurrence = Recurrence.None,
     val completedAt: Long? = null,
     val createdAt: Long,
 )

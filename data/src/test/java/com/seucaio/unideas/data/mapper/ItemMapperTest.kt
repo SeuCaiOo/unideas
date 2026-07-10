@@ -39,7 +39,7 @@ class ItemMapperTest {
             id = 10L,
             description = "detalhes",
             sectionId = 3L,
-            recurrence = Recurrence.WEEKLY,
+            recurrence = Recurrence.Weekly,
             completedAt = ItemStub.TODAY.atTime(9, 30),
         )
 
@@ -51,7 +51,7 @@ class ItemMapperTest {
         assertEquals("detalhes", entity.description)
         assertEquals(3L, entity.sectionId)
         assertEquals(item.dueDate?.toEpochMilli(), entity.dueDate)
-        assertEquals(Recurrence.WEEKLY, entity.recurrence)
+        assertEquals(Recurrence.Weekly, entity.recurrence)
         assertEquals(item.completedAt?.toEpochMilli(), entity.completedAt)
         assertEquals(item.createdAt.toEpochMilli(), entity.createdAt)
     }
@@ -63,7 +63,7 @@ class ItemMapperTest {
         assertNull(entity.sectionId)
         assertNull(entity.dueDate)
         assertNull(entity.completedAt)
-        assertEquals(Recurrence.NONE, entity.recurrence)
+        assertEquals(Recurrence.None, entity.recurrence)
     }
 
     @Test
@@ -82,7 +82,7 @@ class ItemMapperTest {
             id = 7L,
             description = "detalhes",
             sectionId = 2L,
-            recurrence = Recurrence.MONTHLY,
+            recurrence = Recurrence.Monthly,
             completedAt = ItemStub.TODAY.atTime(18, 45),
             tags = TagStub.tags(count = 2),
         )

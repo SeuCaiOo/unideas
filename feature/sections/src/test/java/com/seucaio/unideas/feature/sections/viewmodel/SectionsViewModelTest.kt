@@ -79,6 +79,22 @@ class SectionsViewModelTest {
     }
 
     @Test
+    fun `when OnRetryClicked after an error should re-fetch and update uiState to Success`() = runTest {
+        val sections = SectionStub.sections()
+        every { getSections() } returnsMany listOf(
+            flow { throw IllegalStateException("boom") },
+            flowOf(sections),
+        )
+        val vm = SectionsViewModel(getSections, addSection, renameSection, deleteSection)
+
+        vm.uiState.test {
+            assertEquals(SectionsUiState.Error(R.string.sections_load_error), awaitItem())
+            vm.onEvent(SectionsEvent.OnRetryClicked)
+            assertEquals(SectionsUiState.Success(sections), awaitItem())
+        }
+    }
+
+    @Test
     fun `when OnAddClicked with a valid name should call the use case without emitting an action`() = runTest {
         val vm = viewModel()
         coEvery { addSection.invoke("Trabalho") } returns Result.success(1L)

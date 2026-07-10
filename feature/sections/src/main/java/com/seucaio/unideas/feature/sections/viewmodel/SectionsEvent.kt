@@ -10,4 +10,6 @@ sealed interface SectionsEvent {
     data class OnRenameClicked(val section: Section, val newName: String) : SectionsEvent
 
     data class OnDeleteClicked(val id: Long) : SectionsEvent
+
+    data object OnRetryClicked : SectionsEvent
 }

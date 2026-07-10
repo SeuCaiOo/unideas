@@ -15,17 +15,14 @@ description: Use when starting development of a GitHub issue — first moves any
 
 ## Step-by-step
 
-### -1. Determine base branch and review docs
+### -1. Base branch and review docs
 
-First, find out which branch the new feature branch should be created from:
+**In unideas, the base is always `dev`** — feature branches are never cut from `main` here (unlike some of the user's other projects, e.g. GymLog, which use a different flow). Don't ask for confirmation on this; just check out and pull `dev`:
 
 ```bash
-git branch --show-current
+git checkout dev
+git pull origin dev
 ```
-
-**Ask the user:** "A branch base para criar a nova branch é `<current-branch>`? Ou deve ser outra?"
-
-Wait for confirmation before proceeding. Do NOT assume `dev`. Do NOT switch branches without explicit user authorization.
 
 Once the base branch is confirmed, check if it has commits that aren't yet reflected in the docs:
 
@@ -92,12 +89,14 @@ gh api graphql -f query="
 ```
 
 If `parent` is non-null:
-- If `subIssuesSummary.completed == subIssuesSummary.total` (every sub-issue of the epic is now done), close the parent issue too (same comment pattern as step 1 above, referencing which sub-issue completed the set) and move its card to Done — same mutation as for the sub-issue, using the parent's own project item ID.
+- If `subIssuesSummary.completed == subIssuesSummary.total` (every sub-issue of the epic is now done): **validate the parent's own DoD before closing it — don't skip straight to closing just because the sub-issue count checks out.** A parent/epic issue has no PR of its own (its "Definition of Done" is a plain `- [ ]` checklist in its body, usually one line per sub-issue plus any overall requirement — often not even labeled "DoD" the way leaf issues are, but it's the same concept and still needs the same reconciliation `finish-issue` does for leaf issues). Fetch the parent's body (`gh issue view <parent> --json body`), compare each checklist item against what the now-complete sub-issues actually delivered, check off everything that holds (reword only after asking the user if something doesn't match, same rule as `finish-issue` step 2), `gh issue edit <parent> --body-file ...`. Confirmed the hard way (issue #6 — closed and moved to Done with all three of its own checklist items still unchecked, because only `subIssuesSummary` was checked, never the parent's body). Only after this reconciliation, close the parent issue (same comment pattern as step 1 above, referencing which sub-issue completed the set) and move its card to Done — same mutation as for the sub-issue, using the parent's own project item ID.
 - Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 9 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
 
 This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial progress instead of sitting untouched in Backlog while their sub-issues get worked on and finished one at a time.
 
-**Improvements artifact sync**: for each issue just closed above (and its parent, if promoted/closed per the sync above), also update the **"unideas — Improvements"** artifact — URL in `.claude/skills/add-improvement/SKILL.md` (`https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667`). This is the same artifact `add-improvement` writes new ideas into; it doubles as the living index of the whole `v0.1.0` backlog (issues #3–#30), so it needs to move in lockstep with the board:
+**Improvements artifact sync — now just a fallback**: `open-pr` step 6.5 syncs this artifact right when the PR opens (DoD is already green by then), not at this later sweep — so for any issue whose PR was opened after that rule existed, this artifact entry should already show `✅ Merged` with the right PR number by the time this step runs. Reason for moving it earlier: waiting until the *next* `/start-feature` run left the artifact stale for however long the user took to start something new (worse if auto-merge finished unattended while they were away) — the old timing meant "what's actually done" and "what the artifact says" could disagree for a while.
+
+Still check each issue closed above: if its entry isn't yet marked `✅ Merged` (an older PR predating the rule, or the `open-pr` sync somehow got skipped), do the sync here as a catch-up — same mechanics either way:
 
 1. `WebFetch` the artifact URL for its current markdown — never assume its content from memory, another session may have changed it.
 2. Find the entry whose heading contains `(#<N>)`. Check every `- [ ]` in its checklist to `- [x]`. Add or update a status tag right after its `pré-req` line, matching the existing convention: `· ✅ **Merged** (PR #<M> → dev, implementado via <how>)`.
@@ -302,7 +301,7 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Mistake | Fix |
 |---|---|
 | Starting with unchecked DoR | Always validate all DoR items first |
-| Assuming base branch without asking | Always ask user to confirm base branch in step -1 |
+| Asking to confirm the base branch every time | Don't — it's always `dev` in unideas (step -1), no need to ask |
 | Plan not saved | Always write to `.claude/plans/` |
 | Slug with uppercase or special chars | Normalize: lowercase, hyphens only |
 | Planning without reading CLAUDE.md/AGENTS.md | Always run step 4 — never infer package structure from memory |
@@ -310,5 +309,6 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Leaving the rest of a lettered group sitting in Backlog while one issue is worked | Always run step 8 — pull every sibling issue of the same group into Todo, not just the one being started |
 | Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 9 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
 | Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
+| Closing a parent epic on `subIssuesSummary` alone, without checking its own body checklist | The parent has its own DoD (a checklist in its body, even if not labeled "DoD") — reconcile and check it off before closing, same as `finish-issue` does for leaf issues |
 | Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
 | Creating the branch with plain `git checkout -b` for an issue-tied feature | Always use `createLinkedBranch` (step 3) instead — plain branch creation + a later `Closes #N` in the PR body does NOT reliably link the issue's Development section for `dev`-targeting PRs (confirmed empirically, #22/#35) |

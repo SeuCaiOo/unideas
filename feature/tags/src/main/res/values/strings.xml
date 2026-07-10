@@ -3,4 +3,15 @@
     <string name="tag_name_required">Name is required</string>
     <string name="tag_delete_blocked">%1$d items are linked to this tag</string>
     <string name="tags_load_error">Couldn\'t load tags</string>
+    <string name="tags_title">Tags</string>
+    <string name="tags_empty">No tags yet. Tap + to create one.</string>
+    <string name="tags_add">Add tag</string>
+    <string name="tags_add_label">Tag name</string>
+    <string name="tags_rename">Rename tag</string>
+    <string name="tags_rename_label">Tag name</string>
+    <string name="tag_options">Tag options</string>
+    <string name="tag_rename_action">Rename</string>
+    <string name="tag_delete_action">Delete</string>
+    <string name="tag_delete_confirm_title">Delete tag?</string>
+    <string name="tag_delete_confirm_message">This action cannot be undone.</string>
 </resources>

@@ -14,6 +14,9 @@ interface TagRepository {
     /** Inserts [tag] and returns the generated id. */
     suspend fun insertTag(tag: Tag): Long
 
+    /** Updates [tag] (rename) by [Tag.id]. */
+    suspend fun updateTag(tag: Tag)
+
     /**
      * Deletes the tag with [id]. Callers must check [countLinkedItems] first —
      * deletion with linked items is blocked at the use-case level.

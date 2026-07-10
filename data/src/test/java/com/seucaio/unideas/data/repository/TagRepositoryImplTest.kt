@@ -42,6 +42,16 @@ class TagRepositoryImplTest {
     }
 
     @Test
+    fun `updateTag delegates the entity`() = runTest {
+        val tag = TagStub.tag(id = 7L, name = "renomeada")
+        coEvery { tagDao.update(tag.toEntity()) } returns Unit
+
+        repository.updateTag(tag)
+
+        coVerify(exactly = 1) { tagDao.update(tag.toEntity()) }
+    }
+
+    @Test
     fun `deleteTag delegates the id`() = runTest {
         coEvery { tagDao.deleteById(5L) } returns Unit
 

@@ -18,6 +18,8 @@ class TagRepositoryImpl(
     override suspend fun insertTag(tag: Tag): Long =
         tagDao.insert(tag.toEntity())
 
+    override suspend fun updateTag(tag: Tag) = tagDao.update(tag.toEntity())
+
     override suspend fun deleteTag(id: Long) = tagDao.deleteById(id)
 
     override suspend fun countLinkedItems(tagId: Long): Int =

@@ -102,7 +102,7 @@ val uiState: StateFlow<UiState> = combine(_internalState, itemsFlow) { internal,
 - **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel.
 - **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`).
 
-### Regras visuais (planta: Material 3, dark, acento teal)
+### Regras visuais (planta: Material 3, light + dark, acento teal)
 
 - Toque mínimo 48dp.
 - Sem dividers entre itens de lista — usar espaçamento vertical (8/12dp).

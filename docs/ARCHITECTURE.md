@@ -194,12 +194,12 @@ PK composta (itemId, tagId)
 Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, não centralizada em `:app` (diferente do GymLog, onde tudo ficava em `:app/di/`; decisão deliberada aqui: cada camada é dona da sua fiação). `AppModule.kt` (`:app`) é o único ponto de entrada no `startKoin`, só agregando os demais via `includes(...)`.
 
 ```
-data/di/DataModule.kt              — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
-domain/di/DomainModule.kt          — Use Cases (factoryOf) — ainda não existe, chega com B1/B2/B3
-core/backup/di/BackupModule.kt     — repos + use cases de :core:backup — ainda não existe, chega com E1
-feature/*/di/PresentationModule.kt — ViewModels de cada :feature:* (viewModelOf) — ainda não existe, chega com D1+
+data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
+domain/di/DomainModule.kt     — Use Cases (factoryOf) — confirmado em #42 (só os de Section por ora; Item/Tag chegam com D1/#44)
+core/backup/di/BackupModule.kt — repos + use cases de :core:backup — ainda não existe, chega com E1
+feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf) — confirmado em #42 (feature/sections/di/FeatureModule.kt, val sectionsModule)
 
-:app/di/AppModule.kt — includes(dataModule, domainModule, backupModule, ...todos os PresentationModule de :feature:*)
+:app/di/AppModule.kt — includes(dataModule, domainModule, backupModule, ...todos os FeatureModule de :feature:*); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |

@@ -1,6 +1,6 @@
 ---
 name: start-feature
-description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done, then validates DoR, creates branch, generates and saves a development plan, moves issue to In Progress, then enters planning mode.
+description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics too), then validates DoR, creates branch, generates and saves a development plan, moves issue (and its parent epic, if any) to In Progress, then enters planning mode.
 ---
 
 # Start Feature — unideas Workflow
@@ -73,6 +73,29 @@ mutation {
 ```
 
 Skip issues already closed (already handled by a previous run).
+
+**Parent epic sync**: for each issue just closed above, check whether it has a parent via GitHub's native sub-issues relationship:
+
+```bash
+gh api graphql -f query="
+{
+  repository(owner: \"SeuCaiOo\", name: \"unideas\") {
+    issue(number: <N>) {
+      parent {
+        number
+        title
+        subIssuesSummary { total completed }
+      }
+    }
+  }
+}"
+```
+
+If `parent` is non-null:
+- If `subIssuesSummary.completed == subIssuesSummary.total` (every sub-issue of the epic is now done), close the parent issue too (same comment pattern as step 1 above, referencing which sub-issue completed the set) and move its card to Done — same mutation as for the sub-issue, using the parent's own project item ID.
+- Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 8 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
+
+This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial progress instead of sitting untouched in Backlog while their sub-issues get worked on and finished one at a time.
 
 **Local branch cleanup**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Locally, clean up what's now stale:
 
@@ -203,13 +226,31 @@ mutation {
 }"
 ```
 
-### 8. Enter planning mode
+### 8. Promote parent epic issue (if this is a sub-issue)
+
+Check whether the issue has a parent, using GitHub's native sub-issues relationship (not text parsing — unreliable, since sub-issue bodies don't consistently spell out "#<parent-number>"):
+
+```bash
+gh api graphql -f query="
+{
+  repository(owner: \"SeuCaiOo\", name: \"unideas\") {
+    issue(number: <issue-number>) {
+      parent { number title }
+    }
+  }
+}"
+```
+
+If `parent` is non-null, find the parent's project item and current status the same way as step 7 (swap in the parent's issue number). If the parent's status is `Backlog` or `Todo`, move it to `In Progress` too — starting work on any sub-issue means the epic itself is now in progress, even though it isn't finished. If the parent is already `In Progress` (a later sibling sub-issue), leave it as-is. Report which parent (if any) was promoted, and to what status it was found before promoting.
+
+### 9. Enter planning mode
 
 Summarize what was set up:
 - ✅ DoR validated
 - ✅ Branch created: `<branch-name>`
 - ✅ Plan saved: `<plan-path>`
 - ✅ Issue moved to "In Progress"
+- ✅ Parent epic promoted to "In Progress" (if applicable)
 
 Then present the plan to the user and ask for confirmation before starting implementation.
 
@@ -225,3 +266,5 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Slug with uppercase or special chars | Normalize: lowercase, hyphens only |
 | Planning without reading CLAUDE.md/AGENTS.md | Always run step 4 — never infer package structure from memory |
 | Not moving issue to "In Progress" | Always run step 7 — move card before starting implementation |
+| Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 8 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
+| Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |

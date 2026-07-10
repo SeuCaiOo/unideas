@@ -11,6 +11,9 @@ interface SectionRepository {
     /** Observes all sections. */
     fun getSections(): Flow<List<Section>>
 
+    /** Observes sections that have at least one item tagged with any of [tagIds]. */
+    fun getSectionsByTags(tagIds: List<Long>): Flow<List<Section>>
+
     /** Inserts [section] and returns the generated id. */
     suspend fun insertSection(section: Section): Long
 

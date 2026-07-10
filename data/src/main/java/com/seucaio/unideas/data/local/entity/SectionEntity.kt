@@ -5,13 +5,13 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Room entity for the `tags` table.
+ * Room entity for the `sections` table.
  */
 @Entity(
-    tableName = "tags",
+    tableName = "sections",
     indices = [Index(value = ["name"], unique = true)],
 )
-data class TagEntity(
+data class SectionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val name: String,

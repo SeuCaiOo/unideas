@@ -69,6 +69,7 @@ class ItemDaoTest {
 
     @Test
     fun getItemsFiltersBySection() = runTest {
+        seedSection(1L, "Trabalho")
         dao.insert(task(title = "com seção", sectionId = 1L))
         dao.insert(task(title = "sem seção"))
 
@@ -160,7 +161,6 @@ class ItemDaoTest {
         createdAt = 1_000L,
     )
 
-    /** Seeds the `tags` table directly — Tag CRUD (TagDao) is out of this sub-issue's scope. */
     private fun seedTags(vararg tags: Pair<Long, String>) {
         tags.forEach { (id, name) ->
             database.openHelper.writableDatabase.execSQL(
@@ -168,6 +168,14 @@ class ItemDaoTest {
                 arrayOf(id, name),
             )
         }
+    }
+
+    /** Seeds the `sections` table — `ItemEntity.sectionId` FKs to it. */
+    private fun seedSection(id: Long, name: String) {
+        database.openHelper.writableDatabase.execSQL(
+            "INSERT INTO sections (id, name) VALUES (?, ?)",
+            arrayOf(id, name),
+        )
     }
 
     private fun countCrossRefs(itemId: Long): Int =

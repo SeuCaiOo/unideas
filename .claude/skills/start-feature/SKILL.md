@@ -152,18 +152,38 @@ Complete os itens acima na issue antes de iniciar.
 
 **Only proceed if ALL DoR items are checked.**
 
-### 3. Create branch
+### 3. Create branch — via `createLinkedBranch`, not plain `git checkout -b`
 
 Branch naming pattern: `<type>/#<number>/<slug>`
 - Extract `type` from the issue title prefix (e.g. `feat`, `fix`, `refactor`, `test`, `chore`)
 - Extract slug from the issue title: lowercase, spaces → hyphens, remove special chars
 - Example: `feat: Add login screen` → `feat/#4/add-login-screen`
 
+Don't create the branch with a plain `git checkout -b` + later `git push` — that only links the PR to the issue much later (and unreliably) via the `Closes #N` text, which never even auto-closes anyway since PRs target `dev`, not the repo's default branch (confirmed empirically: `willCloseTarget: false` on the cross-reference event, regardless of merge). Instead, use GitHub's `createLinkedBranch` GraphQL mutation, which creates the branch **and** links it in the issue's Development section atomically, at the moment the branch is born — validated live on a throwaway issue (`linkedBranches` populated instantly, no delay, unlike `closingIssuesReferences`).
+
 ```bash
 git checkout <base-branch>
 git pull origin <base-branch>
-git checkout -b <type>/#<number>/<slug>
+
+ISSUE_NODE_ID=$(gh api repos/SeuCaiOo/unideas/issues/<issue-number> --jq '.node_id')
+BASE_OID=$(git rev-parse HEAD)
+
+gh api graphql -f query="
+mutation {
+  createLinkedBranch(input: {
+    issueId: \"$ISSUE_NODE_ID\"
+    oid: \"$BASE_OID\"
+    name: \"<type>/#<number>/<slug>\"
+  }) {
+    linkedBranch { ref { name } }
+  }
+}"
+
+git fetch origin "<type>/#<number>/<slug>"
+git checkout "<type>/#<number>/<slug>"
 ```
+
+This pushes the branch to the remote immediately too — a real backup from the first commit, not just at PR time. Read the mutation's response `linkedBranch.ref.name` to confirm the actual created branch name (GitHub could in principle sanitize it) before the `git fetch`/`checkout`.
 
 ### 4. Load project conventions
 
@@ -296,3 +316,4 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 9 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
 | Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
 | Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
+| Creating the branch with plain `git checkout -b` for an issue-tied feature | Always use `createLinkedBranch` (step 3) instead — plain branch creation + a later `Closes #N` in the PR body does NOT reliably link the issue's Development section for `dev`-targeting PRs (confirmed empirically, #22/#35) |

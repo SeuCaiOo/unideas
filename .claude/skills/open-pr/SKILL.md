@@ -17,6 +17,9 @@ description: Use when opening a pull request in the unideas project — covers b
 ## Step-by-step
 
 ### 1. Branch
+
+**If the work is tied to a numbered GitHub issue, this step already happened in `/start-feature` (which links the branch to the issue via `createLinkedBranch` at creation time) — don't recreate it here.** Only use the plain flow below for work with no issue number (ad-hoc chore/fix, no `/start-feature` involved):
+
 ```bash
 git checkout dev
 git pull origin dev
@@ -74,7 +77,7 @@ Then apply the label:
 gh pr edit <number> --add-label "<label>"
 ```
 
-If the PR closes a GitHub issue, always include `Closes #<issue>` in the PR body at creation time (in the `gh pr create --body` call), not as an optional afterthought — this is what makes GitHub auto-populate the "Development" sidebar link on both the issue and the PR (verified via `closingIssuesReferences` in the GraphQL API), even though it targets `dev` and won't auto-close on merge. If it was missed at creation, `/finish-issue` adds it retroactively via `gh pr edit`, but doing it upfront avoids the extra step.
+If the PR closes a GitHub issue, always include `Closes #<issue>` in the PR body at creation time (in the `gh pr create --body` call) — it's still correct traceability/documentation practice. **But don't rely on it for the "Development" sidebar link**: confirmed empirically (issue #22 / PR #35) that the closing keyword never populates `closingIssuesReferences` reliably for a `dev`-targeting PR — GitHub flags the reference `willCloseTarget: false` since `dev` isn't the repo's default branch, and the sidebar link either never appears or appears after an unpredictable, uncontrolled delay (unrelated to merge — observed still empty minutes after merge in one case, populated well after in another). The reliable mechanism is `createLinkedBranch` at branch-creation time, in `/start-feature` step 3 — by the time a PR opens here, the branch (and therefore the PR) is already linked.
 
 ### 7. Auto-merge (PRs targeting `dev`)
 

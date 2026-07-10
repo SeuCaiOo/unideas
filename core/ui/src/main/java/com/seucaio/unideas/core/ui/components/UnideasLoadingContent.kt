@@ -3,10 +3,11 @@ package com.seucaio.unideas.core.ui.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 
 @Composable
@@ -16,10 +17,12 @@ fun UnideasLoadingContent(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UnideasLoadingContentPreview() {
     UnideasTheme {
-        UnideasLoadingContent()
+        Surface {
+            UnideasLoadingContent()
+        }
     }
 }

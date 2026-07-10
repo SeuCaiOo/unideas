@@ -1,4 +1,4 @@
-package com.seucaio.unideas.ui.components
+package com.seucaio.unideas.core.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -8,13 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.seucaio.unideas.BuildConfig
-import com.seucaio.unideas.ui.theme.UnideasTheme
+import com.seucaio.unideas.core.ui.theme.UnideasTheme
 
 @Composable
-fun AppVersionFooter(modifier: Modifier = Modifier) {
+fun AppVersionFooter(versionName: String, modifier: Modifier = Modifier) {
     Text(
-        text = "v${BuildConfig.VERSION_NAME}",
+        text = "v$versionName",
         style = MaterialTheme.typography.labelSmall,
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth()
@@ -26,7 +25,7 @@ fun AppVersionFooter(modifier: Modifier = Modifier) {
 private fun AppVersionFooterPreview() {
     UnideasTheme {
         Surface {
-            AppVersionFooter()
+            AppVersionFooter(versionName = "0.0.2")
         }
     }
 }

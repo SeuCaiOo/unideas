@@ -7,11 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 
@@ -54,18 +55,22 @@ fun UnideasListItem(
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UnideasListItemPreview() {
     UnideasTheme {
-        UnideasListItem(title = "Pagar contas", subtitle = "Vence em 2 dias")
+        Surface {
+            UnideasListItem(title = "Pagar contas", subtitle = "Vence em 2 dias")
+        }
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UnideasListItemMinimalPreview() {
     UnideasTheme {
-        UnideasListItem(title = "Ideia de projeto")
+        Surface {
+            UnideasListItem(title = "Ideia de projeto")
+        }
     }
 }

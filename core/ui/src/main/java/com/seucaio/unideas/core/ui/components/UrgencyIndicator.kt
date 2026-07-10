@@ -4,10 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.core.ui.theme.UrgencyColors
@@ -27,26 +28,32 @@ fun UrgencyIndicator(level: UrgencyIndicatorLevel, modifier: Modifier = Modifier
     )
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UrgencyIndicatorOverduePreview() {
     UnideasTheme {
-        UrgencyIndicator(level = UrgencyIndicatorLevel.OVERDUE)
+        Surface {
+            UrgencyIndicator(level = UrgencyIndicatorLevel.OVERDUE)
+        }
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UrgencyIndicatorDueSoonPreview() {
     UnideasTheme {
-        UrgencyIndicator(level = UrgencyIndicatorLevel.DUE_SOON)
+        Surface {
+            UrgencyIndicator(level = UrgencyIndicatorLevel.DUE_SOON)
+        }
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
 private fun UrgencyIndicatorNormalPreview() {
     UnideasTheme {
-        UrgencyIndicator(level = UrgencyIndicatorLevel.NORMAL)
+        Surface {
+            UrgencyIndicator(level = UrgencyIndicatorLevel.NORMAL)
+        }
     }
 }

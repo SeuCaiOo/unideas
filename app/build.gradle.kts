@@ -68,6 +68,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -157,6 +158,9 @@ dependencies {
     kover(project(":feature:sections"))
     kover(project(":feature:tags"))
     kover(project(":feature:settings"))
+
+    implementation(project(":core:ui"))
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Compose BOM — aligns versions for every Compose artifact below
     implementation(platform(libs.androidx.compose.bom))

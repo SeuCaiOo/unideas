@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ui.components.AppVersionFooter
-import com.seucaio.unideas.ui.theme.UnideasTheme
+import com.seucaio.unideas.core.ui.components.AppVersionFooter
+import com.seucaio.unideas.core.ui.theme.UnideasTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +24,10 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        AppVersionFooter(modifier = Modifier.padding(16.dp))
+                        AppVersionFooter(
+                            versionName = BuildConfig.VERSION_NAME,
+                            modifier = Modifier.padding(16.dp),
+                        )
                     }
                 ) { innerPadding ->
                     Greeting(

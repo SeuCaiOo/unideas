@@ -108,6 +108,21 @@ Always include `Closes #<issue>` in the PR body at creation time (in the `gh pr 
 
 If the sidebar link seems missing right after opening the PR, wait a few minutes before assuming it failed — it's a webhook/indexing delay, not a broken mechanism. The branch itself is separately linked at creation time via `createLinkedBranch` in `/start-feature` step 3.
 
+### 6.5. Sync the Improvements artifact — right now, not at the next `/start-feature`
+
+**Only when the PR was opened ready-for-review (DoD green, not Draft) and it's tied to a numbered issue.** Update the **"unideas — Improvements"** artifact (URL in `.claude/skills/add-improvement/SKILL.md`) immediately, in this same pass — don't wait for the PR to actually merge or for the user to pull the next issue.
+
+**Why now and not later:** the old flow only synced this artifact during `/start-feature`'s step 0, which only runs when someone starts the *next* issue. If the user opens a PR, auto-merge fires while they're away, and they don't start a new issue right away, the artifact stays stale — showing the just-finished work as still pending — for an unpredictable stretch. Since DoD is already validated before the PR opens (step 3.5), the work is functionally done the moment the PR exists; merging is a mechanical formality from here. Updating the artifact at this point means it's always an accurate "what's actually done, what's next" reference, independent of when merge happens or when the next `/start-feature` run occurs.
+
+Steps (same mechanics as `start-feature` step 0's artifact sync):
+1. `WebFetch` the artifact URL for its current markdown.
+2. Find the entry whose heading contains `(#<issue-number>)`. Check every `- [ ]` in its checklist to `- [x]`.
+3. Add/update its status tag: `· ✅ **Merged** (PR #<just-created-number> → dev, implementado via <how>)` — matching the existing convention, right after its `pré-req` line.
+4. If the issue has a parent epic: update the parent's status tag too, and move it (and this issue) into **"## Finalizadas (Done)"** if this was the epic's last remaining sub-issue; otherwise keep the parent listed under "Em andamento" with the updated sub-issue count.
+5. Write the full updated markdown to a local scratchpad file and republish via `Artifact` with the same `url` — never a new `file_path`-only publish.
+
+`start-feature` step 0 no longer needs to redo this sync for PRs opened after this rule — it becomes a fallback pass only (skip any issue whose artifact entry already shows `✅ Merged` with the right PR number).
+
 ### 7. Auto-merge (PRs targeting `dev`, DoD already green) — **ask first**
 
 **Skip this step entirely if the PR was opened as Draft in step 6** — GitHub refuses to merge a Draft regardless, and enabling auto-merge on one just means it fires the moment someone marks it ready, bypassing the DoD gate. Come back to it via `finish-issue` once DoD passes.
@@ -142,3 +157,4 @@ Use `--merge` (merge commit) to match the existing convention.
 | Validating DoD after the PR is already open/mergeable | Run `finish-issue` (step 3.5) before opening a ready PR — DoD is a pre-merge gate, not something to check after the fact |
 | Enabling auto-merge on a Draft PR | Skip step 7 for Drafts; promote via `finish-issue` (`gh pr ready` + `gh pr merge --auto`) once DoD passes |
 | Running `gh pr merge --auto` right after opening the PR, without asking | DoD green ≠ user reviewed the code — always ask before step 7, even on a ready (non-Draft) PR |
+| Waiting for the next `/start-feature` to sync the Improvements artifact | Sync it now, in step 6.5, right when the PR opens ready — don't leave it stale until someone starts the next issue |

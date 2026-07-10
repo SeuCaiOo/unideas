@@ -54,8 +54,8 @@ gh issue edit <issue-number> --body-file /tmp/issue_body.md
 
 ### 4. Gate the PR
 
-- **No PR yet** → hand off to `/open-pr`; it creates the PR directly as ready-for-review with auto-merge enabled, since DoD is already green.
-- **Draft PR already open** → promote it now:
+- **No PR yet** → hand off to `/open-pr`; it creates the PR directly as ready-for-review with auto-merge enabled (since DoD is already green) and syncs the Improvements artifact in the same pass (`open-pr` step 6.5).
+- **Draft PR already open** → promote it now, then sync the Improvements artifact (same mechanics as `open-pr` step 6.5 — it was skipped at Draft-creation time since DoD wasn't green yet):
 ```bash
 gh pr ready <pr-number>
 gh pr merge <pr-number> --auto --merge

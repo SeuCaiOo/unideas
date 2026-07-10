@@ -18,14 +18,14 @@ data class Item(
     val description: String? = null,
     val sectionId: Long? = null,
     val dueDate: LocalDate? = null,
-    val recurrence: Recurrence = Recurrence.NONE,
+    val recurrence: Recurrence = Recurrence.None,
     val completedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val tags: List<Tag> = emptyList(),
 ) {
     val isCompleted: Boolean get() = completedAt != null
 
-    val isRecurring: Boolean get() = recurrence != Recurrence.NONE
+    val isRecurring: Boolean get() = recurrence !is Recurrence.None
 
     /**
      * Urgency derived from [dueDate] vs [today]; see [UrgencyLevel.of].

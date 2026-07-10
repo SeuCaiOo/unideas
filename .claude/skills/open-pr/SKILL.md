@@ -108,11 +108,13 @@ Always include `Closes #<issue>` in the PR body at creation time (in the `gh pr 
 
 If the sidebar link seems missing right after opening the PR, wait a few minutes before assuming it failed — it's a webhook/indexing delay, not a broken mechanism. The branch itself is separately linked at creation time via `createLinkedBranch` in `/start-feature` step 3.
 
-### 7. Auto-merge (PRs targeting `dev`, DoD already green)
+### 7. Auto-merge (PRs targeting `dev`, DoD already green) — **ask first**
 
 **Skip this step entirely if the PR was opened as Draft in step 6** — GitHub refuses to merge a Draft regardless, and enabling auto-merge on one just means it fires the moment someone marks it ready, bypassing the DoD gate. Come back to it via `finish-issue` once DoD passes.
 
-`dev` has branch protection requiring the `Quality Gate` check (from `dev_checks.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). Enable auto-merge right after creating a ready feature → `dev` PR so it merges by itself once CI passes, instead of waiting around:
+**Never run `gh pr merge --auto` right after creating the PR without asking the user first.** DoD passing is Claude's own self-check that the work matches the checklist — it is not the user having looked at the code. Confirmed the hard way (issue #24 / PR #38): Claude opened the PR and armed auto-merge in the same breath, leaving the user zero window to review before it could merge on its own — caught only because CI happened to still be running. Push-without-asking (this skill, step 2 onward) covers getting commits onto the remote as a backup; it does **not** extend to arming the PR to merge unattended. Ask something like "PR aberta, DoD validado — posso habilitar auto-merge, ou você quer olhar o código primeiro?" and wait for a yes before running the command below.
+
+`dev` has branch protection requiring the `Quality Gate` check (from `dev_checks.yml`) to pass, and the repo has `allow_auto_merge` enabled — this only works because the repo is public (branch protection on private repos needs a paid GitHub plan). Once the user confirms:
 
 ```bash
 gh pr merge <number> --auto --merge
@@ -139,3 +141,4 @@ Use `--merge` (merge commit) to match the existing convention.
 | Running `gh pr merge --auto` on a `main`-targeting PR | Auto-merge is only for `dev`; `main` merges are manual and reviewed |
 | Validating DoD after the PR is already open/mergeable | Run `finish-issue` (step 3.5) before opening a ready PR — DoD is a pre-merge gate, not something to check after the fact |
 | Enabling auto-merge on a Draft PR | Skip step 7 for Drafts; promote via `finish-issue` (`gh pr ready` + `gh pr merge --auto`) once DoD passes |
+| Running `gh pr merge --auto` right after opening the PR, without asking | DoD green ≠ user reviewed the code — always ask before step 7, even on a ready (non-Draft) PR |

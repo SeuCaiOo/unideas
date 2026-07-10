@@ -148,7 +148,7 @@ class SectionDaoTest {
         type = ItemType.TASK,
         title = "tarefa",
         sectionId = sectionId,
-        recurrence = Recurrence.NONE,
+        recurrence = Recurrence.None,
         createdAt = 1_000L,
     )
 }

@@ -150,7 +150,7 @@ class ItemDaoTest {
         title = title,
         sectionId = sectionId,
         dueDate = dueDate,
-        recurrence = Recurrence.NONE,
+        recurrence = Recurrence.None,
         completedAt = completedAt,
         createdAt = createdAt,
     )

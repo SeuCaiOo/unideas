@@ -49,6 +49,17 @@ class TagDaoTest {
     }
 
     @Test
+    fun updateRenamesTag() = runTest {
+        val id = dao.insert(TagEntity(name = "original"))
+        val stored = dao.getTags().first().single()
+
+        dao.update(stored.copy(name = "renomeada"))
+
+        assertEquals(listOf("renomeada"), dao.getTags().first().map { it.name })
+        assertEquals(id, dao.getTags().first().single().id)
+    }
+
+    @Test
     fun deleteByIdRemovesTagAndCascadesCrossRefs() = runTest {
         val tagId = dao.insert(TagEntity(name = "urgente"))
         val itemDao = database.itemDao()

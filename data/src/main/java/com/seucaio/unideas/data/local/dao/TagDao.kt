@@ -3,6 +3,7 @@ package com.seucaio.unideas.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.seucaio.unideas.data.local.entity.TagEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,9 @@ interface TagDao {
 
     @Insert
     suspend fun insert(tag: TagEntity): Long
+
+    @Update
+    suspend fun update(tag: TagEntity)
 
     @Query("DELETE FROM tags WHERE id = :id")
     suspend fun deleteById(id: Long)

@@ -80,7 +80,12 @@ Then apply the label:
 gh pr edit <number> --add-label "<label>"
 ```
 
-If the PR closes a GitHub issue, always include `Closes #<issue>` in the PR body at creation time (in the `gh pr create --body` call) — it's still correct traceability/documentation practice. **But don't rely on it for the "Development" sidebar link**: confirmed empirically (issue #22 / PR #35) that the closing keyword never populates `closingIssuesReferences` reliably for a `dev`-targeting PR — GitHub flags the reference `willCloseTarget: false` since `dev` isn't the repo's default branch, and the sidebar link either never appears or appears after an unpredictable, uncontrolled delay (unrelated to merge — observed still empty minutes after merge in one case, populated well after in another). The reliable mechanism is `createLinkedBranch` at branch-creation time, in `/start-feature` step 3 — by the time a PR opens here, the branch (and therefore the PR) is already linked.
+Always include `Closes #<issue>` in the PR body at creation time (in the `gh pr create --body` call). Two separate things happen from this text, and it's worth not conflating them:
+
+- **`closingIssuesReferences` / auto-close on merge**: stays empty and merging won't auto-close the issue, because `dev` isn't the repo's default branch (`willCloseTarget: false`). This is expected — final closing happens at the `dev`→`main` release PR, or manually.
+- **The "Development" sidebar link on the issue** (a `ConnectedEvent` in the issue's timeline): this **does** appear from the same `Closes #N` text, confirmed live on issue #23 / PR #37 — it showed up within a few minutes of the PR being opened/pushed. No extra step needed. There is no public API to manually link an already-open PR to an issue (checked the GraphQL schema — only `createLinkedBranch`/`deleteLinkedBranch` exist, nothing PR-equivalent); the web UI's "Link a pull request" search box has no exposed mutation, so don't try to build a workaround for it.
+
+If the sidebar link seems missing right after opening the PR, wait a few minutes before assuming it failed — it's a webhook/indexing delay, not a broken mechanism. The branch itself is separately linked at creation time via `createLinkedBranch` in `/start-feature` step 3.
 
 ### 7. Auto-merge (PRs targeting `dev`)
 

@@ -74,7 +74,7 @@ Then apply the label:
 gh pr edit <number> --add-label "<label>"
 ```
 
-If the PR closes a GitHub issue, add `Closes #<issue>` to the PR body — or, if the work started via `/start-feature`, let `/finish-issue` handle that linking step instead.
+If the PR closes a GitHub issue, always include `Closes #<issue>` in the PR body at creation time (in the `gh pr create --body` call), not as an optional afterthought — this is what makes GitHub auto-populate the "Development" sidebar link on both the issue and the PR (verified via `closingIssuesReferences` in the GraphQL API), even though it targets `dev` and won't auto-close on merge. If it was missed at creation, `/finish-issue` adds it retroactively via `gh pr edit`, but doing it upfront avoids the extra step.
 
 ### 7. Auto-merge (PRs targeting `dev`)
 

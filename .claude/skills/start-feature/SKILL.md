@@ -74,6 +74,15 @@ mutation {
 
 Skip issues already closed (already handled by a previous run).
 
+**Local branch cleanup**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Locally, clean up what's now stale:
+
+```bash
+git fetch --prune origin   # drop local refs to remote branches GitHub already deleted
+git branch --merged dev | grep -v -E "^\*|main|dev" | xargs -r git branch -d
+```
+
+`git branch -d` (lowercase) refuses to delete anything not fully merged, so this is safe even if run speculatively.
+
 Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users/SeuCaiOo/projects/4):
 - Status field ID: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
 - Backlog option ID: `19386e88`

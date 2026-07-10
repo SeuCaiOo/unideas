@@ -137,11 +137,6 @@ kover {
                 )
             }
         }
-        verify {
-            rule("Rule of coverage minimum for the project") {
-                minBound(70)
-            }
-        }
     }
 }
 

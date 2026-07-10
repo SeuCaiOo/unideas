@@ -64,7 +64,7 @@ gh pr edit <pr-number> --body "$(gh pr view <pr-number> --json body --jq '.body'
 Closes #<issue-number>"
 ```
 
-This links the PR to the issue on GitHub — merging it will close the issue automatically.
+This links the PR to the issue on GitHub for traceability. Note: it will **not** auto-close the issue on merge — `Closes #N` only auto-closes when merging into the repo's default branch (`main`), and this PR targets `dev`. `start-feature` step 0 closes the issue explicitly once the PR merges into `dev`.
 
 ### 5. Report
 
@@ -78,7 +78,7 @@ This links the PR to the issue on GitHub — merging it will close the issue aut
 PR: <pr-url>
 ```
 
-**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. It gets swept to "Done" automatically the next time `/start-feature` runs (step 0), once the issue is closed by the merge.
+**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. Once the PR merges into `dev`, `start-feature` step 0 closes the issue and sweeps its card to "Done" (criterion is "PR merged into `dev`", not the issue's own open/closed state — `Closes #N` doesn't auto-fire since feature PRs never target the default branch). `Released` is a separate, later step for when the work ships in an actual generated version.
 
 ---
 
@@ -88,5 +88,5 @@ PR: <pr-url>
 |---|---|
 | Marking DoD done without checking commits | Confirm each item against the real diff (`git log dev..HEAD`) |
 | Skipping checkbox update | Always update the issue — makes future audits easier |
-| Not linking PR to issue | `Closes #N` in the PR body is required — it drives the auto-close on merge |
+| Not linking PR to issue | `Closes #N` in the PR body is required for traceability — it does NOT auto-close on merge (dev isn't the default branch); `start-feature` step 0 closes it explicitly |
 | Trying to move the card to "In Review" | That column doesn't exist on this board; leave it in "In Progress" |

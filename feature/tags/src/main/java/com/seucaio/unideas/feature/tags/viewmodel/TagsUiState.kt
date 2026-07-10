@@ -8,7 +8,10 @@ sealed interface TagsUiState {
 
     data object Loading : TagsUiState
 
-    data class Success(val tags: List<Tag>) : TagsUiState
+    data class Success(
+        val tags: List<Tag>,
+        val dialog: TagsDialogState = TagsDialogState.None,
+    ) : TagsUiState
 
     data class Error(@StringRes val messageRes: Int) : TagsUiState
 }

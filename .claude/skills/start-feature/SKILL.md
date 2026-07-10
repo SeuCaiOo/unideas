@@ -1,6 +1,6 @@
 ---
 name: start-feature
-description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics and the Improvements artifact too), then validates DoR, creates branch, generates and saves a development plan, moves issue (and its parent epic, if any) to In Progress, syncs the Improvements artifact, then enters planning mode.
+description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics and the Improvements artifact too), then validates DoR, creates branch, generates and saves a development plan, moves issue to In Progress, pulls the rest of its lettered backlog group into Todo, promotes its parent epic if any, syncs the Improvements artifact, then enters planning mode.
 ---
 
 # Start Feature — unideas Workflow
@@ -93,7 +93,7 @@ gh api graphql -f query="
 
 If `parent` is non-null:
 - If `subIssuesSummary.completed == subIssuesSummary.total` (every sub-issue of the epic is now done), close the parent issue too (same comment pattern as step 1 above, referencing which sub-issue completed the set) and move its card to Done — same mutation as for the sub-issue, using the parent's own project item ID.
-- Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 8 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
+- Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 9 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
 
 This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial progress instead of sitting untouched in Backlog while their sub-issues get worked on and finished one at a time.
 
@@ -236,7 +236,17 @@ mutation {
 }"
 ```
 
-### 8. Promote parent epic issue (if this is a sub-issue)
+### 8. Promote the rest of this letter group to "Todo"
+
+The `docs/BLUEPRINT.md` / Improvements-artifact backlog is organized into lettered groups (`A · Fundação de dados`, `B · Casos de uso`, `C · Design system`, ...). `Backlog` means "everything specced, no timeline"; `Todo` means "queued up next, no more thinking needed to know what's coming." The user wants the **whole group** pulled into `Todo` together as soon as the first issue of that group starts — not one issue at a time, since seeing 2-3 loose `Todo` cards while the rest of the group sits in `Backlog` defeats the point (you'd still have to ask "what's next?").
+
+Determine the group: `WebFetch` the Improvements artifact (URL in `.claude/skills/add-improvement/SKILL.md`) and find the `### <Letter> · <name>` heading containing this issue's `(#<N>)`. Collect every issue number under that heading (top-level items and their `↳` sub-issues) up to the next `### ` heading.
+
+For every issue in that list that is **not** the one just moved to In Progress in step 7 and whose board status is currently `Backlog`, move it to `Todo` (option ID `f75ad846`) — same mutation pattern as step 7, just swap the target status. Leave anything already `Todo`/`In Progress`/`Done` untouched. Report the full list of what got pulled forward.
+
+Example: starting #21 (group A) should have pulled #22 (still A, the only sibling not yet started) into `Todo` at the same time — it didn't, because this step didn't exist yet; done manually once, now automated going forward.
+
+### 9. Promote parent epic issue (if this is a sub-issue)
 
 Check whether the issue has a parent, using GitHub's native sub-issues relationship (not text parsing — unreliable, since sub-issue bodies don't consistently spell out "#<parent-number>"):
 
@@ -253,17 +263,18 @@ gh api graphql -f query="
 
 If `parent` is non-null, find the parent's project item and current status the same way as step 7 (swap in the parent's issue number). If the parent's status is `Backlog` or `Todo`, move it to `In Progress` too — starting work on any sub-issue means the epic itself is now in progress, even though it isn't finished. If the parent is already `In Progress` (a later sibling sub-issue), leave it as-is. Report which parent (if any) was promoted, and to what status it was found before promoting.
 
-### 9. Sync the Improvements artifact (mark as started)
+### 10. Sync the Improvements artifact (mark as started)
 
-Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading). This step is about visibility, not completion, so keep it light: no status tag change is required for an in-progress item (the artifact's convention only tags `✅ Merged`/`⏳ In Progress` on *epics*, not individual sub-issues mid-flight) — but if this issue **is** an epic itself (has its own sub-issues) or the parent promoted in step 8, add/update its `⏳ In Progress` status tag now, same format as the Done-time tag in step 0. Republish with the same `url`. Skip silently if nothing needs to change (e.g. this is a plain leaf issue with no epic-level tag to add).
+Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading). This step is about visibility, not completion, so keep it light: no status tag change is required for an in-progress item (the artifact's convention only tags `✅ Merged`/`⏳ In Progress` on *epics*, not individual sub-issues mid-flight) — but if this issue **is** an epic itself (has its own sub-issues) or the parent promoted in step 9, add/update its `⏳ In Progress` status tag now, same format as the Done-time tag in step 0. Republish with the same `url`. Skip silently if nothing needs to change (e.g. this is a plain leaf issue with no epic-level tag to add).
 
-### 10. Enter planning mode
+### 11. Enter planning mode
 
 Summarize what was set up:
 - ✅ DoR validated
 - ✅ Branch created: `<branch-name>`
 - ✅ Plan saved: `<plan-path>`
 - ✅ Issue moved to "In Progress"
+- ✅ Rest of the letter group pulled into "Todo"
 - ✅ Parent epic promoted to "In Progress" (if applicable)
 - ✅ Improvements artifact synced
 
@@ -281,6 +292,7 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Slug with uppercase or special chars | Normalize: lowercase, hyphens only |
 | Planning without reading CLAUDE.md/AGENTS.md | Always run step 4 — never infer package structure from memory |
 | Not moving issue to "In Progress" | Always run step 7 — move card before starting implementation |
-| Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 8 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
+| Leaving the rest of a lettered group sitting in Backlog while one issue is worked | Always run step 8 — pull every sibling issue of the same group into Todo, not just the one being started |
+| Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 9 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
 | Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
-| Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 9 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
+| Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |

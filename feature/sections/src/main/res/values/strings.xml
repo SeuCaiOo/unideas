@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="section_name_required">Name is required</string>
+    <string name="section_delete_blocked">%1$d items are linked to this section</string>
+    <string name="sections_load_error">Couldn\'t load sections</string>
+</resources>

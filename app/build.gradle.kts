@@ -124,8 +124,6 @@ kover {
                     "*ComposableSingletons*",
                     // Koin modules
                     "*Module*",
-                    // ViewModels (not tested by project convention)
-                    "*ViewModel*",
                 )
 
                 packages(
@@ -156,6 +154,7 @@ dependencies {
     kover(project(":domain"))
     kover(project(":data"))
     kover(project(":core:common"))
+    kover(project(":feature:sections"))
 
     // Compose BOM — aligns versions for every Compose artifact below
     implementation(platform(libs.androidx.compose.bom))

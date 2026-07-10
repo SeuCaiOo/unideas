@@ -78,7 +78,7 @@ This links the PR to the issue on GitHub for traceability. Note: it will **not**
 PR: <pr-url>
 ```
 
-**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. Once the PR merges into `dev`, `start-feature` step 0 closes the issue and sweeps its card to "Done" (criterion is "PR merged into `dev`", not the issue's own open/closed state — `Closes #N` doesn't auto-fire since feature PRs never target the default branch). `Released` is a separate, later step for when the work ships in an actual generated version.
+**Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card is deliberately left in "In Progress" here. Once the PR merges into `dev`, `start-feature` step 0 closes the issue, sweeps its card to "Done", syncs the parent epic (if any), and syncs the **"unideas — Improvements"** artifact (URL in `.claude/skills/add-improvement/SKILL.md`) — all in the same pass, next time `/start-feature` runs. `finish-issue` itself doesn't touch the artifact; that's deliberately deferred to merge time. `Released` is a separate, later step for when the work ships in an actual generated version.
 
 ---
 

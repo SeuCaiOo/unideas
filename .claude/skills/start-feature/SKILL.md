@@ -1,6 +1,6 @@
 ---
 name: start-feature
-description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics too), then validates DoR, creates branch, generates and saves a development plan, moves issue (and its parent epic, if any) to In Progress, then enters planning mode.
+description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics and the Improvements artifact too), then validates DoR, creates branch, generates and saves a development plan, moves issue (and its parent epic, if any) to In Progress, syncs the Improvements artifact, then enters planning mode.
 ---
 
 # Start Feature — unideas Workflow
@@ -96,6 +96,16 @@ If `parent` is non-null:
 - Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 8 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
 
 This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial progress instead of sitting untouched in Backlog while their sub-issues get worked on and finished one at a time.
+
+**Improvements artifact sync**: for each issue just closed above (and its parent, if promoted/closed per the sync above), also update the **"unideas — Improvements"** artifact — URL in `.claude/skills/add-improvement/SKILL.md` (`https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667`). This is the same artifact `add-improvement` writes new ideas into; it doubles as the living index of the whole `v0.1.0` backlog (issues #3–#30), so it needs to move in lockstep with the board:
+
+1. `WebFetch` the artifact URL for its current markdown — never assume its content from memory, another session may have changed it.
+2. Find the entry whose heading contains `(#<N>)`. Check every `- [ ]` in its checklist to `- [x]`. Add or update a status tag right after its `pré-req` line, matching the existing convention: `· ✅ **Merged** (PR #<M> → dev, implementado via <how>)`.
+3. If the issue has a parent epic: update the parent's own status tag too (`· ⏳ **In Progress** (X/Y sub-issues — ...)` or, once all sub-issues are done, `· ✅ **Merged**` — mirror whatever was just decided in the Parent epic sync above).
+4. Add a one-line entry for the issue (and parent, if it just completed) under **"## Finalizadas (Done)"**; if the issue's epic is still partially open, make sure it's listed under **"## Em andamento (In Progress)"** instead (remove it from there once fully done).
+5. Write the full updated markdown to a local scratchpad file and republish via the `Artifact` tool with the same `url` — never a new `file_path`-only publish, that would mint a second artifact.
+
+See the sync done for #21/#5 in this project's history for a worked example of the exact edits.
 
 **Local branch cleanup**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Locally, clean up what's now stale:
 
@@ -243,7 +253,11 @@ gh api graphql -f query="
 
 If `parent` is non-null, find the parent's project item and current status the same way as step 7 (swap in the parent's issue number). If the parent's status is `Backlog` or `Todo`, move it to `In Progress` too — starting work on any sub-issue means the epic itself is now in progress, even though it isn't finished. If the parent is already `In Progress` (a later sibling sub-issue), leave it as-is. Report which parent (if any) was promoted, and to what status it was found before promoting.
 
-### 9. Enter planning mode
+### 9. Sync the Improvements artifact (mark as started)
+
+Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading). This step is about visibility, not completion, so keep it light: no status tag change is required for an in-progress item (the artifact's convention only tags `✅ Merged`/`⏳ In Progress` on *epics*, not individual sub-issues mid-flight) — but if this issue **is** an epic itself (has its own sub-issues) or the parent promoted in step 8, add/update its `⏳ In Progress` status tag now, same format as the Done-time tag in step 0. Republish with the same `url`. Skip silently if nothing needs to change (e.g. this is a plain leaf issue with no epic-level tag to add).
+
+### 10. Enter planning mode
 
 Summarize what was set up:
 - ✅ DoR validated
@@ -251,6 +265,7 @@ Summarize what was set up:
 - ✅ Plan saved: `<plan-path>`
 - ✅ Issue moved to "In Progress"
 - ✅ Parent epic promoted to "In Progress" (if applicable)
+- ✅ Improvements artifact synced
 
 Then present the plan to the user and ask for confirmation before starting implementation.
 
@@ -268,3 +283,4 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Not moving issue to "In Progress" | Always run step 7 — move card before starting implementation |
 | Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 8 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
 | Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
+| Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 9 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |

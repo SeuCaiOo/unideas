@@ -92,7 +92,7 @@ Repita o passo 4 (ler o estado atual via WebFetch, editar, republicar): mova a e
 
 O conteúdo da entrada não muda — só o título ganha o número e a entrada muda de seção.
 
-**Estágios seguintes** (mover a entrada para "Em andamento" e depois "Finalizadas") não são responsabilidade desta skill — eles acompanham naturalmente `/start-feature` (issue vai pra In Progress) e `/finish-issue` / merge (issue fecha, card vai pra Done no próximo `/start-feature`). Se quiser manter o Artifact 100% sincronizado com o board, mova a entrada manualmente nesses momentos ou peça para eu fazer isso.
+**Estágios seguintes** (mover a entrada para "Em andamento" e depois "Finalizadas") são responsabilidade do `/start-feature` — ele já lê a URL deste artifact diretamente (documentada aqui) e sincroniza sozinho: ao iniciar uma issue (passo 9) e, principalmente, ao varrer PRs mesclados no início da próxima execução (passo 0). Não é preciso pedir isso nem colar o link de novo — `start-feature` já sabe onde o artifact está.
 
 ---
 

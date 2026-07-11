@@ -20,4 +20,5 @@
     <string name="item_form_recurrence_daily">Daily</string>
     <string name="item_form_recurrence_weekly">Weekly</string>
     <string name="item_form_recurrence_monthly">Monthly</string>
+    <string name="item_detail_load_error">Couldn\'t load the item</string>
 </resources>

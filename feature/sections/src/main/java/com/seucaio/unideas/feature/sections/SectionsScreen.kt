@@ -54,11 +54,12 @@ fun SectionsScreen(
     viewModel: SectionsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
 
     LaunchedEffect(Unit) {
-        viewModel.action.collect { action ->
+        viewModel.uiAction.collect { action ->
             val message = when (action) {
                 is SectionsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
@@ -70,6 +71,7 @@ fun SectionsScreen(
 
     SectionsContent(
         uiState = uiState,
+        dialogState = dialogState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -80,6 +82,7 @@ fun SectionsScreen(
 @Composable
 private fun SectionsContent(
     uiState: SectionsUiState,
+    dialogState: SectionsDialogState,
     onEvent: (SectionsEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
@@ -104,9 +107,7 @@ private fun SectionsContent(
         SectionsBody(uiState = uiState, padding = padding, onEvent = onEvent)
     }
 
-    if (uiState is SectionsUiState.Success) {
-        SectionsDialogs(dialog = uiState.dialog, onEvent = onEvent)
-    }
+    SectionsDialogs(dialogState = dialogState, onEvent = onEvent)
 }
 
 @Composable
@@ -174,10 +175,10 @@ private fun SectionRow(
 
 @Composable
 private fun SectionsDialogs(
-    dialog: SectionsDialogState,
+    dialogState: SectionsDialogState,
     onEvent: (SectionsEvent) -> Unit,
 ) {
-    when (dialog) {
+    when (dialogState) {
         is SectionsDialogState.None -> Unit
         is SectionsDialogState.Add ->
             NameInputDialog(
@@ -190,7 +191,7 @@ private fun SectionsDialogs(
             NameInputDialog(
                 title = stringResource(R.string.sections_rename),
                 label = stringResource(R.string.sections_rename_label),
-                initialValue = dialog.section.name,
+                initialValue = dialogState.section.name,
                 onConfirm = { newName -> onEvent(SectionsEvent.OnRenameConfirmClicked(newName)) },
                 onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
             )
@@ -207,11 +208,12 @@ private fun SectionsDialogs(
 @PreviewLightDark
 @Composable
 private fun SectionsScreenPreview(
-    @PreviewParameter(SectionsPreviewProvider::class) uiState: SectionsUiState,
+    @PreviewParameter(SectionsPreviewProvider::class) previewState: SectionsPreviewState,
 ) {
     UnideasTheme {
         SectionsContent(
-            uiState = uiState,
+            uiState = previewState.uiState,
+            dialogState = previewState.dialogState,
             onEvent = {},
             onNavigateBack = null,
             snackbarHostState = remember { SnackbarHostState() },

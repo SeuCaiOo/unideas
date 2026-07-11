@@ -16,17 +16,17 @@ class SettingsViewModel : ViewModel() {
     val uiState: StateFlow<SettingsUiState> =
         MutableStateFlow(SettingsUiState.Success(BackupStatus.DISCONNECTED)).asStateFlow()
 
-    private val _action = Channel<SettingsUiAction>(Channel.BUFFERED)
-    val action: Flow<SettingsUiAction> = _action.receiveAsFlow()
+    private val _uiAction = Channel<SettingsUiAction>(Channel.BUFFERED)
+    val uiAction: Flow<SettingsUiAction> = _uiAction.receiveAsFlow()
 
     fun onEvent(event: SettingsEvent) {
         when (event) {
-            SettingsEvent.OnOrganizeSectionsClicked -> send(SettingsUiAction.NavigateToSections)
-            SettingsEvent.OnOrganizeTagsClicked -> send(SettingsUiAction.NavigateToTags)
+            SettingsEvent.OnOrganizeSectionsClicked -> sendUiAction(SettingsUiAction.NavigateToSections)
+            SettingsEvent.OnOrganizeTagsClicked -> sendUiAction(SettingsUiAction.NavigateToTags)
         }
     }
 
-    private fun send(action: SettingsUiAction) = viewModelScope.launch {
-        _action.send(action)
+    private fun sendUiAction(action: SettingsUiAction) = viewModelScope.launch {
+        _uiAction.send(action)
     }
 }

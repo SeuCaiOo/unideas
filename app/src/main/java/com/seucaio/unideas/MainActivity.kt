@@ -11,6 +11,9 @@ import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
 import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
+import com.seucaio.unideas.feature.settings.navigation.SettingsRoute
+import com.seucaio.unideas.feature.settings.navigation.settingsNavGraph
+import com.seucaio.unideas.feature.tags.navigation.TagsRoute
 import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 class MainActivity : ComponentActivity() {
@@ -20,16 +23,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             UnideasTheme {
                 val navController = rememberNavController()
-                // SectionsRoute.List is a placeholder startDestination until Home (#27) exists —
-                // no back stack to pop yet, so no back button (null) until Home takes over as root.
+                // SettingsRoute.Settings is a placeholder startDestination until Home (#27)
+                // exists — it's the natural temporary root since it's the screen that fans out
+                // to Sections/Tags. No back stack to pop from it yet, so no back button (null).
                 NavHost(
                     navController = navController,
-                    startDestination = SectionsRoute.List,
+                    startDestination = SettingsRoute.Settings,
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    sectionsNavGraph(onNavigateBack = null)
-                    // Not reachable yet — no screen navigates here until Settings (#46) exists.
-                    // Registered now so the graph/DI wiring is ready when that entry point lands.
+                    settingsNavGraph(
+                        versionName = BuildConfig.VERSION_NAME,
+                        onNavigateBack = null,
+                        onNavigateToSections = { navController.navigate(SectionsRoute.List) },
+                        onNavigateToTags = { navController.navigate(TagsRoute.List) },
+                    )
+                    sectionsNavGraph(onNavigateBack = navController::popBackStack)
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                 }
             }

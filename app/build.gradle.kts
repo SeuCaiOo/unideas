@@ -78,6 +78,11 @@ android {
     lint {
         abortOnError = false
     }
+    packaging {
+        // :feature:settings -> :core:backup pulls the Google Drive API, whose httpclient/
+        // httpcore transitive deps both ship a META-INF/DEPENDENCIES file with the same path.
+        resources.excludes.add("META-INF/DEPENDENCIES")
+    }
 }
 
 // Distinguishable APK filenames (unideas-v<version>[-debug].apk) instead of the
@@ -164,6 +169,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":feature:sections"))
     implementation(project(":feature:tags"))
+    implementation(project(":feature:settings"))
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Compose BOM — aligns versions for every Compose artifact below

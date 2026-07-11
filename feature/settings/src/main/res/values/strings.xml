@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Settings</string>
+    <string name="settings_organize_section">Organize</string>
+    <string name="settings_organize_sections">Sections</string>
+    <string name="settings_organize_tags">Tags</string>
+    <string name="settings_backup_section">Backup</string>
+    <string name="settings_backup_disconnected">Not connected</string>
+</resources>

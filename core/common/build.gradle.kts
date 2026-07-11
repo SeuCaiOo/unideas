@@ -20,11 +20,16 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain"))
+
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.coroutines.android)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
 
     detektPlugins(libs.bundles.detekt)
 }

@@ -32,4 +32,8 @@
     <string name="item_detail_complete">Mark as complete</string>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
+    <string name="items_list_title">Items</string>
+    <string name="items_list_empty">No items yet</string>
+    <string name="items_list_load_error">Couldn\'t load items</string>
+    <string name="items_list_add">New item</string>
 </resources>

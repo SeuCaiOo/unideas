@@ -51,4 +51,14 @@ class SettingsViewModelTest {
             assertEquals(SettingsUiAction.NavigateToTags, awaitItem())
         }
     }
+
+    @Test
+    fun `when OnItemsClicked should navigate to items`() = runTest {
+        val vm = SettingsViewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(SettingsEvent.OnItemsClicked)
+            assertEquals(SettingsUiAction.NavigateToItems, awaitItem())
+        }
+    }
 }

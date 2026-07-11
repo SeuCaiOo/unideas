@@ -5,8 +5,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.seucaio.unideas.feature.items.ItemDetailScreen
 import com.seucaio.unideas.feature.items.ItemFormScreen
+import com.seucaio.unideas.feature.items.ItemsListScreen
 
-fun NavGraphBuilder.itemsNavGraph(onNavigateBack: (() -> Unit)?, onNavigateToEdit: (Long) -> Unit) {
+fun NavGraphBuilder.itemsNavGraph(
+    onNavigateBack: (() -> Unit)?,
+    onNavigateToEdit: (Long) -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
+    onNavigateToForm: () -> Unit,
+) {
     composable<ItemsRoute.Form> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Form>()
         ItemFormScreen(itemId = route.itemId, onNavigateBack = onNavigateBack)
@@ -14,5 +20,12 @@ fun NavGraphBuilder.itemsNavGraph(onNavigateBack: (() -> Unit)?, onNavigateToEdi
     composable<ItemsRoute.Detail> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()
         ItemDetailScreen(itemId = route.itemId, onNavigateBack = onNavigateBack, onNavigateToEdit = onNavigateToEdit)
+    }
+    composable<ItemsRoute.List> {
+        ItemsListScreen(
+            onNavigateBack = onNavigateBack,
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToForm = onNavigateToForm,
+        )
     }
 }

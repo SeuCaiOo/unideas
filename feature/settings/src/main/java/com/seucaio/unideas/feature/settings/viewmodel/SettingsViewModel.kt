@@ -23,6 +23,7 @@ class SettingsViewModel : ViewModel() {
         when (event) {
             SettingsEvent.OnOrganizeSectionsClicked -> sendUiAction(SettingsUiAction.NavigateToSections)
             SettingsEvent.OnOrganizeTagsClicked -> sendUiAction(SettingsUiAction.NavigateToTags)
+            SettingsEvent.OnItemsClicked -> sendUiAction(SettingsUiAction.NavigateToItems)
         }
     }
 

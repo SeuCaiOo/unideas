@@ -35,6 +35,13 @@ fun LocalDate.toEpochMilli(): Long =
 fun Long.toLocalDateUtc(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
 
+/**
+ * Converts this [LocalDate] to UTC midnight epoch millis — the inverse of [toLocalDateUtc],
+ * for pre-selecting a Material3 DatePicker/DateRangePicker with an existing date.
+ */
+fun LocalDate.toEpochMilliUtc(): Long =
+    atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+
 /** Formats this [LocalDate] as `dd/MM/yyyy`. */
 fun LocalDate.toFormattedDateString(): String = format(dateFormatter)
 

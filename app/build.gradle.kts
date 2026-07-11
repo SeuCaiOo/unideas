@@ -171,6 +171,7 @@ dependencies {
     implementation(project(":feature:sections"))
     implementation(project(":feature:tags"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:items"))
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Compose BOM — aligns versions for every Compose artifact below

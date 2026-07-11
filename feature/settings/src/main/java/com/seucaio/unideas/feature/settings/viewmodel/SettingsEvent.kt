@@ -6,4 +6,6 @@ sealed interface SettingsEvent {
     data object OnOrganizeSectionsClicked : SettingsEvent
 
     data object OnOrganizeTagsClicked : SettingsEvent
+
+    data object OnItemsClicked : SettingsEvent
 }

@@ -38,13 +38,16 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = null,
                         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
                         onNavigateToTags = { navController.navigate(TagsRoute.List) },
+                        // Debug-only entry point until Home (#27) ships as the real one.
+                        onNavigateToItems = { navController.navigate(ItemsRoute.List) },
                     )
                     sectionsNavGraph(onNavigateBack = navController::popBackStack)
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
-                    // No entry point yet — the FAB that opens this (Home, #27) doesn't exist.
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
                         onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
+                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToForm = { navController.navigate(ItemsRoute.Form()) },
                     )
                 }
             }

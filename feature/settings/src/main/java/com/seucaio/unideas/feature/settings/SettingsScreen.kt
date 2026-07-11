@@ -33,17 +33,20 @@ fun SettingsScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
+    onNavigateToItems: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val updatedOnNavigateToSections by rememberUpdatedState(onNavigateToSections)
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
+    val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
                 is SettingsUiAction.NavigateToSections -> updatedOnNavigateToSections()
                 is SettingsUiAction.NavigateToTags -> updatedOnNavigateToTags()
+                is SettingsUiAction.NavigateToItems -> updatedOnNavigateToItems()
             }
         }
     }
@@ -104,6 +107,13 @@ private fun SettingsBody(
         UnideasListItem(
             title = stringResource(R.string.settings_backup_section),
             subtitle = stringResource(R.string.settings_backup_disconnected),
+        )
+
+        // Temporary entry point until Home (#27) ships as the real way to reach Items.
+        SettingsSectionHeader(stringResource(R.string.settings_debug_section))
+        UnideasListItem(
+            title = stringResource(R.string.settings_debug_items),
+            onClick = { onEvent(SettingsEvent.OnItemsClicked) },
         )
     }
 }

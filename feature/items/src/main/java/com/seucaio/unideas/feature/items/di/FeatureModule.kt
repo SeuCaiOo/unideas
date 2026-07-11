@@ -2,7 +2,9 @@ package com.seucaio.unideas.feature.items.di
 
 import com.seucaio.unideas.feature.items.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.viewmodel.ItemFormViewModel
+import com.seucaio.unideas.feature.items.viewmodel.ItemsListViewModel
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val itemsModule = module {
@@ -26,4 +28,5 @@ val itemsModule = module {
             completeItem = get(),
         )
     }
+    viewModelOf(::ItemsListViewModel)
 }

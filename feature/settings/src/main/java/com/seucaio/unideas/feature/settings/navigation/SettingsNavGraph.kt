@@ -9,6 +9,7 @@ fun NavGraphBuilder.settingsNavGraph(
     onNavigateBack: (() -> Unit)?,
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
+    onNavigateToItems: () -> Unit,
 ) {
     composable<SettingsRoute.Settings> {
         SettingsScreen(
@@ -16,6 +17,7 @@ fun NavGraphBuilder.settingsNavGraph(
             onNavigateBack = onNavigateBack,
             onNavigateToSections = onNavigateToSections,
             onNavigateToTags = onNavigateToTags,
+            onNavigateToItems = onNavigateToItems,
         )
     }
 }

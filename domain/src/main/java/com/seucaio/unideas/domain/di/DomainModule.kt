@@ -8,6 +8,7 @@ import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
@@ -48,4 +49,5 @@ val domainModule = module {
     factoryOf(::EditItemUseCase)
     factoryOf(::DeleteItemUseCase)
     factoryOf(::CompleteItemUseCase)
+    factoryOf(::ItemUseCase)
 }

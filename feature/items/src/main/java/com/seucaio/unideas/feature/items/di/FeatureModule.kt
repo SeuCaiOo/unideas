@@ -21,9 +21,7 @@ val itemsModule = module {
     viewModel { params ->
         ItemDetailViewModel(
             itemId = params.get(),
-            getItemDetail = get(),
-            deleteItem = get(),
-            completeItem = get(),
+            itemUseCase = get(),
         )
     }
     viewModelOf(::ItemsListViewModel)

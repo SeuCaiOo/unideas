@@ -8,9 +8,7 @@ import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
-import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
-import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
-import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -37,15 +35,16 @@ import java.time.LocalDateTime
  * instead of the "flat list" exception — but no `combine` is needed for it: neither the
  * available sections nor the available tags can change while this screen is open (both are
  * only created/edited from Settings, a separate screen), so [GetSectionsAndTagsUseCase] is a
- * one-time snapshot loaded once, same as [originalItem].
+ * one-time snapshot loaded once, same as [originalItem]. [ItemFormUseCase] is a delegating
+ * facade over the single-purpose use cases this screen needs (get, create, edit) — named after
+ * this screen since [com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase] needs a
+ * different subset of Item's use cases.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemFormViewModel(
     private val itemId: Long?,
-    private val getItem: GetItemUseCase,
+    private val itemFormUseCase: ItemFormUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
-    private val createItem: CreateItemUseCase,
-    private val editItem: EditItemUseCase,
 ) : ViewModel() {
 
     private data class InternalState(
@@ -99,7 +98,7 @@ class ItemFormViewModel(
     }
 
     private suspend fun loadItem(id: Long) {
-        val item = getItem(id).first() ?: error("Item $id not found")
+        val item = itemFormUseCase.get(id).first() ?: error("Item $id not found")
         originalItem = item
         internalState.update {
             it.copy(
@@ -142,7 +141,7 @@ class ItemFormViewModel(
         val selectedTags = state.availableTags.filter { it.id in state.selectedTagIds }
 
         val result: Result<Unit> = if (itemId == null) {
-            createItem(
+            itemFormUseCase.create(
                 Item(
                     type = state.type,
                     title = state.title,
@@ -156,7 +155,7 @@ class ItemFormViewModel(
             ).map { }
         } else {
             val original = originalItem ?: return@launch
-            editItem(
+            itemFormUseCase.edit(
                 original.copy(
                     type = state.type,
                     title = state.title,

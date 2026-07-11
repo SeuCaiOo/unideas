@@ -15,13 +15,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDateTime
 
-/** [ItemUseCase] is a delegating facade — these tests only check the delegation itself. */
-class ItemUseCaseTest {
+/** [ItemDetailUseCase] is a delegating facade — these tests only check the delegation itself. */
+class ItemDetailUseCaseTest {
 
     private val getItemDetail: GetItemDetailUseCase = mockk()
     private val deleteItem: DeleteItemUseCase = mockk()
     private val completeItem: CompleteItemUseCase = mockk()
-    private val useCase = ItemUseCase(getItemDetail, deleteItem, completeItem)
+    private val useCase = ItemDetailUseCase(getItemDetail, deleteItem, completeItem)
 
     @Test
     fun `getDetail delegates to GetItemDetailUseCase`() = runTest {

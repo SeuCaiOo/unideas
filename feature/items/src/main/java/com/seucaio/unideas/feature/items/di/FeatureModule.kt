@@ -12,16 +12,14 @@ val itemsModule = module {
     viewModel { params ->
         ItemFormViewModel(
             itemId = params.getOrNull(),
-            getItem = get(),
+            itemFormUseCase = get(),
             getSectionsAndTags = get(),
-            createItem = get(),
-            editItem = get(),
         )
     }
     viewModel { params ->
         ItemDetailViewModel(
             itemId = params.get(),
-            itemUseCase = get(),
+            itemDetailUseCase = get(),
         )
     }
     viewModelOf(::ItemsListViewModel)

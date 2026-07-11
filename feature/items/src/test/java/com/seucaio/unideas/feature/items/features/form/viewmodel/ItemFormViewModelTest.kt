@@ -7,9 +7,7 @@ import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
-import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
-import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
-import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -32,16 +30,10 @@ import org.junit.Test
 class ItemFormViewModelTest {
 
     @MockK
-    private lateinit var getItem: GetItemUseCase
+    private lateinit var itemFormUseCase: ItemFormUseCase
 
     @MockK
     private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
-
-    @MockK
-    private lateinit var createItem: CreateItemUseCase
-
-    @MockK
-    private lateinit var editItem: EditItemUseCase
 
     @Before
     fun setUp() {
@@ -56,7 +48,7 @@ class ItemFormViewModelTest {
     }
 
     private fun viewModel(itemId: Long? = null) =
-        ItemFormViewModel(itemId, getItem, getSectionsAndTags, createItem, editItem)
+        ItemFormViewModel(itemId, itemFormUseCase, getSectionsAndTags)
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
@@ -72,9 +64,9 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when editing should load the item fields via GetItemUseCase`() = runTest {
+    fun `when editing should load the item fields via ItemFormUseCase's get`() = runTest {
         val item = ItemStub.task(id = 1L, tags = listOf(TagStub.tag(id = 1L)))
-        every { getItem(1L) } returns flowOf(item)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -89,7 +81,7 @@ class ItemFormViewModelTest {
 
     @Test
     fun `when the item is not found should emit Error`() = runTest {
-        every { getItem(1L) } returns flowOf(null)
+        every { itemFormUseCase.get(1L) } returns flowOf(null)
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -100,7 +92,7 @@ class ItemFormViewModelTest {
     @Test
     fun `when OnRetryClicked after a load error should retry and succeed`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItem(1L) } returnsMany listOf(flowOf(null), flowOf(item))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(null), flowOf(item))
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -142,8 +134,8 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when OnSaveClicked in create mode should call CreateItemUseCase and navigate back`() = runTest {
-        coEvery { createItem(any()) } returns Result.success(10L)
+    fun `when OnSaveClicked in create mode should call ItemFormUseCase's create and navigate back`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
@@ -156,17 +148,17 @@ class ItemFormViewModelTest {
         }
 
         coVerify(exactly = 1) {
-            createItem(
+            itemFormUseCase.create(
                 match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) },
             )
         }
     }
 
     @Test
-    fun `when OnSaveClicked in edit mode should call EditItemUseCase and navigate back`() = runTest {
+    fun `when OnSaveClicked in edit mode should call ItemFormUseCase's edit and navigate back`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItem(1L) } returns flowOf(item)
-        coEvery { editItem(any()) } returns Result.success(Unit)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test { awaitItem() }
@@ -177,12 +169,12 @@ class ItemFormViewModelTest {
             assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
         }
 
-        coVerify(exactly = 1) { editItem(match { it.id == 1L && it.title == "Título editado" }) }
+        coVerify(exactly = 1) { itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" }) }
     }
 
     @Test
     fun `when OnSaveClicked with blank title should emit a title-required snackbar`() = runTest {
-        coEvery { createItem(any()) } returns Result.failure(IllegalArgumentException("Title is required"))
+        coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalArgumentException("Title is required"))
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
@@ -195,7 +187,7 @@ class ItemFormViewModelTest {
 
     @Test
     fun `when the use case fails unexpectedly should emit ShowError with the exception message`() = runTest {
-        coEvery { createItem(any()) } returns Result.failure(IllegalStateException("boom"))
+        coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalStateException("boom"))
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }

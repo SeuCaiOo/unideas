@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.usecase.item.ItemUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -29,22 +29,24 @@ import java.time.LocalDateTime
 
 /**
  * ViewModel for the read-only item detail screen. Unlike the form (#54), there's no in-progress
- * editing to protect — `uiState` stays fully reactive to `ItemUseCase.getDetail`, same "no
+ * editing to protect — `uiState` stays fully reactive to `ItemDetailUseCase.getDetail`, same "no
  * combine" pattern as Sections/Tags. The section name is resolved in `:data` (Room join,
  * `ItemWithTagsAndSection`) — the ViewModel never combines a second flow to do that lookup
- * itself. [ItemUseCase] is a delegating facade over the single-purpose use cases this screen
- * needs (get detail, delete, complete) — same shape as Sections/Tags' use case facades.
+ * itself. [ItemDetailUseCase] is a delegating facade over the single-purpose use cases this
+ * screen needs (get detail, delete, complete) — same shape as Sections/Tags' use case facades,
+ * but named after this screen since [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase]
+ * needs a different subset of Item's use cases.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemDetailViewModel(
     private val itemId: Long,
-    private val itemUseCase: ItemUseCase,
+    private val itemDetailUseCase: ItemDetailUseCase,
 ) : ViewModel() {
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
     val uiState: StateFlow<ItemDetailUiState> = retryTrigger.flatMapLatest {
-        itemUseCase.getDetail(itemId)
+        itemDetailUseCase.getDetail(itemId)
             .map { detail ->
                 detail?.let { ItemDetailUiState.Success(it.item, it.sectionName) }
                     ?: ItemDetailUiState.Error(R.string.item_detail_load_error)
@@ -83,7 +85,7 @@ class ItemDetailViewModel(
 
     private fun handleDelete() = viewModelScope.launch {
         _dialogState.update { ItemDetailDialogState.None }
-        runCatching { itemUseCase.delete(itemId) }
+        runCatching { itemDetailUseCase.delete(itemId) }
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
@@ -91,7 +93,7 @@ class ItemDetailViewModel(
     private fun handleComplete() = viewModelScope.launch {
         val item = currentItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
-        itemUseCase.complete(item, LocalDateTime.now())
+        itemDetailUseCase.complete(item, LocalDateTime.now())
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 

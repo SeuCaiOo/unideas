@@ -1,11 +1,12 @@
-package com.seucaio.unideas.feature.items
+package com.seucaio.unideas.feature.items.features.detail.screen
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
 import java.time.LocalDateTime
 

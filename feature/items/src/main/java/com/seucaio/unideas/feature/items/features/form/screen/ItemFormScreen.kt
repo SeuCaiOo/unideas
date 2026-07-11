@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items
+package com.seucaio.unideas.feature.items.features.form.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,10 +56,11 @@ import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.viewmodel.ItemFormEvent
-import com.seucaio.unideas.feature.items.viewmodel.ItemFormUiAction
-import com.seucaio.unideas.feature.items.viewmodel.ItemFormUiState
-import com.seucaio.unideas.feature.items.viewmodel.ItemFormViewModel
+import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 

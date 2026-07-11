@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.viewmodel
+package com.seucaio.unideas.feature.items.features.detail.viewmodel
 
 import androidx.annotation.StringRes
 import com.seucaio.unideas.domain.model.Item

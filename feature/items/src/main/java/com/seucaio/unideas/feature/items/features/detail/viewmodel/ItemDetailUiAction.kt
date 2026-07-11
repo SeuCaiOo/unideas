@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.viewmodel
+package com.seucaio.unideas.feature.items.features.detail.viewmodel
 
 /** One-shot UI actions for the item detail screen. */
 sealed interface ItemDetailUiAction {

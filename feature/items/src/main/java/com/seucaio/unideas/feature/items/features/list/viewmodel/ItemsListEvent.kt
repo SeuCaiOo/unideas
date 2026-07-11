@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.viewmodel
+package com.seucaio.unideas.feature.items.features.list.viewmodel
 
 /** User interactions on the dev-only item listing screen. */
 sealed interface ItemsListEvent {

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items
+package com.seucaio.unideas.feature.items.features.list.screen
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,10 +27,11 @@ import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.feature.items.viewmodel.ItemsListEvent
-import com.seucaio.unideas.feature.items.viewmodel.ItemsListUiAction
-import com.seucaio.unideas.feature.items.viewmodel.ItemsListUiState
-import com.seucaio.unideas.feature.items.viewmodel.ItemsListViewModel
+import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListEvent
+import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListUiAction
+import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListUiState
+import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

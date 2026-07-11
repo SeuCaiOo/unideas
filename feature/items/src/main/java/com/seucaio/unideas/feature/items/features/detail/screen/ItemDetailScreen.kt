@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items
+package com.seucaio.unideas.feature.items.features.detail.screen
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Column
@@ -49,11 +49,12 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.UrgencyLevel
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailDialogState
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailEvent
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailUiAction
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailUiState
-import com.seucaio.unideas.feature.items.viewmodel.ItemDetailViewModel
+import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailDialogState
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.time.LocalDate

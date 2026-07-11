@@ -3,7 +3,7 @@ package com.seucaio.unideas.domain.usecase
 import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
+import com.seucaio.unideas.domain.usecase.section.SectionUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import io.mockk.every
 import io.mockk.mockk
@@ -15,13 +15,13 @@ import org.junit.Test
 
 class GetSectionsAndTagsUseCaseTest {
 
-    private val getSections: GetSectionsUseCase = mockk()
+    private val sectionUseCase: SectionUseCase = mockk()
     private val getTags: GetTagsUseCase = mockk()
-    private val useCase = GetSectionsAndTagsUseCase(getSections, getTags)
+    private val useCase = GetSectionsAndTagsUseCase(sectionUseCase, getTags)
 
     @Test
     fun `invoke returns a snapshot with both lists`() = runTest {
-        every { getSections() } returns flowOf(SectionStub.sections())
+        every { sectionUseCase.getAll() } returns flowOf(SectionStub.sections())
         every { getTags() } returns flowOf(TagStub.tags())
 
         val result = useCase()
@@ -31,7 +31,7 @@ class GetSectionsAndTagsUseCaseTest {
 
     @Test
     fun `invoke falls back to an empty sections list when that flow throws`() = runTest {
-        every { getSections() } returns flow { throw IllegalStateException("boom") }
+        every { sectionUseCase.getAll() } returns flow { throw IllegalStateException("boom") }
         every { getTags() } returns flowOf(TagStub.tags())
 
         val result = useCase()
@@ -41,7 +41,7 @@ class GetSectionsAndTagsUseCaseTest {
 
     @Test
     fun `invoke falls back to an empty tags list when that flow throws`() = runTest {
-        every { getSections() } returns flowOf(SectionStub.sections())
+        every { sectionUseCase.getAll() } returns flowOf(SectionStub.sections())
         every { getTags() } returns flow { throw IllegalStateException("boom") }
 
         val result = useCase()

@@ -12,6 +12,7 @@ import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.domain.usecase.section.RenameSectionUseCase
+import com.seucaio.unideas.domain.usecase.section.SectionUseCase
 import com.seucaio.unideas.domain.usecase.tag.AddTagUseCase
 import com.seucaio.unideas.domain.usecase.tag.DeleteTagUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
@@ -29,6 +30,7 @@ val domainModule = module {
     factoryOf(::AddSectionUseCase)
     factoryOf(::RenameSectionUseCase)
     factoryOf(::DeleteSectionUseCase)
+    factoryOf(::SectionUseCase)
 
     factoryOf(::GetTagsUseCase)
     factoryOf(::AddTagUseCase)

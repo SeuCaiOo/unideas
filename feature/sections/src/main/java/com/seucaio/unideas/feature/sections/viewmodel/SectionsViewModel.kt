@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.outcome.DeletionStatus
-import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
-import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
-import com.seucaio.unideas.domain.usecase.section.RenameSectionUseCase
+import com.seucaio.unideas.domain.usecase.section.SectionUseCase
 import com.seucaio.unideas.feature.sections.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -28,10 +25,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SectionsViewModel(
-    private val getSections: GetSectionsUseCase,
-    private val addSection: AddSectionUseCase,
-    private val renameSection: RenameSectionUseCase,
-    private val deleteSection: DeleteSectionUseCase,
+    private val sectionUseCase: SectionUseCase,
 ) : ViewModel() {
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
@@ -39,7 +33,7 @@ class SectionsViewModel(
     // region States
 
     val uiState: StateFlow<SectionsUiState> = retryTrigger.flatMapLatest {
-        getSections()
+        sectionUseCase.getAll()
             .map<List<Section>, SectionsUiState> { SectionsUiState.Success(it) }
             .onStart { emit(SectionsUiState.Loading) }
             .catch { emit(SectionsUiState.Error(R.string.sections_load_error)) }
@@ -71,14 +65,14 @@ class SectionsViewModel(
     private fun handleDialog(state: SectionsDialogState) = _dialogState.update { state }
 
     private fun handleAdd(name: String) = viewModelScope.launch {
-        addSection(name)
+        sectionUseCase.add(name)
             .onSuccess { handleDialog(SectionsDialogState.None) }
             .onFailure { handleFailure(it) }
     }
 
     private fun handleRename(newName: String) = viewModelScope.launch {
         val section = (_dialogState.value as? SectionsDialogState.Rename)?.section ?: return@launch
-        renameSection(section.copy(name = newName))
+        sectionUseCase.rename(section.copy(name = newName))
             .onSuccess { handleDialog(SectionsDialogState.None) }
             .onFailure { handleFailure(it) }
     }
@@ -86,7 +80,7 @@ class SectionsViewModel(
     private fun handleDelete() = viewModelScope.launch {
         val section = (_dialogState.value as? SectionsDialogState.Delete)?.section ?: return@launch
         handleDialog(SectionsDialogState.None)
-        deleteSection(section.id)
+        sectionUseCase.delete(section.id)
             .onSuccess { handleDeletionStatus(it) }
             .onFailure { handleFailure(it) }
     }

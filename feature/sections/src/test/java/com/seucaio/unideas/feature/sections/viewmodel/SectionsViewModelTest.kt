@@ -58,7 +58,7 @@ class SectionsViewModelTest {
     }
 
     @Test
-    fun `when the flow emits sections should update uiState to Success with no dialog`() = runTest {
+    fun `when the flow emits sections should update uiState to Success`() = runTest {
         val sections = SectionStub.sections()
         every { getSections() } returns flowOf(sections)
         val vm = SectionsViewModel(getSections, addSection, renameSection, deleteSection)
@@ -90,7 +90,6 @@ class SectionsViewModelTest {
         vm.uiState.test {
             assertEquals(SectionsUiState.Error(R.string.sections_load_error), awaitItem())
             vm.onEvent(SectionsEvent.OnRetryClicked)
-            assertEquals(SectionsUiState.Loading, awaitItem())
             assertEquals(SectionsUiState.Success(sections), awaitItem())
         }
     }
@@ -99,12 +98,9 @@ class SectionsViewModelTest {
     fun `when OnAddClicked should show the Add dialog`() = runTest {
         val vm = viewModel()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnAddClicked)
-            val state = awaitItem() as SectionsUiState.Success
-            assertEquals(SectionsDialogState.Add, state.dialog)
-        }
+        vm.onEvent(SectionsEvent.OnAddClicked)
+
+        assertEquals(SectionsDialogState.Add, vm.dialogState.value)
     }
 
     @Test
@@ -112,15 +108,11 @@ class SectionsViewModelTest {
         val vm = viewModel()
         coEvery { addSection.invoke("Trabalho") } returns Result.success(1L)
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnAddClicked)
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnAddConfirmClicked("Trabalho"))
-            val state = awaitItem() as SectionsUiState.Success
-            assertEquals(SectionsDialogState.None, state.dialog)
-        }
+        vm.onEvent(SectionsEvent.OnAddClicked)
+        vm.onEvent(SectionsEvent.OnAddConfirmClicked("Trabalho"))
+
         coVerify(exactly = 1) { addSection.invoke("Trabalho") }
+        assertEquals(SectionsDialogState.None, vm.dialogState.value)
     }
 
     @Test
@@ -128,7 +120,7 @@ class SectionsViewModelTest {
         val vm = viewModel()
         coEvery { addSection.invoke("") } returns Result.failure(IllegalArgumentException("Name is required"))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SectionsEvent.OnAddConfirmClicked(""))
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_name_required), awaitItem())
         }
@@ -139,12 +131,9 @@ class SectionsViewModelTest {
         val vm = viewModel()
         val section = SectionStub.section()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnRenameClicked(section))
-            val state = awaitItem() as SectionsUiState.Success
-            assertEquals(SectionsDialogState.Rename(section), state.dialog)
-        }
+        vm.onEvent(SectionsEvent.OnRenameClicked(section))
+
+        assertEquals(SectionsDialogState.Rename(section), vm.dialogState.value)
     }
 
     @Test
@@ -169,7 +158,7 @@ class SectionsViewModelTest {
 
         vm.onEvent(SectionsEvent.OnRenameClicked(section))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SectionsEvent.OnRenameConfirmClicked(""))
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_name_required), awaitItem())
         }
@@ -180,12 +169,9 @@ class SectionsViewModelTest {
         val vm = viewModel()
         val section = SectionStub.section()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnDeleteClicked(section))
-            val state = awaitItem() as SectionsUiState.Success
-            assertEquals(SectionsDialogState.Delete(section), state.dialog)
-        }
+        vm.onEvent(SectionsEvent.OnDeleteClicked(section))
+
+        assertEquals(SectionsDialogState.Delete(section), vm.dialogState.value)
     }
 
     @Test
@@ -196,7 +182,7 @@ class SectionsViewModelTest {
 
         vm.onEvent(SectionsEvent.OnDeleteClicked(section))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SectionsEvent.OnDeleteConfirmClicked)
             assertEquals(SectionsUiAction.ShowSnackbar(R.string.section_delete_blocked, listOf(3)), awaitItem())
         }
@@ -222,7 +208,7 @@ class SectionsViewModelTest {
 
         vm.onEvent(SectionsEvent.OnDeleteClicked(section))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SectionsEvent.OnDeleteConfirmClicked)
             assertEquals(SectionsUiAction.ShowError("boom"), awaitItem())
         }
@@ -232,13 +218,9 @@ class SectionsViewModelTest {
     fun `when OnDialogDismissed should hide the dialog`() = runTest {
         val vm = viewModel()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnAddClicked)
-            skipItems(1)
-            vm.onEvent(SectionsEvent.OnDialogDismissed)
-            val state = awaitItem() as SectionsUiState.Success
-            assertEquals(SectionsDialogState.None, state.dialog)
-        }
+        vm.onEvent(SectionsEvent.OnAddClicked)
+        vm.onEvent(SectionsEvent.OnDialogDismissed)
+
+        assertEquals(SectionsDialogState.None, vm.dialogState.value)
     }
 }

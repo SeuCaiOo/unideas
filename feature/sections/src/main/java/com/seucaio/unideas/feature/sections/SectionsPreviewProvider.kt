@@ -5,29 +5,38 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsDialogState
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsUiState
 
-class SectionsPreviewProvider : PreviewParameterProvider<SectionsUiState> {
+/** [uiState] and [dialogState] are independent StateFlows in the ViewModel — bundled here only so
+ * a single PreviewParameterProvider can simulate every combination for the Screen preview. */
+data class SectionsPreviewState(
+    val uiState: SectionsUiState,
+    val dialogState: SectionsDialogState = SectionsDialogState.None,
+)
 
-    override val values: Sequence<SectionsUiState> = sequenceOf(
-        SectionsUiState.Loading,
-        SectionsUiState.Success(sections = emptyList()),
-        SectionsUiState.Success(
-            sections = listOf(
-                Section(id = 1L, name = "Work"),
-                Section(id = 2L, name = "Home"),
+class SectionsPreviewProvider : PreviewParameterProvider<SectionsPreviewState> {
+
+    override val values: Sequence<SectionsPreviewState> = sequenceOf(
+        SectionsPreviewState(SectionsUiState.Loading),
+        SectionsPreviewState(SectionsUiState.Success(sections = emptyList())),
+        SectionsPreviewState(
+            SectionsUiState.Success(
+                sections = listOf(
+                    Section(id = 1L, name = "Work"),
+                    Section(id = 2L, name = "Home"),
+                ),
             ),
         ),
-        SectionsUiState.Error(messageRes = R.string.sections_load_error),
-        SectionsUiState.Success(
-            sections = listOf(Section(id = 1L, name = "Work")),
-            dialog = SectionsDialogState.Add,
+        SectionsPreviewState(SectionsUiState.Error(messageRes = R.string.sections_load_error)),
+        SectionsPreviewState(
+            uiState = SectionsUiState.Success(sections = listOf(Section(id = 1L, name = "Work"))),
+            dialogState = SectionsDialogState.Add,
         ),
-        SectionsUiState.Success(
-            sections = listOf(Section(id = 1L, name = "Work")),
-            dialog = SectionsDialogState.Rename(Section(id = 1L, name = "Work")),
+        SectionsPreviewState(
+            uiState = SectionsUiState.Success(sections = listOf(Section(id = 1L, name = "Work"))),
+            dialogState = SectionsDialogState.Rename(Section(id = 1L, name = "Work")),
         ),
-        SectionsUiState.Success(
-            sections = listOf(Section(id = 1L, name = "Work")),
-            dialog = SectionsDialogState.Delete(Section(id = 1L, name = "Work")),
+        SectionsPreviewState(
+            uiState = SectionsUiState.Success(sections = listOf(Section(id = 1L, name = "Work"))),
+            dialogState = SectionsDialogState.Delete(Section(id = 1L, name = "Work")),
         ),
     )
 }

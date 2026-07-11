@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.sections
+package com.seucaio.unideas.feature.tags
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -40,18 +40,18 @@ import com.seucaio.unideas.core.ui.components.UnideasListItem
 import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
-import com.seucaio.unideas.domain.model.Section
-import com.seucaio.unideas.feature.sections.viewmodel.SectionsDialogState
-import com.seucaio.unideas.feature.sections.viewmodel.SectionsEvent
-import com.seucaio.unideas.feature.sections.viewmodel.SectionsUiAction
-import com.seucaio.unideas.feature.sections.viewmodel.SectionsUiState
-import com.seucaio.unideas.feature.sections.viewmodel.SectionsViewModel
+import com.seucaio.unideas.domain.model.Tag
+import com.seucaio.unideas.feature.tags.viewmodel.TagsDialogState
+import com.seucaio.unideas.feature.tags.viewmodel.TagsEvent
+import com.seucaio.unideas.feature.tags.viewmodel.TagsUiAction
+import com.seucaio.unideas.feature.tags.viewmodel.TagsUiState
+import com.seucaio.unideas.feature.tags.viewmodel.TagsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SectionsScreen(
+fun TagsScreen(
     onNavigateBack: (() -> Unit)?,
-    viewModel: SectionsViewModel = koinViewModel(),
+    viewModel: TagsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
@@ -61,15 +61,15 @@ fun SectionsScreen(
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             val message = when (action) {
-                is SectionsUiAction.ShowSnackbar ->
+                is TagsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
-                is SectionsUiAction.ShowError -> action.message
+                is TagsUiAction.ShowError -> action.message
             }
             snackbarHostState.showSnackbar(message)
         }
     }
 
-    SectionsContent(
+    TagsContent(
         uiState = uiState,
         dialogState = dialogState,
         onEvent = viewModel::onEvent,
@@ -80,10 +80,10 @@ fun SectionsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SectionsContent(
-    uiState: SectionsUiState,
-    dialogState: SectionsDialogState,
-    onEvent: (SectionsEvent) -> Unit,
+private fun TagsContent(
+    uiState: TagsUiState,
+    dialogState: TagsDialogState,
+    onEvent: (TagsEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -91,46 +91,46 @@ private fun SectionsContent(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(title = stringResource(R.string.sections_title), onNavigateBack = updatedOnNavigateBack)
+            UnideasTopBar(title = stringResource(R.string.tags_title), onNavigateBack = updatedOnNavigateBack)
         },
         floatingActionButton = {
             // FAB only once we have a definitive answer (empty or with data) — not while
-            // loading or errored, since there's nothing to add a section to yet.
-            if (uiState is SectionsUiState.Success) {
-                FloatingActionButton(onClick = { onEvent(SectionsEvent.OnAddClicked) }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sections_add))
+            // loading or errored, since there's nothing to add a tag to yet.
+            if (uiState is TagsUiState.Success) {
+                FloatingActionButton(onClick = { onEvent(TagsEvent.OnAddClicked) }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.tags_add))
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        SectionsBody(uiState = uiState, padding = padding, onEvent = onEvent)
+        TagsBody(uiState = uiState, padding = padding, onEvent = onEvent)
     }
 
-    SectionsDialogs(dialogState = dialogState, onEvent = onEvent)
+    TagsDialogs(dialogState = dialogState, onEvent = onEvent)
 }
 
 @Composable
-private fun SectionsBody(
-    uiState: SectionsUiState,
+private fun TagsBody(
+    uiState: TagsUiState,
     padding: PaddingValues,
-    onEvent: (SectionsEvent) -> Unit,
+    onEvent: (TagsEvent) -> Unit,
 ) {
     when (uiState) {
-        is SectionsUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
-        is SectionsUiState.Error ->
+        is TagsUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
+        is TagsUiState.Error ->
             UnideasErrorContent(
                 messageRes = uiState.messageRes,
-                onRetry = { onEvent(SectionsEvent.OnRetryClicked) },
+                onRetry = { onEvent(TagsEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-        is SectionsUiState.Success -> {
-            if (uiState.sections.isEmpty()) {
-                UnideasEmptyContent(messageRes = R.string.sections_empty, modifier = Modifier.padding(padding))
+        is TagsUiState.Success -> {
+            if (uiState.tags.isEmpty()) {
+                UnideasEmptyContent(messageRes = R.string.tags_empty, modifier = Modifier.padding(padding))
             } else {
                 LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
-                    items(uiState.sections, key = { it.id }) { section ->
-                        SectionRow(section = section, onEvent = onEvent)
+                    items(uiState.tags, key = { it.id }) { tag ->
+                        TagRow(tag = tag, onEvent = onEvent)
                     }
                 }
             }
@@ -139,32 +139,32 @@ private fun SectionsBody(
 }
 
 @Composable
-private fun SectionRow(
-    section: Section,
-    onEvent: (SectionsEvent) -> Unit,
+private fun TagRow(
+    tag: Tag,
+    onEvent: (TagsEvent) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     UnideasListItem(
-        title = section.name,
+        title = tag.name,
         trailingContent = {
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.section_options))
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.tag_options))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.section_rename_action)) },
+                        text = { Text(stringResource(R.string.tag_rename_action)) },
                         onClick = {
                             menuExpanded = false
-                            onEvent(SectionsEvent.OnRenameClicked(section))
+                            onEvent(TagsEvent.OnRenameClicked(tag))
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.section_delete_action)) },
+                        text = { Text(stringResource(R.string.tag_delete_action)) },
                         onClick = {
                             menuExpanded = false
-                            onEvent(SectionsEvent.OnDeleteClicked(section))
+                            onEvent(TagsEvent.OnDeleteClicked(tag))
                         },
                     )
                 }
@@ -174,44 +174,44 @@ private fun SectionRow(
 }
 
 @Composable
-private fun SectionsDialogs(
-    dialogState: SectionsDialogState,
-    onEvent: (SectionsEvent) -> Unit,
+private fun TagsDialogs(
+    dialogState: TagsDialogState,
+    onEvent: (TagsEvent) -> Unit,
 ) {
     when (dialogState) {
-        is SectionsDialogState.None -> Unit
-        is SectionsDialogState.Add ->
+        is TagsDialogState.None -> Unit
+        is TagsDialogState.Add ->
             NameInputDialog(
-                title = stringResource(R.string.sections_add),
-                label = stringResource(R.string.sections_add_label),
-                onConfirm = { name -> onEvent(SectionsEvent.OnAddConfirmClicked(name)) },
-                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
+                title = stringResource(R.string.tags_add),
+                label = stringResource(R.string.tags_add_label),
+                onConfirm = { name -> onEvent(TagsEvent.OnAddConfirmClicked(name)) },
+                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
             )
-        is SectionsDialogState.Rename ->
+        is TagsDialogState.Rename ->
             NameInputDialog(
-                title = stringResource(R.string.sections_rename),
-                label = stringResource(R.string.sections_rename_label),
-                initialValue = dialogState.section.name,
-                onConfirm = { newName -> onEvent(SectionsEvent.OnRenameConfirmClicked(newName)) },
-                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
+                title = stringResource(R.string.tags_rename),
+                label = stringResource(R.string.tags_rename_label),
+                initialValue = dialogState.tag.name,
+                onConfirm = { newName -> onEvent(TagsEvent.OnRenameConfirmClicked(newName)) },
+                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
             )
-        is SectionsDialogState.Delete ->
+        is TagsDialogState.Delete ->
             DeleteConfirmationDialog(
-                titleRes = R.string.section_delete_confirm_title,
-                messageRes = R.string.section_delete_confirm_message,
-                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
-                onConfirm = { onEvent(SectionsEvent.OnDeleteConfirmClicked) },
+                titleRes = R.string.tag_delete_confirm_title,
+                messageRes = R.string.tag_delete_confirm_message,
+                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
+                onConfirm = { onEvent(TagsEvent.OnDeleteConfirmClicked) },
             )
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun SectionsScreenPreview(
-    @PreviewParameter(SectionsPreviewProvider::class) previewState: SectionsPreviewState,
+private fun TagsScreenPreview(
+    @PreviewParameter(TagsPreviewProvider::class) previewState: TagsPreviewState,
 ) {
     UnideasTheme {
-        SectionsContent(
+        TagsContent(
             uiState = previewState.uiState,
             dialogState = previewState.dialogState,
             onEvent = {},

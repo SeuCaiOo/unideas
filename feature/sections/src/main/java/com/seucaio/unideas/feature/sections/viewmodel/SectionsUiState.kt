@@ -8,10 +8,7 @@ sealed interface SectionsUiState {
 
     data object Loading : SectionsUiState
 
-    data class Success(
-        val sections: List<Section>,
-        val dialog: SectionsDialogState = SectionsDialogState.None,
-    ) : SectionsUiState
+    data class Success(val sections: List<Section>) : SectionsUiState
 
     data class Error(@StringRes val messageRes: Int) : SectionsUiState
 }

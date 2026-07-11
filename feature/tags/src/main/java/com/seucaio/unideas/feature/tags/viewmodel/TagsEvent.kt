@@ -5,9 +5,19 @@ import com.seucaio.unideas.domain.model.Tag
 /** User interactions on the manage-tags screen. */
 sealed interface TagsEvent {
 
-    data class OnAddClicked(val name: String) : TagsEvent
+    data object OnAddClicked : TagsEvent
 
-    data class OnRenameClicked(val tag: Tag, val newName: String) : TagsEvent
+    data class OnAddConfirmClicked(val name: String) : TagsEvent
 
-    data class OnDeleteClicked(val id: Long) : TagsEvent
+    data class OnRenameClicked(val tag: Tag) : TagsEvent
+
+    data class OnRenameConfirmClicked(val newName: String) : TagsEvent
+
+    data class OnDeleteClicked(val tag: Tag) : TagsEvent
+
+    data object OnDeleteConfirmClicked : TagsEvent
+
+    data object OnDialogDismissed : TagsEvent
+
+    data object OnRetryClicked : TagsEvent
 }

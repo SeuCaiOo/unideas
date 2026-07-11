@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
 import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
+import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +28,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     sectionsNavGraph(onNavigateBack = null)
+                    // Not reachable yet — no screen navigates here until Settings (#46) exists.
+                    // Registered now so the graph/DI wiring is ready when that entry point lands.
+                    tagsNavGraph(onNavigateBack = navController::popBackStack)
                 }
             }
         }

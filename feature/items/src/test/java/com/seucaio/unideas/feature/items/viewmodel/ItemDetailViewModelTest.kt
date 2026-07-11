@@ -3,9 +3,11 @@ package com.seucaio.unideas.feature.items.viewmodel
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
+import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
+import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -32,6 +34,9 @@ class ItemDetailViewModelTest {
     private lateinit var getItemDetail: GetItemDetailUseCase
 
     @MockK
+    private lateinit var getSections: GetSectionsUseCase
+
+    @MockK
     private lateinit var deleteItem: DeleteItemUseCase
 
     @MockK
@@ -41,6 +46,7 @@ class ItemDetailViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        every { getSections() } returns flowOf(emptyList())
     }
 
     @After
@@ -48,7 +54,8 @@ class ItemDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long = 1L) = ItemDetailViewModel(itemId, getItemDetail, deleteItem, completeItem)
+    private fun viewModel(itemId: Long = 1L) =
+        ItemDetailViewModel(itemId, getItemDetail, getSections, deleteItem, completeItem)
 
     @Test
     fun `when the flow emits an item should update uiState to Success`() = runTest {
@@ -58,6 +65,18 @@ class ItemDetailViewModelTest {
 
         vm.uiState.test {
             assertEquals(ItemDetailUiState.Success(item), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when the item has a section should resolve its name into uiState`() = runTest {
+        val item = ItemStub.task(id = 1L, sectionId = 2L)
+        every { getItemDetail(1L) } returns flowOf(item)
+        every { getSections() } returns flowOf(SectionStub.sections(count = 3))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(ItemDetailUiState.Success(item, "Seção 2"), awaitItem())
         }
     }
 
@@ -90,6 +109,7 @@ class ItemDetailViewModelTest {
         vm.uiState.test {
             assertEquals(ItemDetailUiState.Error(R.string.item_detail_load_error), awaitItem())
             vm.onEvent(ItemDetailEvent.OnRetryClicked)
+            assertEquals(ItemDetailUiState.Loading, awaitItem())
             assertEquals(ItemDetailUiState.Success(item), awaitItem())
         }
     }

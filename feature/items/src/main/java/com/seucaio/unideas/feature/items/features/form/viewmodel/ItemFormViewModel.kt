@@ -7,24 +7,22 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
+import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
-import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -35,15 +33,17 @@ import java.time.LocalDateTime
 
 /**
  * ViewModel for the single create/edit Item form. Unlike Sections/Tags, this screen has real
- * UI-only state (the fields being typed), so `uiState` goes back to the documented
- * `combine(InternalState, domainFlows)` pattern instead of the "flat list" exception.
+ * UI-only state (the fields being typed), so `uiState` keeps deriving from `InternalState`
+ * instead of the "flat list" exception — but no `combine` is needed for it: neither the
+ * available sections nor the available tags can change while this screen is open (both are
+ * only created/edited from Settings, a separate screen), so [GetSectionsAndTagsUseCase] is a
+ * one-time snapshot loaded once, same as [originalItem].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemFormViewModel(
     private val itemId: Long?,
     private val getItem: GetItemUseCase,
-    getSections: GetSectionsUseCase,
-    getTags: GetTagsUseCase,
+    private val getSectionsAndTags: GetSectionsAndTagsUseCase,
     private val createItem: CreateItemUseCase,
     private val editItem: EditItemUseCase,
 ) : ViewModel() {
@@ -56,6 +56,8 @@ class ItemFormViewModel(
         val selectedTagIds: Set<Long> = emptySet(),
         val dueDate: LocalDate? = null,
         val recurrence: Recurrence = Recurrence.None,
+        val availableSections: List<Section> = emptyList(),
+        val availableTags: List<Tag> = emptyList(),
     )
 
     // Preserved once an existing item loads, so save() can carry over id/createdAt/completedAt
@@ -65,39 +67,36 @@ class ItemFormViewModel(
     private val internalState = MutableStateFlow(InternalState())
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
-    // Kept as dedicated StateFlows (not read back from uiState) so handleSave() can resolve
-    // selected tag ids into Tag objects without casting uiState.value to Success. Eagerly, not
-    // WhileSubscribed — retryTrigger's flatMapLatest detaches/reattaches uiState's collector on
-    // every retry, and WhileSubscribed would reset these back to their empty seed value each time.
-    private val availableSections: StateFlow<List<Section>> = getSections()
-        .catch { emit(emptyList()) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-    private val availableTags: StateFlow<List<Tag>> = getTags()
-        .catch { emit(emptyList()) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
     val uiState: StateFlow<ItemFormUiState> = retryTrigger.flatMapLatest {
-        combine(internalState, availableSections, availableTags) { internal, sections, tags ->
-            ItemFormUiState.Success(
-                isEditing = itemId != null,
-                type = internal.type,
-                title = internal.title,
-                description = internal.description,
-                sectionId = internal.sectionId,
-                selectedTagIds = internal.selectedTagIds,
-                dueDate = internal.dueDate,
-                recurrence = internal.recurrence,
-                availableSections = sections,
-                availableTags = tags,
-            ) as ItemFormUiState
-        }
-            .onStart { if (itemId != null) loadItem(itemId) }
+        internalState
+            .map<InternalState, ItemFormUiState> { internal ->
+                ItemFormUiState.Success(
+                    isEditing = itemId != null,
+                    type = internal.type,
+                    title = internal.title,
+                    description = internal.description,
+                    sectionId = internal.sectionId,
+                    selectedTagIds = internal.selectedTagIds,
+                    dueDate = internal.dueDate,
+                    recurrence = internal.recurrence,
+                    availableSections = internal.availableSections,
+                    availableTags = internal.availableTags,
+                )
+            }
+            .onStart { loadFormData() }
             .catch { emit(ItemFormUiState.Error(R.string.item_form_load_error)) }
     }.stateIn(viewModelScope, WhileSubscribed(5_000), ItemFormUiState.Loading)
 
     private val _uiAction = Channel<ItemFormUiAction>(Channel.BUFFERED)
     val uiAction: Flow<ItemFormUiAction> = _uiAction.receiveAsFlow()
+
+    private suspend fun loadFormData() {
+        val referenceData = getSectionsAndTags()
+        internalState.update {
+            it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)
+        }
+        if (itemId != null) loadItem(itemId)
+    }
 
     private suspend fun loadItem(id: Long) {
         val item = getItem(id).first() ?: error("Item $id not found")
@@ -140,7 +139,7 @@ class ItemFormViewModel(
 
     private fun handleSave() = viewModelScope.launch {
         val state = internalState.value
-        val selectedTags = availableTags.value.filter { it.id in state.selectedTagIds }
+        val selectedTags = state.availableTags.filter { it.id in state.selectedTagIds }
 
         val result: Result<Unit> = if (itemId == null) {
             createItem(

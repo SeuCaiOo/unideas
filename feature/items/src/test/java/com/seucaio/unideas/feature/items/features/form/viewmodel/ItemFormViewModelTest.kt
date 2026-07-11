@@ -2,14 +2,14 @@ package com.seucaio.unideas.feature.items.features.form.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
+import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
-import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -18,7 +18,6 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -26,7 +25,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -37,10 +35,7 @@ class ItemFormViewModelTest {
     private lateinit var getItem: GetItemUseCase
 
     @MockK
-    private lateinit var getSections: GetSectionsUseCase
-
-    @MockK
-    private lateinit var getTags: GetTagsUseCase
+    private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
 
     @MockK
     private lateinit var createItem: CreateItemUseCase
@@ -52,8 +47,7 @@ class ItemFormViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        every { getSections() } returns flowOf(SectionStub.sections())
-        every { getTags() } returns flowOf(TagStub.tags())
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
     }
 
     @After
@@ -62,7 +56,7 @@ class ItemFormViewModelTest {
     }
 
     private fun viewModel(itemId: Long? = null) =
-        ItemFormViewModel(itemId, getItem, getSections, getTags, createItem, editItem)
+        ItemFormViewModel(itemId, getItem, getSectionsAndTags, createItem, editItem)
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
@@ -214,13 +208,12 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when the sections flow throws should fall back to an empty list instead of crashing`() = runTest {
-        every { getSections() } returns flow { throw IllegalStateException("boom") }
+    fun `when GetSectionsAndTagsUseCase throws should emit Error`() = runTest {
+        coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
         val vm = viewModel()
 
         vm.uiState.test {
-            val state = awaitItem() as ItemFormUiState.Success
-            assertTrue(state.availableSections.isEmpty())
+            assertEquals(ItemFormUiState.Error(R.string.item_form_load_error), awaitItem())
         }
     }
 }

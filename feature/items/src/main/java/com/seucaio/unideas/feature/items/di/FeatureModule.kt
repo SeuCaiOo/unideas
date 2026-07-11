@@ -13,8 +13,7 @@ val itemsModule = module {
         ItemFormViewModel(
             itemId = params.getOrNull(),
             getItem = get(),
-            getSections = get(),
-            getTags = get(),
+            getSectionsAndTags = get(),
             createItem = get(),
             editItem = get(),
         )

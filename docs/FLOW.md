@@ -19,6 +19,8 @@
 
 Ponto de entrada do app: `HomeRoute.Home`. **Não há bottom navigation bar** — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `NavHost` central vive no `:app`, cada feature expõe seu `*NavGraph` + `*Route`.
 
+> **Estado atual (pré-Home, até D2.1/#27 existir):** como `HomeRoute` ainda não existe, o `startDestination` real do `NavHost` é `SettingsRoute.Settings` (raiz temporária, ver `MainActivity`). Settings ganhou uma seção **"Debug"**, só de desenvolvimento, com um item "Items" que abre `ItemsRoute.List` (#62) — uma listagem simples de todos os Items (sem abas/filtro/painel de prioridade, isso é escopo da Home), que por sua vez navega pra `ItemsRoute.Detail`/`ItemsRoute.Form`. Esse ponto de entrada some quando a Home existir de verdade.
+
 ---
 
 ## Home

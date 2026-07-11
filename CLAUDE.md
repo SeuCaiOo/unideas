@@ -43,7 +43,7 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 ## Code quality
 
 - **Detekt** (`config/detekt/`): `autoCorrect` on, `ignoreFailures` on — read the report (`app/build/reports/detekt/`).
-- **Kover**: 70% min via `koverVerify` on real logic (use cases, repos, mappers); excludes `*ViewModel*`, Composables and entry points. CI fails the PR if coverage drops below.
+- **Kover**: 70% min via `koverVerify` on real logic — use cases, repos, mappers, **and ViewModels** (the `*ViewModel*` exclusion was removed as of #41; each tested `:feature:*` ViewModel must be added to `app/build.gradle.kts`'s `kover(project(...))` aggregation). Composables/PreviewProviders/entry points stay excluded. CI fails the PR if coverage drops below.
 - **Lint**: `abortOnError = false` — reports only.
 
 ## Commits & branches
@@ -60,6 +60,6 @@ Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) liv
 
 ## More docs
 
-- **`docs/BLUEPRINT.md`** — class/screen inventory + implementation backlog (GitHub issues #3–#30, milestone `v0.1.0`).
+- **`docs/BLUEPRINT.md`** — original class/screen inventory + implementation backlog, frozen as planning context. Live issue/PR status lives in the "unideas — Improvements" artifact + the GitHub Project board, not here.
 - **`docs/RELEASE.md`** — build variants, signing, release automation, secrets, SemVer.
 - **`docs/RUNNING.md`** — running/inspecting the app (`android` CLI) + git hooks (`./gradlew installGitHooks`).

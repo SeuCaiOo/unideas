@@ -125,28 +125,25 @@ core/ui/
 
 ### `:feature:*` — `com.seucaio.unideas.feature.<nome>`
 
-Uma pasta por tela; `Screen` + `PreviewProvider` na raiz da tela, contrato do ViewModel em `viewmodel/`.
+Flat na raiz do módulo — `Screen` + `PreviewProvider` de cada tela direto em `feature/<nome>/`, sem subpasta por tela (nome do arquivo já distingue). `navigation/`, `viewmodel/` e `di/` são as únicas subpastas, compartilhadas por todas as telas do módulo.
 
 ```
 feature/items/
 ├── navigation/
 │   ├── ItemsNavGraph.kt
-│   └── ItemsRoute.kt        — @Serializable, type-safe
-├── form/                    — Criar/Editar Item (tela única)
-│   ├── ItemFormScreen.kt
-│   ├── ItemFormPreviewProvider.kt
-│   └── viewmodel/
-│       ├── ItemFormUiState.kt
-│       ├── ItemFormUiAction.kt
-│       ├── ItemFormEvent.kt
-│       └── ItemFormViewModel.kt
-└── detail/                  — Detalhe do Item
-    ├── ItemDetailScreen.kt
-    ├── ItemDetailPreviewProvider.kt
-    └── viewmodel/ ...
+│   └── ItemsRoute.kt              — @Serializable, type-safe: Form(itemId: Long?) | Detail(itemId: Long) | List
+├── di/
+│   └── FeatureModule.kt           — val itemsModule
+├── viewmodel/                     — uma tela = 4 arquivos (UiState/UiAction/Event/ViewModel), todas juntas aqui
+│   ├── ItemFormUiState.kt / ItemFormUiAction.kt / ItemFormEvent.kt / ItemFormViewModel.kt
+│   ├── ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt / ItemDetailViewModel.kt / ItemDetailDialogState.kt
+│   └── ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
+├── ItemFormScreen.kt + ItemFormPreviewProvider.kt      — criar/editar Item (tela única)
+├── ItemDetailScreen.kt + ItemDetailPreviewProvider.kt  — detalhe do Item
+└── ItemsListScreen.kt + ItemsListPreviewProvider.kt    — listagem dev-only (#62), sem abas/filtro; descartável quando Home (D2.1/#27) existir
 ```
 
-O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md).
+O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no artifact "unideas — Improvements" e no board do GitHub Project).
 
 ## Persistência (Room) — schema
 
@@ -195,11 +192,14 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 
 ```
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
-domain/di/DomainModule.kt     — Use Cases (factoryOf) — confirmado em #42 (só os de Section por ora; Item/Tag chegam com D1/#44)
+domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados (GetItems entrou em #62,
+                                 pré-requisito de ItemsListViewModel — existia desde #23 mas nunca tinha sido wireado)
 core/backup/di/BackupModule.kt — repos + use cases de :core:backup — ainda não existe, chega com E1
-feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf) — confirmado em #42 (feature/sections/di/FeatureModule.kt, val sectionsModule)
+feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
+                                 (items/sections/tags/settings já existem; home chega com D2)
 
-:app/di/AppModule.kt — includes(dataModule, domainModule, backupModule, ...todos os FeatureModule de :feature:*); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
+:app/di/AppModule.kt — includes(dataModule, domainModule, sectionsModule, tagsModule, settingsModule, itemsModule);
+                        backupModule entra quando E1 existir; startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |

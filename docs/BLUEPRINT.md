@@ -2,7 +2,7 @@
 
 O **o quê construir** e **em que ordem**. Ponte entre a planta de produto (o quê/por quê), [`ARCHITECTURE.md`](ARCHITECTURE.md) (estrutura), [`FLOW.md`](FLOW.md) (navegação) e o backlog de issues no GitHub.
 
-> Documento vivo. Cada linha do backlog vira (ou já é) uma issue. Marque o `#N` quando a issue for criada.
+> **Planejamento original, congelado.** Este documento reflete a divisão de escopo pensada antes de abrir as issues (#3–#30) — não foi mantido linha a linha depois disso (várias telas foram sub-divididas em VM/UI, ex. D1.1/D1.2/D3/D4/D5; issue #62, dev-only, nem existia aqui). **Para status atual (o que está Merged/In Progress/Backlog, PRs, adendos de escopo)**, a fonte viva é o artifact **"unideas — Improvements"** (URL em `.claude/skills/add-improvement/SKILL.md`) + o [GitHub Project](https://github.com/users/SeuCaiOo/projects/4). Use este arquivo só pra entender a lógica original de dependência entre os grupos A–F.
 
 ---
 

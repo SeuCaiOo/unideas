@@ -5,29 +5,38 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.tags.viewmodel.TagsDialogState
 import com.seucaio.unideas.feature.tags.viewmodel.TagsUiState
 
-class TagsPreviewProvider : PreviewParameterProvider<TagsUiState> {
+/** [uiState] and [dialogState] are independent StateFlows in the ViewModel — bundled here only so
+ * a single PreviewParameterProvider can simulate every combination for the Screen preview. */
+data class TagsPreviewState(
+    val uiState: TagsUiState,
+    val dialogState: TagsDialogState = TagsDialogState.None,
+)
 
-    override val values: Sequence<TagsUiState> = sequenceOf(
-        TagsUiState.Loading,
-        TagsUiState.Success(tags = emptyList()),
-        TagsUiState.Success(
-            tags = listOf(
-                Tag(id = 1L, name = "urgente"),
-                Tag(id = 2L, name = "pessoal"),
+class TagsPreviewProvider : PreviewParameterProvider<TagsPreviewState> {
+
+    override val values: Sequence<TagsPreviewState> = sequenceOf(
+        TagsPreviewState(TagsUiState.Loading),
+        TagsPreviewState(TagsUiState.Success(tags = emptyList())),
+        TagsPreviewState(
+            TagsUiState.Success(
+                tags = listOf(
+                    Tag(id = 1L, name = "urgente"),
+                    Tag(id = 2L, name = "pessoal"),
+                ),
             ),
         ),
-        TagsUiState.Error(messageRes = R.string.tags_load_error),
-        TagsUiState.Success(
-            tags = listOf(Tag(id = 1L, name = "urgente")),
-            dialog = TagsDialogState.Add,
+        TagsPreviewState(TagsUiState.Error(messageRes = R.string.tags_load_error)),
+        TagsPreviewState(
+            uiState = TagsUiState.Success(tags = listOf(Tag(id = 1L, name = "urgente"))),
+            dialogState = TagsDialogState.Add,
         ),
-        TagsUiState.Success(
-            tags = listOf(Tag(id = 1L, name = "urgente")),
-            dialog = TagsDialogState.Rename(Tag(id = 1L, name = "urgente")),
+        TagsPreviewState(
+            uiState = TagsUiState.Success(tags = listOf(Tag(id = 1L, name = "urgente"))),
+            dialogState = TagsDialogState.Rename(Tag(id = 1L, name = "urgente")),
         ),
-        TagsUiState.Success(
-            tags = listOf(Tag(id = 1L, name = "urgente")),
-            dialog = TagsDialogState.Delete(Tag(id = 1L, name = "urgente")),
+        TagsPreviewState(
+            uiState = TagsUiState.Success(tags = listOf(Tag(id = 1L, name = "urgente"))),
+            dialogState = TagsDialogState.Delete(Tag(id = 1L, name = "urgente")),
         ),
     )
 }

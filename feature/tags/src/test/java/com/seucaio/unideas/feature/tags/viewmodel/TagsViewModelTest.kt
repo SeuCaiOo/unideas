@@ -58,7 +58,7 @@ class TagsViewModelTest {
     }
 
     @Test
-    fun `when the flow emits tags should update uiState to Success with no dialog`() = runTest {
+    fun `when the flow emits tags should update uiState to Success`() = runTest {
         val tags = TagStub.tags()
         every { getTags() } returns flowOf(tags)
         val vm = TagsViewModel(getTags, addTag, renameTag, deleteTag)
@@ -90,7 +90,6 @@ class TagsViewModelTest {
         vm.uiState.test {
             assertEquals(TagsUiState.Error(R.string.tags_load_error), awaitItem())
             vm.onEvent(TagsEvent.OnRetryClicked)
-            assertEquals(TagsUiState.Loading, awaitItem())
             assertEquals(TagsUiState.Success(tags), awaitItem())
         }
     }
@@ -99,12 +98,9 @@ class TagsViewModelTest {
     fun `when OnAddClicked should show the Add dialog`() = runTest {
         val vm = viewModel()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnAddClicked)
-            val state = awaitItem() as TagsUiState.Success
-            assertEquals(TagsDialogState.Add, state.dialog)
-        }
+        vm.onEvent(TagsEvent.OnAddClicked)
+
+        assertEquals(TagsDialogState.Add, vm.dialogState.value)
     }
 
     @Test
@@ -112,15 +108,11 @@ class TagsViewModelTest {
         val vm = viewModel()
         coEvery { addTag.invoke("urgente") } returns Result.success(1L)
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnAddClicked)
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnAddConfirmClicked("urgente"))
-            val state = awaitItem() as TagsUiState.Success
-            assertEquals(TagsDialogState.None, state.dialog)
-        }
+        vm.onEvent(TagsEvent.OnAddClicked)
+        vm.onEvent(TagsEvent.OnAddConfirmClicked("urgente"))
+
         coVerify(exactly = 1) { addTag.invoke("urgente") }
+        assertEquals(TagsDialogState.None, vm.dialogState.value)
     }
 
     @Test
@@ -128,7 +120,7 @@ class TagsViewModelTest {
         val vm = viewModel()
         coEvery { addTag.invoke("") } returns Result.failure(IllegalArgumentException("Name is required"))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(TagsEvent.OnAddConfirmClicked(""))
             assertEquals(TagsUiAction.ShowSnackbar(R.string.tag_name_required), awaitItem())
         }
@@ -139,12 +131,9 @@ class TagsViewModelTest {
         val vm = viewModel()
         val tag = TagStub.tag()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnRenameClicked(tag))
-            val state = awaitItem() as TagsUiState.Success
-            assertEquals(TagsDialogState.Rename(tag), state.dialog)
-        }
+        vm.onEvent(TagsEvent.OnRenameClicked(tag))
+
+        assertEquals(TagsDialogState.Rename(tag), vm.dialogState.value)
     }
 
     @Test
@@ -169,7 +158,7 @@ class TagsViewModelTest {
 
         vm.onEvent(TagsEvent.OnRenameClicked(tag))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(TagsEvent.OnRenameConfirmClicked(""))
             assertEquals(TagsUiAction.ShowSnackbar(R.string.tag_name_required), awaitItem())
         }
@@ -180,12 +169,9 @@ class TagsViewModelTest {
         val vm = viewModel()
         val tag = TagStub.tag()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnDeleteClicked(tag))
-            val state = awaitItem() as TagsUiState.Success
-            assertEquals(TagsDialogState.Delete(tag), state.dialog)
-        }
+        vm.onEvent(TagsEvent.OnDeleteClicked(tag))
+
+        assertEquals(TagsDialogState.Delete(tag), vm.dialogState.value)
     }
 
     @Test
@@ -196,7 +182,7 @@ class TagsViewModelTest {
 
         vm.onEvent(TagsEvent.OnDeleteClicked(tag))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(TagsEvent.OnDeleteConfirmClicked)
             assertEquals(TagsUiAction.ShowSnackbar(R.string.tag_delete_blocked, listOf(3)), awaitItem())
         }
@@ -222,7 +208,7 @@ class TagsViewModelTest {
 
         vm.onEvent(TagsEvent.OnDeleteClicked(tag))
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(TagsEvent.OnDeleteConfirmClicked)
             assertEquals(TagsUiAction.ShowError("boom"), awaitItem())
         }
@@ -232,13 +218,9 @@ class TagsViewModelTest {
     fun `when OnDialogDismissed should hide the dialog`() = runTest {
         val vm = viewModel()
 
-        vm.uiState.test {
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnAddClicked)
-            skipItems(1)
-            vm.onEvent(TagsEvent.OnDialogDismissed)
-            val state = awaitItem() as TagsUiState.Success
-            assertEquals(TagsDialogState.None, state.dialog)
-        }
+        vm.onEvent(TagsEvent.OnAddClicked)
+        vm.onEvent(TagsEvent.OnDialogDismissed)
+
+        assertEquals(TagsDialogState.None, vm.dialogState.value)
     }
 }

@@ -54,11 +54,12 @@ fun TagsScreen(
     viewModel: TagsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
 
     LaunchedEffect(Unit) {
-        viewModel.action.collect { action ->
+        viewModel.uiAction.collect { action ->
             val message = when (action) {
                 is TagsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
@@ -70,6 +71,7 @@ fun TagsScreen(
 
     TagsContent(
         uiState = uiState,
+        dialogState = dialogState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -80,6 +82,7 @@ fun TagsScreen(
 @Composable
 private fun TagsContent(
     uiState: TagsUiState,
+    dialogState: TagsDialogState,
     onEvent: (TagsEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
@@ -104,9 +107,7 @@ private fun TagsContent(
         TagsBody(uiState = uiState, padding = padding, onEvent = onEvent)
     }
 
-    if (uiState is TagsUiState.Success) {
-        TagsDialogs(dialog = uiState.dialog, onEvent = onEvent)
-    }
+    TagsDialogs(dialogState = dialogState, onEvent = onEvent)
 }
 
 @Composable
@@ -174,10 +175,10 @@ private fun TagRow(
 
 @Composable
 private fun TagsDialogs(
-    dialog: TagsDialogState,
+    dialogState: TagsDialogState,
     onEvent: (TagsEvent) -> Unit,
 ) {
-    when (dialog) {
+    when (dialogState) {
         is TagsDialogState.None -> Unit
         is TagsDialogState.Add ->
             NameInputDialog(
@@ -190,7 +191,7 @@ private fun TagsDialogs(
             NameInputDialog(
                 title = stringResource(R.string.tags_rename),
                 label = stringResource(R.string.tags_rename_label),
-                initialValue = dialog.tag.name,
+                initialValue = dialogState.tag.name,
                 onConfirm = { newName -> onEvent(TagsEvent.OnRenameConfirmClicked(newName)) },
                 onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
             )
@@ -207,11 +208,12 @@ private fun TagsDialogs(
 @PreviewLightDark
 @Composable
 private fun TagsScreenPreview(
-    @PreviewParameter(TagsPreviewProvider::class) uiState: TagsUiState,
+    @PreviewParameter(TagsPreviewProvider::class) previewState: TagsPreviewState,
 ) {
     UnideasTheme {
         TagsContent(
-            uiState = uiState,
+            uiState = previewState.uiState,
+            dialogState = previewState.dialogState,
             onEvent = {},
             onNavigateBack = null,
             snackbarHostState = remember { SnackbarHostState() },

@@ -2,4 +2,22 @@
 <resources>
     <string name="item_form_load_error">Couldn\'t load the item</string>
     <string name="item_title_required">Title is required</string>
+    <string name="item_form_title_create">New item</string>
+    <string name="item_form_title_edit">Edit item</string>
+    <string name="item_form_save">Save</string>
+    <string name="item_form_type_task">Task</string>
+    <string name="item_form_type_note">Note</string>
+    <string name="item_form_title_label">Title</string>
+    <string name="item_form_description_label">Description</string>
+    <string name="item_form_section_label">Section</string>
+    <string name="item_form_section_none">No section</string>
+    <string name="item_form_tags_label">Tags</string>
+    <string name="item_form_date_label">Due date</string>
+    <string name="item_form_date_none">No date</string>
+    <string name="item_form_date_clear">Clear date</string>
+    <string name="item_form_recurrence_label">Repeat</string>
+    <string name="item_form_recurrence_none">Does not repeat</string>
+    <string name="item_form_recurrence_daily">Daily</string>
+    <string name="item_form_recurrence_weekly">Weekly</string>
+    <string name="item_form_recurrence_monthly">Monthly</string>
 </resources>

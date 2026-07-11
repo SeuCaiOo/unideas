@@ -163,6 +163,7 @@ dependencies {
     kover(project(":feature:sections"))
     kover(project(":feature:tags"))
     kover(project(":feature:settings"))
+    kover(project(":feature:items"))
 
     implementation(project(":core:ui"))
     implementation(project(":domain"))

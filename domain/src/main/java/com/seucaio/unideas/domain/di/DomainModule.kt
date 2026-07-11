@@ -17,6 +17,7 @@ import com.seucaio.unideas.domain.usecase.tag.AddTagUseCase
 import com.seucaio.unideas.domain.usecase.tag.DeleteTagUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.domain.usecase.tag.RenameTagUseCase
+import com.seucaio.unideas.domain.usecase.tag.TagUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -36,6 +37,7 @@ val domainModule = module {
     factoryOf(::AddTagUseCase)
     factoryOf(::RenameTagUseCase)
     factoryOf(::DeleteTagUseCase)
+    factoryOf(::TagUseCase)
 
     factoryOf(::GetSectionsAndTagsUseCase)
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.feature.items.navigation.ItemsRoute
 import com.seucaio.unideas.feature.items.navigation.itemsNavGraph
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
 import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
@@ -41,7 +42,10 @@ class MainActivity : ComponentActivity() {
                     sectionsNavGraph(onNavigateBack = navController::popBackStack)
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                     // No entry point yet — the FAB that opens this (Home, #27) doesn't exist.
-                    itemsNavGraph(onNavigateBack = navController::popBackStack)
+                    itemsNavGraph(
+                        onNavigateBack = navController::popBackStack,
+                        onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
+                    )
                 }
             }
         }

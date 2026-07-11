@@ -8,7 +8,7 @@ sealed interface ItemDetailUiState {
 
     data object Loading : ItemDetailUiState
 
-    data class Success(val item: Item) : ItemDetailUiState
+    data class Success(val item: Item, val sectionName: String? = null) : ItemDetailUiState
 
     data class Error(@StringRes val messageRes: Int) : ItemDetailUiState
 }

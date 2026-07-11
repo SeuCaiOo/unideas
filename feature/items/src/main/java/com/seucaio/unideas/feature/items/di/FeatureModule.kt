@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.di
 
+import com.seucaio.unideas.feature.items.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.viewmodel.ItemFormViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -14,6 +15,15 @@ val itemsModule = module {
             getTags = get(),
             createItem = get(),
             editItem = get(),
+        )
+    }
+    viewModel { params ->
+        ItemDetailViewModel(
+            itemId = params.get(),
+            getItemDetail = get(),
+            getSections = get(),
+            deleteItem = get(),
+            completeItem = get(),
         )
     }
 }

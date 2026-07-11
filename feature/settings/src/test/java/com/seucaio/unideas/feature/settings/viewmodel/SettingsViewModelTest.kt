@@ -36,7 +36,7 @@ class SettingsViewModelTest {
     fun `when OnOrganizeSectionsClicked should navigate to sections`() = runTest {
         val vm = SettingsViewModel()
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SettingsEvent.OnOrganizeSectionsClicked)
             assertEquals(SettingsUiAction.NavigateToSections, awaitItem())
         }
@@ -46,7 +46,7 @@ class SettingsViewModelTest {
     fun `when OnOrganizeTagsClicked should navigate to tags`() = runTest {
         val vm = SettingsViewModel()
 
-        vm.action.test {
+        vm.uiAction.test {
             vm.onEvent(SettingsEvent.OnOrganizeTagsClicked)
             assertEquals(SettingsUiAction.NavigateToTags, awaitItem())
         }

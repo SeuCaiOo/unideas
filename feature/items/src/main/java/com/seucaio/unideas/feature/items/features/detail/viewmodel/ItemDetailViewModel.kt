@@ -8,7 +8,6 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -19,9 +18,9 @@ import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -33,14 +32,14 @@ import java.time.LocalDateTime
 /**
  * ViewModel for the read-only item detail screen. Unlike the form (#54), there's no in-progress
  * editing to protect — `uiState` stays fully reactive to `GetItemDetailUseCase`, same "no
- * combine" pattern as Sections/Tags. [GetSectionsUseCase] is combined in only to resolve
- * `sectionId` into a display name — same problem `ItemFormViewModel` already solved.
+ * combine" pattern as Sections/Tags. [GetItemDetailUseCase] resolves the section name in `:data`
+ * (Room join, `ItemWithTagsAndSection`) — the ViewModel no longer combines a second flow to do
+ * that lookup itself.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemDetailViewModel(
     private val itemId: Long,
     private val getItemDetail: GetItemDetailUseCase,
-    private val getSections: GetSectionsUseCase,
     private val deleteItem: DeleteItemUseCase,
     private val completeItem: CompleteItemUseCase,
 ) : ViewModel() {
@@ -48,12 +47,11 @@ class ItemDetailViewModel(
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
     val uiState: StateFlow<ItemDetailUiState> = retryTrigger.flatMapLatest {
-        combine(getItemDetail(itemId), getSections()) { item, sections ->
-            (
-                item?.let { ItemDetailUiState.Success(it, sections.firstOrNull { s -> s.id == it.sectionId }?.name) }
+        getItemDetail(itemId)
+            .map { detail ->
+                detail?.let { ItemDetailUiState.Success(it.item, it.sectionName) }
                     ?: ItemDetailUiState.Error(R.string.item_detail_load_error)
-                ) as ItemDetailUiState
-        }
+            }
             .onStart { emit(ItemDetailUiState.Loading) }
             .catch { emit(ItemDetailUiState.Error(R.string.item_detail_load_error)) }
     }.stateIn(viewModelScope, WhileSubscribed(5_000), ItemDetailUiState.Loading)

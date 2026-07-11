@@ -9,7 +9,7 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
-import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
+import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.feature.items.R
@@ -41,7 +41,7 @@ import java.time.LocalDateTime
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemFormViewModel(
     private val itemId: Long?,
-    private val getItemDetail: GetItemDetailUseCase,
+    private val getItem: GetItemUseCase,
     getSections: GetSectionsUseCase,
     getTags: GetTagsUseCase,
     private val createItem: CreateItemUseCase,
@@ -100,7 +100,7 @@ class ItemFormViewModel(
     val uiAction: Flow<ItemFormUiAction> = _uiAction.receiveAsFlow()
 
     private suspend fun loadItem(id: Long) {
-        val item = getItemDetail(id).first() ?: error("Item $id not found")
+        val item = getItem(id).first() ?: error("Item $id not found")
         originalItem = item
         internalState.update {
             it.copy(

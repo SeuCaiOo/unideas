@@ -7,7 +7,7 @@ import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
-import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
+import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
 import com.seucaio.unideas.feature.items.R
@@ -34,7 +34,7 @@ import org.junit.Test
 class ItemFormViewModelTest {
 
     @MockK
-    private lateinit var getItemDetail: GetItemDetailUseCase
+    private lateinit var getItem: GetItemUseCase
 
     @MockK
     private lateinit var getSections: GetSectionsUseCase
@@ -62,7 +62,7 @@ class ItemFormViewModelTest {
     }
 
     private fun viewModel(itemId: Long? = null) =
-        ItemFormViewModel(itemId, getItemDetail, getSections, getTags, createItem, editItem)
+        ItemFormViewModel(itemId, getItem, getSections, getTags, createItem, editItem)
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
@@ -78,9 +78,9 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when editing should load the item fields via GetItemDetailUseCase`() = runTest {
+    fun `when editing should load the item fields via GetItemUseCase`() = runTest {
         val item = ItemStub.task(id = 1L, tags = listOf(TagStub.tag(id = 1L)))
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItem(1L) } returns flowOf(item)
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -95,7 +95,7 @@ class ItemFormViewModelTest {
 
     @Test
     fun `when the item is not found should emit Error`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(null)
+        every { getItem(1L) } returns flowOf(null)
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -106,7 +106,7 @@ class ItemFormViewModelTest {
     @Test
     fun `when OnRetryClicked after a load error should retry and succeed`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returnsMany listOf(flowOf(null), flowOf(item))
+        every { getItem(1L) } returnsMany listOf(flowOf(null), flowOf(item))
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
@@ -171,7 +171,7 @@ class ItemFormViewModelTest {
     @Test
     fun `when OnSaveClicked in edit mode should call EditItemUseCase and navigate back`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItem(1L) } returns flowOf(item)
         coEvery { editItem(any()) } returns Result.success(Unit)
         val vm = viewModel(itemId = 1L)
 

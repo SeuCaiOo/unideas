@@ -12,7 +12,7 @@ val itemsModule = module {
     viewModel { params ->
         ItemFormViewModel(
             itemId = params.getOrNull(),
-            getItemDetail = get(),
+            getItem = get(),
             getSections = get(),
             getTags = get(),
             createItem = get(),
@@ -23,7 +23,6 @@ val itemsModule = module {
         ItemDetailViewModel(
             itemId = params.get(),
             getItemDetail = get(),
-            getSections = get(),
             deleteItem = get(),
             completeItem = get(),
         )

@@ -1,13 +1,13 @@
 package com.seucaio.unideas.feature.items.features.detail.viewmodel
 
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemDetail
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
-import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
-import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -34,9 +34,6 @@ class ItemDetailViewModelTest {
     private lateinit var getItemDetail: GetItemDetailUseCase
 
     @MockK
-    private lateinit var getSections: GetSectionsUseCase
-
-    @MockK
     private lateinit var deleteItem: DeleteItemUseCase
 
     @MockK
@@ -46,7 +43,6 @@ class ItemDetailViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        every { getSections() } returns flowOf(emptyList())
     }
 
     @After
@@ -55,12 +51,14 @@ class ItemDetailViewModelTest {
     }
 
     private fun viewModel(itemId: Long = 1L) =
-        ItemDetailViewModel(itemId, getItemDetail, getSections, deleteItem, completeItem)
+        ItemDetailViewModel(itemId, getItemDetail, deleteItem, completeItem)
+
+    private fun detailOf(item: Item, sectionName: String? = null) = ItemDetail(item, sectionName)
 
     @Test
     fun `when the flow emits an item should update uiState to Success`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItemDetail(1L) } returns flowOf(detailOf(item))
         val vm = viewModel()
 
         vm.uiState.test {
@@ -69,10 +67,9 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when the item has a section should resolve its name into uiState`() = runTest {
+    fun `when the item has a section should surface its resolved name into uiState`() = runTest {
         val item = ItemStub.task(id = 1L, sectionId = 2L)
-        every { getItemDetail(1L) } returns flowOf(item)
-        every { getSections() } returns flowOf(SectionStub.sections(count = 3))
+        every { getItemDetail(1L) } returns flowOf(detailOf(item, "Seção 2"))
         val vm = viewModel()
 
         vm.uiState.test {
@@ -103,20 +100,19 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnRetryClicked after an error should retry and succeed`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returnsMany listOf(flowOf(null), flowOf(item))
+        every { getItemDetail(1L) } returnsMany listOf(flowOf(null), flowOf(detailOf(item)))
         val vm = viewModel()
 
         vm.uiState.test {
             assertEquals(ItemDetailUiState.Error(R.string.item_detail_load_error), awaitItem())
             vm.onEvent(ItemDetailEvent.OnRetryClicked)
-            assertEquals(ItemDetailUiState.Loading, awaitItem())
             assertEquals(ItemDetailUiState.Success(item), awaitItem())
         }
     }
 
     @Test
     fun `when OnDeleteClicked should show the delete confirmation dialog`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(ItemStub.task(id = 1L))
+        every { getItemDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
         val vm = viewModel()
 
         vm.onEvent(ItemDetailEvent.OnDeleteClicked)
@@ -126,7 +122,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnDialogDismissed should hide the dialog`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(ItemStub.task(id = 1L))
+        every { getItemDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
         val vm = viewModel()
 
         vm.onEvent(ItemDetailEvent.OnDeleteClicked)
@@ -137,7 +133,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnDeleteConfirmClicked succeeds should navigate back and hide the dialog`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(ItemStub.task(id = 1L))
+        every { getItemDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
         coEvery { deleteItem(1L) } returns Unit
         val vm = viewModel()
 
@@ -153,7 +149,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnDeleteConfirmClicked fails should emit ShowError`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(ItemStub.task(id = 1L))
+        every { getItemDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
         coEvery { deleteItem(1L) } throws IllegalStateException("boom")
         val vm = viewModel()
 
@@ -168,7 +164,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnCompleteClicked for a task should call CompleteItemUseCase`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItemDetail(1L) } returns flowOf(detailOf(item))
         coEvery { completeItem(item, any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel()
 
@@ -181,7 +177,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnCompleteClicked for a note should not call CompleteItemUseCase`() = runTest {
         val item = ItemStub.note(id = 1L)
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItemDetail(1L) } returns flowOf(detailOf(item))
         val vm = viewModel()
 
         vm.uiState.test { awaitItem() }
@@ -193,7 +189,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnCompleteClicked fails should emit ShowError`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItemDetail(1L) } returns flowOf(detailOf(item))
         coEvery { completeItem(item, any()) } returns Result.failure(IllegalStateException("boom"))
         val vm = viewModel()
 
@@ -208,7 +204,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnShareClicked should emit ShareText with the item title`() = runTest {
         val item = ItemStub.task(id = 1L, title = "Pagar contas")
-        every { getItemDetail(1L) } returns flowOf(item)
+        every { getItemDetail(1L) } returns flowOf(detailOf(item))
         val vm = viewModel()
 
         vm.uiState.test { awaitItem() }
@@ -222,7 +218,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnEditClicked should emit NavigateToEdit with the item id`() = runTest {
-        every { getItemDetail(1L) } returns flowOf(ItemStub.task(id = 1L))
+        every { getItemDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
         val vm = viewModel()
 
         vm.uiAction.test {

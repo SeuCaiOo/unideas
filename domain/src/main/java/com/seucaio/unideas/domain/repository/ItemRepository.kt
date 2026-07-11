@@ -1,6 +1,7 @@
 package com.seucaio.unideas.domain.repository
 
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemDetail
 import com.seucaio.unideas.domain.model.ItemType
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -23,7 +24,13 @@ interface ItemRepository {
     fun getItems(type: ItemType, sectionId: Long?, tagIds: List<Long>): Flow<List<Item>>
 
     /** Observes a single item, `null` when it does not exist (e.g. after deletion). */
-    fun getItemById(id: Long): Flow<Item?>
+    fun getItem(id: Long): Flow<Item?>
+
+    /**
+     * Observes a single item together with its resolved [ItemDetail.sectionName], `null` when
+     * the item does not exist. The join happens in `:data` (Room relation), never in memory.
+     */
+    fun getItemDetail(id: Long): Flow<ItemDetail?>
 
     /**
      * Observes non-completed items due on or before [dueOnOrBefore] (overdue +

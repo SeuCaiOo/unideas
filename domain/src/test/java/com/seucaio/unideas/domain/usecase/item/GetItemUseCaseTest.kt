@@ -1,6 +1,5 @@
 package com.seucaio.unideas.domain.usecase.item
 
-import com.seucaio.unideas.domain.model.ItemDetail
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.stub.ItemStub
 import io.mockk.every
@@ -13,25 +12,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class GetItemDetailUseCaseTest {
+class GetItemUseCaseTest {
 
     private val repository: ItemRepository = mockk()
-    private val useCase = GetItemDetailUseCase(repository)
+    private val useCase = GetItemUseCase(repository)
 
     @Test
-    fun `invoke delegates to the repository and emits the item detail`() = runTest {
-        val detail = ItemDetail(item = ItemStub.task(sectionId = 2L), sectionName = "Trabalho")
-        every { repository.getItemDetail(detail.item.id) } returns flowOf(detail)
+    fun `invoke delegates to the repository and emits the item`() = runTest {
+        val item = ItemStub.task()
+        every { repository.getItem(item.id) } returns flowOf(item)
 
-        val result = useCase(detail.item.id).first()
+        val result = useCase(item.id).first()
 
-        assertEquals(detail, result)
-        verify(exactly = 1) { repository.getItemDetail(detail.item.id) }
+        assertEquals(item, result)
+        verify(exactly = 1) { repository.getItem(item.id) }
     }
 
     @Test
     fun `invoke emits null when the item does not exist`() = runTest {
-        every { repository.getItemDetail(99L) } returns flowOf(null)
+        every { repository.getItem(99L) } returns flowOf(null)
 
         val result = useCase(99L).first()
 

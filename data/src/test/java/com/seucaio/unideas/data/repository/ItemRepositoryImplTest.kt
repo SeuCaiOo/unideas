@@ -2,9 +2,12 @@ package com.seucaio.unideas.data.repository
 
 import com.seucaio.unideas.core.common.extensions.toEpochMilli
 import com.seucaio.unideas.data.local.dao.ItemDao
+import com.seucaio.unideas.data.local.entity.SectionEntity
 import com.seucaio.unideas.data.local.entity.TagEntity
 import com.seucaio.unideas.data.local.relation.ItemWithTags
+import com.seucaio.unideas.data.local.relation.ItemWithTagsAndSection
 import com.seucaio.unideas.data.mapper.toEntity
+import com.seucaio.unideas.domain.model.ItemDetail
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.TagStub
@@ -42,17 +45,47 @@ class ItemRepositoryImplTest {
     }
 
     @Test
-    fun `getItemById maps the row and emits null when missing`() = runTest {
+    fun `getItem maps the row and emits null when missing`() = runTest {
         val item = ItemStub.note()
         every { itemDao.getItemById(item.id) } returns flowOf(
             ItemWithTags(item = item.toEntity(), tags = emptyList()),
         )
         every { itemDao.getItemById(99L) } returns flowOf(null)
 
-        assertEquals(item, repository.getItemById(item.id).first())
-        assertNull(repository.getItemById(99L).first())
+        assertEquals(item, repository.getItem(item.id).first())
+        assertNull(repository.getItem(99L).first())
         verify(exactly = 1) { itemDao.getItemById(item.id) }
         verify(exactly = 1) { itemDao.getItemById(99L) }
+    }
+
+    @Test
+    fun `getItemDetail resolves the section name and emits null when missing`() = runTest {
+        val item = ItemStub.task(sectionId = 3L)
+        every { itemDao.getItemDetailById(item.id) } returns flowOf(
+            ItemWithTagsAndSection(
+                item = item.toEntity(),
+                tags = emptyList(),
+                section = SectionEntity(id = 3L, name = "Trabalho"),
+            ),
+        )
+        every { itemDao.getItemDetailById(99L) } returns flowOf(null)
+
+        assertEquals(ItemDetail(item = item, sectionName = "Trabalho"), repository.getItemDetail(item.id).first())
+        assertNull(repository.getItemDetail(99L).first())
+        verify(exactly = 1) { itemDao.getItemDetailById(item.id) }
+        verify(exactly = 1) { itemDao.getItemDetailById(99L) }
+    }
+
+    @Test
+    fun `getItemDetail emits a null section name when the item has no section`() = runTest {
+        val item = ItemStub.task(sectionId = null)
+        every { itemDao.getItemDetailById(item.id) } returns flowOf(
+            ItemWithTagsAndSection(item = item.toEntity(), tags = emptyList(), section = null),
+        )
+
+        val result = repository.getItemDetail(item.id).first()
+
+        assertEquals(ItemDetail(item = item, sectionName = null), result)
     }
 
     @Test

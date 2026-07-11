@@ -5,6 +5,7 @@ import com.seucaio.unideas.data.local.dao.ItemDao
 import com.seucaio.unideas.data.mapper.toDomain
 import com.seucaio.unideas.data.mapper.toEntity
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemDetail
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.repository.ItemRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,8 +24,11 @@ class ItemRepositoryImpl(
         itemDao.getItems(type, sectionId, tagIds, tagIds.size)
             .map { rows -> rows.map { it.toDomain() } }
 
-    override fun getItemById(id: Long): Flow<Item?> =
+    override fun getItem(id: Long): Flow<Item?> =
         itemDao.getItemById(id).map { it?.toDomain() }
+
+    override fun getItemDetail(id: Long): Flow<ItemDetail?> =
+        itemDao.getItemDetailById(id).map { it?.toDomain() }
 
     override fun getPriorityItems(dueOnOrBefore: LocalDate): Flow<List<Item>> =
         itemDao.getPriorityItems(dueOnOrBefore.toEpochMilli())

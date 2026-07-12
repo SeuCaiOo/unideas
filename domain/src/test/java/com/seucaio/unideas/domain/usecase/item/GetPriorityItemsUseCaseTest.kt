@@ -22,19 +22,9 @@ class GetPriorityItemsUseCaseTest {
         val items = listOf(ItemStub.overdueTask())
         every { repository.getPriorityItems(today.plusDays(3)) } returns flowOf(items)
 
-        val result = useCase(today = today, dueSoonDays = 3, limit = 10).first()
+        val result = useCase(today = today, dueSoonDays = 3).first()
 
         assertEquals(items, result)
         verify(exactly = 1) { repository.getPriorityItems(today.plusDays(3)) }
-    }
-
-    @Test
-    fun `invoke caps the result at the given limit`() = runTest {
-        val items = (1..5).map { ItemStub.overdueTask(id = it.toLong()) }
-        every { repository.getPriorityItems(today.plusDays(3)) } returns flowOf(items)
-
-        val result = useCase(today = today, dueSoonDays = 3, limit = 2).first()
-
-        assertEquals(items.take(2), result)
     }
 }

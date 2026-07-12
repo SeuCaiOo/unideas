@@ -16,8 +16,9 @@ import kotlinx.coroutines.launch
 
 /**
  * No use cases yet for the real screen state — the shell only navigates to Sections/Tags; Backup
- * status arrives in E2. [SeedDatabaseUseCase]/[ClearDatabaseUseCase] are debug-only tooling (#19),
- * triggered from buttons the Screen only renders when `BuildConfig.DEBUG`.
+ * connection state is collected directly from `BackupViewModel` by the Screen, not through here.
+ * [SeedDatabaseUseCase]/[ClearDatabaseUseCase] are debug-only tooling (#19), triggered from
+ * buttons the Screen only renders when `BuildConfig.DEBUG`.
  */
 class SettingsViewModel(
     private val seedDatabase: SeedDatabaseUseCase,
@@ -25,7 +26,7 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> =
-        MutableStateFlow(SettingsUiState.Success(BackupStatus.DISCONNECTED)).asStateFlow()
+        MutableStateFlow(SettingsUiState.Success).asStateFlow()
 
     // Which debug dialog is open — a separate StateFlow (not local Compose state, not nested in
     // uiState) so previews can simulate the seed-scope sheet, same pattern as SectionsViewModel.

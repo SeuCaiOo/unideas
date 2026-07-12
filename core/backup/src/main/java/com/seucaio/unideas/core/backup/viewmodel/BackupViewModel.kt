@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,9 +16,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalDateTime
 
-class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
+class BackupViewModel(
+    private val googleAuthUseCase: GoogleAuthUseCase,
+    private val backupUseCase: BackupUseCase,
+) : ViewModel() {
 
     private val _internalState = MutableStateFlow(InternalState())
 
@@ -26,7 +31,7 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
             if (state.isLoading) {
                 BackupUiState.Loading
             } else {
-                BackupUiState.Ready(lastBackupAt = state.lastBackupAt)
+                BackupUiState.Ready(isConnected = state.isConnected, lastBackupAt = state.lastBackupAt)
             }
         }
         .stateIn(
@@ -35,11 +40,17 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
             initialValue = BackupUiState.Ready(),
         )
 
-    private val _action = Channel<BackupUiAction>(Channel.BUFFERED)
+    private val _action = Channel<BackupUiAction>(Channel.CONFLATED)
     val action = _action.receiveAsFlow()
+
+    init {
+        val account = googleAuthUseCase.getSignedInAccount()
+        if (account != null) refreshConnectionState(account, isInitialCheck = true)
+    }
 
     fun onEvent(event: BackupEvent) {
         when (event) {
+            BackupEvent.OnConnectClick -> launchSignIn(BackupAction.Connect)
             BackupEvent.OnBackupClick -> launchSignIn(BackupAction.Upload)
             BackupEvent.OnSyncClick -> launchSignIn(BackupAction.Sync)
             is BackupEvent.OnGoogleSignInResult -> handleSignInResult(event.account, event.pendingAction)
@@ -49,59 +60,89 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
 
     private fun launchSignIn(pendingAction: BackupAction) {
         viewModelScope.launch {
-            val intent = backupUseCase.getSignInIntent()
+            val intent = googleAuthUseCase.getSignInIntent()
             _action.send(BackupUiAction.LaunchGoogleSignIn(intent, pendingAction))
         }
     }
 
     private fun handleSignInResult(account: GoogleSignInAccount?, pendingAction: BackupAction) {
         if (account == null) {
+            Timber.w("Backup: Google Sign-In result is null (user cancelled or error)")
             viewModelScope.launch { showSnackbar(R.string.backup_sign_in_failed) }
             return
         }
         when (pendingAction) {
+            BackupAction.Connect -> refreshConnectionState(account, isInitialCheck = false)
             BackupAction.Upload -> upload(account)
             BackupAction.Sync -> listBackups(account)
+        }
+    }
+
+    private fun refreshConnectionState(account: GoogleSignInAccount, isInitialCheck: Boolean) {
+        viewModelScope.launch {
+            _internalState.update { it.copy(isLoading = true) }
+            backupUseCase.getLastBackupInfo(account)
+                .onSuccess { info ->
+                    _internalState.update {
+                        it.copy(isLoading = false, isConnected = true, lastBackupAt = info?.createdAt)
+                    }
+                }
+                .onFailure {
+                    Timber.e(it, "Backup: Failed to get last backup info")
+                    _internalState.update { it.copy(isLoading = false) }
+                    if (!isInitialCheck) handleFailure()
+                }
         }
     }
 
     private fun upload(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.upload(backupUseCase.buildDriveService(account))
+            backupUseCase.upload(account)
                 .onSuccess { info ->
-                    _internalState.update { it.copy(isLoading = false, lastBackupAt = info.createdAt) }
+                    _internalState.update {
+                        it.copy(isLoading = false, isConnected = true, lastBackupAt = info.createdAt)
+                    }
                     showSnackbar(R.string.backup_upload_success)
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: Upload failed")
+                    handleFailure()
+                }
         }
     }
 
     private fun listBackups(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.list(backupUseCase.buildDriveService(account))
+            backupUseCase.list(account)
                 .onSuccess { backups ->
-                    _internalState.update { it.copy(isLoading = false) }
+                    _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     if (backups.isEmpty()) {
                         showSnackbar(R.string.backup_no_backups_found)
                     } else {
                         _action.send(BackupUiAction.ShowRestoreDialog(backups))
                     }
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: List failed")
+                    handleFailure()
+                }
         }
     }
 
     private fun restore(account: GoogleSignInAccount, fileId: String) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.restore(backupUseCase.buildDriveService(account), fileId)
+            backupUseCase.restore(account, fileId)
                 .onSuccess {
-                    _internalState.update { it.copy(isLoading = false) }
+                    _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     showSnackbar(R.string.backup_restore_success)
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: Restore failed")
+                    handleFailure()
+                }
         }
     }
 
@@ -115,6 +156,7 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
 
     private data class InternalState(
         val isLoading: Boolean = false,
+        val isConnected: Boolean = false,
         val lastBackupAt: LocalDateTime? = null,
     )
 

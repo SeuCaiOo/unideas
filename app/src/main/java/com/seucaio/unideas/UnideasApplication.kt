@@ -1,6 +1,7 @@
 package com.seucaio.unideas
 
 import android.app.Application
+import com.seucaio.unideas.core.common.log.CrashlyticsTree
 import com.seucaio.unideas.di.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -13,6 +14,8 @@ class UnideasApplication : Application() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
+        } else {
+            Timber.plant(CrashlyticsTree())
         }
         startKoin {
             androidLogger()

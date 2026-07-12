@@ -9,6 +9,21 @@ Reference for build variants, signing, the release automation and CI secrets. No
 - `release` builds run R8 (`optimization.enable = true`), which requires `android.r8.gradual.support=true` in `gradle.properties` (AGP 9's declarative build-type DSL).
 - `buildFeatures.buildConfig = true` is enabled so `BuildConfig.VERSION_NAME`/`VERSION_CODE` are generated for the app module.
 
+### Building each variant locally
+
+```bash
+./gradlew assembleDebug     # app/build/outputs/apk/debug/unideas-v<version>-debug.apk
+./gradlew assembleRelease   # app/build/outputs/apk/release/unideas-v<version>.apk — needs signing.properties locally (or the CI env vars above)
+```
+
+### SHA-1 / SHA-256 fingerprints (Google Cloud Console / Firebase setup)
+
+```bash
+./gradlew signingReport
+```
+
+Reads every configured signing config (`debug` keystore, `signingConfigs.release`) directly from `app/build.gradle.kts` and prints `SHA1`/`SHA-256`/`MD5` per variant — no need to know keystore paths/passwords/aliases by hand. Needed whenever registering an Android OAuth client (Google Sign-In, Drive API, etc.) in Cloud Console/Firebase: one client per package name (`com.seucaio.unideas` / `com.seucaio.unideas.debug`) + matching SHA-1.
+
 ## Release automation
 
 `prepare_release.yml` (workflow_dispatch, run manually from `main`) bumps `versionCode`/`versionName` in `app/build.gradle.kts`, commits, tags (`vX.Y.Z`), then calls `release_build.yml`, which builds a signed release APK, creates a draft GitHub Release and uploads to Firebase App Distribution (group `alpha-testers`). `release-drafter.yml` keeps a draft changelog up to date on every push to `main`, categorized by label via `.github/changelog-drafter.yml` — `release_build.yml` reuses that draft's body for the real release's notes (then deletes the draft) instead of GitHub's native auto-generated notes, to avoid a redundant "New Contributors" section on a single-dev repo.

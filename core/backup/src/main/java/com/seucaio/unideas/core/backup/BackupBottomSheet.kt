@@ -15,7 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,12 +24,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -50,14 +47,12 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupBottomSheet(
-    snackbarHostState: SnackbarHostState,
     onDismiss: () -> Unit,
     viewModel: BackupViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
-    val resources by rememberUpdatedState(LocalResources.current)
 
     var pendingAction by remember { mutableStateOf<BackupAction?>(null) }
     var restoreBackups by remember { mutableStateOf<List<BackupInfo>>(emptyList()) }
@@ -76,8 +71,9 @@ fun BackupBottomSheet(
     LaunchedEffect(Unit) {
         viewModel.action.collect { action ->
             when (action) {
-                is BackupUiAction.ShowSnackbar ->
-                    snackbarHostState.showSnackbar(resources.getString(action.message))
+                is BackupUiAction.ShowSnackbar -> {
+                    // Handled by SettingsScreen to persist after dismiss
+                }
                 is BackupUiAction.LaunchGoogleSignIn -> {
                     pendingAction = action.pendingAction
                     signInLauncher.launch(action.intent)
@@ -94,6 +90,7 @@ fun BackupBottomSheet(
     ) {
         BackupSheetContent(
             uiState = uiState,
+            onConnectClick = { viewModel.onEvent(BackupEvent.OnConnectClick) },
             onBackupClick = { viewModel.onEvent(BackupEvent.OnBackupClick) },
             onSyncClick = { viewModel.onEvent(BackupEvent.OnSyncClick) },
         )
@@ -117,6 +114,7 @@ fun BackupBottomSheet(
 @Composable
 private fun BackupSheetContent(
     uiState: BackupUiState,
+    onConnectClick: () -> Unit,
     onBackupClick: () -> Unit,
     onSyncClick: () -> Unit,
 ) {
@@ -135,30 +133,58 @@ private fun BackupSheetContent(
         when (uiState) {
             is BackupUiState.Loading ->
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            is BackupUiState.Ready -> {
-                val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm") }
-                val subtitle = uiState.lastBackupAt?.format(formatter)
-                    ?.let { stringResource(R.string.backup_last_at, it) }
-                    ?: stringResource(R.string.backup_none)
-
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(onClick = onBackupClick, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.backup_action_upload))
-                    }
-                    Button(onClick = onSyncClick, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.backup_action_sync))
-                    }
-                }
+            is BackupUiState.Ready -> if (uiState.isConnected) {
+                ConnectedBackupContent(uiState, onBackupClick, onSyncClick)
+            } else {
+                DisconnectedBackupContent(onConnectClick)
             }
+        }
+    }
+}
+
+@Composable
+private fun ConnectedBackupContent(
+    uiState: BackupUiState.Ready,
+    onBackupClick: () -> Unit,
+    onSyncClick: () -> Unit,
+) {
+    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm") }
+    val subtitle = uiState.lastBackupAt?.format(formatter)
+        ?.let { stringResource(R.string.backup_last_at, it) }
+        ?: stringResource(R.string.backup_none)
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(onClick = onBackupClick, modifier = Modifier.weight(1f)) {
+                Text(text = stringResource(R.string.backup_action_upload))
+            }
+            Button(onClick = onSyncClick, modifier = Modifier.weight(1f)) {
+                Text(text = stringResource(R.string.backup_action_sync))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DisconnectedBackupContent(onConnectClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResource(R.string.backup_not_connected),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.backup_action_connect))
         }
     }
 }
@@ -209,6 +235,7 @@ private fun BackupSheetContentPreview(
         Surface {
             BackupSheetContent(
                 uiState = uiState,
+                onConnectClick = {},
                 onBackupClick = {},
                 onSyncClick = {},
             )

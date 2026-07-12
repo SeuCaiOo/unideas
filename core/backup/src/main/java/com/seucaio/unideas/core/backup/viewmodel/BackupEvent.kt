@@ -3,6 +3,7 @@ package com.seucaio.unideas.core.backup.viewmodel
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 
 sealed interface BackupEvent {
+    data object OnConnectClick : BackupEvent
     data object OnBackupClick : BackupEvent
     data object OnSyncClick : BackupEvent
     data class OnGoogleSignInResult(

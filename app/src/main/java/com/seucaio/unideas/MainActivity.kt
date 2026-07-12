@@ -16,6 +16,7 @@ import com.seucaio.unideas.feature.items.navigation.itemsNavGraph
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
 import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
 import com.seucaio.unideas.feature.settings.navigation.SettingsRoute
+import com.seucaio.unideas.feature.settings.navigation.SettingsScreenConfig
 import com.seucaio.unideas.feature.settings.navigation.settingsNavGraph
 import com.seucaio.unideas.feature.tags.navigation.TagsRoute
 import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
@@ -40,7 +41,10 @@ class MainActivity : ComponentActivity() {
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
                     )
                     settingsNavGraph(
-                        versionName = BuildConfig.VERSION_NAME,
+                        config = SettingsScreenConfig(
+                            versionName = BuildConfig.VERSION_NAME,
+                            showDebugSection = BuildConfig.DEBUG,
+                        ),
                         onNavigateBack = navController::popBackStack,
                         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
                         onNavigateToTags = { navController.navigate(TagsRoute.List) },

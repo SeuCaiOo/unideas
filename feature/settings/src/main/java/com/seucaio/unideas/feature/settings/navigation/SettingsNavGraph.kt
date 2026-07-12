@@ -5,7 +5,7 @@ import androidx.navigation.compose.composable
 import com.seucaio.unideas.feature.settings.SettingsScreen
 
 fun NavGraphBuilder.settingsNavGraph(
-    versionName: String,
+    config: SettingsScreenConfig,
     onNavigateBack: (() -> Unit)?,
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
@@ -13,7 +13,8 @@ fun NavGraphBuilder.settingsNavGraph(
 ) {
     composable<SettingsRoute.Settings> {
         SettingsScreen(
-            versionName = versionName,
+            versionName = config.versionName,
+            showDebugSection = config.showDebugSection,
             onNavigateBack = onNavigateBack,
             onNavigateToSections = onNavigateToSections,
             onNavigateToTags = onNavigateToTags,

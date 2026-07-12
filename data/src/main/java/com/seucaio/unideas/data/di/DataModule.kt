@@ -1,9 +1,12 @@
 package com.seucaio.unideas.data.di
 
+import com.seucaio.unideas.data.local.database.DatabaseSeeder
 import com.seucaio.unideas.data.local.database.UnideasDatabase
+import com.seucaio.unideas.data.repository.DatabaseRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemRepositoryImpl
 import com.seucaio.unideas.data.repository.SectionRepositoryImpl
 import com.seucaio.unideas.data.repository.TagRepositoryImpl
+import com.seucaio.unideas.domain.repository.DatabaseRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.SectionRepository
 import com.seucaio.unideas.domain.repository.TagRepository
@@ -24,4 +27,6 @@ val dataModule = module {
     singleOf(::ItemRepositoryImpl).bind<ItemRepository>()
     singleOf(::SectionRepositoryImpl).bind<SectionRepository>()
     singleOf(::TagRepositoryImpl).bind<TagRepository>()
+    singleOf(::DatabaseSeeder)
+    singleOf(::DatabaseRepositoryImpl).bind<DatabaseRepository>()
 }

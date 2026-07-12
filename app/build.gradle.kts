@@ -164,6 +164,7 @@ dependencies {
     kover(project(":feature:tags"))
     kover(project(":feature:settings"))
     kover(project(":feature:items"))
+    kover(project(":feature:home"))
 
     implementation(project(":core:ui"))
     implementation(project(":domain"))

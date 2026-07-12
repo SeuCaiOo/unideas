@@ -8,6 +8,8 @@ import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
@@ -25,8 +27,7 @@ import org.koin.dsl.module
 
 /**
  * Koin module for `:domain` use cases. Included by `appModule` in `:app`.
- * Grows one screen's worth of use cases at a time — the rest of the Item use
- * cases (GetPriorityItems) join once their own screens wire them (D2).
+ * Grows one screen's worth of use cases at a time.
  */
 val domainModule = module {
     factoryOf(::GetSectionsUseCase)
@@ -50,6 +51,8 @@ val domainModule = module {
     factoryOf(::EditItemUseCase)
     factoryOf(::DeleteItemUseCase)
     factoryOf(::CompleteItemUseCase)
+    factoryOf(::GetPriorityItemsUseCase)
     factoryOf(::ItemDetailUseCase)
     factoryOf(::ItemFormUseCase)
+    factoryOf(::HomeUseCase)
 }

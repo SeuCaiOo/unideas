@@ -79,14 +79,15 @@ domain/
     ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
     │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete/complete)
-    │   └── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
+    │   ├── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
+    │   └── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam (getPriorityItems/getItems/complete)
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
     │   └── SectionUseCase.kt      — facade delegando pros 4 acima (CRUD completo, um método por operação)
     └── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
         └── TagUseCase.kt          — facade delegando pros 4 acima, mesmo formato de SectionUseCase
 ```
 
-**Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). Ver `CONVENTIONS.md` para o critério completo.
+**Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase` ≠ `HomeUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). `HomeUseCase` é compartilhada por `HomeViewModel` e `AllPrioritiesViewModel` (mesma tela-conceito, dois pontos de entrada). Ver `CONVENTIONS.md` para o critério completo.
 
 ### `:data` — `com.seucaio.unideas.data`
 
@@ -154,8 +155,24 @@ feature/items/
     │   ├── screen/    — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt
     │   └── viewmodel/ — ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt / ItemDetailViewModel.kt / ItemDetailDialogState.kt
     └── list/
-        ├── screen/    — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro; descartável quando Home (D2.1/#27) existir
+        ├── screen/    — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro; acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
         └── viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
+```
+
+```
+feature/home/
+├── navigation/
+│   ├── HomeNavGraph.kt
+│   └── HomeRoute.kt              — @Serializable, type-safe: Panel | AllPriorities
+├── di/
+│   └── FeatureModule.kt          — val homeModule
+└── features/
+    ├── panel/
+    │   ├── screen/    — HomeScreen.kt + HomePreviewProvider.kt + components/ (PriorityPanel.kt, Filters.kt, HomeItemRow.kt)
+    │   └── viewmodel/ — HomeUiState.kt / HomeUiAction.kt / HomeEvent.kt / HomeViewModel.kt
+    └── allpriorities/
+        ├── screen/    — AllPrioritiesScreen.kt + AllPrioritiesPreviewProvider.kt   — reaproveita HomeItemRow do pacote panel/
+        └── viewmodel/ — AllPrioritiesUiState.kt / AllPrioritiesUiAction.kt / AllPrioritiesEvent.kt / AllPrioritiesViewModel.kt
 ```
 
 `feature/sections/` e `feature/tags/` continuam flat (uma tela só cada) — o padrão `features/<tela>/` só se aplica quando o módulo tem mais de uma tela.
@@ -209,13 +226,12 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 
 ```
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
-domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados (GetItems entrou em #62,
-                                 pré-requisito de ItemsListViewModel — existia desde #23 mas nunca tinha sido wireado)
+domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66)
 core/backup/di/BackupModule.kt — repos + use cases de :core:backup — ainda não existe, chega com E1
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
-                                 (items/sections/tags/settings já existem; home chega com D2)
+                                 (items/sections/tags/settings/home já existem)
 
-:app/di/AppModule.kt — includes(dataModule, domainModule, sectionsModule, tagsModule, settingsModule, itemsModule);
+:app/di/AppModule.kt — includes(dataModule, domainModule, sectionsModule, tagsModule, settingsModule, itemsModule, homeModule);
                         backupModule entra quando E1 existir; startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 

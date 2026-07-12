@@ -2,7 +2,6 @@ package com.seucaio.unideas.core.backup.domain.usecase
 
 import android.content.Intent
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.services.drive.Drive
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -14,15 +13,9 @@ class GoogleAuthUseCaseTest {
 
     private val getSignInIntentUseCase: GetSignInIntentUseCase = mockk()
     private val getSignedInAccountUseCase: GetSignedInAccountUseCase = mockk()
-    private val buildDriveServiceUseCase: BuildDriveServiceUseCase = mockk()
-    private val useCase = GoogleAuthUseCase(
-        getSignInIntentUseCase,
-        getSignedInAccountUseCase,
-        buildDriveServiceUseCase,
-    )
+    private val useCase = GoogleAuthUseCase(getSignInIntentUseCase, getSignedInAccountUseCase)
 
     private val account: GoogleSignInAccount = mockk()
-    private val driveService: Drive = mockk()
 
     @Test
     fun `getSignInIntent delegates to GetSignInIntentUseCase`() {
@@ -43,15 +36,5 @@ class GoogleAuthUseCaseTest {
 
         assertEquals(account, result)
         verify(exactly = 1) { getSignedInAccountUseCase() }
-    }
-
-    @Test
-    fun `buildDriveService delegates to BuildDriveServiceUseCase`() {
-        every { buildDriveServiceUseCase(account) } returns driveService
-
-        val result = useCase.buildDriveService(account)
-
-        assertEquals(driveService, result)
-        verify(exactly = 1) { buildDriveServiceUseCase(account) }
     }
 }

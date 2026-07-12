@@ -3,7 +3,6 @@ package com.seucaio.unideas.core.backup.viewmodel
 import android.content.Intent
 import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.services.drive.Drive
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
@@ -34,14 +33,12 @@ class BackupViewModelTest {
     @MockK
     private lateinit var backupUseCase: BackupUseCase
 
-    private val driveService: Drive = mockk()
     private val account: GoogleSignInAccount = mockk()
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        every { googleAuthUseCase.buildDriveService(account) } returns driveService
         every { googleAuthUseCase.getSignedInAccount() } returns null
     }
 
@@ -65,7 +62,7 @@ class BackupViewModelTest {
     fun `when created with a signed-in account should expose connected state with last backup`() = runTest {
         val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
         every { googleAuthUseCase.getSignedInAccount() } returns account
-        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns
             Result.success(BackupInfo("file-1", createdAt, 1024L))
 
         val vm = viewModel()
@@ -78,7 +75,7 @@ class BackupViewModelTest {
     @Test
     fun `when created with a signed-in account and no prior backup should expose connected state`() = runTest {
         every { googleAuthUseCase.getSignedInAccount() } returns account
-        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns Result.success(null)
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
 
         val vm = viewModel()
 
@@ -91,7 +88,7 @@ class BackupViewModelTest {
     fun `when created with a signed-in account but the info fetch fails should show the error snackbar`() =
         runTest {
             every { googleAuthUseCase.getSignedInAccount() } returns account
-            coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+            coEvery { backupUseCase.getLastBackupInfo(account) } returns
                 Result.failure(RuntimeException("error"))
 
             val vm = viewModel()
@@ -116,7 +113,7 @@ class BackupViewModelTest {
     @Test
     fun `when connect sign-in succeeds should expose connected state with the last backup`() = runTest {
         val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
-        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns
             Result.success(BackupInfo("file-1", createdAt, 1024L))
         val vm = viewModel()
 
@@ -166,7 +163,7 @@ class BackupViewModelTest {
     @Test
     fun `when upload succeeds should update lastBackupAt and show the success snackbar`() = runTest {
         val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
-        coEvery { backupUseCase.upload(driveService) } returns
+        coEvery { backupUseCase.upload(account) } returns
             Result.success(BackupInfo("file-1", createdAt, 1024L))
         val vm = viewModel()
 
@@ -184,7 +181,7 @@ class BackupViewModelTest {
 
     @Test
     fun `when upload fails should show the error snackbar`() = runTest {
-        coEvery { backupUseCase.upload(driveService) } returns Result.failure(RuntimeException("error"))
+        coEvery { backupUseCase.upload(account) } returns Result.failure(RuntimeException("error"))
         val vm = viewModel()
 
         vm.action.test {
@@ -195,7 +192,7 @@ class BackupViewModelTest {
 
     @Test
     fun `when sync finds no backups should show the not-found snackbar`() = runTest {
-        coEvery { backupUseCase.list(driveService) } returns Result.success(emptyList())
+        coEvery { backupUseCase.list(account) } returns Result.success(emptyList())
         val vm = viewModel()
 
         vm.action.test {
@@ -207,7 +204,7 @@ class BackupViewModelTest {
     @Test
     fun `when sync finds backups should show the restore dialog`() = runTest {
         val backups = listOf(BackupInfo("file-1", LocalDateTime.now(), 1024L))
-        coEvery { backupUseCase.list(driveService) } returns Result.success(backups)
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
         val vm = viewModel()
 
         vm.action.test {
@@ -218,7 +215,7 @@ class BackupViewModelTest {
 
     @Test
     fun `when sync fails should show the error snackbar`() = runTest {
-        coEvery { backupUseCase.list(driveService) } returns Result.failure(RuntimeException("error"))
+        coEvery { backupUseCase.list(account) } returns Result.failure(RuntimeException("error"))
         val vm = viewModel()
 
         vm.action.test {
@@ -229,7 +226,7 @@ class BackupViewModelTest {
 
     @Test
     fun `when restore succeeds should show the restore success snackbar`() = runTest {
-        coEvery { backupUseCase.restore(driveService, "file-1") } returns Result.success(Unit)
+        coEvery { backupUseCase.restore(account, "file-1") } returns Result.success(Unit)
         val vm = viewModel()
 
         vm.action.test {
@@ -240,7 +237,7 @@ class BackupViewModelTest {
 
     @Test
     fun `when restore fails should show the error snackbar`() = runTest {
-        coEvery { backupUseCase.restore(driveService, "file-1") } returns
+        coEvery { backupUseCase.restore(account, "file-1") } returns
             Result.failure(RuntimeException("error"))
         val vm = viewModel()
 

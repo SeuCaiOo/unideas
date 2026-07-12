@@ -2,22 +2,19 @@ package com.seucaio.unideas.core.backup.domain.usecase
 
 import android.content.Intent
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.services.drive.Drive
 
 /**
- * Facade over the sign-in/session use cases — everything that doesn't take a [Drive] service as
- * input (it either produces one, like [buildDriveService], or resolves account state). The
- * backup-data operations that operate *on* a [Drive] service live in [BackupUseCase] instead.
+ * Facade over Google sign-in/session concerns — launching the sign-in flow and resolving the
+ * current account. Building the [com.google.api.services.drive.Drive] service from an account
+ * and everything that operates on it live in [BackupUseCase] instead, so callers deal only in
+ * [GoogleSignInAccount] and never see the intermediate Drive service.
  */
 class GoogleAuthUseCase(
     private val getSignInIntentUseCase: GetSignInIntentUseCase,
     private val getSignedInAccountUseCase: GetSignedInAccountUseCase,
-    private val buildDriveServiceUseCase: BuildDriveServiceUseCase,
 ) {
 
     fun getSignInIntent(): Intent = getSignInIntentUseCase()
 
     fun getSignedInAccount(): GoogleSignInAccount? = getSignedInAccountUseCase()
-
-    fun buildDriveService(account: GoogleSignInAccount): Drive = buildDriveServiceUseCase(account)
 }

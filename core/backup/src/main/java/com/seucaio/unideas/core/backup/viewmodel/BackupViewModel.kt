@@ -79,7 +79,7 @@ class BackupViewModel(
     private fun refreshConnectionState(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.getLastBackupInfo(googleAuthUseCase.buildDriveService(account))
+            backupUseCase.getLastBackupInfo(account)
                 .onSuccess { info ->
                     _internalState.update {
                         it.copy(isLoading = false, isConnected = true, lastBackupAt = info?.createdAt)
@@ -92,7 +92,7 @@ class BackupViewModel(
     private fun upload(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.upload(googleAuthUseCase.buildDriveService(account))
+            backupUseCase.upload(account)
                 .onSuccess { info ->
                     _internalState.update {
                         it.copy(isLoading = false, isConnected = true, lastBackupAt = info.createdAt)
@@ -106,7 +106,7 @@ class BackupViewModel(
     private fun listBackups(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.list(googleAuthUseCase.buildDriveService(account))
+            backupUseCase.list(account)
                 .onSuccess { backups ->
                     _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     if (backups.isEmpty()) {
@@ -122,7 +122,7 @@ class BackupViewModel(
     private fun restore(account: GoogleSignInAccount, fileId: String) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.restore(googleAuthUseCase.buildDriveService(account), fileId)
+            backupUseCase.restore(account, fileId)
                 .onSuccess {
                     _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     showSnackbar(R.string.backup_restore_success)

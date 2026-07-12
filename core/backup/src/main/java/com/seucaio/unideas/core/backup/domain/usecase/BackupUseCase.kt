@@ -1,27 +1,31 @@
 package com.seucaio.unideas.core.backup.domain.usecase
 
-import com.google.api.services.drive.Drive
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 
 /**
- * Facade over the backup-data use cases — everything that operates *on* an already-built
- * [Drive] service. Sign-in/session concerns (getting the intent, resolving the current account,
- * building the [Drive] service itself) live in [GoogleAuthUseCase] instead.
+ * Facade over the backup-data use cases — takes a [GoogleSignInAccount] and builds the
+ * `Drive` service itself before delegating, so callers (the ViewModel) never touch the
+ * intermediate Drive service directly. Sign-in/session concerns (getting the intent, resolving
+ * the current account) live in [GoogleAuthUseCase] instead.
  */
 class BackupUseCase(
+    private val buildDriveServiceUseCase: BuildDriveServiceUseCase,
     private val uploadBackupUseCase: UploadBackupUseCase,
     private val listBackupsUseCase: ListBackupsUseCase,
     private val restoreBackupUseCase: RestoreBackupUseCase,
     private val getLastBackupInfoUseCase: GetLastBackupInfoUseCase,
 ) {
 
-    suspend fun upload(driveService: Drive): Result<BackupInfo> = uploadBackupUseCase(driveService)
+    suspend fun upload(account: GoogleSignInAccount): Result<BackupInfo> =
+        uploadBackupUseCase(buildDriveServiceUseCase(account))
 
-    suspend fun list(driveService: Drive): Result<List<BackupInfo>> = listBackupsUseCase(driveService)
+    suspend fun list(account: GoogleSignInAccount): Result<List<BackupInfo>> =
+        listBackupsUseCase(buildDriveServiceUseCase(account))
 
-    suspend fun restore(driveService: Drive, fileId: String): Result<Unit> =
-        restoreBackupUseCase(driveService, fileId)
+    suspend fun restore(account: GoogleSignInAccount, fileId: String): Result<Unit> =
+        restoreBackupUseCase(buildDriveServiceUseCase(account), fileId)
 
-    suspend fun getLastBackupInfo(driveService: Drive): Result<BackupInfo?> =
-        getLastBackupInfoUseCase(driveService)
+    suspend fun getLastBackupInfo(account: GoogleSignInAccount): Result<BackupInfo?> =
+        getLastBackupInfoUseCase(buildDriveServiceUseCase(account))
 }

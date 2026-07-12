@@ -261,11 +261,26 @@ Fluxo próprio e separado, específico pro Drive (**não** reaproveita Google Si
 
 Estrutura em `:core:backup`:
 - `GoogleAuthRepository` / `BackupRepository` (interfaces + impl auto-contidas no módulo)
-- Use cases: `GetSignInIntentUseCase`, `BuildDriveServiceUseCase`, `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
-- `BackupUseCase` — facade sobre os 6 use cases acima (mesmo padrão de `SectionUseCase`/`TagUseCase`/`HomeUseCase`), único parâmetro do `BackupViewModel`
-- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet`/seção na tela de Configurações.
+- Use cases de sessão (sem `Drive` como parâmetro de entrada): `GetSignInIntentUseCase`, `GetSignedInAccountUseCase`, `BuildDriveServiceUseCase`
+- Use cases de dados (recebem uma conta/`Drive`): `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
+- `GoogleAuthUseCase` — facade sobre os 3 use cases de sessão (`getSignInIntent`/`getSignedInAccount`/`buildDriveService`)
+- `BackupUseCase` — facade sobre os 4 use cases de dados; recebe `GoogleSignInAccount` direto e constrói o `Drive` internamente (compõe `BuildDriveServiceUseCase`), então o `BackupViewModel` nunca lida com o tipo `Drive` (#16)
+- `BackupViewModel` — checa conexão (`GoogleAuthUseCase.getSignedInAccount()`) no `init` e pré-carrega o último backup se já conectado; `isConnected` explícito em `BackupUiState.Ready`, evento `OnConnectClick` dedicado (não dispara sign-in implícito no primeiro clique de backup/restore)
+- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables).
 
 Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+
+### Setup externo (Google Cloud Console / Firebase)
+
+O projeto Firebase `unideas-app` (já existente para Crashlytics/App Distribution) também hospeda o client OAuth do Drive — não precisa criar um projeto GCP separado, um projeto Firebase **é** um projeto Google Cloud por baixo (mesmo project ID). Pré-requisitos, feitos uma vez em [console.cloud.google.com](https://console.cloud.google.com) (não há API/CLI pra isso, é ação manual no navegador):
+
+1. **APIs & Services → Library** → habilitar **"Google Drive API"**.
+2. **APIs & Services → OAuth consent screen** → configurar (tipo "External" serve pra uso próprio/dev).
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID → Android**, um client por variante (package name + SHA-1, obtidos via `./gradlew signingReport` — ver `docs/RELEASE.md`):
+   - `com.seucaio.unideas.debug` (debug)
+   - `com.seucaio.unideas` (release)
+
+Não precisa client "Web" nem nada hardcoded no app — o código usa só `.requestEmail().requestScopes(Scope(DriveScopes.DRIVE_APPDATA))` (sem `requestIdToken`/`serverClientId`), então o Play Services resolve o client automaticamente batendo `package_name` + assinatura contra o que está registrado no Console.
 
 ## Convenção de datas
 

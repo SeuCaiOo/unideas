@@ -54,7 +54,7 @@ suspend operator fun invoke(item: Item): Result<Long> = runCatching {
 
 - **Operações complexas retornam "Outcome" ricos** em `domain/model/outcome/`, não flags soltas. Ex: excluir seção retorna `DeletionStatus.Deleted` ou `DeletionStatus.BlockedByLinkedItems(count)` — o ViewModel só reage ao outcome, não recalcula a regra.
 - **Setup use case**: para telas de formulário, um `Get<X>FormSetupUseCase` resolve "é novo? existe? erro?" e devolve o estado inicial pronto — o ViewModel não decide "como carregar" no `init`.
-- **Facade de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`, `BackupUseCase`): quando um ViewModel precisa de vários use cases da mesma entidade, uma facade pode compor os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando, **nunca acessando repositório diretamente**. Não é "um use case a mais fazendo a mesma coisa" — reduz quantos parâmetros o construtor do ViewModel recebe, sem duplicar lógica nem esconder regra de negócio.
+- **Facade de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`, `GoogleAuthUseCase`, `BackupUseCase`): quando um ViewModel precisa de vários use cases da mesma entidade, uma facade pode compor os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando, **nunca acessando repositório diretamente**. Não é "um use case a mais fazendo a mesma coisa" — reduz quantos parâmetros o construtor do ViewModel recebe, sem duplicar lógica nem esconder regra de negócio. Quando uma facade cresce demais (`LongParameterList`), prefira **dividir por contexto** em vez de suprimir o lint — `BackupUseCase` (#16) foi dividido em `GoogleAuthUseCase` (sign-in/sessão: intent + conta atual) e um `BackupUseCase` enxuto (operações que recebem uma conta e constroem o `Drive` service internamente), espelhando a fronteira já existente entre `GoogleAuthRepository`/`BackupRepository`.
 
     ```kotlin
     // ✅ correto — só delega, sem lógica própria
@@ -182,7 +182,7 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 
 ## Logging
 
-- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Árvore plantada só em build debug (`UnideasApplication`, guardado por `BuildConfig.DEBUG`) — nada é logado em release.
+- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Em debug, `Timber.DebugTree()` (`UnideasApplication`, guardado por `BuildConfig.DEBUG`). Em release, `CrashlyticsTree` (`:core:common`) — forwarda `WARN`+ como log custom do Crashlytics e chama `recordException` (sintetizando uma exceção pra `ERROR` sem `Throwable`); `VERBOSE`/`DEBUG`/`INFO` são descartados.
 - Módulos que precisam logar adicionam `implementation(libs.timber)` no próprio `build.gradle.kts` (`:app` já tem).
 - Log de debug temporário e pontual (adicionado só pra rastrear um bug específico e removido depois) pode seguir usando `Log.d` mesmo — não precisa Timber pra algo descartável em minutos.
 

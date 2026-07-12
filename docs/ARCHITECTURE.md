@@ -67,6 +67,7 @@ domain/
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
 │   ├── Section.kt
 │   ├── Tag.kt
+│   ├── SeedScope.kt         — enum EMPTY | BASIC | FULL — cenário de dado de exemplo, debug-only (#19)
 │   └── outcome/             — resultados ricos de operações (ver CONVENTIONS.md)
 │       ├── DeletionStatus.kt   — Deleted | BlockedByLinkedItems(count)
 │       ├── SaveResult.kt
@@ -74,7 +75,8 @@ domain/
 ├── repository/       — interfaces (contratos), sem implementação
 │   ├── ItemRepository.kt
 │   ├── SectionRepository.kt
-│   └── TagRepository.kt
+│   ├── TagRepository.kt
+│   └── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
 └── usecase/
     ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
@@ -83,8 +85,9 @@ domain/
     │   └── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam (getPriorityItems/getItems/complete)
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
     │   └── SectionUseCase.kt      — facade delegando pros 4 acima (CRUD completo, um método por operação)
-    └── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
-        └── TagUseCase.kt          — facade delegando pros 4 acima, mesmo formato de SectionUseCase
+    ├── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
+    │   └── TagUseCase.kt          — facade delegando pros 4 acima, mesmo formato de SectionUseCase
+    └── settings/     — SeedDatabaseUseCase/ClearDatabaseUseCase — debug-only (#19), gatilho só em Settings quando BuildConfig.DEBUG
 ```
 
 **Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase` ≠ `HomeUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). `HomeUseCase` é compartilhada por `HomeViewModel` e `AllPrioritiesViewModel` (mesma tela-conceito, dois pontos de entrada). Ver `CONVENTIONS.md` para o critério completo.
@@ -101,10 +104,11 @@ data/
 │   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
 │   ├── dao/          — ItemDao, SectionDao, TagDao (retornam Flow)
 │   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder)
+│   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
 ├── mapper/           — extension functions Entity ↔ Domain
-├── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl
+├── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl, DatabaseRepositoryImpl
 └── di/               — DataModule.kt (Koin, local ao módulo — ver seção DI abaixo)
 ```
 

@@ -168,6 +168,7 @@ dependencies {
     kover(project(":core:backup"))
 
     implementation(project(":core:ui"))
+    implementation(project(":core:backup"))
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":feature:sections"))

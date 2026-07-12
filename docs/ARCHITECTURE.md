@@ -43,12 +43,14 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :core:common  ←  :core:ui (api)  ←  :feature:*
 :domain       ←  :data
 :domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
-:domain, :core:common, :core:ui  ←  :core:backup
+:domain, :core:common, :core:ui, :data  ←  :core:backup
 :feature:settings  →  :core:backup
 tudo  ←  :app  (faz o wiring de DI e navegação)
 ```
 
 Regra dura: **`:feature:*` nunca depende de `:data` diretamente** — só de `:domain` (interfaces + use cases). A implementação concreta do repositório é injetada via Koin no `:app`. Isso mantém as features testáveis e desacopladas da persistência.
+
+**Exceção confirmada em #30 (E1.2):** `:core:backup` **é** `implementation(project(":data"))` — diferente da regra acima. Backup manipula o arquivo físico do Room (`database.close()`/`checkpoint()`/`getDatabasePath()`) pra copiar/restaurar o `.db` bruto direto no Drive, não só via interface de repositório — não dá pra fazer isso só com `:domain`. Mesma exceção existe no GymLog (projeto-fonte de convenções do bootstrap).
 
 ## Estrutura de pacotes por módulo
 
@@ -231,13 +233,14 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 ```
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66)
-core/backup/di/BackupDataModule.kt — backupDataModule (single GoogleAuthRepositoryImpl.bind(), factoryOf use cases) — confirmado em #29 (E1.1);
-                                      BackupRepository/upload-list-restore use cases chegam com E1.2 (#30)
+core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
+                                      use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
                                  (items/sections/tags/settings/home já existem)
 
-:app/di/AppModule.kt — includes(dataModule, domainModule, sectionsModule, tagsModule, settingsModule, itemsModule, homeModule);
-                        backupDataModule ainda não incluído (sem tela consumidora até E1.2/E2); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
+:app/di/AppModule.kt — includes(dataModule, domainModule, backupDataModule, sectionsModule, tagsModule, settingsModule,
+                        itemsModule, homeModule); backupDataModule entrou em #30, ainda sem tela consumindo (E2/#16);
+                        startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |
@@ -259,6 +262,7 @@ Fluxo próprio e separado, específico pro Drive (**não** reaproveita Google Si
 Estrutura em `:core:backup`:
 - `GoogleAuthRepository` / `BackupRepository` (interfaces + impl auto-contidas no módulo)
 - Use cases: `GetSignInIntentUseCase`, `BuildDriveServiceUseCase`, `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
+- `BackupUseCase` — facade sobre os 6 use cases acima (mesmo padrão de `SectionUseCase`/`TagUseCase`/`HomeUseCase`), único parâmetro do `BackupViewModel`
 - `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet`/seção na tela de Configurações.
 
 Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.

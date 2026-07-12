@@ -45,7 +45,7 @@ abstract class UnideasDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
 
     companion object {
-        private const val DATABASE_NAME = "unideas.db"
+        const val DATABASE_NAME = "unideas.db"
 
         @Volatile
         private var instance: UnideasDatabase? = null
@@ -54,6 +54,16 @@ abstract class UnideasDatabase : RoomDatabase() {
             instance ?: synchronized(this) {
                 instance ?: buildDatabase(context).also { instance = it }
             }
+
+        /** Drops the cached singleton so the next [getInstance] rebuilds it — used after a restore. */
+        fun resetInstance() {
+            instance = null
+        }
+
+        /** Forces the WAL log to flush into the main `.db` file before it's copied for backup. */
+        fun checkpoint(database: UnideasDatabase) {
+            database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").close()
+        }
 
         private fun buildDatabase(context: Context): UnideasDatabase =
             Room.databaseBuilder(

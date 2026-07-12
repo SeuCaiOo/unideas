@@ -60,6 +60,8 @@ Namespace base: `com.seucaio.unideas`. Cada módulo tem seu sufixo.
 domain/
 ├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
 │   ├── Item.kt
+│   ├── ItemDetail.kt        — Item + sectionName resolvido (join feito em :data, nunca no ViewModel — ver ItemWithTagsAndSection)
+│   ├── SectionsAndTags.kt   — snapshot único de sections+tags pra telas que selecionam dos dois (ex: ItemForm)
 │   ├── ItemType.kt          — enum TASK | NOTE
 │   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
@@ -74,10 +76,17 @@ domain/
 │   ├── SectionRepository.kt
 │   └── TagRepository.kt
 └── usecase/
-    ├── item/         — Create/Edit/Delete/Complete/GetItems/GetItemDetail/GetPriorityItems
+    ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
+    ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
+    │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete/complete)
+    │   └── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
+    │   └── SectionUseCase.kt      — facade delegando pros 4 acima (CRUD completo, um método por operação)
     └── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
+        └── TagUseCase.kt          — facade delegando pros 4 acima, mesmo formato de SectionUseCase
 ```
+
+**Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). Ver `CONVENTIONS.md` para o critério completo.
 
 ### `:data` — `com.seucaio.unideas.data`
 
@@ -92,7 +101,7 @@ data/
 │   ├── dao/          — ItemDao, SectionDao, TagDao (retornam Flow)
 │   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder)
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
-│   └── relation/     — POJOs @Relation/@Embedded (ex: ItemWithTags) — joins no Room, nunca em memória
+│   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
 ├── mapper/           — extension functions Entity ↔ Domain
 ├── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl
 └── di/               — DataModule.kt (Koin, local ao módulo — ver seção DI abaixo)
@@ -125,7 +134,10 @@ core/ui/
 
 ### `:feature:*` — `com.seucaio.unideas.feature.<nome>`
 
-Flat na raiz do módulo — `Screen` + `PreviewProvider` de cada tela direto em `feature/<nome>/`, sem subpasta por tela (nome do arquivo já distingue). `navigation/`, `viewmodel/` e `di/` são as únicas subpastas, compartilhadas por todas as telas do módulo.
+Dois formatos, conforme o módulo tem uma tela só ou várias:
+
+- **Módulo com uma tela** (Sections, Tags, Settings): flat na raiz — `Screen` + `PreviewProvider` direto em `feature/<nome>/`, sem subpasta por tela. `navigation/`, `viewmodel/` e `di/` são as únicas subpastas.
+- **Módulo com várias telas** (Items — Form/Detail/List): cada tela ganha seu próprio `features/<tela>/{screen,viewmodel}/`, já que um único pacote `viewmodel/` compartilhado misturava os 4 arquivos MVI de cada tela sem nenhuma separação visual. `navigation/` e `di/` continuam fora de `features/`, compartilhados pelas telas do módulo.
 
 ```
 feature/items/
@@ -134,14 +146,19 @@ feature/items/
 │   └── ItemsRoute.kt              — @Serializable, type-safe: Form(itemId: Long?) | Detail(itemId: Long) | List
 ├── di/
 │   └── FeatureModule.kt           — val itemsModule
-├── viewmodel/                     — uma tela = 4 arquivos (UiState/UiAction/Event/ViewModel), todas juntas aqui
-│   ├── ItemFormUiState.kt / ItemFormUiAction.kt / ItemFormEvent.kt / ItemFormViewModel.kt
-│   ├── ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt / ItemDetailViewModel.kt / ItemDetailDialogState.kt
-│   └── ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
-├── ItemFormScreen.kt + ItemFormPreviewProvider.kt      — criar/editar Item (tela única)
-├── ItemDetailScreen.kt + ItemDetailPreviewProvider.kt  — detalhe do Item
-└── ItemsListScreen.kt + ItemsListPreviewProvider.kt    — listagem dev-only (#62), sem abas/filtro; descartável quando Home (D2.1/#27) existir
+└── features/
+    ├── form/
+    │   ├── screen/    — ItemFormScreen.kt + ItemFormPreviewProvider.kt
+    │   └── viewmodel/ — ItemFormUiState.kt / ItemFormUiAction.kt / ItemFormEvent.kt / ItemFormViewModel.kt
+    ├── detail/
+    │   ├── screen/    — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt
+    │   └── viewmodel/ — ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt / ItemDetailViewModel.kt / ItemDetailDialogState.kt
+    └── list/
+        ├── screen/    — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro; descartável quando Home (D2.1/#27) existir
+        └── viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
 ```
+
+`feature/sections/` e `feature/tags/` continuam flat (uma tela só cada) — o padrão `features/<tela>/` só se aplica quando o módulo tem mais de uma tela.
 
 O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no artifact "unideas — Improvements" e no board do GitHub Project).
 

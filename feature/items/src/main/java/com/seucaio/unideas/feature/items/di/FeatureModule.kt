@@ -8,12 +8,14 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val itemsModule = module {
-    // itemId is a nav argument, not resolvable by Koin — passed via parametersOf at the call site.
+    // itemId/initialType are nav arguments, not resolvable by Koin — passed via parametersOf(itemId,
+    // type) at the call site; ParametersHolder reads them back in that same order.
     viewModel { params ->
         ItemFormViewModel(
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
             getSectionsAndTags = get(),
+            initialType = params.get(),
         )
     }
     viewModel { params ->

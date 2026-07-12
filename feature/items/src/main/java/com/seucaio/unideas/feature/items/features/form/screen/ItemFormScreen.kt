@@ -66,7 +66,8 @@ import org.koin.core.parameter.parametersOf
 fun ItemFormScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
-    viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId) },
+    initialType: ItemType = ItemType.TASK,
+    viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId, initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }

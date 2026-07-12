@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.features.form.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
@@ -32,13 +33,16 @@ class ItemFormViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
     // Preserved once an existing item loads, so save() can carry over id/createdAt/completedAt
     // without the editable fields needing to track them.
     private var originalItem: Item? = null
 
-    private val _uiState = MutableStateFlow(ItemFormUiState(isEditing = itemId != null))
+    // initialType only seeds creation mode — loadItem() overwrites it with the real type when
+    // editing, so an edit deep-link can't be nudged into a different type by a stale nav arg.
+    private val _uiState = MutableStateFlow(ItemFormUiState(isEditing = itemId != null, type = initialType))
     val uiState: StateFlow<ItemFormUiState> = _uiState.asStateFlow()
 
     private val _uiAction = Channel<ItemFormUiAction>(Channel.BUFFERED)

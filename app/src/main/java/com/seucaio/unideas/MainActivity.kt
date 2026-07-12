@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.feature.home.navigation.HomeRoute
+import com.seucaio.unideas.feature.home.navigation.homeNavGraph
 import com.seucaio.unideas.feature.items.navigation.ItemsRoute
 import com.seucaio.unideas.feature.items.navigation.itemsNavGraph
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
@@ -25,20 +27,25 @@ class MainActivity : ComponentActivity() {
         setContent {
             UnideasTheme {
                 val navController = rememberNavController()
-                // SettingsRoute.Settings is a placeholder startDestination until Home (#27)
-                // exists — it's the natural temporary root since it's the screen that fans out
-                // to Sections/Tags. No back stack to pop from it yet, so no back button (null).
                 NavHost(
                     navController = navController,
-                    startDestination = SettingsRoute.Settings,
+                    startDestination = HomeRoute.Panel,
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    homeNavGraph(
+                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        // #28 (HomeRoute.AllPriorities) doesn't exist yet — "Ver todas" has no
+                        // destination to navigate to until that issue lands.
+                        onNavigateToAllPriorities = {},
+                        onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
+                    )
                     settingsNavGraph(
                         versionName = BuildConfig.VERSION_NAME,
-                        onNavigateBack = null,
+                        onNavigateBack = navController::popBackStack,
                         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
                         onNavigateToTags = { navController.navigate(TagsRoute.List) },
-                        // Debug-only entry point until Home (#27) ships as the real one.
+                        // Debug-only entry point — Home is the real one now.
                         onNavigateToItems = { navController.navigate(ItemsRoute.List) },
                     )
                     sectionsNavGraph(onNavigateBack = navController::popBackStack)
@@ -47,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = navController::popBackStack,
                         onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
                         onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
-                        onNavigateToForm = { navController.navigate(ItemsRoute.Form()) },
+                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
                     )
                 }
             }

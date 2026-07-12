@@ -8,4 +8,16 @@
     <string name="settings_backup_disconnected">Not connected</string>
     <string name="settings_debug_section">Debug</string>
     <string name="settings_debug_items">Items</string>
+    <string name="settings_debug_seed">Seed database</string>
+    <string name="settings_debug_seed_success">Sample data added</string>
+    <string name="settings_debug_clear">Clear database</string>
+    <string name="settings_debug_clear_success">Database cleared</string>
+    <string name="seed_scope_sheet_title">What should we seed?</string>
+    <string name="seed_scope_confirm">Seed</string>
+    <string name="seed_scope_empty">Empty</string>
+    <string name="seed_scope_empty_description">Wipes the database, no sample data</string>
+    <string name="seed_scope_basic">Basic</string>
+    <string name="seed_scope_basic_description">A few items, priority panel under the limit</string>
+    <string name="seed_scope_full">Full</string>
+    <string name="seed_scope_full_description">Enough items to show \"See all\", covering every visual case</string>
 </resources>

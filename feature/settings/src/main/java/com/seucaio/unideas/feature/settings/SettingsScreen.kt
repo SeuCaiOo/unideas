@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -21,6 +25,7 @@ import com.seucaio.unideas.core.ui.components.AppVersionFooter
 import com.seucaio.unideas.core.ui.components.UnideasListItem
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiState
@@ -30,6 +35,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsScreen(
     versionName: String,
+    showDebugSection: Boolean,
     onNavigateBack: (() -> Unit)?,
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
@@ -37,6 +43,10 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val updatedOnNavigateToSections by rememberUpdatedState(onNavigateToSections)
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
     val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
@@ -47,15 +57,23 @@ fun SettingsScreen(
                 is SettingsUiAction.NavigateToSections -> updatedOnNavigateToSections()
                 is SettingsUiAction.NavigateToTags -> updatedOnNavigateToTags()
                 is SettingsUiAction.NavigateToItems -> updatedOnNavigateToItems()
+                is SettingsUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
+                is SettingsUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
+                    resources.getString(action.messageRes),
+                )
+                is SettingsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }
         }
     }
 
     SettingsContent(
         uiState = uiState,
+        dialogState = dialogState,
         versionName = versionName,
+        showDebugSection = showDebugSection,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -63,9 +81,12 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     uiState: SettingsUiState,
+    dialogState: SettingsDialogState,
     versionName: String,
+    showDebugSection: Boolean,
     onEvent: (SettingsEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
+    snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
 
@@ -78,18 +99,33 @@ private fun SettingsContent(
                 versionName = versionName,
                 modifier = Modifier.padding(16.dp),
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         when (uiState) {
             is SettingsUiState.Success ->
-                SettingsBody(onEvent = onEvent, modifier = Modifier.padding(padding))
+                SettingsBody(
+                    onEvent = onEvent,
+                    showDebugSection = showDebugSection,
+                    modifier = Modifier.padding(padding),
+                )
         }
+    }
+
+    if (dialogState is SettingsDialogState.SelectingSeedScope) {
+        SeedScopeBottomSheet(
+            selectedScope = dialogState.selectedScope,
+            onScopeSelect = { onEvent(SettingsEvent.OnSeedScopeSelected(it)) },
+            onConfirm = { onEvent(SettingsEvent.OnSeedConfirmClicked) },
+            onDismiss = { onEvent(SettingsEvent.OnSeedDialogDismissed) },
+        )
     }
 }
 
 @Composable
 private fun SettingsBody(
     onEvent: (SettingsEvent) -> Unit,
+    showDebugSection: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -109,12 +145,21 @@ private fun SettingsBody(
             subtitle = stringResource(R.string.settings_backup_disconnected),
         )
 
-        // Temporary entry point until Home (#27) ships as the real way to reach Items.
-        SettingsSectionHeader(stringResource(R.string.settings_debug_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_debug_items),
-            onClick = { onEvent(SettingsEvent.OnItemsClicked) },
-        )
+        if (showDebugSection) {
+            SettingsSectionHeader(stringResource(R.string.settings_debug_section))
+            UnideasListItem(
+                title = stringResource(R.string.settings_debug_items),
+                onClick = { onEvent(SettingsEvent.OnItemsClicked) },
+            )
+            UnideasListItem(
+                title = stringResource(R.string.settings_debug_seed),
+                onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
+            )
+            UnideasListItem(
+                title = stringResource(R.string.settings_debug_clear),
+                onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
+            )
+        }
     }
 }
 
@@ -135,9 +180,12 @@ private fun SettingsScreenPreview(
     UnideasTheme {
         SettingsContent(
             uiState = uiState,
+            dialogState = SettingsDialogState.None,
             versionName = "0.0.2",
+            showDebugSection = true,
             onEvent = {},
             onNavigateBack = null,
+            snackbarHostState = remember { SnackbarHostState() },
         )
     }
 }

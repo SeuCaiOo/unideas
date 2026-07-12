@@ -54,7 +54,7 @@ suspend operator fun invoke(item: Item): Result<Long> = runCatching {
 
 - **Operações complexas retornam "Outcome" ricos** em `domain/model/outcome/`, não flags soltas. Ex: excluir seção retorna `DeletionStatus.Deleted` ou `DeletionStatus.BlockedByLinkedItems(count)` — o ViewModel só reage ao outcome, não recalcula a regra.
 - **Setup use case**: para telas de formulário, um `Get<X>FormSetupUseCase` resolve "é novo? existe? erro?" e devolve o estado inicial pronto — o ViewModel não decide "como carregar" no `init`.
-- **Facade de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`): quando um ViewModel precisa de vários use cases da mesma entidade, uma facade pode compor os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando, **nunca acessando repositório diretamente**. Não é "um use case a mais fazendo a mesma coisa" — reduz quantos parâmetros o construtor do ViewModel recebe, sem duplicar lógica nem esconder regra de negócio.
+- **Facade de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`, `BackupUseCase`): quando um ViewModel precisa de vários use cases da mesma entidade, uma facade pode compor os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando, **nunca acessando repositório diretamente**. Não é "um use case a mais fazendo a mesma coisa" — reduz quantos parâmetros o construtor do ViewModel recebe, sem duplicar lógica nem esconder regra de negócio.
 
     ```kotlin
     // ✅ correto — só delega, sem lógica própria

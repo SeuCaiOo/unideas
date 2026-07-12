@@ -18,6 +18,7 @@ class GoogleAuthRepositoryImpl(private val application: Application) : GoogleAut
 
     override fun getSignInIntent(): Intent {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
             .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
             .build()
         return GoogleSignIn.getClient(application, options).signInIntent

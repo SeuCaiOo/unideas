@@ -15,7 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,12 +24,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -50,14 +47,12 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupBottomSheet(
-    snackbarHostState: SnackbarHostState,
     onDismiss: () -> Unit,
     viewModel: BackupViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
-    val resources by rememberUpdatedState(LocalResources.current)
 
     var pendingAction by remember { mutableStateOf<BackupAction?>(null) }
     var restoreBackups by remember { mutableStateOf<List<BackupInfo>>(emptyList()) }
@@ -76,8 +71,9 @@ fun BackupBottomSheet(
     LaunchedEffect(Unit) {
         viewModel.action.collect { action ->
             when (action) {
-                is BackupUiAction.ShowSnackbar ->
-                    snackbarHostState.showSnackbar(resources.getString(action.message))
+                is BackupUiAction.ShowSnackbar -> {
+                    // Handled by SettingsScreen to persist after dismiss
+                }
                 is BackupUiAction.LaunchGoogleSignIn -> {
                     pendingAction = action.pendingAction
                     signInLauncher.launch(action.intent)

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalDateTime
 
 class BackupViewModel(
@@ -39,12 +40,12 @@ class BackupViewModel(
             initialValue = BackupUiState.Ready(),
         )
 
-    private val _action = Channel<BackupUiAction>(Channel.BUFFERED)
+    private val _action = Channel<BackupUiAction>(Channel.CONFLATED)
     val action = _action.receiveAsFlow()
 
     init {
         val account = googleAuthUseCase.getSignedInAccount()
-        if (account != null) refreshConnectionState(account)
+        if (account != null) refreshConnectionState(account, isInitialCheck = true)
     }
 
     fun onEvent(event: BackupEvent) {
@@ -66,17 +67,18 @@ class BackupViewModel(
 
     private fun handleSignInResult(account: GoogleSignInAccount?, pendingAction: BackupAction) {
         if (account == null) {
+            Timber.w("Backup: Google Sign-In result is null (user cancelled or error)")
             viewModelScope.launch { showSnackbar(R.string.backup_sign_in_failed) }
             return
         }
         when (pendingAction) {
-            BackupAction.Connect -> refreshConnectionState(account)
+            BackupAction.Connect -> refreshConnectionState(account, isInitialCheck = false)
             BackupAction.Upload -> upload(account)
             BackupAction.Sync -> listBackups(account)
         }
     }
 
-    private fun refreshConnectionState(account: GoogleSignInAccount) {
+    private fun refreshConnectionState(account: GoogleSignInAccount, isInitialCheck: Boolean) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
             backupUseCase.getLastBackupInfo(account)
@@ -85,7 +87,11 @@ class BackupViewModel(
                         it.copy(isLoading = false, isConnected = true, lastBackupAt = info?.createdAt)
                     }
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: Failed to get last backup info")
+                    _internalState.update { it.copy(isLoading = false) }
+                    if (!isInitialCheck) handleFailure()
+                }
         }
     }
 
@@ -99,7 +105,10 @@ class BackupViewModel(
                     }
                     showSnackbar(R.string.backup_upload_success)
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: Upload failed")
+                    handleFailure()
+                }
         }
     }
 
@@ -115,7 +124,10 @@ class BackupViewModel(
                         _action.send(BackupUiAction.ShowRestoreDialog(backups))
                     }
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: List failed")
+                    handleFailure()
+                }
         }
     }
 
@@ -127,7 +139,10 @@ class BackupViewModel(
                     _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     showSnackbar(R.string.backup_restore_success)
                 }
-                .onFailure { handleFailure() }
+                .onFailure {
+                    Timber.e(it, "Backup: Restore failed")
+                    handleFailure()
+                }
         }
     }
 

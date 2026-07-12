@@ -49,8 +49,6 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
 import com.seucaio.unideas.core.ui.components.SectionDropdown
 import com.seucaio.unideas.core.ui.components.TagChip
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.ItemType
@@ -114,33 +112,24 @@ private fun ItemFormContent(
                 title = title,
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
-                    if (uiState is ItemFormUiState.Success) {
-                        IconButton(onClick = { onEvent(ItemFormEvent.OnSaveClicked) }) {
-                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.item_form_save))
-                        }
+                    IconButton(
+                        onClick = { onEvent(ItemFormEvent.OnSaveClicked) },
+                        enabled = uiState.isTitleValid,
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.item_form_save))
                     }
                 },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        when (uiState) {
-            is ItemFormUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
-            is ItemFormUiState.Error ->
-                UnideasErrorContent(
-                    messageRes = uiState.messageRes,
-                    onRetry = { onEvent(ItemFormEvent.OnRetryClicked) },
-                    modifier = Modifier.padding(padding),
-                )
-            is ItemFormUiState.Success ->
-                ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
-        }
+        ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
     }
 }
 
 @Composable
 private fun ItemFormBody(
-    state: ItemFormUiState.Success,
+    state: ItemFormUiState,
     onEvent: (ItemFormEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -167,19 +156,23 @@ private fun ItemFormBody(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         )
 
-        SectionDropdown(
-            options = state.availableSections.map { it.id to it.name },
-            selectedId = state.sectionId,
-            onSelect = { onEvent(ItemFormEvent.OnSectionChanged(it)) },
-            noFilterLabel = stringResource(R.string.item_form_section_none),
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        )
+        if (state.availableSections.isNotEmpty()) {
+            SectionDropdown(
+                options = state.availableSections.map { it.id to it.name },
+                selectedId = state.sectionId,
+                onSelect = { onEvent(ItemFormEvent.OnSectionChanged(it)) },
+                noFilterLabel = stringResource(R.string.item_form_section_none),
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            )
+        }
 
-        TagsSection(
-            availableTags = state.availableTags,
-            selectedTagIds = state.selectedTagIds,
-            onEvent = onEvent,
-        )
+        if (state.availableTags.isNotEmpty()) {
+            TagsSection(
+                availableTags = state.availableTags,
+                selectedTagIds = state.selectedTagIds,
+                onEvent = onEvent,
+            )
+        }
 
         DateAndRecurrenceSection(state = state, onEvent = onEvent)
     }
@@ -231,7 +224,7 @@ private fun TagsSection(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateAndRecurrenceSection(state: ItemFormUiState.Success, onEvent: (ItemFormEvent) -> Unit) {
+private fun DateAndRecurrenceSection(state: ItemFormUiState, onEvent: (ItemFormEvent) -> Unit) {
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column {

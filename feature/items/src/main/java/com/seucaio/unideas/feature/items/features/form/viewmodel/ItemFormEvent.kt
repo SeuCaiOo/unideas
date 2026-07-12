@@ -22,6 +22,4 @@ sealed interface ItemFormEvent {
     data class OnRecurrenceChanged(val recurrence: Recurrence) : ItemFormEvent
 
     data object OnSaveClicked : ItemFormEvent
-
-    data object OnRetryClicked : ItemFormEvent
 }

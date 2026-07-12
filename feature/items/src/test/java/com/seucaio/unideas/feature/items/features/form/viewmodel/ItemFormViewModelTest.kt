@@ -16,6 +16,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -23,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -55,7 +57,7 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = null)
 
         vm.uiState.test {
-            val state = awaitItem() as ItemFormUiState.Success
+            val state = awaitItem()
             assertEquals(false, state.isEditing)
             assertEquals("", state.title)
             assertEquals(SectionStub.sections(), state.availableSections)
@@ -70,7 +72,7 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test {
-            val state = awaitItem() as ItemFormUiState.Success
+            val state = awaitItem()
             assertEquals(true, state.isEditing)
             assertEquals(item.title, state.title)
             assertEquals(item.sectionId, state.sectionId)
@@ -80,26 +82,37 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when the item is not found should emit Error`() = runTest {
+    fun `when the item is not found should show a snackbar and navigate back`() = runTest {
         every { itemFormUseCase.get(1L) } returns flowOf(null)
         val vm = viewModel(itemId = 1L)
 
-        vm.uiState.test {
-            assertEquals(ItemFormUiState.Error(R.string.item_form_load_error), awaitItem())
+        vm.uiAction.test {
+            assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
         }
     }
 
     @Test
-    fun `when OnRetryClicked after a load error should retry and succeed`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(null), flowOf(item))
+    fun `when loading the item throws should show a snackbar and navigate back`() = runTest {
+        every { itemFormUseCase.get(1L) } returns flow { throw IllegalStateException("boom") }
         val vm = viewModel(itemId = 1L)
 
+        vm.uiAction.test {
+            assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
+        }
+    }
+
+    @Test
+    fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() = runTest {
+        coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
+        val vm = viewModel()
+
         vm.uiState.test {
-            assertEquals(ItemFormUiState.Error(R.string.item_form_load_error), awaitItem())
-            vm.onEvent(ItemFormEvent.OnRetryClicked)
-            val state = awaitItem() as ItemFormUiState.Success
-            assertEquals(item.title, state.title)
+            val state = awaitItem()
+            assertEquals(false, state.isEditing)
+            assertTrue(state.availableSections.isEmpty())
+            assertTrue(state.availableTags.isEmpty())
         }
     }
 
@@ -110,7 +123,7 @@ class ItemFormViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onEvent(ItemFormEvent.OnTitleChanged("Nova tarefa"))
-            val state = awaitItem() as ItemFormUiState.Success
+            val state = awaitItem()
             assertEquals("Nova tarefa", state.title)
         }
     }
@@ -124,11 +137,11 @@ class ItemFormViewModelTest {
             vm.onEvent(ItemFormEvent.OnDueDateChanged(ItemStub.TODAY))
             vm.onEvent(ItemFormEvent.OnRecurrenceChanged(Recurrence.Weekly))
             awaitItem()
-            val withRecurrence = awaitItem() as ItemFormUiState.Success
+            val withRecurrence = awaitItem()
             assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
 
             vm.onEvent(ItemFormEvent.OnDueDateChanged(null))
-            val cleared = awaitItem() as ItemFormUiState.Success
+            val cleared = awaitItem()
             assertEquals(Recurrence.None, cleared.recurrence)
         }
     }
@@ -196,16 +209,6 @@ class ItemFormViewModelTest {
         vm.uiAction.test {
             vm.onEvent(ItemFormEvent.OnSaveClicked)
             assertEquals(ItemFormUiAction.ShowError("boom"), awaitItem())
-        }
-    }
-
-    @Test
-    fun `when GetSectionsAndTagsUseCase throws should emit Error`() = runTest {
-        coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
-        val vm = viewModel()
-
-        vm.uiState.test {
-            assertEquals(ItemFormUiState.Error(R.string.item_form_load_error), awaitItem())
         }
     }
 }

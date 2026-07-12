@@ -5,6 +5,8 @@
 
     <!-- Backup & Sync -->
     <string name="backup_section_title">Backup</string>
+    <string name="backup_not_connected">Not connected</string>
+    <string name="backup_action_connect">Connect</string>
     <string name="backup_none">No backup yet</string>
     <string name="backup_last_at">Last backup: %s</string>
     <string name="backup_action_upload">Back up now</string>

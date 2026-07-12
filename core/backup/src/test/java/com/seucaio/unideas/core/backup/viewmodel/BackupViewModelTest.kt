@@ -7,6 +7,7 @@ import com.google.api.services.drive.Drive
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
@@ -28,6 +29,9 @@ import java.time.LocalDateTime
 class BackupViewModelTest {
 
     @MockK
+    private lateinit var googleAuthUseCase: GoogleAuthUseCase
+
+    @MockK
     private lateinit var backupUseCase: BackupUseCase
 
     private val driveService: Drive = mockk()
@@ -37,7 +41,8 @@ class BackupViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        every { backupUseCase.buildDriveService(account) } returns driveService
+        every { googleAuthUseCase.buildDriveService(account) } returns driveService
+        every { googleAuthUseCase.getSignedInAccount() } returns null
     }
 
     @After
@@ -45,12 +50,89 @@ class BackupViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = BackupViewModel(backupUseCase)
+    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase)
+
+    @Test
+    fun `when created with no signed-in account should expose disconnected state`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isConnected = false), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when created with a signed-in account should expose connected state with last backup`() = runTest {
+        val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+            Result.success(BackupInfo("file-1", createdAt, 1024L))
+
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isConnected = true, lastBackupAt = createdAt), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when created with a signed-in account and no prior backup should expose connected state`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns Result.success(null)
+
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isConnected = true), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when created with a signed-in account but the info fetch fails should show the error snackbar`() =
+        runTest {
+            every { googleAuthUseCase.getSignedInAccount() } returns account
+            coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+                Result.failure(RuntimeException("error"))
+
+            val vm = viewModel()
+
+            vm.action.test {
+                assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+            }
+        }
+
+    @Test
+    fun `when OnConnectClick should launch sign-in for the connect action`() = runTest {
+        val intent: Intent = mockk()
+        every { googleAuthUseCase.getSignInIntent() } returns intent
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnConnectClick)
+            assertEquals(BackupUiAction.LaunchGoogleSignIn(intent, BackupAction.Connect), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when connect sign-in succeeds should expose connected state with the last backup`() = runTest {
+        val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
+        coEvery { backupUseCase.getLastBackupInfo(driveService) } returns
+            Result.success(BackupInfo("file-1", createdAt, 1024L))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isConnected = false), awaitItem())
+
+            vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Connect))
+
+            assertEquals(BackupUiState.Ready(isConnected = true, lastBackupAt = createdAt), awaitItem())
+        }
+    }
 
     @Test
     fun `when OnBackupClick should launch sign-in for the upload action`() = runTest {
         val intent: Intent = mockk()
-        every { backupUseCase.getSignInIntent() } returns intent
+        every { googleAuthUseCase.getSignInIntent() } returns intent
         val vm = viewModel()
 
         vm.action.test {
@@ -62,7 +144,7 @@ class BackupViewModelTest {
     @Test
     fun `when OnSyncClick should launch sign-in for the sync action`() = runTest {
         val intent: Intent = mockk()
-        every { backupUseCase.getSignInIntent() } returns intent
+        every { googleAuthUseCase.getSignInIntent() } returns intent
         val vm = viewModel()
 
         vm.action.test {
@@ -96,7 +178,7 @@ class BackupViewModelTest {
                 assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_upload_success), awaitItem())
             }
 
-            assertEquals(BackupUiState.Ready(lastBackupAt = createdAt), awaitItem())
+            assertEquals(BackupUiState.Ready(isConnected = true, lastBackupAt = createdAt), awaitItem())
         }
     }
 

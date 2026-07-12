@@ -13,6 +13,9 @@ interface GoogleAuthRepository {
     /** Intent to launch the scoped Google Sign-In flow. */
     fun getSignInIntent(): Intent
 
+    /** Already-signed-in account for this app's scope, if any — null when disconnected. */
+    fun getSignedInAccount(): GoogleSignInAccount?
+
     /** Builds a [Drive] client authenticated as [account], scoped to the app data folder. */
     fun buildDriveService(account: GoogleSignInAccount): Drive
 }

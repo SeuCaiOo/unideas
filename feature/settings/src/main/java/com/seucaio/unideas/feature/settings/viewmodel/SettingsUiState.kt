@@ -1,12 +1,11 @@
 package com.seucaio.unideas.feature.settings.viewmodel
 
-/** UI state for the settings shell. No Loading/Error yet — nothing to load or fail until E1/E2 (Drive backup) exist. */
+/**
+ * UI state for the settings shell. No Loading/Error yet — nothing to load or fail here; the
+ * real Backup connection state lives in `BackupViewModel` (`:core:backup`), collected directly
+ * by `SettingsScreen` alongside this one.
+ */
 sealed interface SettingsUiState {
 
-    data class Success(val backupStatus: BackupStatus) : SettingsUiState
-}
-
-/** Placeholder until E2 wires the real Google Drive connection state. */
-enum class BackupStatus {
-    DISCONNECTED,
+    data object Success : SettingsUiState
 }

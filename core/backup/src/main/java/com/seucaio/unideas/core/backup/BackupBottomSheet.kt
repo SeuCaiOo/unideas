@@ -94,6 +94,7 @@ fun BackupBottomSheet(
     ) {
         BackupSheetContent(
             uiState = uiState,
+            onConnectClick = { viewModel.onEvent(BackupEvent.OnConnectClick) },
             onBackupClick = { viewModel.onEvent(BackupEvent.OnBackupClick) },
             onSyncClick = { viewModel.onEvent(BackupEvent.OnSyncClick) },
         )
@@ -117,6 +118,7 @@ fun BackupBottomSheet(
 @Composable
 private fun BackupSheetContent(
     uiState: BackupUiState,
+    onConnectClick: () -> Unit,
     onBackupClick: () -> Unit,
     onSyncClick: () -> Unit,
 ) {
@@ -135,30 +137,58 @@ private fun BackupSheetContent(
         when (uiState) {
             is BackupUiState.Loading ->
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            is BackupUiState.Ready -> {
-                val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm") }
-                val subtitle = uiState.lastBackupAt?.format(formatter)
-                    ?.let { stringResource(R.string.backup_last_at, it) }
-                    ?: stringResource(R.string.backup_none)
-
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(onClick = onBackupClick, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.backup_action_upload))
-                    }
-                    Button(onClick = onSyncClick, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.backup_action_sync))
-                    }
-                }
+            is BackupUiState.Ready -> if (uiState.isConnected) {
+                ConnectedBackupContent(uiState, onBackupClick, onSyncClick)
+            } else {
+                DisconnectedBackupContent(onConnectClick)
             }
+        }
+    }
+}
+
+@Composable
+private fun ConnectedBackupContent(
+    uiState: BackupUiState.Ready,
+    onBackupClick: () -> Unit,
+    onSyncClick: () -> Unit,
+) {
+    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm") }
+    val subtitle = uiState.lastBackupAt?.format(formatter)
+        ?.let { stringResource(R.string.backup_last_at, it) }
+        ?: stringResource(R.string.backup_none)
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(onClick = onBackupClick, modifier = Modifier.weight(1f)) {
+                Text(text = stringResource(R.string.backup_action_upload))
+            }
+            Button(onClick = onSyncClick, modifier = Modifier.weight(1f)) {
+                Text(text = stringResource(R.string.backup_action_sync))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DisconnectedBackupContent(onConnectClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResource(R.string.backup_not_connected),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.backup_action_connect))
         }
     }
 }
@@ -209,6 +239,7 @@ private fun BackupSheetContentPreview(
         Surface {
             BackupSheetContent(
                 uiState = uiState,
+                onConnectClick = {},
                 onBackupClick = {},
                 onSyncClick = {},
             )

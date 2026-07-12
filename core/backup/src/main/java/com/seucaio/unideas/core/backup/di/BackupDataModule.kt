@@ -8,6 +8,8 @@ import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BuildDriveServiceUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetLastBackupInfoUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetSignInIntentUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GetSignedInAccountUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.ListBackupsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.RestoreBackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
@@ -24,11 +26,13 @@ val backupDataModule = module {
     single { GoogleAuthRepositoryImpl(androidApplication()) }.bind<GoogleAuthRepository>()
     single { BackupRepositoryImpl(database = get(), context = androidContext()) }.bind<BackupRepository>()
     factoryOf(::GetSignInIntentUseCase)
+    factoryOf(::GetSignedInAccountUseCase)
     factoryOf(::BuildDriveServiceUseCase)
     factoryOf(::UploadBackupUseCase)
     factoryOf(::ListBackupsUseCase)
     factoryOf(::RestoreBackupUseCase)
     factoryOf(::GetLastBackupInfoUseCase)
+    factoryOf(::GoogleAuthUseCase)
     factoryOf(::BackupUseCase)
     viewModelOf(::BackupViewModel)
 }

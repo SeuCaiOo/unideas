@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,7 +18,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
-class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
+class BackupViewModel(
+    private val googleAuthUseCase: GoogleAuthUseCase,
+    private val backupUseCase: BackupUseCase,
+) : ViewModel() {
 
     private val _internalState = MutableStateFlow(InternalState())
 
@@ -26,7 +30,7 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
             if (state.isLoading) {
                 BackupUiState.Loading
             } else {
-                BackupUiState.Ready(lastBackupAt = state.lastBackupAt)
+                BackupUiState.Ready(isConnected = state.isConnected, lastBackupAt = state.lastBackupAt)
             }
         }
         .stateIn(
@@ -38,8 +42,14 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
     private val _action = Channel<BackupUiAction>(Channel.BUFFERED)
     val action = _action.receiveAsFlow()
 
+    init {
+        val account = googleAuthUseCase.getSignedInAccount()
+        if (account != null) refreshConnectionState(account)
+    }
+
     fun onEvent(event: BackupEvent) {
         when (event) {
+            BackupEvent.OnConnectClick -> launchSignIn(BackupAction.Connect)
             BackupEvent.OnBackupClick -> launchSignIn(BackupAction.Upload)
             BackupEvent.OnSyncClick -> launchSignIn(BackupAction.Sync)
             is BackupEvent.OnGoogleSignInResult -> handleSignInResult(event.account, event.pendingAction)
@@ -49,7 +59,7 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
 
     private fun launchSignIn(pendingAction: BackupAction) {
         viewModelScope.launch {
-            val intent = backupUseCase.getSignInIntent()
+            val intent = googleAuthUseCase.getSignInIntent()
             _action.send(BackupUiAction.LaunchGoogleSignIn(intent, pendingAction))
         }
     }
@@ -60,17 +70,33 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
             return
         }
         when (pendingAction) {
+            BackupAction.Connect -> refreshConnectionState(account)
             BackupAction.Upload -> upload(account)
             BackupAction.Sync -> listBackups(account)
+        }
+    }
+
+    private fun refreshConnectionState(account: GoogleSignInAccount) {
+        viewModelScope.launch {
+            _internalState.update { it.copy(isLoading = true) }
+            backupUseCase.getLastBackupInfo(googleAuthUseCase.buildDriveService(account))
+                .onSuccess { info ->
+                    _internalState.update {
+                        it.copy(isLoading = false, isConnected = true, lastBackupAt = info?.createdAt)
+                    }
+                }
+                .onFailure { handleFailure() }
         }
     }
 
     private fun upload(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.upload(backupUseCase.buildDriveService(account))
+            backupUseCase.upload(googleAuthUseCase.buildDriveService(account))
                 .onSuccess { info ->
-                    _internalState.update { it.copy(isLoading = false, lastBackupAt = info.createdAt) }
+                    _internalState.update {
+                        it.copy(isLoading = false, isConnected = true, lastBackupAt = info.createdAt)
+                    }
                     showSnackbar(R.string.backup_upload_success)
                 }
                 .onFailure { handleFailure() }
@@ -80,9 +106,9 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
     private fun listBackups(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.list(backupUseCase.buildDriveService(account))
+            backupUseCase.list(googleAuthUseCase.buildDriveService(account))
                 .onSuccess { backups ->
-                    _internalState.update { it.copy(isLoading = false) }
+                    _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     if (backups.isEmpty()) {
                         showSnackbar(R.string.backup_no_backups_found)
                     } else {
@@ -96,9 +122,9 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
     private fun restore(account: GoogleSignInAccount, fileId: String) {
         viewModelScope.launch {
             _internalState.update { it.copy(isLoading = true) }
-            backupUseCase.restore(backupUseCase.buildDriveService(account), fileId)
+            backupUseCase.restore(googleAuthUseCase.buildDriveService(account), fileId)
                 .onSuccess {
-                    _internalState.update { it.copy(isLoading = false) }
+                    _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     showSnackbar(R.string.backup_restore_success)
                 }
                 .onFailure { handleFailure() }
@@ -115,6 +141,7 @@ class BackupViewModel(private val backupUseCase: BackupUseCase) : ViewModel() {
 
     private data class InternalState(
         val isLoading: Boolean = false,
+        val isConnected: Boolean = false,
         val lastBackupAt: LocalDateTime? = null,
     )
 

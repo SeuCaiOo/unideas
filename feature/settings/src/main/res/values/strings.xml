@@ -5,7 +5,6 @@
     <string name="settings_organize_sections">Sections</string>
     <string name="settings_organize_tags">Tags</string>
     <string name="settings_backup_section">Backup</string>
-    <string name="settings_backup_disconnected">Not connected</string>
     <string name="settings_debug_section">Debug</string>
     <string name="settings_debug_items">Items</string>
     <string name="settings_debug_seed">Seed database</string>

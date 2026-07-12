@@ -43,10 +43,10 @@ class SettingsViewModelTest {
     private fun viewModel() = SettingsViewModel(seedDatabase, clearDatabase)
 
     @Test
-    fun `when created should expose Success with a disconnected backup status`() = runTest {
+    fun `when created should expose Success`() = runTest {
         val vm = viewModel()
 
-        assertEquals(SettingsUiState.Success(BackupStatus.DISCONNECTED), vm.uiState.value)
+        assertEquals(SettingsUiState.Success, vm.uiState.value)
     }
 
     @Test

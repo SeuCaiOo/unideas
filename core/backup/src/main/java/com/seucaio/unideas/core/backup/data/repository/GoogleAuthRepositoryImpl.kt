@@ -23,6 +23,9 @@ class GoogleAuthRepositoryImpl(private val application: Application) : GoogleAut
         return GoogleSignIn.getClient(application, options).signInIntent
     }
 
+    override fun getSignedInAccount(): GoogleSignInAccount? =
+        GoogleSignIn.getLastSignedInAccount(application)
+
     override fun buildDriveService(account: GoogleSignInAccount): Drive {
         val credential = GoogleAccountCredential
             .usingOAuth2(application, listOf(DriveScopes.DRIVE_APPDATA))

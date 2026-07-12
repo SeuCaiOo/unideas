@@ -3,9 +3,11 @@ package com.seucaio.unideas.feature.home.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.feature.home.features.allpriorities.screen.AllPrioritiesScreen
 import com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen
 
 fun NavGraphBuilder.homeNavGraph(
+    onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToForm: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
@@ -17,6 +19,12 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToForm = onNavigateToForm,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToSettings = onNavigateToSettings,
+        )
+    }
+    composable<HomeRoute.AllPriorities> {
+        AllPrioritiesScreen(
+            onNavigateBack = onNavigateBack,
+            onNavigateToDetail = onNavigateToDetail,
         )
     }
 }

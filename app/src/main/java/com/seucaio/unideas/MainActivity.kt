@@ -33,11 +33,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     homeNavGraph(
+                        onNavigateBack = navController::popBackStack,
                         onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
                         onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
-                        // #28 (HomeRoute.AllPriorities) doesn't exist yet — "Ver todas" has no
-                        // destination to navigate to until that issue lands.
-                        onNavigateToAllPriorities = {},
+                        onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
                     )
                     settingsNavGraph(

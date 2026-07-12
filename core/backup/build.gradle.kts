@@ -28,12 +28,20 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":core:common"))
     implementation(project(":core:ui"))
+    // Exception to the ":feature:* never depends on :data" rule — backup manipulates the
+    // Room database file directly (close/checkpoint/path), not just via a repository interface.
+    implementation(project(":data"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.room.runtime)
     implementation(libs.koin.android)
+    implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
 
     // Google Drive backup (scoped GoogleSignIn + Drive API, not Firebase Auth)
@@ -47,6 +55,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

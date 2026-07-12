@@ -85,7 +85,7 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when created with a signed-in account but the info fetch fails should show the error snackbar`() =
+    fun `when created with a signed-in account but the info fetch fails should silently expose disconnected`() =
         runTest {
             every { googleAuthUseCase.getSignedInAccount() } returns account
             coEvery { backupUseCase.getLastBackupInfo(account) } returns
@@ -93,8 +93,11 @@ class BackupViewModelTest {
 
             val vm = viewModel()
 
+            vm.uiState.test {
+                assertEquals(BackupUiState.Ready(isConnected = false), awaitItem())
+            }
             vm.action.test {
-                assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+                expectNoEvents()
             }
         }
 

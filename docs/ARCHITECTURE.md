@@ -231,12 +231,13 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 ```
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66)
-core/backup/di/BackupModule.kt — repos + use cases de :core:backup — ainda não existe, chega com E1
+core/backup/di/BackupDataModule.kt — backupDataModule (single GoogleAuthRepositoryImpl.bind(), factoryOf use cases) — confirmado em #29 (E1.1);
+                                      BackupRepository/upload-list-restore use cases chegam com E1.2 (#30)
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
                                  (items/sections/tags/settings/home já existem)
 
 :app/di/AppModule.kt — includes(dataModule, domainModule, sectionsModule, tagsModule, settingsModule, itemsModule, homeModule);
-                        backupModule entra quando E1 existir; startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
+                        backupDataModule ainda não incluído (sem tela consumidora até E1.2/E2); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |

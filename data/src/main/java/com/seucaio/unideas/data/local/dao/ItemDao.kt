@@ -9,6 +9,7 @@ import androidx.room.Update
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
 import com.seucaio.unideas.data.local.relation.ItemWithTags
+import com.seucaio.unideas.data.local.relation.ItemWithTagsAndSection
 import com.seucaio.unideas.domain.model.ItemType
 import kotlinx.coroutines.flow.Flow
 
@@ -46,6 +47,11 @@ interface ItemDao {
     @Transaction
     @Query("SELECT * FROM items WHERE id = :id")
     fun getItemById(id: Long): Flow<ItemWithTags?>
+
+    /** Same row as [getItemById], with the section joined too — backs the detail screen. */
+    @Transaction
+    @Query("SELECT * FROM items WHERE id = :id")
+    fun getItemDetailById(id: Long): Flow<ItemWithTagsAndSection?>
 
     /**
      * Observes non-completed items with a due date on or before

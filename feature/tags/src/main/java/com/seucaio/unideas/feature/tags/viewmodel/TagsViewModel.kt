@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.model.outcome.DeletionStatus
-import com.seucaio.unideas.domain.usecase.tag.AddTagUseCase
-import com.seucaio.unideas.domain.usecase.tag.DeleteTagUseCase
-import com.seucaio.unideas.domain.usecase.tag.GetTagsUseCase
-import com.seucaio.unideas.domain.usecase.tag.RenameTagUseCase
+import com.seucaio.unideas.domain.usecase.tag.TagUseCase
 import com.seucaio.unideas.feature.tags.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -28,10 +25,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagsViewModel(
-    private val getTags: GetTagsUseCase,
-    private val addTag: AddTagUseCase,
-    private val renameTag: RenameTagUseCase,
-    private val deleteTag: DeleteTagUseCase,
+    private val tagUseCase: TagUseCase,
 ) : ViewModel() {
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
@@ -39,7 +33,7 @@ class TagsViewModel(
     // region States
 
     val uiState: StateFlow<TagsUiState> = retryTrigger.flatMapLatest {
-        getTags()
+        tagUseCase.getAll()
             .map<List<Tag>, TagsUiState> { TagsUiState.Success(it) }
             .onStart { emit(TagsUiState.Loading) }
             .catch { emit(TagsUiState.Error(R.string.tags_load_error)) }
@@ -71,14 +65,14 @@ class TagsViewModel(
     private fun handleDialog(state: TagsDialogState) = _dialogState.update { state }
 
     private fun handleAdd(name: String) = viewModelScope.launch {
-        addTag(name)
+        tagUseCase.add(name)
             .onSuccess { handleDialog(TagsDialogState.None) }
             .onFailure { handleFailure(it) }
     }
 
     private fun handleRename(newName: String) = viewModelScope.launch {
         val tag = (_dialogState.value as? TagsDialogState.Rename)?.tag ?: return@launch
-        renameTag(tag.copy(name = newName))
+        tagUseCase.rename(tag.copy(name = newName))
             .onSuccess { handleDialog(TagsDialogState.None) }
             .onFailure { handleFailure(it) }
     }
@@ -86,7 +80,7 @@ class TagsViewModel(
     private fun handleDelete() = viewModelScope.launch {
         val tag = (_dialogState.value as? TagsDialogState.Delete)?.tag ?: return@launch
         handleDialog(TagsDialogState.None)
-        deleteTag(tag.id)
+        tagUseCase.delete(tag.id)
             .onSuccess { handleDeletionStatus(it) }
             .onFailure { handleFailure(it) }
     }

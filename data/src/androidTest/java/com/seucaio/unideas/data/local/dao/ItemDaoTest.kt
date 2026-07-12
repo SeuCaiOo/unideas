@@ -56,6 +56,32 @@ class ItemDaoTest {
     }
 
     @Test
+    fun getItemDetailByIdJoinsTheSectionName() = runTest {
+        seedSection(1L, "Trabalho")
+        val id = dao.insert(task(title = "com seção", sectionId = 1L))
+
+        val loaded = dao.getItemDetailById(id).first()
+
+        assertEquals("com seção", loaded?.item?.title)
+        assertEquals("Trabalho", loaded?.section?.name)
+    }
+
+    @Test
+    fun getItemDetailByIdEmitsANullSectionWhenTheItemHasNone() = runTest {
+        val id = dao.insert(task(title = "sem seção"))
+
+        val loaded = dao.getItemDetailById(id).first()
+
+        assertEquals("sem seção", loaded?.item?.title)
+        assertNull(loaded?.section)
+    }
+
+    @Test
+    fun getItemDetailByIdEmitsNullWhenMissing() = runTest {
+        assertNull(dao.getItemDetailById(999L).first())
+    }
+
+    @Test
     fun getItemsFiltersByType() = runTest {
         dao.insert(task(title = "tarefa"))
         dao.insert(note(title = "nota"))

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="section_name_required">O nome é obrigatório</string>
+    <string name="section_delete_blocked">%1$d itens estão vinculados a esta seção</string>
+    <string name="sections_load_error">Não foi possível carregar as seções</string>
+    <string name="sections_title">Seções</string>
+    <string name="sections_empty">Nenhuma seção ainda. Toque em + para criar uma.</string>
+    <string name="sections_add">Adicionar seção</string>
+    <string name="sections_add_label">Nome da seção</string>
+    <string name="sections_rename">Renomear seção</string>
+    <string name="sections_rename_label">Nome da seção</string>
+    <string name="section_options">Opções da seção</string>
+    <string name="section_rename_action">Renomear</string>
+    <string name="section_delete_action">Excluir</string>
+    <string name="section_delete_confirm_title">Excluir seção?</string>
+    <string name="section_delete_confirm_message">Esta ação não pode ser desfeita.</string>
+</resources>

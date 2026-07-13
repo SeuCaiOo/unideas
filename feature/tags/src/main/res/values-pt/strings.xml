@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tag_name_required">O nome é obrigatório</string>
+    <string name="tag_delete_blocked">%1$d itens estão vinculados a esta tag</string>
+    <string name="tags_load_error">Não foi possível carregar as tags</string>
+    <string name="tags_title">Tags</string>
+    <string name="tags_empty">Nenhuma tag ainda. Toque em + para criar uma.</string>
+    <string name="tags_add">Adicionar tag</string>
+    <string name="tags_add_label">Nome da tag</string>
+    <string name="tags_rename">Renomear tag</string>
+    <string name="tags_rename_label">Nome da tag</string>
+    <string name="tag_options">Opções da tag</string>
+    <string name="tag_rename_action">Renomear</string>
+    <string name="tag_delete_action">Excluir</string>
+    <string name="tag_delete_confirm_title">Excluir tag?</string>
+    <string name="tag_delete_confirm_message">Esta ação não pode ser desfeita.</string>
+</resources>

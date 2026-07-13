@@ -166,7 +166,7 @@ private fun ConnectedBackupContent(
     onBackupClick: () -> Unit,
     onSyncClick: () -> Unit,
 ) {
-    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm") }
+    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm") }
     val subtitle = uiState.lastBackupAt?.format(formatter)
         ?.let { stringResource(R.string.backup_last_at, it) }
         ?: stringResource(R.string.backup_none)

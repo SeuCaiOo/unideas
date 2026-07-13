@@ -9,7 +9,8 @@ Princípios que regem tudo abaixo: **SOLID, KISS, YAGNI, DRY, Clean Code**. Na d
 ## Nomenclatura e idioma
 
 - **Código, nomes de classe/função/variável, comentários: inglês.** Strings de UI: recursos (`strings.xml`) com suporte PT/EN.
-- **Nunca strings PT-BR hardcoded no código** (nem em ViewModel, nem em Composable). Textos de UI vêm de `@StringRes`.
+- **Nunca strings PT-BR hardcoded no código** (nem em ViewModel, nem em Composable). Textos de UI vêm de `@StringRes`. Vale também pra padrões de formatação (`DateTimeFormatter.ofPattern`, etc.) — um literal tipo `'at'` embutido no padrão é hardcoded do mesmo jeito, mesmo não sendo uma chamada direta a `Text(...)` (bug real, corrigido em #17).
+- Cada módulo com `strings.xml` (#17) mantém seu par `values/` (EN, default) + `values-pt/` (PT-BR) com as mesmas chaves — qualifier `values-pt` (português genérico), não `values-pt-rBR`. `app_name` fica "Unideas" sem tradução nos dois.
 - Pacotes: `com.seucaio.unideas.<módulo>` (ex: `com.seucaio.unideas.feature.home`).
 - Componentes compartilhados de `:core:ui` usam prefixo `Unideas` (`UnideasTopBar`, `UnideasEmptyContent`, ...).
 - Commits: [Conventional Commits](https://www.conventionalcommits.org/) em inglês (`feat: ...`, `fix: ...`). Issues: título em inglês, corpo em PT-BR.

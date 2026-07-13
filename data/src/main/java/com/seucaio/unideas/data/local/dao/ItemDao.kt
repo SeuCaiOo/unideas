@@ -69,6 +69,10 @@ interface ItemDao {
     )
     fun getPriorityItems(dueOnOrBefore: Long): Flow<List<ItemWithTags>>
 
+    /** Cheap existence check — no items in the entire table, regardless of type/section/tags. */
+    @Query("SELECT EXISTS(SELECT 1 FROM items)")
+    fun hasAnyItem(): Flow<Boolean>
+
     @Insert
     suspend fun insert(item: ItemEntity): Long
 

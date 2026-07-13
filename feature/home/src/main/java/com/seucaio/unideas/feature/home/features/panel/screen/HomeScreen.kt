@@ -193,7 +193,8 @@ private fun HomeSuccessBody(
             onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
         )
         if (state.tabItems.isEmpty()) {
-            UnideasEmptyContent(messageRes = R.string.home_tab_empty, modifier = Modifier.fillMaxSize())
+            val emptyMessageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
+            UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.tabItems, key = { it.id }) { item ->

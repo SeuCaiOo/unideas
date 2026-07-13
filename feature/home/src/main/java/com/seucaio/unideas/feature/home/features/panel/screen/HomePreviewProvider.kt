@@ -45,7 +45,9 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
             tagFilters = emptySet(),
             availableSections = sections,
             availableTags = tags,
+            hasAnyItem = true,
         ),
+        // filtered-to-zero: user has items elsewhere, just none match this tab/filter
         HomeUiState.Success(
             priorityItems = (1..6).map { task(it.toLong(), "Prioridade $it", LocalDate.of(2026, 6, 20)) },
             showSeeAllButton = true,
@@ -55,7 +57,9 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
             tagFilters = setOf(1L),
             availableSections = sections,
             availableTags = tags,
+            hasAnyItem = true,
         ),
+        // true first-run empty state: no items anywhere in the app
         HomeUiState.Success(
             priorityItems = emptyList(),
             showSeeAllButton = false,
@@ -65,6 +69,7 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
             tagFilters = emptySet(),
             availableSections = emptyList(),
             availableTags = emptyList(),
+            hasAnyItem = false,
         ),
         HomeUiState.Error(R.string.home_load_error),
     )

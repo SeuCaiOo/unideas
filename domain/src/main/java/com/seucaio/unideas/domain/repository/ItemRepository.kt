@@ -39,6 +39,9 @@ interface ItemRepository {
      */
     fun getPriorityItems(dueOnOrBefore: LocalDate): Flow<List<Item>>
 
+    /** Observes whether the item table has any row at all, regardless of type/section/tags. */
+    fun hasAnyItem(): Flow<Boolean>
+
     /** Inserts [item] (and its tag links) and returns the generated id. */
     suspend fun insertItem(item: Item): Long
 

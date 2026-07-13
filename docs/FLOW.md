@@ -9,7 +9,7 @@
 
 | # | Tela | Módulo | Rota (type-safe) |
 |---|---|---|---|
-| 1 | **Home** (Painel de Prioridades + abas Tarefas/Anotações) | `:feature:home` | `HomeRoute.Home` |
+| 1 | **Home** (Painel de Prioridades + abas Tarefas/Anotações) | `:feature:home` | `HomeRoute.Panel` |
 | 2 | **Todas as Prioridades** | `:feature:home` | `HomeRoute.AllPriorities` |
 | 3 | **Criar/Editar Item** | `:feature:items` | `ItemsRoute.Form(itemId: Long?)` |
 | 4 | **Detalhe do Item** | `:feature:items` | `ItemsRoute.Detail(itemId: Long)` |
@@ -17,7 +17,9 @@
 | 6 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
 | 7 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
 
-Ponto de entrada do app: `HomeRoute.Home`. **Não há bottom navigation bar** — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `NavHost` central vive no `:app`, cada feature expõe seu `*NavGraph` + `*Route`.
+Ponto de entrada do app: `HomeRoute.Panel` (`startDestination` real do `NavHost`, desde D2.1/#27 — ver `MainActivity`). **Não há bottom navigation bar** — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `NavHost` central vive no `:app`, cada feature expõe seu `*NavGraph` + `*Route`.
+
+> **Ponto de entrada de debug remanescente:** Settings mantém uma seção **"Debug"**, só de desenvolvimento, com um item "Items" que abre `ItemsRoute.List` (#62) — uma listagem simples de todos os Items (sem abas/filtro/painel de prioridade, isso é escopo da Home), que por sua vez navega pra `ItemsRoute.Detail`/`ItemsRoute.Form`. Não foi removida quando a Home passou a existir (D2/#11) — segue como atalho útil pra QA manual; decisão de descartá-la fica em aberto.
 
 ---
 

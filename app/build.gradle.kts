@@ -62,12 +62,17 @@ android {
             optimization {
                 enable = true
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -76,6 +81,11 @@ android {
     }
     lint {
         abortOnError = false
+    }
+    packaging {
+        // :feature:settings -> :core:backup pulls the Google Drive API, whose httpclient/
+        // httpcore transitive deps both ship a META-INF/DEPENDENCIES file with the same path.
+        resources.excludes.add("META-INF/DEPENDENCIES")
     }
 }
 
@@ -122,12 +132,15 @@ kover {
                     "*PreviewProvider",
                     // Compose generated classes
                     "*ComposableSingletons*",
-                    // ViewModels (not tested by project convention)
-                    "*ViewModel*",
+                    // Koin modules
+                    "*Module*",
                 )
 
                 packages(
                     "*.ui.theme",
+                    "*.local.dao",
+                    "*.local.database",
+                    "*.local.converter",
                 )
 
                 annotatedBy(
@@ -146,6 +159,29 @@ kover {
 }
 
 dependencies {
+    // Aggregates coverage from real-logic modules into :app's koverVerify —
+    // :app itself holds only entry points/Composables, all excluded above.
+    kover(project(":domain"))
+    kover(project(":data"))
+    kover(project(":core:common"))
+    kover(project(":feature:sections"))
+    kover(project(":feature:tags"))
+    kover(project(":feature:settings"))
+    kover(project(":feature:items"))
+    kover(project(":feature:home"))
+    kover(project(":core:backup"))
+
+    implementation(project(":core:ui"))
+    implementation(project(":core:backup"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":feature:sections"))
+    implementation(project(":feature:tags"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:items"))
+    implementation(project(":feature:home"))
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
+
     // Compose BOM — aligns versions for every Compose artifact below
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -154,9 +190,16 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
 
     // Compose UI
     implementation(libs.bundles.composeUi)
+
+    // DI (Koin)
+    implementation(libs.koin.android)
+
+    // Logging
+    implementation(libs.timber)
 
     // Firebase
     implementation(platform(libs.google.firebase.bom))

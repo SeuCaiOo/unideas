@@ -9,7 +9,8 @@ Princípios que regem tudo abaixo: **SOLID, KISS, YAGNI, DRY, Clean Code**. Na d
 ## Nomenclatura e idioma
 
 - **Código, nomes de classe/função/variável, comentários: inglês.** Strings de UI: recursos (`strings.xml`) com suporte PT/EN.
-- **Nunca strings PT-BR hardcoded no código** (nem em ViewModel, nem em Composable). Textos de UI vêm de `@StringRes`.
+- **Nunca strings PT-BR hardcoded no código** (nem em ViewModel, nem em Composable). Textos de UI vêm de `@StringRes`. Vale também pra padrões de formatação (`DateTimeFormatter.ofPattern`, etc.) — um literal tipo `'at'` embutido no padrão é hardcoded do mesmo jeito, mesmo não sendo uma chamada direta a `Text(...)` (bug real, corrigido em #17).
+- Cada módulo com `strings.xml` (#17) mantém seu par `values/` (EN, default) + `values-pt/` (PT-BR) com as mesmas chaves — qualifier `values-pt` (português genérico), não `values-pt-rBR`. `app_name` fica "Unideas" sem tradução nos dois.
 - Pacotes: `com.seucaio.unideas.<módulo>` (ex: `com.seucaio.unideas.feature.home`).
 - Componentes compartilhados de `:core:ui` usam prefixo `Unideas` (`UnideasTopBar`, `UnideasEmptyContent`, ...).
 - Commits: [Conventional Commits](https://www.conventionalcommits.org/) em inglês (`feat: ...`, `fix: ...`). Issues: título em inglês, corpo em PT-BR.
@@ -54,6 +55,24 @@ suspend operator fun invoke(item: Item): Result<Long> = runCatching {
 
 - **Operações complexas retornam "Outcome" ricos** em `domain/model/outcome/`, não flags soltas. Ex: excluir seção retorna `DeletionStatus.Deleted` ou `DeletionStatus.BlockedByLinkedItems(count)` — o ViewModel só reage ao outcome, não recalcula a regra.
 - **Setup use case**: para telas de formulário, um `Get<X>FormSetupUseCase` resolve "é novo? existe? erro?" e devolve o estado inicial pronto — o ViewModel não decide "como carregar" no `init`.
+- **Facade de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`, `GoogleAuthUseCase`, `BackupUseCase`): quando um ViewModel precisa de vários use cases da mesma entidade, uma facade pode compor os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando, **nunca acessando repositório diretamente**. Não é "um use case a mais fazendo a mesma coisa" — reduz quantos parâmetros o construtor do ViewModel recebe, sem duplicar lógica nem esconder regra de negócio. Quando uma facade cresce demais (`LongParameterList`), prefira **dividir por contexto** em vez de suprimir o lint — `BackupUseCase` (#16) foi dividido em `GoogleAuthUseCase` (sign-in/sessão: intent + conta atual) e um `BackupUseCase` enxuto (operações que recebem uma conta e constroem o `Drive` service internamente), espelhando a fronteira já existente entre `GoogleAuthRepository`/`BackupRepository`.
+
+    ```kotlin
+    // ✅ correto — só delega, sem lógica própria
+    class SectionUseCase(
+        private val getSections: GetSectionsUseCase,
+        private val addSection: AddSectionUseCase,
+        private val renameSection: RenameSectionUseCase,
+        private val deleteSection: DeleteSectionUseCase,
+    ) {
+        fun getAll() = getSections()
+        suspend fun add(name: String) = addSection(name)
+        suspend fun rename(section: Section) = renameSection(section)
+        suspend fun delete(id: Long) = deleteSection(id)
+    }
+    ```
+
+    Nomeie pela **entidade** quando uma única tela usa o CRUD inteiro (Section/Tag — telas de "gerenciar entidade", 4 operações cada). Nomeie pela **tela** quando a entidade se espalha por várias telas com subconjuntos diferentes de operações (Item: `ItemDetailUseCase` cobre getDetail/delete/complete, `ItemFormUseCase` cobre get/create/edit) — um facade genérico `ItemUseCase` cobrindo tudo já foi tentado e descartado: virou um "grab-bag" sem dono claro, onde procurar `get()` na tela de detalhe não achava nada (só existia no form) e vice-versa.
 
 ---
 
@@ -70,7 +89,8 @@ Contrato de cada tela (arquivos em `feature/<tela>/viewmodel/`):
 
 ### Regras inegociáveis
 
-- **`uiState` derivado por `combine(...)`**, unindo `InternalState` (campos de UI) + flows de domínio. Evite `init { collect { ... } }` manual.
+- **`uiState` derivado por `combine(...)`**, unindo `InternalState` (campos de UI) + flows de domínio. Evite `init { collect { ... } }` manual. **Exceção 1:** tela sem nenhum estado só-de-UI (sem filtro, sem seleção — ex: lista de gerenciamento simples) pode derivar `uiState` direto do flow de domínio (`.map`/`.catch`/`.stateIn`), sem `combine`/`InternalState` vazio só pra seguir a forma. Confirmado em `SectionsViewModel`/`TagsViewModel` (#41/#43) e `AllPrioritiesViewModel` (#28). **Exceção 2:** `UiState` não precisa ser `sealed interface Loading|Success|Error` quando a tela **sempre** consegue renderizar — um formulário cujos campos existem desde o primeiro frame (nada de "tela carregando"), onde só uma ação de fundo (buscar dados de referência, carregar o item pra editar) pode falhar. Nesse caso, `UiState` vira uma `data class` só (campos sempre presentes); a falha de carregar dados de referência fica silenciosa se degrada bem pra lista vazia (mesmo tratamento de "não tem nada ainda", não é erro de tela), e uma falha real (ex: item não encontrado em modo editar) vira uma `UiAction` one-shot (`ShowSnackbar` + `NavigateBack`) em vez de um estado bloqueante — não faz sentido ter uma tela de erro com "tentar de novo" pra algo que não existe mais. Confirmado em `ItemFormViewModel`.
+- **`UiAction` via `Channel(Channel.BUFFERED)`** (não o default RENDEZVOUS) — evita bloquear o `send` se o coletor (Screen) não estiver pronto exatamente na hora do envio.
 - **`combine` é transformação pura — sem efeitos colaterais.** Nunca `_action.send(...)` nem suspending dentro do bloco. Efeitos (navegação, snackbar) vão em handlers do `onEvent` ou em `LaunchedEffect` na Screen.
 - **Proibido join manual em memória.** Dados relacionados chegam prontos do use case (Room `@Relation`/SQL join na camada data). ViewModel é "burro": mapeia domínio → UI.
 - **Proibido `.value = ...`** — sempre `.update { it.copy(...) }` (atomicidade).
@@ -98,10 +118,10 @@ val uiState: StateFlow<UiState> = combine(_internalState, itemsFlow) { internal,
 - Consumir `UiAction` num `LaunchedEffect` que faz `collect`; resolver `@StringRes` com `LocalResources.current` (não `LocalContext` — não invalida em mudança de config). Callbacks de navegação e o effect capturado em `LaunchedEffect(Unit)` devem usar `rememberUpdatedState` pra evitar stale closure.
 - `when (uiState)` cobrindo `Loading`/`Error`/`Success`; usar `UnideasLoadingContent`/`UnideasErrorContent`/`UnideasEmptyContent` do `:core:ui` — **nunca reimplementar inline**. `Error` em feature: `stringResource(uiState.messageRes)`.
 - **Design System primeiro**: antes de criar UI inline, checar `:core:ui`. Componentes compartilhados (topbar, list item, dialogs, chips, indicador de urgência) moram lá.
-- **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel.
-- **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`).
+- **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel. **Exceção:** qual dialog de entidade (criar/renomear/excluir) está aberto, e sobre qual item, mora na ViewModel — não em `remember` local — permitindo que o `PreviewProvider` simule os cenários com dialog aberto, não só as três variantes de `UiState`. Implementado como um **`StateFlow` independente** (`dialogState`, separado de `uiState`, sem `combine` entre os dois) em vez de um campo dentro de `Success` — mais simples que combinar os dois num `UiState` só, e evita um tipo `Result` intermediário redundante. A Screen coleta os dois `StateFlow`s separadamente. Confirmado em `SectionsViewModel`/`TagsViewModel` (#42/#44).
+- **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`) **e** os estados de dialog de entidade quando aplicável (ver exceção acima).
 
-### Regras visuais (planta: Material 3, dark, acento teal)
+### Regras visuais (planta: Material 3, light + dark, acento teal)
 
 - Toque mínimo 48dp.
 - Sem dividers entre itens de lista — usar espaçamento vertical (8/12dp).
@@ -142,7 +162,7 @@ Ver [`ARCHITECTURE.md`](ARCHITECTURE.md#di--estrutura-koin). Resumo:
 
 ## Testes
 
-Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Presentation (ViewModels/Screens) é ignorada na cobertura por ora** — vários ViewModels serão refatorados depois que o app estabilizar; testar agora é desperdício. O que **precisa** de teste:
+Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a #41, ViewModels entram no *gate* de cobertura** — o filtro `*ViewModel*` foi removido das exclusões e cada módulo `:feature:*` com um ViewModel testado precisa aplicar o plugin `kover` e ser adicionado à agregação em `app/build.gradle.kts` (`kover(project(":feature:..."))`) , como feito para `:feature:sections` (100% de cobertura no módulo). Screens/Composables continuam excluídas (`annotatedBy(Composable/Preview/PreviewLightDark)`, `*PreviewProvider`) — só a lógica (ViewModel) é cobrada. O que **precisa** de teste:
 
 | Alvo | Como | Mínimo |
 |---|---|---|
@@ -150,19 +170,38 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Present
 | Repository | MockK — mocka o DAO, verifica delegação + `toDomain`/`toEntity` | happy path por método público |
 | Mapper | `test` puro | round-trip `toDomain()`/`toEntity()`, campo a campo |
 | DAO | `Room.inMemoryDatabaseBuilder` (`androidTest`) | inserir/ler/deletar + queries com Flow |
+| ViewModel | MockK (use cases, `@MockK` + `MockKAnnotations.init(this)`) + **Turbine** (`Flow`/`StateFlow` de `uiState`/`action`) | `Loading`→`Success`, `Error` (flow lança), cada `Event` (happy path + falha) |
 
 - Stubs compartilhados: `domain/src/testFixtures/` (domain models) via `testFixtures(project(":domain"))`; entity stubs em `data/src/test/`.
+- **Turbine** (`app.cash.turbine:turbine`, `libs.turbine`) é o padrão pra testar `Flow`/`StateFlow` de ViewModel — `flow.test { awaitItem() ... }` em vez de `.first()`/coleta manual. Adicionar como `testImplementation` em cada `:feature:*` que ganhar um ViewModel testado.
+- `Dispatchers.setMain(UnconfinedTestDispatcher())` em `@Before` / `Dispatchers.resetMain()` em `@After` — evita que `viewModelScope.launch` rode num dispatcher diferente do `runTest`.
+- **Testes de ViewModel usam `@MockK` + `MockKAnnotations.init(this)`** (em vez de `= mockk()` inline) — mais legível com vários mocks (um por use case injetado). `:domain`/`:data` continuam com `= mockk()` inline; não é retrofit, só o padrão novo pra ViewModel a partir da #43.
+- **Nome de teste de ViewModel: `` `when <condição/evento> should <comportamento esperado>` ``** — variante enxuta de Given-When-Then (sem "given", condição embutida no "when"), sem vírgula. Ex.: `` `when OnDeleteClicked completes should not emit an action` ``. `:domain`/`:data` continuam com a frase descritiva direta (`` `invoke fails when the repository throws` ``) — não é retrofit, só o padrão novo pra ViewModel a partir da #43.
 - **Rodar `./gradlew koverVerify` antes de abrir PR** — a CI falha se cair abaixo do mínimo. O `pre-push` não valida cobertura; é responsabilidade do dev.
+
+---
+
+## Logging
+
+- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Em debug, `Timber.DebugTree()` (`UnideasApplication`, guardado por `BuildConfig.DEBUG`). Em release, `CrashlyticsTree` (`:core:common`) — forwarda `WARN`+ como log custom do Crashlytics e chama `recordException` (sintetizando uma exceção pra `ERROR` sem `Throwable`); `VERBOSE`/`DEBUG`/`INFO` são descartados.
+- Módulos que precisam logar adicionam `implementation(libs.timber)` no próprio `build.gradle.kts` (`:app` já tem).
+- Log de debug temporário e pontual (adicionado só pra rastrear um bug específico e removido depois) pode seguir usando `Log.d` mesmo — não precisa Timber pra algo descartável em minutos.
 
 ---
 
 ## Antes de abrir o PR (checklist)
 
+**Rodar `./gradlew clean` sempre antes de `koverVerify`/`detekt`** — cache stale nesse setup multi-módulo já mascarou uma cobertura real (o número reportado não batia com o `report.xml` real). Projeto é pequeno, o clean custa segundos; não pular.
+
+**Nunca rodar `./gradlew build` numa branch de feature — usar `assembleDebug`.** `build` roda a árvore de tasks inteira (debug + release, lint/testes das duas variantes, R8, dex — tudo) e leva minutos; `assembleDebug` gera só o necessário pra instalar e testar manualmente num device/emulador, muito mais rápido, e só piora conforme o projeto cresce. `build` é reservado pra `main` (branch de release) — só ali a árvore de release completa precisa rodar de fato.
+
 ```bash
-./gradlew test          # unit tests passando
-./gradlew koverVerify   # cobertura ok
-./gradlew detekt        # sem warnings novos (ignoreFailures=true — ler o report)
-./gradlew lint          # ler o report (abortOnError=false)
+./gradlew clean          # sempre primeiro, antes de detekt/koverVerify
+./gradlew test           # unit tests passando
+./gradlew koverVerify    # cobertura ok
+./gradlew detekt         # sem warnings novos (ignoreFailures=true — ler o report)
+./gradlew lint           # ler o report (abortOnError=false)
+./gradlew assembleDebug  # gera o APK debug pra testar manualmente — NUNCA `build` numa feature branch
 ```
 
 Fluxo: `/new-issue` → `/start-feature` → implementação → `/finish-issue` → `/open-pr` (target `dev`, nunca `main`).

@@ -13,6 +13,11 @@
             "type": "command",
             "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE '^git push'; then changed_kt=$(git diff origin/dev --name-only 2>/dev/null | grep -cE '\\.kt$' || echo 0); changed_docs=$(git diff origin/dev --name-only 2>/dev/null | grep -cE '^docs/|^CLAUDE\\.md|^AGENTS\\.md' || echo 0); if [ \"$changed_kt\" -gt 0 ] && [ \"$changed_docs\" -eq 0 ]; then echo '{\"systemMessage\": \"⚠️ Docs possivelmente desatualizadas: há arquivos .kt modificados neste branch mas nenhum arquivo de docs (docs/, CLAUDE.md, AGENTS.md) foi alterado. Considere rodar /review-and-update-docs antes do push.\"}'; fi; fi",
             "statusMessage": "Verificando docs antes do push..."
+          },
+          {
+            "type": "command",
+            "command": "input=$(cat); cmd=$(echo \"$input\" | jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE '(^|&&|;|\\|)[[:space:]]*git push'; then branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$branch\" = \"main\" ] || [ \"$branch\" = \"dev\" ]; then changed=$(git diff \"origin/$branch\" --name-only 2>/dev/null); non_docs=$(echo \"$changed\" | grep -vE '^docs/|^CLAUDE\\.md$|^AGENTS\\.md$|^\\.claude/rules/' | grep -c .); if [ -n \"$changed\" ] && [ \"$non_docs\" -eq 0 ]; then echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"allow\", \"permissionDecisionReason\": \"Push docs-only direto em main/dev (docs/, CLAUDE.md, AGENTS.md, .claude/rules/) — sem escopo de dev, autorizado sem confirmação.\"}}'; else echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"ask\", \"permissionDecisionReason\": \"Push de um commit direto em main/dev (commit pontual, sem passar por PR revisado) — peça confirmação explícita do usuário antes de subir, já que nada nesse commit foi validado por um fluxo de revisão. Push de branches de feature dentro do fluxo open-pr/finish-issue não precisa disso.\"}}'; fi; fi; fi",
+            "statusMessage": "Confirmando push (commit direto em main/dev)..."
           }
         ]
       }

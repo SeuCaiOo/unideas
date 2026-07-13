@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_load_error">Couldn\'t load your priorities</string>
+    <string name="home_title">Home</string>
+    <string name="home_settings_action">Settings</string>
+    <string name="home_add_action">Add item</string>
+    <string name="home_add_task">Task</string>
+    <string name="home_add_note">Note</string>
+    <string name="home_panel_title">Priorities</string>
+    <string name="home_panel_empty">Nothing overdue or due soon.</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_tab_tasks">Tasks</string>
+    <string name="home_tab_notes">Notes</string>
+    <string name="home_tab_empty">No items here yet.</string>
+    <string name="home_empty_onboarding">Nothing here yet — tap the + button below to create your first task or note.</string>
+    <string name="home_section_filter_none">All sections</string>
+    <string name="home_item_recurring_content_description">Recurring item</string>
+    <string name="all_priorities_title">All priorities</string>
+    <string name="all_priorities_empty">Nothing overdue or due soon.</string>
+    <string name="all_priorities_load_error">Couldn\'t load your priorities</string>
+</resources>

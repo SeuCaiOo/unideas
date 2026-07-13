@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Unideas</string>
+    <string name="action_cancel">Cancelar</string>
+
+    <!-- Backup & Sync -->
+    <string name="backup_section_title">Backup e Sincronização</string>
+    <string name="backup_not_connected">Não conectado</string>
+    <string name="backup_action_connect">Conectar conta Google</string>
+    <string name="backup_none">Nenhum backup ainda</string>
+    <string name="backup_last_at">Último backup: %s</string>
+    <string name="backup_action_upload">Fazer backup agora</string>
+    <string name="backup_action_sync">Restaurar backup</string>
+    <string name="backup_restore_title">Escolha um backup para restaurar</string>
+    <string name="backup_upload_success">Backup concluído</string>
+    <string name="backup_no_backups_found">Nenhum backup encontrado no Drive</string>
+    <string name="backup_sign_in_failed">Falha na conexão. Verifique se o app está registrado no Google Cloud Console.</string>
+    <string name="backup_error">Não foi possível acessar o Google Drive. Verifique sua conexão ou as permissões da conta.</string>
+</resources>

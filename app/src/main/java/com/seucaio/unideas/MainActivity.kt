@@ -5,15 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ui.components.AppVersionFooter
-import com.seucaio.unideas.ui.theme.UnideasTheme
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.feature.home.navigation.HomeRoute
+import com.seucaio.unideas.feature.home.navigation.homeNavGraph
+import com.seucaio.unideas.feature.items.navigation.ItemsRoute
+import com.seucaio.unideas.feature.items.navigation.itemsNavGraph
+import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
+import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
+import com.seucaio.unideas.feature.settings.navigation.SettingsRoute
+import com.seucaio.unideas.feature.settings.navigation.SettingsScreenConfig
+import com.seucaio.unideas.feature.settings.navigation.settingsNavGraph
+import com.seucaio.unideas.feature.tags.navigation.TagsRoute
+import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,34 +27,40 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UnideasTheme {
-                Scaffold(
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = HomeRoute.Panel,
                     modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        AppVersionFooter(modifier = Modifier.padding(16.dp))
-                    }
-                ) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                ) {
+                    homeNavGraph(
+                        onNavigateBack = navController::popBackStack,
+                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
+                        onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
+                    )
+                    settingsNavGraph(
+                        config = SettingsScreenConfig(
+                            versionName = BuildConfig.VERSION_NAME,
+                            showDebugSection = BuildConfig.DEBUG,
+                        ),
+                        onNavigateBack = navController::popBackStack,
+                        onNavigateToSections = { navController.navigate(SectionsRoute.List) },
+                        onNavigateToTags = { navController.navigate(TagsRoute.List) },
+                        // Debug-only entry point — Home is the real one now.
+                        onNavigateToItems = { navController.navigate(ItemsRoute.List) },
+                    )
+                    sectionsNavGraph(onNavigateBack = navController::popBackStack)
+                    tagsNavGraph(onNavigateBack = navController::popBackStack)
+                    itemsNavGraph(
+                        onNavigateBack = navController::popBackStack,
+                        onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
+                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun GreetingPreview() {
-    UnideasTheme {
-        Greeting("Android")
     }
 }

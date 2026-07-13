@@ -1,6 +1,6 @@
 ---
 name: start-feature
-description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done, then validates DoR, creates branch, generates and saves a development plan, moves issue to In Progress, then enters planning mode.
+description: Use when starting development of a GitHub issue — first moves any closed issues/PRs to Done (syncing parent epics and the Improvements artifact too), then validates DoR, creates branch, generates and saves a development plan, moves issue to In Progress, pulls the rest of its lettered backlog group into Todo, promotes its parent epic if any, syncs the Improvements artifact, then enters planning mode.
 ---
 
 # Start Feature — unideas Workflow
@@ -15,17 +15,14 @@ description: Use when starting development of a GitHub issue — first moves any
 
 ## Step-by-step
 
-### -1. Determine base branch and review docs
+### -1. Base branch and review docs
 
-First, find out which branch the new feature branch should be created from:
+**In unideas, the base is always `dev`** — feature branches are never cut from `main` here (unlike some of the user's other projects, e.g. GymLog, which use a different flow). Don't ask for confirmation on this; just check out and pull `dev`:
 
 ```bash
-git branch --show-current
+git checkout dev
+git pull origin dev
 ```
-
-**Ask the user:** "A branch base para criar a nova branch é `<current-branch>`? Ou deve ser outra?"
-
-Wait for confirmation before proceeding. Do NOT assume `dev`. Do NOT switch branches without explicit user authorization.
 
 Once the base branch is confirmed, check if it has commits that aren't yet reflected in the docs:
 
@@ -74,6 +71,45 @@ mutation {
 
 Skip issues already closed (already handled by a previous run).
 
+**Parent epic sync**: for each issue just closed above, check whether it has a parent via GitHub's native sub-issues relationship:
+
+```bash
+gh api graphql -f query="
+{
+  repository(owner: \"SeuCaiOo\", name: \"unideas\") {
+    issue(number: <N>) {
+      parent {
+        number
+        title
+        subIssuesSummary { total completed }
+      }
+    }
+  }
+}"
+```
+
+If `parent` is non-null:
+- If `subIssuesSummary.completed == subIssuesSummary.total` (every sub-issue of the epic is now done): **validate the parent's own DoD before closing it — don't skip straight to closing just because the sub-issue count checks out.** A parent/epic issue has no PR of its own (its "Definition of Done" is a plain `- [ ]` checklist in its body, usually one line per sub-issue plus any overall requirement — often not even labeled "DoD" the way leaf issues are, but it's the same concept and still needs the same reconciliation `finish-issue` does for leaf issues). Fetch the parent's body (`gh issue view <parent> --json body`), compare each checklist item against what the now-complete sub-issues actually delivered, check off everything that holds (reword only after asking the user if something doesn't match, same rule as `finish-issue` step 2), `gh issue edit <parent> --body-file ...`. Confirmed the hard way (issue #6 — closed and moved to Done with all three of its own checklist items still unchecked, because only `subIssuesSummary` was checked, never the parent's body). Only after this reconciliation, close the parent issue (same comment pattern as step 1 above, referencing which sub-issue completed the set) and move its card to Done — same mutation as for the sub-issue, using the parent's own project item ID.
+- Otherwise (some sub-issues still open), just confirm the parent's card is already `In Progress` (it should be, from `start-feature` step 9 when the first sub-issue started) — move it there if it somehow isn't, but do **not** close it or touch its Done status yet.
+
+This keeps epic issues (e.g. #5 "Room persistence layer") honest about partial progress instead of sitting untouched in Backlog while their sub-issues get worked on and finished one at a time.
+
+**Improvements artifact sync — now just a fallback**: `open-pr` step 6.5 syncs this artifact right when the PR opens (DoD is already green by then), not at this later sweep — so for any issue whose PR was opened after that rule existed, this artifact entry should already show `✅ Merged` with the right PR number by the time this step runs. Reason for moving it earlier: waiting until the *next* `/start-feature` run left the artifact stale for however long the user took to start something new (worse if auto-merge finished unattended while they were away) — the old timing meant "what's actually done" and "what the artifact says" could disagree for a while.
+
+Still check each issue closed above: if its entry isn't yet marked `✅ Merged` (an older PR predating the rule, or the `open-pr` sync somehow got skipped), do the sync here as a catch-up — same mechanics either way:
+
+1. `WebFetch` the artifact URL for its current markdown — never assume its content from memory, another session may have changed it.
+2. Find the entry whose heading contains `(#<N>)`. Check every `- [ ]` in its checklist to `- [x]`. Add or update a status tag right after its `pré-req` line, matching the existing convention: `· ✅ **Merged** (PR #<M> → dev, implementado via <how>)`.
+3. If the issue has a parent epic: update the parent's own status tag too (`· ⏳ **In Progress** (X/Y sub-issues — ...)` or, once all sub-issues are done, `· ✅ **Merged**` — mirror whatever was just decided in the Parent epic sync above).
+4. Add a one-line entry for the issue (and parent, if it just completed) under **"## Finalizadas (Done)"**; if the issue's epic is still partially open, make sure it's listed under **"## Em andamento (In Progress)"** instead (remove it from there once fully done).
+5. Write the full updated markdown to a local scratchpad file and republish via the `Artifact` tool with the same `url` — never a new `file_path`-only publish, that would mint a second artifact.
+
+See the sync done for #21/#5 in this project's history for a worked example of the exact edits.
+
+**Remote-only cleanup, never local**: the repo has `delete_branch_on_merge` enabled, so GitHub deletes the head (feature) branch on the remote automatically once its PR merges — `main`/`dev` are never affected, since they're always the PR *base*, never the head. Nothing to do here on the remote side.
+
+**Do NOT delete local feature branches** (`git branch -d`), even ones already merged. The user explicitly wants them kept locally as a debugging safety net — if a merged change turns out buggy later, the local branch is how you go back and see exactly what that PR's state was, without depending on GitHub still having it (it won't, remote is auto-deleted) or reconstructing it from commit SHAs. `git fetch --prune origin` (dropping stale *remote-tracking* refs, not local branches) is fine and harmless if you want to run it, but skip local `git branch -d` entirely — this was done by mistake twice in this project's history and had to be reverted both times.
+
 Known field/option IDs (project `PVT_kwHOAVNuW84Bcrp8`, https://github.com/users/SeuCaiOo/projects/4):
 - Status field ID: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
 - Backlog option ID: `19386e88`
@@ -110,18 +146,38 @@ Complete os itens acima na issue antes de iniciar.
 
 **Only proceed if ALL DoR items are checked.**
 
-### 3. Create branch
+### 3. Create branch — via `createLinkedBranch`, not plain `git checkout -b`
 
 Branch naming pattern: `<type>/#<number>/<slug>`
 - Extract `type` from the issue title prefix (e.g. `feat`, `fix`, `refactor`, `test`, `chore`)
 - Extract slug from the issue title: lowercase, spaces → hyphens, remove special chars
 - Example: `feat: Add login screen` → `feat/#4/add-login-screen`
 
+Don't create the branch with a plain `git checkout -b` + later `git push` — that only links the PR to the issue much later (and unreliably) via the `Closes #N` text, which never even auto-closes anyway since PRs target `dev`, not the repo's default branch (confirmed empirically: `willCloseTarget: false` on the cross-reference event, regardless of merge). Instead, use GitHub's `createLinkedBranch` GraphQL mutation, which creates the branch **and** links it in the issue's Development section atomically, at the moment the branch is born — validated live on a throwaway issue (`linkedBranches` populated instantly, no delay, unlike `closingIssuesReferences`).
+
 ```bash
 git checkout <base-branch>
 git pull origin <base-branch>
-git checkout -b <type>/#<number>/<slug>
+
+ISSUE_NODE_ID=$(gh api repos/SeuCaiOo/unideas/issues/<issue-number> --jq '.node_id')
+BASE_OID=$(git rev-parse HEAD)
+
+gh api graphql -f query="
+mutation {
+  createLinkedBranch(input: {
+    issueId: \"$ISSUE_NODE_ID\"
+    oid: \"$BASE_OID\"
+    name: \"<type>/#<number>/<slug>\"
+  }) {
+    linkedBranch { ref { name } }
+  }
+}"
+
+git fetch origin "<type>/#<number>/<slug>"
+git checkout "<type>/#<number>/<slug>"
 ```
+
+This pushes the branch to the remote immediately too — a real backup from the first commit, not just at PR time. Read the mutation's response `linkedBranch.ref.name` to confirm the actual created branch name (GitHub could in principle sanitize it) before the `git fetch`/`checkout`.
 
 ### 4. Load project conventions
 
@@ -194,13 +250,47 @@ mutation {
 }"
 ```
 
-### 8. Enter planning mode
+### 8. Promote the rest of this letter group to "Todo"
+
+The `docs/BLUEPRINT.md` / Improvements-artifact backlog is organized into lettered groups (`A · Fundação de dados`, `B · Casos de uso`, `C · Design system`, ...). `Backlog` means "everything specced, no timeline"; `Todo` means "queued up next, no more thinking needed to know what's coming." The user wants the **whole group** pulled into `Todo` together as soon as the first issue of that group starts — not one issue at a time, since seeing 2-3 loose `Todo` cards while the rest of the group sits in `Backlog` defeats the point (you'd still have to ask "what's next?").
+
+Determine the group: `WebFetch` the Improvements artifact (URL in `.claude/skills/add-improvement/SKILL.md`) and find the `### <Letter> · <name>` heading containing this issue's `(#<N>)`. Collect every issue number under that heading (top-level items and their `↳` sub-issues) up to the next `### ` heading.
+
+For every issue in that list that is **not** the one just moved to In Progress in step 7 and whose board status is currently `Backlog`, move it to `Todo` (option ID `f75ad846`) — same mutation pattern as step 7, just swap the target status. Leave anything already `Todo`/`In Progress`/`Done` untouched. Report the full list of what got pulled forward.
+
+Example: starting #21 (group A) should have pulled #22 (still A, the only sibling not yet started) into `Todo` at the same time — it didn't, because this step didn't exist yet; done manually once, now automated going forward.
+
+### 9. Promote parent epic issue (if this is a sub-issue)
+
+Check whether the issue has a parent, using GitHub's native sub-issues relationship (not text parsing — unreliable, since sub-issue bodies don't consistently spell out "#<parent-number>"):
+
+```bash
+gh api graphql -f query="
+{
+  repository(owner: \"SeuCaiOo\", name: \"unideas\") {
+    issue(number: <issue-number>) {
+      parent { number title }
+    }
+  }
+}"
+```
+
+If `parent` is non-null, find the parent's project item and current status the same way as step 7 (swap in the parent's issue number). If the parent's status is `Backlog` or `Todo`, move it to `In Progress` too — starting work on any sub-issue means the epic itself is now in progress, even though it isn't finished. If the parent is already `In Progress` (a later sibling sub-issue), leave it as-is. Report which parent (if any) was promoted, and to what status it was found before promoting.
+
+### 10. Sync the Improvements artifact (mark as started)
+
+Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading). This step is about visibility, not completion, so keep it light: no status tag change is required for an in-progress item (the artifact's convention only tags `✅ Merged`/`⏳ In Progress` on *epics*, not individual sub-issues mid-flight) — but if this issue **is** an epic itself (has its own sub-issues) or the parent promoted in step 9, add/update its `⏳ In Progress` status tag now, same format as the Done-time tag in step 0. Republish with the same `url`. Skip silently if nothing needs to change (e.g. this is a plain leaf issue with no epic-level tag to add).
+
+### 11. Enter planning mode
 
 Summarize what was set up:
 - ✅ DoR validated
 - ✅ Branch created: `<branch-name>`
 - ✅ Plan saved: `<plan-path>`
 - ✅ Issue moved to "In Progress"
+- ✅ Rest of the letter group pulled into "Todo"
+- ✅ Parent epic promoted to "In Progress" (if applicable)
+- ✅ Improvements artifact synced
 
 Then present the plan to the user and ask for confirmation before starting implementation.
 
@@ -211,8 +301,14 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Mistake | Fix |
 |---|---|
 | Starting with unchecked DoR | Always validate all DoR items first |
-| Assuming base branch without asking | Always ask user to confirm base branch in step -1 |
+| Asking to confirm the base branch every time | Don't — it's always `dev` in unideas (step -1), no need to ask |
 | Plan not saved | Always write to `.claude/plans/` |
 | Slug with uppercase or special chars | Normalize: lowercase, hyphens only |
 | Planning without reading CLAUDE.md/AGENTS.md | Always run step 4 — never infer package structure from memory |
 | Not moving issue to "In Progress" | Always run step 7 — move card before starting implementation |
+| Leaving the rest of a lettered group sitting in Backlog while one issue is worked | Always run step 8 — pull every sibling issue of the same group into Todo, not just the one being started |
+| Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 9 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
+| Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
+| Closing a parent epic on `subIssuesSummary` alone, without checking its own body checklist | The parent has its own DoD (a checklist in its body, even if not labeled "DoD") — reconcile and check it off before closing, same as `finish-issue` does for leaf issues |
+| Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
+| Creating the branch with plain `git checkout -b` for an issue-tied feature | Always use `createLinkedBranch` (step 3) instead — plain branch creation + a later `Closes #N` in the PR body does NOT reliably link the issue's Development section for `dev`-targeting PRs (confirmed empirically, #22/#35) |

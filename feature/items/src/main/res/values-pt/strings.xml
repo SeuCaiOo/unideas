@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="item_form_load_error">Não foi possível carregar o item</string>
+    <string name="item_title_required">O título é obrigatório</string>
+    <string name="item_form_title_create">Novo item</string>
+    <string name="item_form_title_edit">Editar item</string>
+    <string name="item_form_save">Salvar</string>
+    <string name="item_form_type_task">Tarefa</string>
+    <string name="item_form_type_note">Anotação</string>
+    <string name="item_form_title_label">Título</string>
+    <string name="item_form_description_label">Descrição</string>
+    <string name="item_form_section_label">Seção</string>
+    <string name="item_form_section_none">Sem seção</string>
+    <string name="item_form_tags_label">Tags</string>
+    <string name="item_form_date_label">Data de vencimento</string>
+    <string name="item_form_date_none">Sem data</string>
+    <string name="item_form_date_clear">Limpar data</string>
+    <string name="item_form_recurrence_label">Repetir</string>
+    <string name="item_form_recurrence_none">Não se repete</string>
+    <string name="item_form_recurrence_daily">Diariamente</string>
+    <string name="item_form_recurrence_weekly">Semanalmente</string>
+    <string name="item_form_recurrence_monthly">Mensalmente</string>
+    <string name="item_detail_load_error">Não foi possível carregar o item</string>
+    <string name="item_detail_section_label">Seção</string>
+    <string name="item_detail_tags_label">Tags</string>
+    <string name="item_detail_date_label">Data de vencimento</string>
+    <string name="item_detail_recurrence_label">Repetir</string>
+    <string name="item_detail_completed_label">Concluído</string>
+    <string name="item_detail_share">Compartilhar</string>
+    <string name="item_detail_edit">Editar</string>
+    <string name="item_detail_delete">Excluir</string>
+    <string name="item_detail_complete">Marcar como concluído</string>
+    <string name="item_detail_delete_title">Excluir item</string>
+    <string name="item_detail_delete_message">Esta ação não pode ser desfeita.</string>
+    <string name="items_list_title">Itens</string>
+    <string name="items_list_empty">Nenhum item ainda</string>
+    <string name="items_list_load_error">Não foi possível carregar os itens</string>
+    <string name="items_list_add">Novo item</string>
+</resources>

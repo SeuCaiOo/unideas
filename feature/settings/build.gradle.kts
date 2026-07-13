@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 android {
@@ -37,6 +38,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
 
@@ -45,6 +47,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 

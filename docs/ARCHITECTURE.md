@@ -26,7 +26,7 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :app                 — entry point, DI wiring (Koin startKoin), NavHost central, MainActivity
 :domain              — models, enums, repository interfaces, use cases. Kotlin puro, sem Android/Room/Compose/Koin
 :data                — Room (entities, DAOs, database, migrations, converters), mappers, impl de repositório, DataModule
-:core:common         — utilitários Kotlin puros (extensions, constantes). Sem Compose
+:core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
 :core:ui             — UnideasTheme + componentes Compose compartilhados. Depende de :core:common via `api`
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
 :feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
@@ -118,7 +118,10 @@ data/
 
 ```
 core/common/
-├── extensions/       — Kotlin extensions puros (Boolean.orFalse, String.EMPTY, Long.toLocalDate, etc.)
+├── extensions/       — Kotlin extensions (Boolean.orFalse, String.EMPTY, Long.toLocalDate, etc.);
+│                       maioria pura, mas Context.restartApplication() (#76) é Android-dependente —
+│                       comportamento genérico de app (não específico de nenhum módulo), por isso
+│                       mora aqui e não em :core:backup, que é quem hoje o consome
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 
@@ -266,7 +269,9 @@ Estrutura em `:core:backup`:
 - `GoogleAuthUseCase` — facade sobre os 3 use cases de sessão (`getSignInIntent`/`getSignedInAccount`/`buildDriveService`)
 - `BackupUseCase` — facade sobre os 4 use cases de dados; recebe `GoogleSignInAccount` direto e constrói o `Drive` internamente (compõe `BuildDriveServiceUseCase`), então o `BackupViewModel` nunca lida com o tipo `Drive` (#16)
 - `BackupViewModel` — checa conexão (`GoogleAuthUseCase.getSignedInAccount()`) no `init` e pré-carrega o último backup se já conectado; `isConnected` explícito em `BackupUiState.Ready`, evento `OnConnectClick` dedicado (não dispara sign-in implícito no primeiro clique de backup/restore)
-- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables).
+- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables). `BackupBottomSheet` é o **único** coletor de `BackupUiAction` (recebe `snackbarHostState` direto do `SettingsScreen`) — `Channel` não faz broadcast, então dois coletores do mesmo canal perdiam ações um pro outro de forma não-determinística (bug real, corrigido junto de #76).
+- `checkpoint()` (`UnideasDatabase`) força o WAL a descarregar no `.db` principal antes do upload: `SupportSQLiteDatabase.query()` é lazy no Android — o `PRAGMA` só roda de fato quando o cursor é lido (`.use { it.moveToFirst() }`), não bastava abrir e fechar. Sem isso todo backup subia um arquivo vazio (4096 bytes, só cabeçalho) — bug real encontrado e corrigido em #76.
+- Restore troca o arquivo físico do Room no disco; qualquer singleton Room/Koin já resolvido no processo (DAOs, repositórios) continua com o file handle antigo. Em vez de rastrear cada referência, `BackupUiAction.RestoreCompleted` reage reiniciando o processo inteiro via `Context.restartApplication()` (`:core:common`, ver seção abaixo) — só matar o processo garante que tudo seja reconstruído contra os dados restaurados; `finishAffinity()` sozinho não é suficiente (confirmado em device: processo sobrevive com o mesmo pid).
 
 Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
 

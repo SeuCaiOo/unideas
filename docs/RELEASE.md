@@ -6,7 +6,7 @@ Reference for build variants, signing, the release automation and CI secrets. No
 
 - `debug` builds get `applicationIdSuffix = ".debug"` and a distinct launcher name ("Unideas Debug", via `resValue`), so debug and release install side by side on the same device.
 - `release` builds are signed via `signingConfigs.release` in `app/build.gradle.kts`, which reads `STORE_FILE_PATH`/`STORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD` env vars (CI) with a fallback to a local, gitignored `signing.properties`. The local keystore is `unideas-release.jks` (gitignored) — **back both up somewhere safe; losing them blocks future signed updates on the same app.**
-- `release` builds run R8 (`optimization.enable = true`), which requires `android.r8.gradual.support=true` in `gradle.properties` (AGP 9's declarative build-type DSL).
+- `release` builds run R8 (`optimization.enable = true`), which requires `android.r8.gradual.support=true` in `gradle.properties` (AGP 9's declarative build-type DSL). Keep rules live in `app/proguard-rules.pro` (#20): kotlinx.serialization's `$$serializer` companions, `domain.model.**` (Navigation Compose route args resolved by class name at runtime — a release-only crash without this, Crashlytics `e8d77124d056321595dae7e2a1e7b3db`), and the Google Drive API client's reflection-based JSON binding.
 - `buildFeatures.buildConfig = true` is enabled so `BuildConfig.VERSION_NAME`/`VERSION_CODE` are generated for the app module.
 
 ### Building each variant locally

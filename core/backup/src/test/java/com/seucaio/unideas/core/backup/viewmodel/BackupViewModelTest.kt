@@ -228,13 +228,13 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when restore succeeds should show the restore success snackbar`() = runTest {
+    fun `when restore succeeds should emit RestoreCompleted`() = runTest {
         coEvery { backupUseCase.restore(account, "file-1") } returns Result.success(Unit)
         val vm = viewModel()
 
         vm.action.test {
             vm.onEvent(BackupEvent.OnRestoreConfirmed(account, "file-1"))
-            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_restore_success), awaitItem())
+            assertEquals(BackupUiAction.RestoreCompleted, awaitItem())
         }
     }
 

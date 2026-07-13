@@ -137,7 +137,7 @@ class BackupViewModel(
             backupUseCase.restore(account, fileId)
                 .onSuccess {
                     _internalState.update { it.copy(isLoading = false, isConnected = true) }
-                    showSnackbar(R.string.backup_restore_success)
+                    _action.send(BackupUiAction.RestoreCompleted)
                 }
                 .onFailure {
                     Timber.e(it, "Backup: Restore failed")

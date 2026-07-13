@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,10 +25,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -40,6 +43,7 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
@@ -47,12 +51,14 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupBottomSheet(
+    snackbarHostState: SnackbarHostState,
     onDismiss: () -> Unit,
     viewModel: BackupViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
+    val resources by rememberUpdatedState(LocalResources.current)
 
     var pendingAction by remember { mutableStateOf<BackupAction?>(null) }
     var restoreBackups by remember { mutableStateOf<List<BackupInfo>>(emptyList()) }
@@ -72,7 +78,11 @@ fun BackupBottomSheet(
         viewModel.action.collect { action ->
             when (action) {
                 is BackupUiAction.ShowSnackbar -> {
-                    // Handled by SettingsScreen to persist after dismiss
+                    // Dismiss first — the sheet would otherwise sit on top of the snackbar,
+                    // hiding it from view. snackbarHostState belongs to the caller's Scaffold,
+                    // so the message keeps showing after the sheet is gone.
+                    onDismiss()
+                    snackbarHostState.showSnackbar(resources.getString(action.message))
                 }
                 is BackupUiAction.LaunchGoogleSignIn -> {
                     pendingAction = action.pendingAction
@@ -80,6 +90,14 @@ fun BackupBottomSheet(
                 }
                 is BackupUiAction.ShowRestoreDialog ->
                     restoreBackups = action.backups
+                is BackupUiAction.RestoreCompleted -> {
+                    onDismiss()
+                    // A simple activity restart (finishAffinity()) is not enough here — confirmed
+                    // on-device the process can survive it, leaving Koin's cached UnideasDatabase/DAO
+                    // singletons pointing at the closed pre-restore database, so every query after
+                    // "restart" fails forever with the same cancelled InvalidationTracker Job.
+                    context.restartApplication()
+                }
             }
         }
     }

@@ -76,14 +76,6 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        backupViewModel.action.collect { action ->
-            if (action is com.seucaio.unideas.core.backup.viewmodel.BackupUiAction.ShowSnackbar) {
-                snackbarHostState.showSnackbar(resources.getString(action.message))
-            }
-        }
-    }
-
     SettingsContent(
         uiState = uiState,
         dialogState = dialogState,
@@ -98,6 +90,7 @@ fun SettingsScreen(
 
     if (showBackupSheet) {
         BackupBottomSheet(
+            snackbarHostState = snackbarHostState,
             onDismiss = { showBackupSheet = false },
             viewModel = backupViewModel,
         )

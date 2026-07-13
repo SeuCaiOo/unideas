@@ -60,9 +60,15 @@ abstract class UnideasDatabase : RoomDatabase() {
             instance = null
         }
 
-        /** Forces the WAL log to flush into the main `.db` file before it's copied for backup. */
+        /**
+         * Forces the WAL log to flush into the main `.db` file before it's copied for backup.
+         * `SQLiteDatabase.query` is lazy — the PRAGMA only actually runs once the cursor is read
+         * (`moveToFirst()`), not just opened and closed. Without that, the main file stayed at
+         * its empty just-created size (4096 bytes) forever, and every backup silently uploaded
+         * an empty database.
+         */
         fun checkpoint(database: UnideasDatabase) {
-            database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").close()
+            database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { it.moveToFirst() }
         }
 
         private fun buildDatabase(context: Context): UnideasDatabase =

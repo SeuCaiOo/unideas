@@ -13,7 +13,6 @@
     <string name="backup_action_sync">Restore backup</string>
     <string name="backup_restore_title">Choose a backup to restore</string>
     <string name="backup_upload_success">Backup completed</string>
-    <string name="backup_restore_success">Data restored</string>
     <string name="backup_no_backups_found">No backups found on Drive</string>
     <string name="backup_sign_in_failed">Connection failed. Make sure your app is registered in the Google Cloud Console.</string>
     <string name="backup_error">Couldn\'t reach Google Drive. Check your connection or account permissions.</string>

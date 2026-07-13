@@ -9,6 +9,7 @@ import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
@@ -56,6 +57,7 @@ val domainModule = module {
     factoryOf(::DeleteItemUseCase)
     factoryOf(::CompleteItemUseCase)
     factoryOf(::GetPriorityItemsUseCase)
+    factoryOf(::HasAnyItemUseCase)
     factoryOf(::ItemDetailUseCase)
     factoryOf(::ItemFormUseCase)
     factoryOf(::HomeUseCase)

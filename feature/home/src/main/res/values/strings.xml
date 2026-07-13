@@ -12,6 +12,7 @@
     <string name="home_tab_tasks">Tasks</string>
     <string name="home_tab_notes">Notes</string>
     <string name="home_tab_empty">No items here yet.</string>
+    <string name="home_empty_onboarding">Nothing here yet — tap the + button below to create your first task or note.</string>
     <string name="home_section_filter_none">All sections</string>
     <string name="home_item_recurring_content_description">Recurring item</string>
     <string name="all_priorities_title">All priorities</string>

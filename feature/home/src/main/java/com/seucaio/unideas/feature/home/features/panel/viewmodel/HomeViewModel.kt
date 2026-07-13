@@ -82,7 +82,8 @@ class HomeViewModel(
             combine(
                 homeUseCase.getPriorityItems(today = LocalDate.now(), dueSoonDays = Constants.DUE_SOON_DAYS),
                 homeUseCase.getItems(internal.activeTab, internal.sectionFilter, internal.tagFilters.toList()),
-            ) { priorityItems, tabItems ->
+                homeUseCase.hasAnyItem(),
+            ) { priorityItems, tabItems, hasAnyItem ->
                 HomeUiState.Success(
                     priorityItems = priorityItems.take(Constants.PRIORITY_PANEL_LIMIT),
                     showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,
@@ -92,6 +93,7 @@ class HomeViewModel(
                     tagFilters = internal.tagFilters,
                     availableSections = internal.availableSections,
                     availableTags = internal.availableTags,
+                    hasAnyItem = hasAnyItem,
                 ) as HomeUiState
             }
                 .onStart { emit(HomeUiState.Loading) }

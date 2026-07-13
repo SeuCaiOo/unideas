@@ -44,6 +44,7 @@ class HomeViewModelTest {
         coEvery { getSectionsAndTags() } returns SectionsAndTags(emptyList(), emptyList())
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
         every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(emptyList())
+        every { homeUseCase.hasAnyItem() } returns flowOf(true)
     }
 
     @After
@@ -184,6 +185,17 @@ class HomeViewModelTest {
         vm.uiAction.test {
             vm.onEvent(HomeEvent.OnCompleteClicked(1L))
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when the user has no items anywhere should reflect hasAnyItem as false`() = runTest {
+        every { homeUseCase.hasAnyItem() } returns flowOf(false)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(false, state.hasAnyItem)
         }
     }
 

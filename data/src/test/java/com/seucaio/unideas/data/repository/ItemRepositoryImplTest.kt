@@ -103,6 +103,16 @@ class ItemRepositoryImplTest {
     }
 
     @Test
+    fun `hasAnyItem delegates to the dao`() = runTest {
+        every { itemDao.hasAnyItem() } returns flowOf(true)
+
+        val result = repository.hasAnyItem().first()
+
+        assertEquals(true, result)
+        verify(exactly = 1) { itemDao.hasAnyItem() }
+    }
+
+    @Test
     fun `insertItem delegates entity and tag ids returning the generated id`() = runTest {
         val item = ItemStub.task(id = 0L, tags = TagStub.tags(count = 2))
         coEvery { itemDao.insertItemWithTags(item.toEntity(), listOf(1L, 2L)) } returns 42L

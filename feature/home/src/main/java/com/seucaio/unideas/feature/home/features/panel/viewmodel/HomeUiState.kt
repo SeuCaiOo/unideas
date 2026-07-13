@@ -21,6 +21,9 @@ sealed interface HomeUiState {
      * @property priorityItems fixed panel content (overdue + due-soon), independent of [activeTab].
      * @property showSeeAllButton true when [priorityItems] was truncated to fit the panel's limit.
      * @property tabItems the active tab's list, filtered by [sectionFilter]/[tagFilters].
+     * @property hasAnyItem false only when the user has never created an item anywhere in the
+     *   app — distinguishes the true first-run empty state from [tabItems] just being empty
+     *   because of the active tab/filters.
      */
     data class Success(
         val priorityItems: List<Item>,
@@ -31,6 +34,7 @@ sealed interface HomeUiState {
         val tagFilters: Set<Long>,
         val availableSections: List<Section>,
         val availableTags: List<Tag>,
+        val hasAnyItem: Boolean,
     ) : HomeUiState
 
     data class Error(@StringRes val messageRes: Int) : HomeUiState

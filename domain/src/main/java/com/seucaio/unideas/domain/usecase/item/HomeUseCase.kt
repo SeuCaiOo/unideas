@@ -23,6 +23,7 @@ class HomeUseCase(
     private val getPriorityItemsUseCase: GetPriorityItemsUseCase,
     private val getItemsUseCase: GetItemsUseCase,
     private val completeItemUseCase: CompleteItemUseCase,
+    private val hasAnyItemUseCase: HasAnyItemUseCase,
 ) {
 
     fun getPriorityItems(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
@@ -33,4 +34,6 @@ class HomeUseCase(
 
     suspend fun complete(item: Item, completedAt: LocalDateTime): Result<CompletionResult> =
         completeItemUseCase(item, completedAt)
+
+    fun hasAnyItem(): Flow<Boolean> = hasAnyItemUseCase()
 }

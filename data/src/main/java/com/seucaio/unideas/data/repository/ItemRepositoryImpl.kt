@@ -34,6 +34,8 @@ class ItemRepositoryImpl(
         itemDao.getPriorityItems(dueOnOrBefore.toEpochMilli())
             .map { rows -> rows.map { it.toDomain() } }
 
+    override fun hasAnyItem(): Flow<Boolean> = itemDao.hasAnyItem()
+
     override suspend fun insertItem(item: Item): Long =
         itemDao.insertItemWithTags(item.toEntity(), item.tags.map { it.id })
 

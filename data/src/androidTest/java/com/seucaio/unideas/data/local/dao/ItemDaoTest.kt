@@ -142,6 +142,15 @@ class ItemDaoTest {
     }
 
     @Test
+    fun hasAnyItemIsFalseWhenTheTableIsEmptyAndTrueAfterAnInsert() = runTest {
+        assertEquals(false, dao.hasAnyItem().first())
+
+        dao.insert(task(title = "primeiro item"))
+
+        assertEquals(true, dao.hasAnyItem().first())
+    }
+
+    @Test
     fun updateItemWithTagsReplacesFieldsAndTagLinks() = runTest {
         seedTags(1L to "urgente", 2L to "casa")
         val id = dao.insertItemWithTags(task(title = "original"), listOf(1L))

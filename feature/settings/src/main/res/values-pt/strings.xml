@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Configurações</string>
+    <string name="settings_organize_section">Organizar</string>
+    <string name="settings_organize_sections">Seções</string>
+    <string name="settings_organize_tags">Tags</string>
+    <string name="settings_backup_section">Backup</string>
+    <string name="settings_debug_section">Depuração</string>
+    <string name="settings_debug_items">Itens</string>
+    <string name="settings_debug_seed">Popular banco de dados</string>
+    <string name="settings_debug_seed_success">Dados de exemplo adicionados</string>
+    <string name="settings_debug_clear">Limpar banco de dados</string>
+    <string name="settings_debug_clear_success">Banco de dados limpo</string>
+    <string name="seed_scope_sheet_title">O que devemos popular?</string>
+    <string name="seed_scope_confirm">Popular</string>
+    <string name="seed_scope_empty">Vazio</string>
+    <string name="seed_scope_empty_description">Limpa o banco de dados, sem dados de exemplo</string>
+    <string name="seed_scope_basic">Básico</string>
+    <string name="seed_scope_basic_description">Alguns itens, painel de prioridades abaixo do limite</string>
+    <string name="seed_scope_full">Completo</string>
+    <string name="seed_scope_full_description">Itens suficientes para mostrar \"Ver todas\", cobrindo todos os casos visuais</string>
+</resources>

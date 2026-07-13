@@ -202,7 +202,7 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
     }
 }
 
-private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' HH:mm")
+private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
 
 @Composable
 private fun SettingsSectionHeader(title: String) {

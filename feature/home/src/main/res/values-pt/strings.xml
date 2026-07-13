@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_load_error">Não foi possível carregar suas prioridades</string>
+    <string name="home_title">Início</string>
+    <string name="home_settings_action">Configurações</string>
+    <string name="home_add_action">Adicionar item</string>
+    <string name="home_add_task">Tarefa</string>
+    <string name="home_add_note">Anotação</string>
+    <string name="home_panel_title">Prioridades</string>
+    <string name="home_panel_empty">Nada vencido ou a vencer.</string>
+    <string name="home_see_all">Ver todas</string>
+    <string name="home_tab_tasks">Tarefas</string>
+    <string name="home_tab_notes">Anotações</string>
+    <string name="home_tab_empty">Nenhum item aqui ainda.</string>
+    <string name="home_empty_onboarding">Nada por aqui ainda — toque no botão + abaixo para criar sua primeira tarefa ou anotação.</string>
+    <string name="home_section_filter_none">Todas as seções</string>
+    <string name="home_item_recurring_content_description">Item recorrente</string>
+    <string name="all_priorities_title">Todas as prioridades</string>
+    <string name="all_priorities_empty">Nada vencido ou a vencer.</string>
+    <string name="all_priorities_load_error">Não foi possível carregar suas prioridades</string>
+</resources>

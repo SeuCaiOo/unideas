@@ -1,6 +1,5 @@
 package com.seucaio.unideas.core.backup
 
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,7 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
@@ -92,10 +92,11 @@ fun BackupBottomSheet(
                     restoreBackups = action.backups
                 is BackupUiAction.RestoreCompleted -> {
                     onDismiss()
-                    val restartIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                    restartIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(restartIntent)
-                    Runtime.getRuntime().exit(0)
+                    // A simple activity restart (finishAffinity()) is not enough here — confirmed
+                    // on-device the process can survive it, leaving Koin's cached UnideasDatabase/DAO
+                    // singletons pointing at the closed pre-restore database, so every query after
+                    // "restart" fails forever with the same cancelled InvalidationTracker Job.
+                    context.restartApplication()
                 }
             }
         }

@@ -136,6 +136,7 @@ class BackupViewModel(
             _internalState.update { it.copy(isLoading = true) }
             backupUseCase.restore(account, fileId)
                 .onSuccess {
+                    Timber.i("Backup: Restore use case finished successfully")
                     _internalState.update { it.copy(isLoading = false, isConnected = true) }
                     _action.send(BackupUiAction.RestoreCompleted)
                 }

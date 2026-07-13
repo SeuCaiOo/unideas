@@ -11,6 +11,7 @@ import com.seucaio.unideas.data.local.database.UnideasDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -71,18 +72,26 @@ class BackupRepositoryImpl(
     override suspend fun restoreBackup(driveService: Drive, fileId: String): Result<Unit> =
         runCatching {
             withContext(ioDispatcher) {
+                Timber.i("Backup: Starting restore for fileId: $fileId")
                 database.close()
                 UnideasDatabase.resetInstance()
 
                 val dbFile = context.getDatabasePath(UnideasDatabase.DATABASE_NAME)
-                java.io.File("${dbFile.path}-wal").delete()
-                java.io.File("${dbFile.path}-shm").delete()
+                Timber.i("Backup: DB path: ${dbFile.absolutePath}")
+
+                val walFile = java.io.File("${dbFile.path}-wal")
+                val shmFile = java.io.File("${dbFile.path}-shm")
+                Timber.i("Backup: Deleting WAL exists: ${walFile.exists()}, SHM exists: ${shmFile.exists()}")
+                walFile.delete()
+                shmFile.delete()
 
                 dbFile.outputStream().use { output ->
                     driveService.files().get(fileId).executeMediaAndDownloadTo(output)
+                    Timber.i("Backup: Download completed. File size: ${dbFile.length()}")
                 }
 
                 UnideasDatabase.getInstance(context)
+                Timber.i("Backup: Restore completed successfully")
             }
         }
 

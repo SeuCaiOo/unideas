@@ -26,10 +26,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
-import com.seucaio.unideas.core.ui.components.AppVersionFooter
-import com.seucaio.unideas.core.ui.components.UnideasListItem
-import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
+import com.seucaio.unideas.ds.components.legacy.UnideasListItem
+import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction

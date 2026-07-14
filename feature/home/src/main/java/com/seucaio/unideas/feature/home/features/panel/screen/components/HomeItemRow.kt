@@ -14,14 +14,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.common.util.Constants
-import com.seucaio.unideas.core.ui.components.UnideasListItem
-import com.seucaio.unideas.core.ui.components.UrgencyIndicator
-import com.seucaio.unideas.core.ui.components.UrgencyIndicatorLevel
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.UrgencyLevel
+import com.seucaio.unideas.ds.components.legacy.UnideasListItem
+import com.seucaio.unideas.ds.components.legacy.UrgencyIndicator
+import com.seucaio.unideas.ds.components.legacy.UrgencyIndicatorLevel
 import com.seucaio.unideas.feature.home.R
 import java.time.LocalDate
 import java.time.LocalDateTime

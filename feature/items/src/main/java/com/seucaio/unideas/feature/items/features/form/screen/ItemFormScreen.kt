@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,8 +12,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,8 +43,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.toEpochMilliUtc
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
+import com.seucaio.unideas.core.ui.components.LabeledOptionDropdown
 import com.seucaio.unideas.core.ui.components.SectionDropdown
-import com.seucaio.unideas.core.ui.components.TagChip
+import com.seucaio.unideas.core.ui.components.TagChipRow
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.ItemType
@@ -210,16 +207,11 @@ private fun TagsSection(
             text = stringResource(R.string.item_form_tags_label),
             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
         )
-        LazyRow {
-            items(availableTags, key = { it.id }) { tag ->
-                TagChip(
-                    label = tag.name,
-                    selected = tag.id in selectedTagIds,
-                    onClick = { onEvent(ItemFormEvent.OnTagToggled(tag.id)) },
-                    modifier = Modifier.padding(end = 8.dp),
-                )
-            }
-        }
+        TagChipRow(
+            tags = availableTags.map { it.id to it.name },
+            selectedIds = selectedTagIds,
+            onToggle = { id -> onEvent(ItemFormEvent.OnTagToggled(id)) },
+        )
     }
 }
 
@@ -241,8 +233,14 @@ private fun DateAndRecurrenceSection(state: ItemFormUiState, onEvent: (ItemFormE
         }
 
         if (state.canPickRecurrence) {
-            RecurrenceDropdown(
-                recurrence = state.recurrence,
+            LabeledOptionDropdown(
+                options = listOf(
+                    Recurrence.None to stringResource(R.string.item_form_recurrence_none),
+                    Recurrence.Daily to stringResource(R.string.item_form_recurrence_daily),
+                    Recurrence.Weekly to stringResource(R.string.item_form_recurrence_weekly),
+                    Recurrence.Monthly to stringResource(R.string.item_form_recurrence_monthly),
+                ),
+                selected = state.recurrence,
                 onSelect = { onEvent(ItemFormEvent.OnRecurrenceChanged(it)) },
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -269,38 +267,6 @@ private fun DateAndRecurrenceSection(state: ItemFormUiState, onEvent: (ItemFormE
             },
         ) {
             DatePicker(state = datePickerState)
-        }
-    }
-}
-
-@Composable
-private fun RecurrenceDropdown(
-    recurrence: Recurrence,
-    onSelect: (Recurrence) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = listOf(
-        Recurrence.None to stringResource(R.string.item_form_recurrence_none),
-        Recurrence.Daily to stringResource(R.string.item_form_recurrence_daily),
-        Recurrence.Weekly to stringResource(R.string.item_form_recurrence_weekly),
-        Recurrence.Monthly to stringResource(R.string.item_form_recurrence_monthly),
-    )
-
-    Column(modifier = modifier) {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text(options.first { it.first == recurrence }.second)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { (value, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = {
-                        onSelect(value)
-                        expanded = false
-                    },
-                )
-            }
         }
     }
 }

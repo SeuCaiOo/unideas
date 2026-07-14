@@ -1,6 +1,5 @@
 package com.seucaio.unideas.feature.tags
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -8,35 +7,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.ui.components.ConditionalFab
 import com.seucaio.unideas.core.ui.components.DeleteConfirmationDialog
+import com.seucaio.unideas.core.ui.components.EntityListItemWithMenu
 import com.seucaio.unideas.core.ui.components.NameInputDialog
 import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
 import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.components.UnideasListItem
 import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
@@ -94,9 +87,7 @@ private fun TagsContent(
             UnideasTopBar(title = stringResource(R.string.tags_title), onNavigateBack = updatedOnNavigateBack)
         },
         floatingActionButton = {
-            // FAB only once we have a definitive answer (empty or with data) — not while
-            // loading or errored, since there's nothing to add a tag to yet.
-            if (uiState is TagsUiState.Success) {
+            ConditionalFab(visible = uiState is TagsUiState.Success) {
                 FloatingActionButton(onClick = { onEvent(TagsEvent.OnAddClicked) }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.tags_add))
                 }
@@ -143,33 +134,13 @@ private fun TagRow(
     tag: Tag,
     onEvent: (TagsEvent) -> Unit,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    UnideasListItem(
+    EntityListItemWithMenu(
         title = tag.name,
-        trailingContent = {
-            Box {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.tag_options))
-                }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.tag_rename_action)) },
-                        onClick = {
-                            menuExpanded = false
-                            onEvent(TagsEvent.OnRenameClicked(tag))
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.tag_delete_action)) },
-                        onClick = {
-                            menuExpanded = false
-                            onEvent(TagsEvent.OnDeleteClicked(tag))
-                        },
-                    )
-                }
-            }
-        },
+        optionsContentDescription = stringResource(R.string.tag_options),
+        renameLabel = stringResource(R.string.tag_rename_action),
+        deleteLabel = stringResource(R.string.tag_delete_action),
+        onRenameClick = { onEvent(TagsEvent.OnRenameClicked(tag)) },
+        onDeleteClick = { onEvent(TagsEvent.OnDeleteClicked(tag)) },
     )
 }
 

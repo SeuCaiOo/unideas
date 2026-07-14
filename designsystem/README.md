@@ -1,9 +1,9 @@
 # unideas-ds
 
-A portable, domain-agnostic Jetpack Compose design system extracted from the "Minhas Coisas"
-app. Every public component takes only primitives (`String`, `Boolean`, `Int`, `Dp`, `Color`,
-`ImageVector`, lambdas) or types defined in this module — never a type from the app that hosts
-it. That's what makes it safe to drop into a different app with a different domain model.
+A portable, domain-agnostic Jetpack Compose design system. Every public component takes only
+primitives (`String`, `Boolean`, `Int`, `Dp`, `Color`, `ImageVector`, lambdas) or types defined
+in this module — never a type from the app that hosts it. That's what makes it safe to drop into
+a different app with a different domain model.
 
 ## Requirements
 
@@ -66,7 +66,6 @@ To verify the module hasn't picked up an app-specific dependency before porting,
 repo root:
 
 ```
-grep -rn "com.tarefasenotas" designsystem/src/   # expect no output
 grep -rln "R\.[a-z]" designsystem/src/main/java/ # expect no output
 grep -rn "java.time" designsystem/src/           # expect no output
 ```

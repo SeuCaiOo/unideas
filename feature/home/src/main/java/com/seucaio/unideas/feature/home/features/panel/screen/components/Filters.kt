@@ -1,7 +1,6 @@
 package com.seucaio.unideas.feature.home.features.panel.screen.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
@@ -11,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.ui.components.SectionDropdown
-import com.seucaio.unideas.core.ui.components.TagChip
+import com.seucaio.unideas.core.ui.components.TagChipRow
 import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
@@ -43,16 +42,13 @@ fun Filters(
             )
         }
         if (tags.isNotEmpty()) {
-            FlowRow(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                tags.forEach { tag ->
-                    TagChip(
-                        label = tag.name,
-                        selected = tag.id in tagFilters,
-                        onClick = { onTagFilterToggle(tag.id) },
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
-                }
-            }
+            TagChipRow(
+                tags = tags.map { it.id to it.name },
+                selectedIds = tagFilters,
+                onToggle = onTagFilterToggle,
+                wrap = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            )
         }
     }
 }

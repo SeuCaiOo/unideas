@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -38,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.core.ui.components.DeleteConfirmationDialog
-import com.seucaio.unideas.core.ui.components.TagChip
+import com.seucaio.unideas.core.ui.components.TagChipRow
 import com.seucaio.unideas.core.ui.components.UnideasErrorContent
 import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
 import com.seucaio.unideas.core.ui.components.UnideasTopBar
@@ -191,11 +189,10 @@ private fun ItemDetailBody(state: ItemDetailUiState.Success, modifier: Modifier 
         if (item.tags.isNotEmpty()) {
             Column(modifier = Modifier.padding(top = 16.dp)) {
                 Text(text = stringResource(R.string.item_detail_tags_label))
-                LazyRow(modifier = Modifier.padding(top = 8.dp)) {
-                    items(item.tags, key = { it.id }) { tag ->
-                        TagChip(label = tag.name, modifier = Modifier.padding(end = 8.dp))
-                    }
-                }
+                TagChipRow(
+                    tags = item.tags.map { it.id to it.name },
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
         }
 

@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.ui.components.ConditionalFab
 import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
 import com.seucaio.unideas.core.ui.components.UnideasErrorContent
 import com.seucaio.unideas.core.ui.components.UnideasListItem
@@ -71,9 +72,7 @@ private fun ItemsListContent(
             UnideasTopBar(title = stringResource(R.string.items_list_title), onNavigateBack = updatedOnNavigateBack)
         },
         floatingActionButton = {
-            // FAB only once we have a definitive answer (empty or with data) — not while
-            // loading or errored, same convention as SectionsScreen/TagsScreen.
-            if (uiState is ItemsListUiState.Success) {
+            ConditionalFab(visible = uiState is ItemsListUiState.Success) {
                 FloatingActionButton(onClick = { onEvent(ItemsListEvent.OnAddClicked) }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.items_list_add))
                 }

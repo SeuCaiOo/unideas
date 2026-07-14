@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.ui.components.ConditionalFab
 import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
 import com.seucaio.unideas.core.ui.components.UnideasErrorContent
 import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
@@ -106,9 +107,7 @@ private fun HomeContent(
             )
         },
         floatingActionButton = {
-            // Same convention as Sections/Tags: FAB only once there's a definitive uiState —
-            // not while loading or errored.
-            if (uiState is HomeUiState.Success) {
+            ConditionalFab(visible = uiState is HomeUiState.Success) {
                 Box {
                     FloatingActionButton(onClick = { addMenuExpanded = true }) {
                         Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_action))

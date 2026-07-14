@@ -12,7 +12,7 @@ Princípios que regem tudo abaixo: **SOLID, KISS, YAGNI, DRY, Clean Code**. Na d
 - **Nunca strings PT-BR hardcoded no código** (nem em ViewModel, nem em Composable). Textos de UI vêm de `@StringRes`. Vale também pra padrões de formatação (`DateTimeFormatter.ofPattern`, etc.) — um literal tipo `'at'` embutido no padrão é hardcoded do mesmo jeito, mesmo não sendo uma chamada direta a `Text(...)` (bug real, corrigido em #17).
 - Cada módulo com `strings.xml` (#17) mantém seu par `values/` (EN, default) + `values-pt/` (PT-BR) com as mesmas chaves — qualifier `values-pt` (português genérico), não `values-pt-rBR`. `app_name` fica "Unideas" sem tradução nos dois.
 - Pacotes: `com.seucaio.unideas.<módulo>` (ex: `com.seucaio.unideas.feature.home`).
-- Componentes compartilhados de `:core:ui` usam prefixo `Unideas` (`UnideasTopBar`, `UnideasEmptyContent`, ...).
+- Componentes compartilhados de `:uds` portados do antigo `:core:ui` (em `uds/components/legacy/`) mantêm o prefixo `Unideas` (`UnideasTopBar`, `UnideasEmptyContent`, ...); componentes nativos do `:uds` usam `Uds`/nomes genéricos próprios.
 - Commits: [Conventional Commits](https://www.conventionalcommits.org/) em inglês (`feat: ...`, `fix: ...`). Issues: título em inglês, corpo em PT-BR.
 
 ---
@@ -26,7 +26,7 @@ feature →  consome SÓ o domain (use cases/interfaces), nunca o data
 app     →  faz o wiring (DI liga data→domain, registra ViewModels, navegação)
 ```
 
-- Um `:feature:*` **jamais** importa `:data`. Depende de `:domain` + `:core:ui`.
+- Um `:feature:*` **jamais** importa `:data`. Depende de `:domain` + `:uds`.
 - Modelos de domínio nunca vazam entities do Room pra UI. Mapper (`Entity ↔ Domain`) mora em `:data/mapper/` como extension function.
 
 ---
@@ -116,8 +116,8 @@ val uiState: StateFlow<UiState> = combine(_internalState, itemsFlow) { internal,
 
 - `koinViewModel()` pra injetar; `collectAsStateWithLifecycle()` pra consumir o `StateFlow`.
 - Consumir `UiAction` num `LaunchedEffect` que faz `collect`; resolver `@StringRes` com `LocalResources.current` (não `LocalContext` — não invalida em mudança de config). Callbacks de navegação e o effect capturado em `LaunchedEffect(Unit)` devem usar `rememberUpdatedState` pra evitar stale closure.
-- `when (uiState)` cobrindo `Loading`/`Error`/`Success`; usar `UnideasLoadingContent`/`UnideasErrorContent`/`UnideasEmptyContent` do `:core:ui` — **nunca reimplementar inline**. `Error` em feature: `stringResource(uiState.messageRes)`.
-- **Design System primeiro**: antes de criar UI inline, checar `:core:ui`. Componentes compartilhados (topbar, list item, dialogs, chips, indicador de urgência) moram lá.
+- `when (uiState)` cobrindo `Loading`/`Error`/`Success`; usar `UnideasLoadingContent`/`UnideasErrorContent`/`UnideasEmptyContent` do `:uds` (`uds/components/legacy/`) — **nunca reimplementar inline**. `Error` em feature: `stringResource(uiState.messageRes)`.
+- **Design System primeiro**: antes de criar UI inline, checar `:uds`. Componentes compartilhados (topbar, list item, dialogs, chips, indicador de urgência) moram lá.
 - **UI element state** (scroll, animação, `LazyListState`) fica em Plain State Holder na camada de UI (`@Stable class ...State` + `remember...State()`), **nunca** no ViewModel. **Exceção:** qual dialog de entidade (criar/renomear/excluir) está aberto, e sobre qual item, mora na ViewModel — não em `remember` local — permitindo que o `PreviewProvider` simule os cenários com dialog aberto, não só as três variantes de `UiState`. Implementado como um **`StateFlow` independente** (`dialogState`, separado de `uiState`, sem `combine` entre os dois) em vez de um campo dentro de `Success` — mais simples que combinar os dois num `UiState` só, e evita um tipo `Result` intermediário redundante. A Screen coleta os dois `StateFlow`s separadamente. Confirmado em `SectionsViewModel`/`TagsViewModel` (#42/#44).
 - **PreviewProvider** cobrindo todos os estados do `UiState` (`Loading`/`Success`/`Error`) **e** os estados de dialog de entidade quando aplicável (ver exceção acima).
 

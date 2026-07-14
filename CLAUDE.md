@@ -4,7 +4,7 @@ Guidance for Claude Code in this repository. Kept lean on purpose — this file 
 
 ## Project
 
-Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:ui`, `:core:backup`, `:uds`, `:feature:{home,items,sections,tags,settings}`.
+Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:backup`, `:uds`, `:feature:{home,items,sections,tags,settings}`.
 
 - minSdk 24 · targetSdk/compileSdk 37 · Kotlin 2.2.10 · AGP 9.2.1 · Compose BOM 2026.02.01 · JVM 11
 - Pre-MVP (`0.0.x` alpha). Dependency versions centralized in `gradle/libs.versions.toml` (`libs.*`) — add new deps there, not hardcoded.
@@ -36,10 +36,10 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 
 - `:domain` — models + use cases; pure Kotlin, no Compose.
 - `:data` — Room, DataStore, repository implementations.
-- `:core:common` — shared utilities (no Compose). `:core:ui` — shared theme/components (being replaced by `:uds`, see below — don't add new components here).
-- `:uds` — design system ported from another project (package `com.seucaio.unideas.ds`, #87), domain-agnostic (no `:domain`/`:core:common` dependency), Compose exposed via `api`. Replacing `:core:ui` gradually as screens migrate (#84/#82) — new shared UI work goes here, not `:core:ui`.
+- `:core:common` — shared utilities (no Compose).
+- `:uds` — design system ported from another project (package `com.seucaio.unideas.ds`, #87), domain-agnostic (no `:domain`/`:core:common` dependency), Compose exposed via `api`. Replaced `:core:ui` entirely (#82 redesign epic) — all shared UI work goes here now. `uds/components/legacy/` holds components ported verbatim from the old `:core:ui` (some carry a documented exception to the module's "no `R.*` references" portability rule, since `legacy/` is transitional and will eventually be folded into the rest of `:uds` or removed) — see the module's README.
 - `:core:backup` — Google Drive backup/restore, self-contained (scoped `GoogleSignIn` + Drive API, not Firebase Auth).
-- `:feature:*` — one per screen area; depend on `:domain` + `:core:ui` only, **never `:data`** (implementations Koin-injected from `:app`).
+- `:feature:*` — one per screen area; depend on `:domain` + `:uds` only, **never `:data`** (implementations Koin-injected from `:app`).
 
 ## Code quality
 
@@ -58,7 +58,7 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 
 ## Conventions & rules
 
-Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) live in **`docs/CONVENTIONS.md`**. The per-layer non-negotiables auto-load via **`.claude/rules/`**, scoped to `domain/**`, `data/**`, `feature/**` (+ `core/ui`, `core/backup`) — so they only enter context when you touch that layer.
+Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) live in **`docs/CONVENTIONS.md`**. The per-layer non-negotiables auto-load via **`.claude/rules/`**, scoped to `domain/**`, `data/**`, `feature/**` (+ `core/backup`) — so they only enter context when you touch that layer.
 
 ## More docs
 

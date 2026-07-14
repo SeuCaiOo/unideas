@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.ui.components
+package com.seucaio.unideas.ds.components.legacy
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +16,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.R
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.R
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 /**
  * Full-screen error state — title is generic and owned by this component; [messageRes]
@@ -25,6 +25,11 @@ import com.seucaio.unideas.core.ui.theme.UnideasTheme
  * TopBar already has one. No FAB either: an error/loading screen has no data yet, so
  * there's nothing else actionable on it besides retrying.
  * Uses the M3 `error`/`errorContainer` role — a separate semantic from due-date urgency colors.
+ *
+ * Exception to `:uds`'s "no `R.*` references" portability rule (see module README) —
+ * `legacy/` only exists to receive `:core:ui` components verbatim while `:core:ui` is
+ * being emptied out, and gets deleted once that's done, so it doesn't need to hold to
+ * the portable-module contract the rest of `:uds` does.
  */
 @Composable
 fun UnideasErrorContent(
@@ -59,7 +64,7 @@ fun UnideasErrorContent(
 @PreviewLightDark
 @Composable
 private fun UnideasErrorContentPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             UnideasErrorContent(messageRes = android.R.string.ok, onRetry = {})
         }

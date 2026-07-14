@@ -26,7 +26,7 @@ Capturas de tela do APK de **release** rodando em emulador:
 <details>
 <summary><h2>🏛️ Arquitetura e Stack</h2></summary>
 
-Multi-módulo (Clean Architecture + MVI, sem KMP): `:app` + `:domain`, `:data`, `:core:common`, `:core:ui`, `:core:backup`, `:feature:{home,items,sections,tags,settings}`. Detalhes completos em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); navegação em [`docs/FLOW.md`](docs/FLOW.md).
+Multi-módulo (Clean Architecture + MVI, sem KMP): `:app` + `:domain`, `:data`, `:core:common`, `:uds`, `:core:backup`, `:feature:{home,items,sections,tags,settings}`. Detalhes completos em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); navegação em [`docs/FLOW.md`](docs/FLOW.md).
 
 | Camada | Tecnologia |
 |---|---|

@@ -18,11 +18,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesEvent
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesUiAction
@@ -119,7 +119,7 @@ private fun AllPrioritiesBody(
 private fun AllPrioritiesScreenPreview(
     @PreviewParameter(AllPrioritiesPreviewProvider::class) uiState: AllPrioritiesUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         AllPrioritiesContent(
             uiState = uiState,
             onEvent = {},

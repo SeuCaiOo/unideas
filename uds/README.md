@@ -50,6 +50,14 @@ mapping its domain type to that `Ui` class.
 - No navigation, lifecycle, or Room/database dependencies.
 - No imports from the app that hosts this module.
 
+**Exception: `components/legacy/`.** This subfolder holds components ported verbatim from
+`unideas`'s old `:core:ui` module (deleted once every consumer moved over) — some of them
+(`DeleteConfirmationDialog`, `UnideasEmptyContent`, `UnideasErrorContent`) still take `@StringRes`
+params or reference this module's own `R.string.*`, breaking the "no `R.*`" rule above. That's
+accepted on purpose: `legacy/` is transitional, not part of the portable surface, and either gets
+folded into the rest of `:uds` (converted to plain `String` params) or deleted outright once it's
+no longer needed — don't hold it to the same bar as the rest of the module.
+
 Every component file that plausibly needs one has a `@Preview @Composable private fun ...`
 wrapped in `UdsTheme` with hard-coded sample data — treat these previews as the living catalog.
 

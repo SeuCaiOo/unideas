@@ -24,8 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.SeedScope
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +143,7 @@ private val SeedScope.descriptionRes: Int
 @PreviewLightDark
 @Composable
 private fun SeedScopeSheetContentPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             SeedScopeSheetContent(
                 selectedScope = SeedScope.FULL,

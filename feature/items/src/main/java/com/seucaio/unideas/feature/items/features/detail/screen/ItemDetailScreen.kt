@@ -35,18 +35,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.util.Constants
-import com.seucaio.unideas.core.ui.components.DeleteConfirmationDialog
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.UrgencyLevel
+import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.TagChipRow
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.components.legacy.UrgencyIndicator
 import com.seucaio.unideas.ds.components.legacy.UrgencyIndicatorLevel
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailDialogState
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
@@ -259,7 +259,7 @@ private fun recurrenceLabel(item: Item): String = when (item.recurrence) {
 private fun ItemDetailScreenPreview(
     @PreviewParameter(ItemDetailPreviewProvider::class) uiState: ItemDetailUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         ItemDetailContent(
             uiState = uiState,
             dialogState = ItemDetailDialogState.None,

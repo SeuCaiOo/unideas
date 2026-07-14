@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.ui.components
+package com.seucaio.unideas.ds.components.legacy
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 /** Single-text-field dialog for creating or renaming an entity — reused across features. */
 @Composable
@@ -51,7 +51,7 @@ fun NameInputDialog(
 @PreviewLightDark
 @Composable
 private fun NameInputDialogPreview() {
-    UnideasTheme {
+    UdsTheme {
         NameInputDialog(
             title = "New section",
             onConfirm = {},

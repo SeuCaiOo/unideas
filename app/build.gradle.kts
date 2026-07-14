@@ -171,8 +171,8 @@ dependencies {
     kover(project(":feature:home"))
     kover(project(":core:backup"))
 
-    implementation(project(":core:ui"))
     implementation(project(":core:backup"))
+    implementation(project(":core:common"))
     implementation(project(":uds"))
     implementation(project(":domain"))
     implementation(project(":data"))

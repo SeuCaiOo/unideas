@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.ui.components
+package com.seucaio.unideas.ds.components.legacy
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
@@ -14,8 +14,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
+/**
+ * Exception to `:uds`'s "no `R.*` references" portability rule (see module README) —
+ * `legacy/` only exists to receive `:core:ui` components verbatim while `:core:ui` is
+ * being emptied out, and gets deleted once that's done, so it doesn't need to hold to
+ * the portable-module contract the rest of `:uds` does.
+ */
 @Composable
 fun UnideasEmptyContent(
     @StringRes messageRes: Int,
@@ -34,7 +40,7 @@ fun UnideasEmptyContent(
 @PreviewLightDark
 @Composable
 private fun UnideasEmptyContentPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             UnideasEmptyContent(messageRes = android.R.string.ok)
         }

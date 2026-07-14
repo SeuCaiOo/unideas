@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -73,7 +73,7 @@ private val previewItems = listOf(
 @PreviewLightDark
 @Composable
 private fun PriorityPanelPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             PriorityPanel(
                 items = previewItems,

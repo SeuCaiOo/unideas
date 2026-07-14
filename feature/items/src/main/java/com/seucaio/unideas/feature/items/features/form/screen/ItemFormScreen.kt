@@ -43,7 +43,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.toEpochMilliUtc
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Tag
@@ -51,6 +50,7 @@ import com.seucaio.unideas.ds.components.legacy.LabeledOptionDropdown
 import com.seucaio.unideas.ds.components.legacy.SectionDropdown
 import com.seucaio.unideas.ds.components.legacy.TagChipRow
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
@@ -276,7 +276,7 @@ private fun DateAndRecurrenceSection(state: ItemFormUiState, onEvent: (ItemFormE
 private fun ItemFormScreenPreview(
     @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         ItemFormContent(
             isEditing = previewState.isEditing,
             uiState = previewState.uiState,

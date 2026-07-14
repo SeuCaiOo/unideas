@@ -19,15 +19,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
+import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasListItem
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListEvent
 import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListUiAction
@@ -117,7 +117,7 @@ private fun ItemRow(item: Item, onEvent: (ItemsListEvent) -> Unit) {
 private fun ItemsListScreenPreview(
     @PreviewParameter(ItemsListPreviewProvider::class) uiState: ItemsListUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         ItemsListContent(uiState = uiState, onEvent = {}, onNavigateBack = {})
     }
 }

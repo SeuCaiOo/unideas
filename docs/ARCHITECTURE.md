@@ -27,8 +27,7 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :domain              — models, enums, repository interfaces, use cases. Kotlin puro, sem Android/Room/Compose/Koin
 :data                — Room (entities, DAOs, database, migrations, converters), mappers, impl de repositório, DataModule
 :core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
-:core:ui             — UnideasTheme + componentes Compose compartilhados. Depende de :core:common via `api`. Em substituição gradual por :uds (#84/#82) — não adicionar componentes novos aqui
-:uds                 — novo design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Vai substituir :core:ui aos poucos conforme as telas forem migradas (#84); expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose
+:uds                 — design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Substituiu :core:ui por completo (#82) — todo trabalho novo de UI compartilhada vai aqui; expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose. `uds/components/legacy/` guarda componentes portados ao pé da letra do antigo :core:ui (alguns com exceção documentada à regra "sem R.*" do módulo, por serem transitórios)
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
 :feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
 :feature:items       — Criar/Editar Item + Detalhe do Item
@@ -41,11 +40,10 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 
 ```
 :core:common  ←  :data
-:core:common  ←  :core:ui (api)  ←  :feature:*
-:uds  ←  :app  (ainda não usado por nenhum :feature:*; passa a ser consumido conforme #84 migra as telas)
+:uds  ←  :app, :feature:*, :core:backup  (design system compartilhado; expõe Compose via `api`)
 :domain       ←  :data
 :domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
-:domain, :core:common, :core:ui, :data  ←  :core:backup
+:domain, :core:common, :uds, :data  ←  :core:backup
 :feature:settings  →  :core:backup
 tudo  ←  :app  (faz o wiring de DI e navegação)
 ```
@@ -127,22 +125,27 @@ core/common/
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 
-### `:core:ui` — `com.seucaio.unideas.core.ui`
+### `:uds` — `com.seucaio.unideas.ds`
 
 ```
-core/ui/
-├── theme/            — UnideasTheme, Color, Type (Material 3, light + dark, acento teal)
-└── components/       — composables compartilhados entre features:
+uds/
+├── theme/                 — UdsTheme, Color, Type, Dimens (Material 3, light + dark, acento teal)
+├── components/            — organizado por papel (buttons/, chips/, inputs/, lists/, navigation/,
+│                            panels/, feedback/), catálogo completo no README do módulo
+└── components/legacy/     — componentes portados ao pé da letra do antigo :core:ui, mesmos nomes
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
     ├── UnideasErrorContent.kt
     ├── UnideasEmptyContent.kt          — estado vazio com texto orientador
-    ├── UnideasListItem.kt
-    ├── DeleteConfirmationDialog.kt
+    ├── UnideasListItem.kt / EntityListItemWithMenu.kt
+    ├── DeleteConfirmationDialog.kt / NameInputDialog.kt
     ├── UrgencyIndicator.kt             — cor de prazo (vermelho/âmbar) — uso EXCLUSIVO de prazo
-    ├── TagChip.kt / SectionDropdown.kt
+    ├── TagChip.kt / TagChipRow.kt / SectionDropdown.kt / LabeledOptionDropdown.kt
+    ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```
+
+Ver `uds/README.md` para as regras de portabilidade do módulo e a exceção documentada de `legacy/` (pasta transitória, com componentes que ainda usam `@StringRes`/`R.*` — algo que o resto do `:uds` proíbe).
 
 ### `:feature:*` — `com.seucaio.unideas.feature.<nome>`
 

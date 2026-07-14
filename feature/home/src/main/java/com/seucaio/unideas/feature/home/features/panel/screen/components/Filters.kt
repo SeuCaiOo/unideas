@@ -9,11 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.legacy.SectionDropdown
 import com.seucaio.unideas.ds.components.legacy.TagChipRow
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 
 /**
@@ -59,7 +59,7 @@ private val previewTags = listOf(Tag(id = 1L, name = "urgente"), Tag(id = 2L, na
 @PreviewLightDark
 @Composable
 private fun FiltersPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             Filters(
                 sections = previewSections,

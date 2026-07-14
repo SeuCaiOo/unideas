@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
 import com.seucaio.unideas.feature.items.navigation.ItemsRoute
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            UnideasTheme {
+            UdsTheme {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,

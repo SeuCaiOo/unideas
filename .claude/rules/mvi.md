@@ -1,7 +1,7 @@
 ---
 paths:
   - "feature/**/*.kt"
-  - "core/ui/**/*.kt"
+  - "uds/**/*.kt"
   - "core/backup/**/*.kt"
 ---
 # MVI / presentation rules
@@ -14,8 +14,8 @@ Each screen: `UiState` (sealed: Loading/Success/Error), `UiAction` (one-shot via
 - No manual joins in the ViewModel — data arrives ready from the use case.
 - No `.value = ...` (use `.update { it.copy(...) }`); no `(uiState.value as? Success)` cast; no `Context`/`AndroidViewModel` (encapsulate in a repository).
 - No hardcoded UI strings — `@StringRes` for snackbars, `e.message.orEmpty()` for errors.
-- `:feature:*` depends only on `:domain` + `:core:ui`, never `:data`. **Exception:** `:core:backup` does depend on `:data` — it manipulates the Room database file directly (close/checkpoint/path) for backup/restore, not just via a repository interface.
-- Reuse `:core:ui` components (TopBar/Loading/Error/Empty/ListItem/dialogs) — don't reimplement inline. Red/amber only for due-date urgency.
+- `:feature:*` depends only on `:domain` + `:uds`, never `:data`. **Exception:** `:core:backup` does depend on `:data` — it manipulates the Room database file directly (close/checkpoint/path) for backup/restore, not just via a repository interface.
+- Reuse `:uds` components (TopBar/Loading/Error/Empty/ListItem/dialogs, most under `uds/components/legacy/` for now) — don't reimplement inline. Red/amber only for due-date urgency.
 - ViewModels are tested (MockK + Turbine) and gated by `koverVerify` since #41 — each `:feature:*` with a tested ViewModel needs the `kover` plugin applied and added to `app/build.gradle.kts`'s aggregation. Composables/Screens stay excluded (no required tests for them yet).
 - ViewModel tests: mock fields via `@MockK` + `MockKAnnotations.init(this)` (not inline `= mockk()`). Test names: `` `when <condition/event> should <expected behavior>` `` (no comma, no "given") — since #43.
 - Screen: `koinViewModel()` + `collectAsStateWithLifecycle()`; resolve `@StringRes` via `LocalResources.current`; wrap nav callbacks in `rememberUpdatedState`.

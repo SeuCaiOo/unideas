@@ -24,16 +24,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.ui.components.DeleteConfirmationDialog
-import com.seucaio.unideas.core.ui.components.NameInputDialog
-import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
+import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
+import com.seucaio.unideas.ds.components.legacy.NameInputDialog
+import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.tags.viewmodel.TagsDialogState
 import com.seucaio.unideas.feature.tags.viewmodel.TagsEvent
 import com.seucaio.unideas.feature.tags.viewmodel.TagsUiAction
@@ -181,7 +181,7 @@ private fun TagsDialogs(
 private fun TagsScreenPreview(
     @PreviewParameter(TagsPreviewProvider::class) previewState: TagsPreviewState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         TagsContent(
             uiState = previewState.uiState,
             dialogState = previewState.dialogState,

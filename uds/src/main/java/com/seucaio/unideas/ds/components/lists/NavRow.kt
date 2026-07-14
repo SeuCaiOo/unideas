@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -51,7 +51,7 @@ fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modi
         Icon(
             Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = LocalDsExtendedColors.current.textTertiary,
+            tint = LocalUdsExtendedColors.current.textTertiary,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -60,7 +60,7 @@ fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modi
 @PreviewLightDark
 @Composable
 private fun NavRowPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             NavRow(icon = Icons.Outlined.Label, label = "Tags", onClick = {})
         }

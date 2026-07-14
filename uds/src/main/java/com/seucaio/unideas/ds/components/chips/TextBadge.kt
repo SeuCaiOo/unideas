@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun TextBadge(text: String, background: Color, content: Color, modifier: Modifier = Modifier) {
@@ -31,7 +31,7 @@ fun TextBadge(text: String, background: Color, content: Color, modifier: Modifie
 @PreviewLightDark
 @Composable
 private fun TextBadgePreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             TextBadge(
                 text = "TASK",

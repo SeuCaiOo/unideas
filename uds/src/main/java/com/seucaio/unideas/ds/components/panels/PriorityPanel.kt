@@ -31,9 +31,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 data class PriorityRowUi(
     val id: Long,
@@ -58,8 +58,8 @@ fun PriorityPanel(
             .padding(horizontal = 16.dp)
             .padding(top = 6.dp, bottom = 14.dp)
             .clip(RoundedCornerShape(Radii.Panel))
-            .background(LocalDsExtendedColors.current.panelBackground)
-            .border(1.dp, LocalDsExtendedColors.current.panelBorder, RoundedCornerShape(Radii.Panel))
+            .background(LocalUdsExtendedColors.current.panelBackground)
+            .border(1.dp, LocalUdsExtendedColors.current.panelBorder, RoundedCornerShape(Radii.Panel))
             .padding(top = 14.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -119,7 +119,7 @@ fun PriorityPanel(
 @PreviewLightDark
 @Composable
 private fun PriorityPanelPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             PriorityPanel(
                 title = "Priorities",
@@ -135,7 +135,7 @@ private fun PriorityPanelPreview() {
                         id = 2L,
                         title = "Morning stretch",
                         badgeLabel = "due today",
-                        badgeColor = LocalDsExtendedColors.current.warning
+                        badgeColor = LocalUdsExtendedColors.current.warning
                     )
                 ),
                 footerLabel = "view all (6)",

@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun SegmentedControl(
@@ -75,7 +75,7 @@ private fun SegmentButton(label: String, selected: Boolean, onClick: () -> Unit,
 @PreviewLightDark
 @Composable
 private fun SegmentedControlPreview() {
-    DsTheme {
+    UdsTheme {
         var selected by remember { mutableIntStateOf(0) }
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             SegmentedControl(options = listOf("Task", "Note"), selectedIndex = selected, onSelect = { selected = it })

@@ -21,9 +21,9 @@ a different app with a different domain model.
 | `Color.kt` | Semantic color tokens (`Background`, `Surface1/2/3`, `TextPrimary/Secondary/Tertiary`, `Accent`, `Danger`, `Warning`, etc.) — dark theme only by design |
 | `Dimens.kt` | `Radii` (corner radii per component), `Spacing`, touch-target constants |
 | `Type.kt` | `AppType` text style catalog + `AppTypography` (Material3 `Typography`) |
-| `Theme.kt` | `DsTheme { content }` — wraps `MaterialTheme` with the tokens above |
+| `Theme.kt` | `UdsTheme { content }` — wraps `MaterialTheme` with the tokens above |
 
-Every screen that uses this design system must be wrapped in `DsTheme { ... }`.
+Every screen that uses this design system must be wrapped in `UdsTheme { ... }`.
 
 ## Components (`components/`)
 
@@ -51,7 +51,7 @@ mapping its domain type to that `Ui` class.
 - No imports from the app that hosts this module.
 
 Every component file that plausibly needs one has a `@Preview @Composable private fun ...`
-wrapped in `DsTheme` with hard-coded sample data — treat these previews as the living catalog.
+wrapped in `UdsTheme` with hard-coded sample data — treat these previews as the living catalog.
 
 ## Porting to another project
 

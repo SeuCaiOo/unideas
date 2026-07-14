@@ -7,7 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
-private val DsDarkColorScheme = darkColorScheme(
+private val UdsDarkColorScheme = darkColorScheme(
     background = BackgroundDark,
     surface = Surface1Dark,
     surfaceVariant = Surface2Dark,
@@ -27,7 +27,7 @@ private val DsDarkColorScheme = darkColorScheme(
     onError = OnAccentDark,
 )
 
-private val DsLightColorScheme = lightColorScheme(
+private val UdsLightColorScheme = lightColorScheme(
     background = BackgroundLight,
     surface = Surface1Light,
     surfaceVariant = Surface2Light,
@@ -48,12 +48,12 @@ private val DsLightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun DsTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+fun UdsTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     CompositionLocalProvider(
-        LocalDsExtendedColors provides if (darkTheme) DsExtendedColorsDark else DsExtendedColorsLight,
+        LocalUdsExtendedColors provides if (darkTheme) UdsExtendedColorsDark else UdsExtendedColorsLight,
     ) {
         MaterialTheme(
-            colorScheme = if (darkTheme) DsDarkColorScheme else DsLightColorScheme,
+            colorScheme = if (darkTheme) UdsDarkColorScheme else UdsLightColorScheme,
             typography = AppTypography,
             content = content,
         )

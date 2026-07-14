@@ -28,9 +28,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 data class ListItemUi(
     val id: Long,
@@ -64,7 +64,7 @@ fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, 
                     .background(if (ui.checked) MaterialTheme.colorScheme.primary else Color.Transparent)
                     .border(
                         if (ui.checked) 0.dp else 2.dp,
-                        LocalDsExtendedColors.current.textTertiary,
+                        LocalUdsExtendedColors.current.textTertiary,
                         RoundedCornerShape(Radii.Checkbox)
                     )
                     .clickable(onClick = onToggleCheck),
@@ -85,7 +85,7 @@ fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, 
                 ui.title,
                 style = AppType.ListItemTitle,
                 color = if (ui.checked) {
-                    LocalDsExtendedColors.current.textTertiary
+                    LocalUdsExtendedColors.current.textTertiary
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
@@ -99,13 +99,13 @@ fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, 
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!ui.meta.isNullOrEmpty()) {
-                    Text(ui.meta, style = AppType.Metadata, color = LocalDsExtendedColors.current.textTertiary)
+                    Text(ui.meta, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary)
                 }
                 if (ui.showRepeatIcon) {
                     Icon(
                         Icons.Outlined.Repeat,
                         contentDescription = null,
-                        tint = LocalDsExtendedColors.current.textTertiary,
+                        tint = LocalUdsExtendedColors.current.textTertiary,
                         modifier = Modifier.size(14.dp)
                     )
                 }
@@ -120,7 +120,7 @@ fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, 
 @PreviewLightDark
 @Composable
 private fun ListItemRowPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             ListItemRow(
                 ui = ListItemUi(

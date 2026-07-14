@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 /** App-bar style icon button; Material ripple stands in for the prototype's hover fill. */
 @Composable
@@ -42,7 +42,7 @@ fun AppIconButton(
 @PreviewLightDark
 @Composable
 private fun AppIconButtonPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AppIconButton(icon = Icons.Outlined.Settings, contentDescription = "Settings", onClick = {})
         }

@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun ActionRow(icon: ImageVector, iconTint: Color, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -42,7 +42,7 @@ fun ActionRow(icon: ImageVector, iconTint: Color, label: String, onClick: () -> 
 @PreviewLightDark
 @Composable
 private fun ActionRowPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             ActionRow(
                 icon = Icons.Outlined.Backup,

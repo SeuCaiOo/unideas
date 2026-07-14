@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun RemovableChip(
@@ -51,7 +51,7 @@ fun RemovableChip(
 @PreviewLightDark
 @Composable
 private fun RemovableChipPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             RemovableChip(label = "android", onRemove = {}, removeContentDescription = "Remove")
         }

@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun SelectableChip(
@@ -51,7 +51,7 @@ fun SelectableChip(
 @PreviewLightDark
 @Composable
 private fun SelectableChipPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SelectableChip(label = "urgent", selected = true, onClick = {})

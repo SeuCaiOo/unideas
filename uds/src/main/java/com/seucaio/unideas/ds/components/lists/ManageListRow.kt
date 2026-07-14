@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.components.buttons.AppIconButton
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun ManageListRow(
@@ -44,12 +44,12 @@ fun ManageListRow(
         Icon(
             icon,
             contentDescription = null,
-            tint = LocalDsExtendedColors.current.textTertiary,
+            tint = LocalUdsExtendedColors.current.textTertiary,
             modifier = Modifier.size(20.dp)
         )
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, style = AppType.Metadata, color = LocalDsExtendedColors.current.textTertiary)
+            Text(subtitle, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary)
         }
         trailing()
     }
@@ -58,7 +58,7 @@ fun ManageListRow(
 @PreviewLightDark
 @Composable
 private fun ManageListRowPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             ManageListRow(icon = Icons.Outlined.Folder, title = "Personal", subtitle = "5 items") {
                 AppIconButton(

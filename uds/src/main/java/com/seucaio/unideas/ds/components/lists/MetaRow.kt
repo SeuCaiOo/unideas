@@ -22,8 +22,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun MetaRow(
@@ -40,13 +40,13 @@ fun MetaRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(label, style = AppType.Metadata, color = LocalDsExtendedColors.current.textTertiary, fontSize = 13.sp)
+            Text(label, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary, fontSize = 13.sp)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (icon != null) {
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = LocalDsExtendedColors.current.textTertiary,
+                        tint = LocalUdsExtendedColors.current.textTertiary,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -60,7 +60,7 @@ fun MetaRow(
 @PreviewLightDark
 @Composable
 private fun MetaRowPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             Column {
                 MetaRow(label = "Section", value = "Home")

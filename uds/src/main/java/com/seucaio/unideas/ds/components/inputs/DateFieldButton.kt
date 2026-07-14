@@ -22,9 +22,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun DateFieldButton(
@@ -50,7 +50,7 @@ fun DateFieldButton(
             color = if (valueLabel != null) {
                 MaterialTheme.colorScheme.onSurface
             } else {
-                LocalDsExtendedColors.current.textTertiary
+                LocalUdsExtendedColors.current.textTertiary
             },
             fontSize = 15.sp
         )
@@ -58,7 +58,7 @@ fun DateFieldButton(
             Icon(
                 Icons.Outlined.Close,
                 contentDescription = clearContentDescription,
-                tint = LocalDsExtendedColors.current.textTertiary,
+                tint = LocalUdsExtendedColors.current.textTertiary,
                 modifier = Modifier.size(18.dp).clickable(onClick = onClear)
             )
         }
@@ -68,7 +68,7 @@ fun DateFieldButton(
 @PreviewLightDark
 @Composable
 private fun DateFieldButtonPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             DateFieldButton(valueLabel = "Jul 14, 2026", onClick = {}, onClear = {}, clearContentDescription = "Clear")
         }

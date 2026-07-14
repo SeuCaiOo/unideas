@@ -6,10 +6,10 @@ import androidx.compose.ui.graphics.Color
 /**
  * Tokens with no direct Material 3 [androidx.compose.material3.ColorScheme] slot — everything
  * else (background/surface/text/accent/error/outline) maps onto standard M3 roles in
- * [DsTheme] instead. Read via [LocalDsExtendedColors] so nested composables resolve the same
- * dark/light choice [DsTheme] already made, instead of re-deriving it themselves.
+ * [UdsTheme] instead. Read via [LocalUdsExtendedColors] so nested composables resolve the same
+ * dark/light choice [UdsTheme] already made, instead of re-deriving it themselves.
  */
-data class DsExtendedColors(
+data class UdsExtendedColors(
     val textTertiary: Color,
     val warning: Color,
     val panelBackground: Color,
@@ -18,7 +18,7 @@ data class DsExtendedColors(
     val snackbarContent: Color,
 )
 
-val DsExtendedColorsDark = DsExtendedColors(
+val UdsExtendedColorsDark = UdsExtendedColors(
     textTertiary = TextTertiaryDark,
     warning = WarningDark,
     panelBackground = PanelBackgroundDark,
@@ -27,7 +27,7 @@ val DsExtendedColorsDark = DsExtendedColors(
     snackbarContent = SnackbarContentDark,
 )
 
-val DsExtendedColorsLight = DsExtendedColors(
+val UdsExtendedColorsLight = UdsExtendedColors(
     textTertiary = TextTertiaryLight,
     warning = WarningLight,
     panelBackground = PanelBackgroundLight,
@@ -36,4 +36,4 @@ val DsExtendedColorsLight = DsExtendedColors(
     snackbarContent = SnackbarContentLight,
 )
 
-val LocalDsExtendedColors = staticCompositionLocalOf { DsExtendedColorsDark }
+val LocalUdsExtendedColors = staticCompositionLocalOf { UdsExtendedColorsDark }

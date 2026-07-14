@@ -14,15 +14,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun AppSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
     SnackbarHost(hostState = hostState, modifier = modifier) { data ->
         Snackbar(
-            containerColor = LocalDsExtendedColors.current.snackbarBackground,
-            contentColor = LocalDsExtendedColors.current.snackbarContent,
+            containerColor = LocalUdsExtendedColors.current.snackbarBackground,
+            contentColor = LocalUdsExtendedColors.current.snackbarContent,
             shape = RoundedCornerShape(10.dp),
             snackbarData = data
         )
@@ -38,11 +38,11 @@ private class PreviewSnackbarVisuals(override val message: String) : SnackbarVis
 @PreviewLightDark
 @Composable
 private fun AppSnackbarHostPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             Snackbar(
-                containerColor = LocalDsExtendedColors.current.snackbarBackground,
-                contentColor = LocalDsExtendedColors.current.snackbarContent,
+                containerColor = LocalUdsExtendedColors.current.snackbarBackground,
+                contentColor = LocalUdsExtendedColors.current.snackbarContent,
                 shape = RoundedCornerShape(10.dp),
                 snackbarData = object : SnackbarData {
                     override val visuals = PreviewSnackbarVisuals("Item deleted")

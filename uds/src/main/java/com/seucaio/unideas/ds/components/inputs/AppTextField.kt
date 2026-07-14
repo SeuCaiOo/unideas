@@ -23,9 +23,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun AppTextField(
@@ -46,7 +46,7 @@ fun AppTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = LocalDsExtendedColors.current.textTertiary) },
+        placeholder = { Text(placeholder, color = LocalUdsExtendedColors.current.textTertiary) },
         singleLine = singleLine,
         shape = RoundedCornerShape(Radii.Field),
         colors = OutlinedTextFieldDefaults.colors(
@@ -79,7 +79,7 @@ fun AppTextField(
 @PreviewLightDark
 @Composable
 private fun AppTextFieldPreview() {
-    DsTheme {
+    UdsTheme {
         var text by remember { mutableStateOf("") }
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AppTextField(value = text, onValueChange = { text = it }, placeholder = "e.g. Pay electricity bill")

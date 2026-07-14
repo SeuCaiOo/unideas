@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun AddEntryRow(
@@ -67,7 +67,7 @@ fun AddEntryRow(
 @PreviewLightDark
 @Composable
 private fun AddEntryRowPreview() {
-    DsTheme {
+    UdsTheme {
         var text by remember { mutableStateOf("") }
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AddEntryRow(value = text, onValueChange = {

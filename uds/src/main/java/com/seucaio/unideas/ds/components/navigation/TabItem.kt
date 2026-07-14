@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -30,7 +30,7 @@ fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
         Text(
             label,
             style = AppType.TabLabel,
-            color = if (selected) MaterialTheme.colorScheme.primary else LocalDsExtendedColors.current.textTertiary
+            color = if (selected) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary
         )
         Spacer(Modifier.height(8.dp))
         Box(
@@ -45,7 +45,7 @@ fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
 @PreviewLightDark
 @Composable
 private fun TabItemPreview() {
-    DsTheme {
+    UdsTheme {
         Row(Modifier.background(MaterialTheme.colorScheme.background).fillMaxWidth().padding(16.dp)) {
             TabItem(label = "Tasks", selected = true, onClick = {}, modifier = Modifier.weight(1f))
             TabItem(label = "Notes", selected = false, onClick = {}, modifier = Modifier.weight(1f))

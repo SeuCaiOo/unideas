@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun DueBadge(label: String, color: Color, modifier: Modifier = Modifier) {
@@ -34,7 +34,7 @@ fun DueBadge(label: String, color: Color, modifier: Modifier = Modifier) {
 @PreviewLightDark
 @Composable
 private fun DueBadgePreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             DueBadge(label = "3 days overdue", color = MaterialTheme.colorScheme.error)
         }

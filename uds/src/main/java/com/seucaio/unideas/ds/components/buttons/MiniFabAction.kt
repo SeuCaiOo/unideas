@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.DsTheme
 import com.seucaio.unideas.ds.theme.Radii
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun MiniFabAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -54,7 +54,7 @@ fun MiniFabAction(icon: ImageVector, label: String, onClick: () -> Unit, modifie
 @PreviewLightDark
 @Composable
 private fun MiniFabActionPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             MiniFabAction(icon = Icons.Outlined.TaskAlt, label = "New task", onClick = {})
         }

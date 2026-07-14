@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun FormField(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
@@ -20,7 +20,7 @@ fun FormField(label: String, modifier: Modifier = Modifier, content: @Composable
         Text(
             label.uppercase(),
             style = AppType.FieldLabel,
-            color = LocalDsExtendedColors.current.textTertiary,
+            color = LocalUdsExtendedColors.current.textTertiary,
             modifier = Modifier.padding(bottom = 7.dp)
         )
         content()
@@ -30,7 +30,7 @@ fun FormField(label: String, modifier: Modifier = Modifier, content: @Composable
 @PreviewLightDark
 @Composable
 private fun FormFieldPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             FormField(label = "Title") { Text("any content goes here", color = MaterialTheme.colorScheme.onSurface) }
         }

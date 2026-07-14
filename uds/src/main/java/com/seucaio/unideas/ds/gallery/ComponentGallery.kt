@@ -60,8 +60,8 @@ import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.components.navigation.TabItem
 import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 /**
  * One screen, every component. Not part of the public API surface consumed by an app -
@@ -123,7 +123,7 @@ fun ComponentGallery() {
         Labeled("DueBadge") {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 DueBadge(label = "3 days overdue", color = MaterialTheme.colorScheme.error)
-                DueBadge(label = "due today", color = LocalDsExtendedColors.current.warning)
+                DueBadge(label = "due today", color = LocalUdsExtendedColors.current.warning)
             }
         }
 
@@ -247,7 +247,7 @@ fun ComponentGallery() {
                         id = 2L,
                         title = "Morning stretch",
                         badgeLabel = "due today",
-                        badgeColor = LocalDsExtendedColors.current.warning
+                        badgeColor = LocalUdsExtendedColors.current.warning
                     )
                 ),
                 footerLabel = "view all (6)",
@@ -299,5 +299,5 @@ private fun Labeled(name: String, content: @Composable () -> Unit) {
 @PreviewLightDark
 @Composable
 private fun ComponentGalleryPreview() {
-    DsTheme { ComponentGallery() }
+    UdsTheme { ComponentGallery() }
 }

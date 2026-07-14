@@ -10,15 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
+import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun GroupHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text.uppercase(),
         style = AppType.FieldLabel,
-        color = LocalDsExtendedColors.current.textTertiary,
+        color = LocalUdsExtendedColors.current.textTertiary,
         modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp)
     )
 }
@@ -26,7 +26,7 @@ fun GroupHeader(text: String, modifier: Modifier = Modifier) {
 @PreviewLightDark
 @Composable
 private fun GroupHeaderPreview() {
-    DsTheme {
+    UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             GroupHeader("Account")
         }

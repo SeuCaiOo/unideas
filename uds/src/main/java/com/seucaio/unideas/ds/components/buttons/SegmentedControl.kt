@@ -61,7 +61,11 @@ private fun SegmentButton(label: String, selected: Boolean, onClick: () -> Unit,
     ) {
         Text(
             label,
-            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (selected) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp
         )

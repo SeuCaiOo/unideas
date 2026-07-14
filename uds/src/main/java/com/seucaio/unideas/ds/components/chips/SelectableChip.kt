@@ -30,7 +30,11 @@ fun SelectableChip(
     val shape = RoundedCornerShape(Radii.Chip)
     val background = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val border = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.outline
-    val content = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    val content = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Text(
         text = label,
         style = AppType.ChipLabel,

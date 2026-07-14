@@ -47,7 +47,11 @@ fun DateFieldButton(
     ) {
         Text(
             valueLabel ?: "",
-            color = if (valueLabel != null) MaterialTheme.colorScheme.onSurface else LocalDsExtendedColors.current.textTertiary,
+            color = if (valueLabel != null) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                LocalDsExtendedColors.current.textTertiary
+            },
             fontSize = 15.sp
         )
         if (valueLabel != null) {

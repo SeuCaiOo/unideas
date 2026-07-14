@@ -84,7 +84,11 @@ fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, 
             Text(
                 ui.title,
                 style = AppType.ListItemTitle,
-                color = if (ui.checked) LocalDsExtendedColors.current.textTertiary else MaterialTheme.colorScheme.onSurface,
+                color = if (ui.checked) {
+                    LocalDsExtendedColors.current.textTertiary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
                 textDecoration = if (ui.checked) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis

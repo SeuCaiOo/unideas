@@ -1,0 +1,80 @@
+package com.seucaio.unideas.ds.components.inputs
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.theme.Accent
+import com.seucaio.unideas.ds.theme.Background
+import com.seucaio.unideas.ds.theme.DsTheme
+import com.seucaio.unideas.ds.theme.OnAccent
+
+@Composable
+fun AddEntryRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    addContentDescription: String,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier.fillMaxWidth().padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AppTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            onImeAction = onSubmit,
+            modifier = Modifier.weight(1f)
+        )
+        Box(
+            Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Accent)
+                .clickable(onClick = onSubmit),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Outlined.Add,
+                contentDescription = addContentDescription,
+                tint = OnAccent,
+                modifier = Modifier.size(23.dp)
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun AddEntryRowPreview() {
+    DsTheme {
+        var text by remember { mutableStateOf("") }
+        Box(Modifier.background(Background).padding(16.dp)) {
+            AddEntryRow(value = text, onValueChange = {
+                text = it
+            }, placeholder = "New section...", addContentDescription = "Add", onSubmit = {})
+        }
+    }
+}

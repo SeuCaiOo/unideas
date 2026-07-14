@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -22,14 +23,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.Accent
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.Outline
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
-import com.seucaio.unideas.ds.theme.Surface1
-import com.seucaio.unideas.ds.theme.TextPrimary
-import com.seucaio.unideas.ds.theme.TextTertiary
 
 @Composable
 fun AppTextField(
@@ -40,7 +36,7 @@ fun AppTextField(
     minHeight: Dp = 0.dp,
     singleLine: Boolean = true,
     fillWidth: Boolean = true,
-    borderColor: Color = Outline,
+    borderColor: Color = MaterialTheme.colorScheme.outline,
     onImeAction: (() -> Unit)? = null
 ) {
     var sized = modifier
@@ -50,17 +46,17 @@ fun AppTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = TextTertiary) },
+        placeholder = { Text(placeholder, color = LocalDsExtendedColors.current.textTertiary) },
         singleLine = singleLine,
         shape = RoundedCornerShape(Radii.Field),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Surface1,
-            unfocusedContainerColor = Surface1,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedBorderColor = borderColor,
             unfocusedBorderColor = borderColor,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-            cursorColor = Accent
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            cursorColor = MaterialTheme.colorScheme.primary
         ),
         keyboardOptions = if (onImeAction != null) {
             KeyboardOptions(
@@ -85,7 +81,7 @@ fun AppTextField(
 private fun AppTextFieldPreview() {
     DsTheme {
         var text by remember { mutableStateOf("") }
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AppTextField(value = text, onValueChange = { text = it }, placeholder = "e.g. Pay electricity bill")
         }
     }

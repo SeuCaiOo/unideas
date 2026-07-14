@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,11 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.TextPrimary
-import com.seucaio.unideas.ds.theme.TextSecondary
-import com.seucaio.unideas.ds.theme.TextTertiary
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 
 @Composable
 fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -37,18 +35,23 @@ fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modi
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(21.dp))
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(21.dp)
+        )
         Text(
             label,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         Icon(
             Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = TextTertiary,
+            tint = LocalDsExtendedColors.current.textTertiary,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -58,7 +61,7 @@ fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modi
 @Composable
 private fun NavRowPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             NavRow(icon = Icons.Outlined.Label, label = "Tags", onClick = {})
         }
     }

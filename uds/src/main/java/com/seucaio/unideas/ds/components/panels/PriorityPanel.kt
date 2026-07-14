@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,16 +30,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.Accent
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.Background
-import com.seucaio.unideas.ds.theme.Danger
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.PanelBackground
-import com.seucaio.unideas.ds.theme.PanelBorder
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
-import com.seucaio.unideas.ds.theme.TextPrimary
-import com.seucaio.unideas.ds.theme.Warning
 
 data class PriorityRowUi(
     val id: Long,
@@ -63,15 +58,20 @@ fun PriorityPanel(
             .padding(horizontal = 16.dp)
             .padding(top = 6.dp, bottom = 14.dp)
             .clip(RoundedCornerShape(Radii.Panel))
-            .background(PanelBackground)
-            .border(1.dp, PanelBorder, RoundedCornerShape(Radii.Panel))
+            .background(LocalDsExtendedColors.current.panelBackground)
+            .border(1.dp, LocalDsExtendedColors.current.panelBorder, RoundedCornerShape(Radii.Panel))
             .padding(top = 14.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon, contentDescription = null, tint = Accent, modifier = Modifier.size(19.dp))
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(19.dp)
+            )
             Text(
                 title.uppercase(),
-                color = Accent,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.4.sp
@@ -89,7 +89,7 @@ fun PriorityPanel(
                 Box(Modifier.size(8.dp).clip(CircleShape).background(row.badgeColor))
                 Text(
                     row.title,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -104,7 +104,7 @@ fun PriorityPanel(
         if (footerLabel != null) {
             Text(
                 footerLabel,
-                color = Accent,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp,
                 modifier = Modifier
@@ -120,7 +120,7 @@ fun PriorityPanel(
 @Composable
 private fun PriorityPanelPreview() {
     DsTheme {
-        Box(Modifier.background(Background)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             PriorityPanel(
                 title = "Priorities",
                 icon = Icons.Outlined.Flag,
@@ -129,9 +129,14 @@ private fun PriorityPanelPreview() {
                         id = 1L,
                         title = "Pay electricity bill",
                         badgeLabel = "6 days overdue",
-                        badgeColor = Danger
+                        badgeColor = MaterialTheme.colorScheme.error
                     ),
-                    PriorityRowUi(id = 2L, title = "Morning stretch", badgeLabel = "due today", badgeColor = Warning)
+                    PriorityRowUi(
+                        id = 2L,
+                        title = "Morning stretch",
+                        badgeLabel = "due today",
+                        badgeColor = LocalDsExtendedColors.current.warning
+                    )
                 ),
                 footerLabel = "view all (6)",
                 onFooterClick = {},

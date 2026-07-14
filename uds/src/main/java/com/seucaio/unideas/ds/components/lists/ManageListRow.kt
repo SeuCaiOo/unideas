@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,11 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.components.buttons.AppIconButton
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.Background
-import com.seucaio.unideas.ds.theme.Danger
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.TextPrimary
-import com.seucaio.unideas.ds.theme.TextTertiary
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 
 @Composable
 fun ManageListRow(
@@ -43,10 +41,15 @@ fun ManageListRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = TextTertiary, modifier = Modifier.size(20.dp))
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = LocalDsExtendedColors.current.textTertiary,
+            modifier = Modifier.size(20.dp)
+        )
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
-            Text(subtitle, style = AppType.Metadata, color = TextTertiary)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text(subtitle, style = AppType.Metadata, color = LocalDsExtendedColors.current.textTertiary)
         }
         trailing()
     }
@@ -56,12 +59,12 @@ fun ManageListRow(
 @Composable
 private fun ManageListRowPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             ManageListRow(icon = Icons.Outlined.Folder, title = "Personal", subtitle = "5 items") {
                 AppIconButton(
                     icon = Icons.Outlined.Delete,
                     contentDescription = "Delete",
-                    tint = Danger,
+                    tint = MaterialTheme.colorScheme.error,
                     buttonSize = 40.dp,
                     iconSize = 20.dp,
                     onClick = {}

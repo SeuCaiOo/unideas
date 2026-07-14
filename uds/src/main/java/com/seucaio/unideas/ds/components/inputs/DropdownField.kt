@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,12 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.Outline
 import com.seucaio.unideas.ds.theme.Radii
-import com.seucaio.unideas.ds.theme.Surface1
-import com.seucaio.unideas.ds.theme.TextPrimary
 
 @Composable
 fun DropdownField(
@@ -42,12 +39,12 @@ fun DropdownField(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Radii.Field))
-                .background(Surface1)
-                .border(1.dp, Outline, RoundedCornerShape(Radii.Field))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(Radii.Field))
                 .clickable { expanded = true }
                 .padding(horizontal = 14.dp, vertical = 13.dp)
         ) {
-            Text(selected.ifEmpty { emptyOptionLabel }, color = TextPrimary, fontSize = 15.sp)
+            Text(selected.ifEmpty { emptyOptionLabel }, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text(emptyOptionLabel) }, onClick = {
@@ -69,7 +66,7 @@ fun DropdownField(
 private fun DropdownFieldPreview() {
     DsTheme {
         var selected by remember { mutableStateOf("") }
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             DropdownField(
                 options = listOf(
                     "Personal",

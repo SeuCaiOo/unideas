@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,13 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AccentContainer
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.Background
-import com.seucaio.unideas.ds.theme.DividerColor
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccentContainer
-import com.seucaio.unideas.ds.theme.TextTertiary
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -36,7 +33,7 @@ fun MetaChipsRow(label: String, chips: List<String>, modifier: Modifier = Modifi
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(label, style = AppType.Metadata, color = TextTertiary, fontSize = 13.sp)
+            Text(label, style = AppType.Metadata, color = LocalDsExtendedColors.current.textTertiary, fontSize = 13.sp)
             if (chips.isNotEmpty()) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -47,17 +44,17 @@ fun MetaChipsRow(label: String, chips: List<String>, modifier: Modifier = Modifi
                             chip,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = OnAccentContainer,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(7.dp))
-                                .background(AccentContainer)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
             }
         }
-        HorizontalDivider(color = DividerColor, thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
     }
 }
 
@@ -65,7 +62,7 @@ fun MetaChipsRow(label: String, chips: List<String>, modifier: Modifier = Modifi
 @Composable
 private fun MetaChipsRowPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             MetaChipsRow(label = "Tags", chips = listOf("urgent", "bills"))
         }
     }

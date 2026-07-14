@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,10 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AccentContainer
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccentContainer
 import com.seucaio.unideas.ds.theme.Radii
 
 @Composable
@@ -35,16 +33,16 @@ fun RemovableChip(
     Row(
         modifier
             .clip(RoundedCornerShape(Radii.Chip))
-            .background(AccentContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(label, color = OnAccentContainer, fontSize = 12.5.sp)
+        Text(label, color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 12.5.sp)
         Icon(
             Icons.Outlined.Close,
             contentDescription = removeContentDescription,
-            tint = OnAccentContainer,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(15.dp).clickable(onClick = onRemove)
         )
     }
@@ -54,7 +52,7 @@ fun RemovableChip(
 @Composable
 private fun RemovableChipPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             RemovableChip(label = "android", onRemove = {}, removeContentDescription = "Remove")
         }
     }

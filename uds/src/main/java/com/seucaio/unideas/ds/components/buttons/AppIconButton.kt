@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,9 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.TextSecondary
 
 /** App-bar style icon button; Material ripple stands in for the prototype's hover fill. */
 @Composable
@@ -26,7 +25,7 @@ fun AppIconButton(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = TextSecondary,
+    tint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     buttonSize: Dp = 44.dp,
     iconSize: Dp = 23.dp
 ) {
@@ -44,7 +43,7 @@ fun AppIconButton(
 @Composable
 private fun AppIconButtonPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AppIconButton(icon = Icons.Outlined.Settings, contentDescription = "Settings", onClick = {})
         }
     }

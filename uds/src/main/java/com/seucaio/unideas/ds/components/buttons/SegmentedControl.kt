@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,13 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AccentContainer
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccentContainer
-import com.seucaio.unideas.ds.theme.Outline
 import com.seucaio.unideas.ds.theme.Radii
-import com.seucaio.unideas.ds.theme.TextSecondary
 
 @Composable
 fun SegmentedControl(
@@ -41,7 +37,7 @@ fun SegmentedControl(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Segmented))
-            .border(1.dp, Outline, RoundedCornerShape(Radii.Segmented))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(Radii.Segmented))
     ) {
         options.forEachIndexed { index, label ->
             SegmentButton(
@@ -58,14 +54,14 @@ fun SegmentedControl(
 private fun SegmentButton(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier
-            .background(if (selected) AccentContainer else Color.Transparent)
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             label,
-            color = if (selected) OnAccentContainer else TextSecondary,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp
         )
@@ -77,7 +73,7 @@ private fun SegmentButton(label: String, selected: Boolean, onClick: () -> Unit,
 private fun SegmentedControlPreview() {
     DsTheme {
         var selected by remember { mutableIntStateOf(0) }
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             SegmentedControl(options = listOf("Task", "Note"), selectedIndex = selected, onSelect = { selected = it })
         }
     }

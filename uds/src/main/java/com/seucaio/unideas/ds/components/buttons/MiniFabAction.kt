@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,10 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AccentContainer
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccentContainer
 import com.seucaio.unideas.ds.theme.Radii
 
 @Composable
@@ -32,14 +30,24 @@ fun MiniFabAction(icon: ImageVector, label: String, onClick: () -> Unit, modifie
     Row(
         modifier
             .clip(RoundedCornerShape(Radii.MiniFab))
-            .background(AccentContainer)
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = OnAccentContainer, modifier = Modifier.size(20.dp))
-        Text(label, color = OnAccentContainer, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp
+        )
     }
 }
 
@@ -47,7 +55,7 @@ fun MiniFabAction(icon: ImageVector, label: String, onClick: () -> Unit, modifie
 @Composable
 private fun MiniFabActionPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             MiniFabAction(icon = Icons.Outlined.TaskAlt, label = "New task", onClick = {})
         }
     }

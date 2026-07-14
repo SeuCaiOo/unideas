@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,11 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.Accent
 import com.seucaio.unideas.ds.theme.AppType
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.TextTertiary
+import com.seucaio.unideas.ds.theme.LocalDsExtendedColors
 
 @Composable
 fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -28,13 +27,17 @@ fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
         modifier = modifier.clickable(onClick = onClick).padding(top = 12.dp, bottom = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(label, style = AppType.TabLabel, color = if (selected) Accent else TextTertiary)
+        Text(
+            label,
+            style = AppType.TabLabel,
+            color = if (selected) MaterialTheme.colorScheme.primary else LocalDsExtendedColors.current.textTertiary
+        )
         Spacer(Modifier.height(8.dp))
         Box(
             Modifier
                 .fillMaxWidth()
                 .height(2.dp)
-                .background(if (selected) Accent else Color.Transparent)
+                .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
         )
     }
 }
@@ -43,7 +46,7 @@ fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
 @Composable
 private fun TabItemPreview() {
     DsTheme {
-        Row(Modifier.background(Background).fillMaxWidth().padding(16.dp)) {
+        Row(Modifier.background(MaterialTheme.colorScheme.background).fillMaxWidth().padding(16.dp)) {
             TabItem(label = "Tasks", selected = true, onClick = {}, modifier = Modifier.weight(1f))
             TabItem(label = "Notes", selected = false, onClick = {}, modifier = Modifier.weight(1f))
         }

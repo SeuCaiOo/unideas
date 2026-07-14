@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,10 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.Accent
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccent
 
 @Composable
 fun AddEntryRow(
@@ -52,14 +50,14 @@ fun AddEntryRow(
             Modifier
                 .size(44.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(Accent)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable(onClick = onSubmit),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Outlined.Add,
                 contentDescription = addContentDescription,
-                tint = OnAccent,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(23.dp)
             )
         }
@@ -71,7 +69,7 @@ fun AddEntryRow(
 private fun AddEntryRowPreview() {
     DsTheme {
         var text by remember { mutableStateOf("") }
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AddEntryRow(value = text, onValueChange = {
                 text = it
             }, placeholder = "New section...", addContentDescription = "Add", onSubmit = {})

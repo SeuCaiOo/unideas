@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,10 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.Accent
-import com.seucaio.unideas.ds.theme.Background
 import com.seucaio.unideas.ds.theme.DsTheme
-import com.seucaio.unideas.ds.theme.OnAccent
 import com.seucaio.unideas.ds.theme.Radii
 
 @Composable
@@ -28,11 +26,16 @@ fun AppFab(icon: ImageVector, contentDescription: String, onClick: () -> Unit, m
         modifier = modifier
             .size(60.dp)
             .clip(RoundedCornerShape(Radii.Fab))
-            .background(Accent)
+            .background(MaterialTheme.colorScheme.primary)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = contentDescription, tint = OnAccent, modifier = Modifier.size(26.dp))
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.size(26.dp)
+        )
     }
 }
 
@@ -40,7 +43,7 @@ fun AppFab(icon: ImageVector, contentDescription: String, onClick: () -> Unit, m
 @Composable
 private fun AppFabPreview() {
     DsTheme {
-        Box(Modifier.background(Background).padding(16.dp)) {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             AppFab(icon = Icons.Outlined.Add, contentDescription = "Add", onClick = {})
         }
     }

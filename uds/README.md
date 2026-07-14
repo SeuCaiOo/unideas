@@ -55,9 +55,9 @@ wrapped in `DsTheme` with hard-coded sample data — treat these previews as the
 
 ## Porting to another project
 
-1. Copy the `designsystem/` folder into the target project's root.
-2. In the target's `settings.gradle.kts`: `include(":designsystem")`.
-3. In the consuming module's `build.gradle.kts`: `implementation(project(":designsystem"))`.
+1. Copy the `uds/` folder into the target project's root.
+2. In the target's `settings.gradle.kts`: `include(":uds")`.
+3. In the consuming module's `build.gradle.kts`: `implementation(project(":uds"))`.
 4. Build. Because the module's own `build.gradle.kts` doesn't pin AGP/Kotlin/Compose-compiler
    versions, it compiles against whatever the target project's root already declares — no version
    reconciliation needed as long as the target's Compose BOM is >= 2024.10.01 and minSdk >= 24.
@@ -66,6 +66,6 @@ To verify the module hasn't picked up an app-specific dependency before porting,
 repo root:
 
 ```
-grep -rln "R\.[a-z]" designsystem/src/main/java/ # expect no output
-grep -rn "java.time" designsystem/src/           # expect no output
+grep -rln "R\.[a-z]" uds/src/main/java/ # expect no output
+grep -rn "java.time" uds/src/           # expect no output
 ```

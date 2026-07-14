@@ -74,7 +74,7 @@ import com.seucaio.unideas.ds.theme.Warning
  * design system in a different project. Open in Android Studio's Split/Design view, or
  * run it directly (see [ComponentGalleryPreview]).
  *
- * File path next to each label is where to find that component under designsystem/src/.
+ * File path next to each label is where to find that component under uds/src/.
  */
 @Composable
 fun ComponentGallery() {

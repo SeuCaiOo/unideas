@@ -27,7 +27,8 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :domain              — models, enums, repository interfaces, use cases. Kotlin puro, sem Android/Room/Compose/Koin
 :data                — Room (entities, DAOs, database, migrations, converters), mappers, impl de repositório, DataModule
 :core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
-:core:ui             — UnideasTheme + componentes Compose compartilhados. Depende de :core:common via `api`
+:core:ui             — UnideasTheme + componentes Compose compartilhados. Depende de :core:common via `api`. Em substituição gradual por :uds (#84/#82) — não adicionar componentes novos aqui
+:uds                 — novo design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Vai substituir :core:ui aos poucos conforme as telas forem migradas (#84); expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
 :feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
 :feature:items       — Criar/Editar Item + Detalhe do Item
@@ -41,6 +42,7 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 ```
 :core:common  ←  :data
 :core:common  ←  :core:ui (api)  ←  :feature:*
+:uds  ←  :app  (ainda não usado por nenhum :feature:*; passa a ser consumido conforme #84 migra as telas)
 :domain       ←  :data
 :domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
 :domain, :core:common, :core:ui, :data  ←  :core:backup

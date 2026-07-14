@@ -173,7 +173,7 @@ dependencies {
 
     implementation(project(":core:ui"))
     implementation(project(":core:backup"))
-    implementation(project(":designsystem"))
+    implementation(project(":uds"))
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":feature:sections"))

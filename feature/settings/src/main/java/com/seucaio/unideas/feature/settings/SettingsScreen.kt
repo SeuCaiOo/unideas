@@ -1,13 +1,17 @@
 package com.seucaio.unideas.feature.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -26,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
 import com.seucaio.unideas.ds.components.legacy.UnideasListItem
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -186,6 +192,7 @@ private fun SettingsBody(
                 title = stringResource(R.string.settings_debug_clear),
                 onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
             )
+            UseV2ScreensRow()
         }
     }
 }
@@ -203,6 +210,26 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
 }
 
 private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
+
+/**
+ * Dev-only toggle for #84 — picks V1 vs V2 per screen while both coexist. Reads/writes
+ * [DevScreenVersionToggle] directly, orthogonal to [SettingsUiState] on purpose (same spirit as
+ * the Seed/Clear database dev actions above).
+ */
+@Composable
+private fun UseV2ScreensRow() {
+    val useV2 by DevScreenVersionToggle.useV2.collectAsStateWithLifecycle()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.settings_debug_use_v2_screens))
+        Switch(checked = useV2, onCheckedChange = DevScreenVersionToggle::set)
+    }
+}
 
 @Composable
 private fun SettingsSectionHeader(title: String) {

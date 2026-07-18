@@ -26,12 +26,13 @@ import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListItemRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.panel.screen.components.FiltersV2
-import com.seucaio.unideas.feature.home.features.panel.screen.components.HomeItemRowV2
 import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRowV2
+import com.seucaio.unideas.feature.home.features.panel.screen.components.toListItemUi
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
@@ -141,12 +142,13 @@ private fun BrowseSuccessBody(
             val emptyMessageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
             UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
         } else {
+            val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.tabItems, key = { it.id }) { item ->
-                    HomeItemRowV2(
-                        item = item,
+                    ListItemRow(
+                        ui = item.toListItemUi(checkContentDescription),
                         onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
-                        onComplete = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                        onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
                         modifier = Modifier.padding(
                             horizontal = 16.dp,
                             vertical = 8.dp,

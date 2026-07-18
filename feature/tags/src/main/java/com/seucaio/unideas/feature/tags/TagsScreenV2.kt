@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -26,11 +24,11 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
-import com.seucaio.unideas.ds.components.legacy.NameInputDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListContent
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.tags.viewmodel.TagsDialogState
 import com.seucaio.unideas.feature.tags.viewmodel.TagsEvent
@@ -41,9 +39,17 @@ import org.koin.androidx.compose.koinViewModel
 
 /**
  * V2 (#84): same [TagsViewModel]/[TagsUiState]/[TagsEvent]/[TagsDialogState] contract as
- * [TagsScreen] — visual pass only. Mirrors
- * [com.seucaio.unideas.feature.sections.SectionsScreenV2]'s decisions (same layout, same
- * `EntityListItemWithMenu`/`AddEntryRow` tradeoffs — see that file's kdoc for the "why").
+ * [TagsScreen] — visual pass only. Row keeps the legacy [EntityListItemWithMenu] (kebab +
+ * rename/delete) since `:uds`'s native `ManageListRow` requires a subtitle Tag has no data for
+ * (item count isn't tracked — out of scope, visual-only pass). Add **and** Rename both move off
+ * dialogs onto `:uds`'s native [AddEntryRow] — Add always visible above the list per the PDF
+ * reference, Rename in place of the row being renamed (kebab menu still triggers it, but the row
+ * itself becomes editable instead of opening a modal — one fewer component, no context-switch).
+ * Both are pure screen-side swaps: they still call the exact same
+ * [TagsEvent.OnAddConfirmClicked]/[TagsEvent.OnRenameConfirmClicked]; the dialog states just never
+ * render a dialog anymore, they gate which row renders as editable. Delete keeps its confirmation
+ * dialog — a destructive action should still stop and ask. Mirrors
+ * [com.seucaio.unideas.feature.sections.SectionsScreenV2]'s decisions exactly.
  */
 @Composable
 fun TagsScreenV2(
@@ -91,7 +97,7 @@ private fun TagsContentV2(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        TagsBodyV2(uiState = uiState, padding = padding, onEvent = onEvent)
+        TagsBodyV2(uiState = uiState, dialogState = dialogState, padding = padding, onEvent = onEvent)
     }
 
     TagsDialogsV2(dialogState = dialogState, onEvent = onEvent)
@@ -100,6 +106,7 @@ private fun TagsContentV2(
 @Composable
 private fun TagsBodyV2(
     uiState: TagsUiState,
+    dialogState: TagsDialogState,
     padding: PaddingValues,
     onEvent: (TagsEvent) -> Unit,
 ) {
@@ -126,15 +133,21 @@ private fun TagsBodyV2(
                         }
                     },
                 )
-                if (uiState.tags.isEmpty()) {
-                    UnideasEmptyContent(messageRes = R.string.tags_empty, modifier = Modifier.fillMaxSize())
-                } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(uiState.tags, key = { it.id }) { tag ->
+                val renamingTagId = (dialogState as? TagsDialogState.Rename)?.tag?.id
+                ListContent(
+                    items = uiState.tags,
+                    key = { it.id },
+                    emptyContent = {
+                        UnideasEmptyContent(messageRes = R.string.tags_empty, modifier = Modifier.fillMaxSize())
+                    },
+                    itemContent = { tag ->
+                        if (tag.id == renamingTagId) {
+                            TagRenameRowV2(tag = tag, onEvent = onEvent)
+                        } else {
                             TagRowV2(tag = tag, onEvent = onEvent)
                         }
-                    }
-                }
+                    },
+                )
             }
     }
 }
@@ -155,20 +168,29 @@ private fun TagRowV2(
 }
 
 @Composable
+private fun TagRenameRowV2(
+    tag: Tag,
+    onEvent: (TagsEvent) -> Unit,
+) {
+    var name by remember(tag.id) { mutableStateOf(tag.name) }
+    AddEntryRow(
+        value = name,
+        onValueChange = { name = it },
+        placeholder = stringResource(R.string.tags_rename_label),
+        addContentDescription = stringResource(R.string.tag_rename_action),
+        onSubmit = { if (name.isNotBlank()) onEvent(TagsEvent.OnRenameConfirmClicked(name)) },
+        onCancel = { onEvent(TagsEvent.OnDialogDismissed) },
+        cancelContentDescription = stringResource(R.string.tag_rename_cancel),
+    )
+}
+
+@Composable
 private fun TagsDialogsV2(
     dialogState: TagsDialogState,
     onEvent: (TagsEvent) -> Unit,
 ) {
     when (dialogState) {
-        is TagsDialogState.None, is TagsDialogState.Add -> Unit
-        is TagsDialogState.Rename ->
-            NameInputDialog(
-                title = stringResource(R.string.tags_rename),
-                label = stringResource(R.string.tags_rename_label),
-                initialValue = dialogState.tag.name,
-                onConfirm = { newName -> onEvent(TagsEvent.OnRenameConfirmClicked(newName)) },
-                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
-            )
+        is TagsDialogState.None, is TagsDialogState.Add, is TagsDialogState.Rename -> Unit
         is TagsDialogState.Delete ->
             DeleteConfirmationDialog(
                 titleRes = R.string.tag_delete_confirm_title,

@@ -41,6 +41,16 @@ import com.seucaio.unideas.feature.tags.viewmodel.TagsUiState
 import com.seucaio.unideas.feature.tags.viewmodel.TagsViewModel
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * V1 — superseded by [TagsScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
+ * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
+ * merges. Don't add new behavior here — any fix belongs in V2 too (or V2-only, if the fix is
+ * about something V1 no longer does, like the Add/Rename dialogs V2 replaced).
+ */
+@Deprecated(
+    "Superseded by TagsScreenV2 (#84) — kept only for the dev toggle comparison.",
+    ReplaceWith("TagsScreenV2(onNavigateBack)"),
+)
 @Composable
 fun TagsScreen(
     onNavigateBack: (() -> Unit)?,

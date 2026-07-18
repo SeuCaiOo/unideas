@@ -1,8 +1,6 @@
 package com.seucaio.unideas.feature.home.features.panel.screen.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
@@ -13,15 +11,17 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.ds.components.chips.SelectableChip
+import com.seucaio.unideas.ds.components.chips.SelectableChipRow
+import com.seucaio.unideas.ds.components.chips.SelectableChipUi
 import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 
 /**
  * V2 (#84) of [Filters] — same contract, rendered via `:uds`'s native `FilterDropdownPill` +
- * `SelectableChip` instead of the legacy `SectionDropdown`/`TagChipRow`. `FilterDropdownPill`
- * selects by name (portable module, no domain `Long` ids), so this maps name back to id.
+ * `SelectableChipRow` instead of the legacy `SectionDropdown`/`TagChipRow`. Both `:uds` pieces
+ * are domain-agnostic (`String`/[SelectableChipUi]); the [Section]/[Tag] name<->id bridging
+ * stays here, in the feature that owns those domain types.
  */
 @Composable
 fun FiltersV2(
@@ -44,19 +44,13 @@ fun FiltersV2(
             )
         }
         if (tags.isNotEmpty()) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                tags.forEach { tag ->
-                    SelectableChip(
-                        label = tag.name,
-                        selected = tag.id in tagFilters,
-                        onClick = { onTagFilterToggle(tag.id) },
-                    )
-                }
-            }
+            SelectableChipRow(
+                chips = tags.map { tag ->
+                    SelectableChipUi(id = tag.id.toString(), label = tag.name, selected = tag.id in tagFilters)
+                },
+                onToggle = { id -> onTagFilterToggle(id.toLong()) },
+                modifier = Modifier.padding(top = 8.dp),
+            )
         }
     }
 }

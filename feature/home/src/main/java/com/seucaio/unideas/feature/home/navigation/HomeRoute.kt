@@ -9,4 +9,7 @@ sealed interface HomeRoute {
 
     @Serializable
     data object AllPriorities : HomeRoute
+
+    @Serializable
+    data object Browse : HomeRoute
 }

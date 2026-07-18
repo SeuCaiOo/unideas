@@ -18,6 +18,8 @@
     <string name="all_priorities_title">All priorities</string>
     <string name="all_priorities_empty">Nothing overdue or due soon.</string>
     <string name="all_priorities_load_error">Couldn\'t load your priorities</string>
+    <string name="browse_title">All items</string>
+    <string name="browse_action">View all items</string>
     <string name="home_due_today">Due today</string>
     <plurals name="home_due_in_days">
         <item quantity="one">Due in %d day</item>

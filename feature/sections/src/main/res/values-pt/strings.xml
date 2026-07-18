@@ -11,6 +11,7 @@
     <string name="sections_rename_label">Nome da seção</string>
     <string name="section_options">Opções da seção</string>
     <string name="section_rename_action">Renomear</string>
+    <string name="section_rename_cancel">Cancelar renomeação</string>
     <string name="section_delete_action">Excluir</string>
     <string name="section_delete_confirm_title">Excluir seção?</string>
     <string name="section_delete_confirm_message">Esta ação não pode ser desfeita.</string>

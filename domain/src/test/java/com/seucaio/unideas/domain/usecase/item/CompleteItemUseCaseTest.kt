@@ -48,6 +48,17 @@ class CompleteItemUseCaseTest {
     }
 
     @Test
+    fun `invoke uncompletes an already-completed task without touching recurrence`() = runTest {
+        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY, completedAt = completedAt)
+        coEvery { repository.updateItem(item.copy(completedAt = null)) } returns Unit
+
+        val result = useCase(item, completedAt)
+
+        assertEquals(CompletionResult.Uncompleted, result.getOrNull())
+        coVerify(exactly = 0) { repository.insertItem(any()) }
+    }
+
+    @Test
     fun `invoke fails for a NOTE and does not touch the repository`() = runTest {
         val note = ItemStub.note()
 

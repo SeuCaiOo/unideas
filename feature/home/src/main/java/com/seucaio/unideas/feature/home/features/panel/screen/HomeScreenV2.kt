@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.Notes
@@ -39,21 +37,19 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.buttons.AppFab
 import com.seucaio.unideas.ds.components.buttons.MiniFabAction
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
-import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.lists.ListItemRow
 import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.components.FiltersV2
+import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsListContent
 import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRowV2
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
-import com.seucaio.unideas.feature.home.features.panel.screen.components.toListItemUi
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
@@ -63,7 +59,7 @@ import org.koin.androidx.compose.koinViewModel
 /**
  * V2 (#84) of [HomeScreen] — same [HomeViewModel]/[HomeUiState]/[HomeUiAction] contract, visual
  * pass to `:uds`'s native, 1a-Tonal-styled components (`PriorityPanel`, `TabItem`, `AppFab` +
- * `MiniFabAction`, `ListItemRow` via [HomeItemRowV2], `FilterDropdownPill`/`SelectableChip` via
+ * `MiniFabAction`, `ListItemRow` via [ItemsListContent], `FilterDropdownPill`/`SelectableChip` via
  * [FiltersV2]) instead of the legacy/ad hoc pieces [HomeScreen] still uses. Coexists with V1 on
  * purpose while both are compared — see `.claude/plans/refactor-84-apply-new-visual-design.md`.
  */
@@ -118,12 +114,6 @@ private fun HomeContentV2(
             UnideasTopBar(
                 title = stringResource(R.string.home_title),
                 actions = {
-                    IconButton(onClick = { updatedOnNavigateToBrowse() }) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.List,
-                            contentDescription = stringResource(R.string.browse_action)
-                        )
-                    }
                     IconButton(onClick = { onEvent(HomeEvent.OnSettingsClicked) }) {
                         Icon(
                             Icons.Outlined.Settings,
@@ -205,6 +195,7 @@ private fun HomeBodyV2(
                 onRetry = { onEvent(HomeEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
+
         is HomeUiState.Success ->
             HomeSuccessBodyV2(
                 state = uiState,
@@ -246,26 +237,17 @@ private fun HomeSuccessBodyV2(
             onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
             onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
         )
-        if (state.tabItems.isEmpty()) {
-            val emptyMessageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
-            UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
-        } else {
-            val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(state.tabItems, key = { it.id }) { item ->
-                    ListItemRow(
-                        ui = item.toListItemUi(checkContentDescription),
-                        onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
-                        onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
-                    )
-                }
-                item {
-                    NavRow(
-                        icon = Icons.AutoMirrored.Outlined.List,
-                        label = stringResource(R.string.browse_action),
-                        onClick = onNavigateToBrowse,
-                    )
-                }
+        ItemsListContent(
+            state = state,
+            onEvent = onEvent,
+            itemModifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            item {
+                NavRow(
+                    icon = Icons.AutoMirrored.Outlined.List,
+                    label = stringResource(R.string.browse_action),
+                    onClick = onNavigateToBrowse,
+                )
             }
         }
     }

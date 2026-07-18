@@ -18,4 +18,13 @@
     <string name="all_priorities_title">Todas as prioridades</string>
     <string name="all_priorities_empty">Nada vencido ou a vencer.</string>
     <string name="all_priorities_load_error">Não foi possível carregar suas prioridades</string>
+    <string name="home_due_today">Vence hoje</string>
+    <plurals name="home_due_in_days">
+        <item quantity="one">Vence em %d dia</item>
+        <item quantity="other">Vence em %d dias</item>
+    </plurals>
+    <plurals name="home_overdue_days">
+        <item quantity="one">Venceu há %d dia</item>
+        <item quantity="other">Venceu há %d dias</item>
+    </plurals>
 </resources>

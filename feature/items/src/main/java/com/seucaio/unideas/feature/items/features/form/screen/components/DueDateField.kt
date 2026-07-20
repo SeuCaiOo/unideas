@@ -1,0 +1,61 @@
+package com.seucaio.unideas.feature.items.features.form.screen.components
+
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.seucaio.unideas.core.common.extensions.toEpochMilliUtc
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
+import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
+import com.seucaio.unideas.ds.components.inputs.DateFieldButton
+import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
+import java.time.LocalDate
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DueDateFieldV2(dueDate: LocalDate?, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    FormField(label = stringResource(R.string.item_form_date_label), modifier = modifier) {
+        DateFieldButton(
+            valueLabel = dueDate?.toFormattedDateString(),
+            onClick = { showDatePicker = true },
+            onClear = { onEvent(ItemFormEvent.OnDueDateChanged(null)) },
+            clearContentDescription = stringResource(R.string.item_form_date_clear),
+        )
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dueDate?.toEpochMilliUtc())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newDate = datePickerState.selectedDateMillis?.toLocalDateUtc()
+                    newDate?.let { onEvent(ItemFormEvent.OnDueDateChanged(it)) }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}

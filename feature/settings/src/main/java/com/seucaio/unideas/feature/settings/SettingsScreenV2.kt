@@ -6,8 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,8 +39,9 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
-import com.seucaio.unideas.ds.components.legacy.UnideasListItem
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.GroupHeader
+import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
@@ -46,15 +53,16 @@ import java.time.format.DateTimeFormatter
 import com.seucaio.unideas.core.backup.R as BackupR
 
 /**
- * V1 — superseded by [SettingsScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
- * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
- * merges. Don't add new behavior here — any fix belongs in V2 too.
+ * V2 (#84): same [SettingsViewModel]/[SettingsUiState]/[SettingsEvent]/[SettingsDialogState] +
+ * `BackupViewModel` contract as [SettingsScreen] — visual pass only. Rows swap from legacy
+ * `UnideasListItem` to `:uds`'s native [NavRow] (icon + label + chevron); [NavRow] gained an
+ * optional `subtitle` for this screen's Backup row, which needs real connection-status text, not
+ * a mock. `GroupHeader` replaces the ad hoc section title `Text`. `SeedScopeBottomSheet`,
+ * `UnideasTopBar`, `AppVersionFooter` and the dev-only `UseV2ScreensRow` stay legacy/as-is — no
+ * native equivalent yet, or (for the toggle row) out of the redesign's scope entirely.
  */
-@Deprecated(
-    "Superseded by SettingsScreenV2 (#84) — kept only for the dev toggle comparison.",
-)
 @Composable
-fun SettingsScreen(
+fun SettingsScreenV2(
     versionName: String,
     showDebugSection: Boolean,
     onNavigateBack: (() -> Unit)?,
@@ -90,7 +98,7 @@ fun SettingsScreen(
         }
     }
 
-    SettingsContent(
+    SettingsContentV2(
         uiState = uiState,
         dialogState = dialogState,
         backupUiState = backupUiState,
@@ -111,9 +119,8 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsContent(
+private fun SettingsContentV2(
     uiState: SettingsUiState,
     dialogState: SettingsDialogState,
     backupUiState: BackupUiState,
@@ -140,7 +147,7 @@ private fun SettingsContent(
     ) { padding ->
         when (uiState) {
             is SettingsUiState.Success ->
-                SettingsBody(
+                SettingsBodyV2(
                     onEvent = onEvent,
                     backupUiState = backupUiState,
                     onBackupClick = onBackupClick,
@@ -161,7 +168,7 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun SettingsBody(
+private fun SettingsBodyV2(
     onEvent: (SettingsEvent) -> Unit,
     backupUiState: BackupUiState,
     onBackupClick: () -> Unit,
@@ -169,38 +176,44 @@ private fun SettingsBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        SettingsSectionHeader(stringResource(R.string.settings_organize_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_sections),
+        GroupHeader(stringResource(R.string.settings_organize_section))
+        NavRow(
+            icon = Icons.Outlined.Folder,
+            label = stringResource(R.string.settings_organize_sections),
             onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
         )
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_tags),
+        NavRow(
+            icon = Icons.AutoMirrored.Outlined.Label,
+            label = stringResource(R.string.settings_organize_tags),
             onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
         )
 
-        SettingsSectionHeader(stringResource(R.string.settings_backup_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_backup_section),
+        GroupHeader(stringResource(R.string.settings_backup_section))
+        NavRow(
+            icon = Icons.Outlined.CloudUpload,
+            label = stringResource(R.string.settings_backup_section),
             subtitle = backupStatusSubtitle(backupUiState),
             onClick = onBackupClick,
         )
 
         if (showDebugSection) {
-            SettingsSectionHeader(stringResource(R.string.settings_debug_section))
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_items),
+            GroupHeader(stringResource(R.string.settings_debug_section))
+            NavRow(
+                icon = Icons.AutoMirrored.Outlined.List,
+                label = stringResource(R.string.settings_debug_items),
                 onClick = { onEvent(SettingsEvent.OnItemsClicked) },
             )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_seed),
+            NavRow(
+                icon = Icons.Outlined.Storage,
+                label = stringResource(R.string.settings_debug_seed),
                 onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
             )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_clear),
+            NavRow(
+                icon = Icons.Outlined.DeleteSweep,
+                label = stringResource(R.string.settings_debug_clear),
                 onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
             )
-            UseV2ScreensRow()
+            UseV2ScreensRowV2()
         }
     }
 }
@@ -210,22 +223,18 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
     is BackupUiState.Loading -> stringResource(BackupR.string.backup_not_connected)
     is BackupUiState.Ready -> if (backupUiState.isConnected) {
         backupUiState.lastBackupAt
-            ?.let { stringResource(BackupR.string.backup_last_at, it.format(LAST_BACKUP_FORMATTER)) }
+            ?.let { stringResource(BackupR.string.backup_last_at, it.format(LAST_BACKUP_FORMATTER_V2)) }
             ?: stringResource(BackupR.string.backup_none)
     } else {
         stringResource(BackupR.string.backup_not_connected)
     }
 }
 
-private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
+private val LAST_BACKUP_FORMATTER_V2: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
 
-/**
- * Dev-only toggle for #84 — picks V1 vs V2 per screen while both coexist. Reads/writes
- * [DevScreenVersionToggle] directly, orthogonal to [SettingsUiState] on purpose (same spirit as
- * the Seed/Clear database dev actions above).
- */
+/** Same dev-only toggle as [SettingsScreen]'s `UseV2ScreensRow` — out of the redesign's scope. */
 @Composable
-private fun UseV2ScreensRow() {
+private fun UseV2ScreensRowV2() {
     val useV2 by DevScreenVersionToggle.useV2.collectAsStateWithLifecycle()
     Row(
         modifier = Modifier
@@ -239,22 +248,13 @@ private fun UseV2ScreensRow() {
     }
 }
 
-@Composable
-private fun SettingsSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-    )
-}
-
 @PreviewLightDark
 @Composable
-private fun SettingsScreenPreview(
+private fun SettingsScreenV2Preview(
     @PreviewParameter(SettingsPreviewProvider::class) uiState: SettingsUiState,
 ) {
     UdsTheme {
-        SettingsContent(
+        SettingsContentV2(
             uiState = uiState,
             dialogState = SettingsDialogState.None,
             backupUiState = BackupUiState.Ready(isConnected = false),

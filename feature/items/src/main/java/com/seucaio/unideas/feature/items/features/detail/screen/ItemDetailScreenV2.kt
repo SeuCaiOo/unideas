@@ -1,21 +1,10 @@
 package com.seucaio.unideas.feature.items.features.detail.screen
 
-import android.content.Intent
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -33,21 +22,21 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.common.extensions.toFormattedDateString
-import com.seucaio.unideas.core.common.util.Constants
-import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.domain.model.UrgencyLevel
+import com.seucaio.unideas.ds.components.chips.TextBadge
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
-import com.seucaio.unideas.ds.components.legacy.TagChipRow
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.legacy.UrgencyIndicator
-import com.seucaio.unideas.ds.components.legacy.UrgencyIndicatorLevel
+import com.seucaio.unideas.ds.components.lists.MetaChipsRow
+import com.seucaio.unideas.ds.components.lists.MetaRow
+import com.seucaio.unideas.ds.components.lists.TitleSubtitle
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.features.detail.screen.components.DueDateRowV2
+import com.seucaio.unideas.feature.items.features.detail.screen.components.ItemDetailActionsV2
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailDialogState
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
@@ -55,18 +44,19 @@ import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiS
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import java.time.LocalDate
 
 /**
- * V1 — superseded by [ItemDetailScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
- * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
- * merges. Don't add new behavior here — any fix belongs in V2 too.
+ * V2 (#84): same [ItemDetailViewModel]/[ItemDetailUiState]/[ItemDetailEvent] contract as
+ * [ItemDetailScreen] — visual pass only. Swaps the legacy metadata `Row`s/`TagChipRow`/
+ * `UrgencyIndicator` for `:uds` native [TitleSubtitle] (title + optional description, any
+ * list-backed entity's detail header), [MetaRow], [MetaChipsRow] (read-only tag display) and
+ * [TextBadge] (item type), plus [DueDateRowV2] — a feature-local composable mirroring `MetaRow`'s
+ * shape but slotting in `:uds`'s native `DueBadge` for the urgency dot+color `MetaRow`'s
+ * plain-text value can't express. `UnideasTopBar`, `UnideasLoadingContent`/`UnideasErrorContent`
+ * and `DeleteConfirmationDialog` stay as-is — no native equivalent yet.
  */
-@Deprecated(
-    "Superseded by ItemDetailScreenV2 (#84) — kept only for the dev toggle comparison.",
-)
 @Composable
-fun ItemDetailScreen(
+fun ItemDetailScreenV2(
     itemId: Long,
     onNavigateBack: (() -> Unit)?,
     onNavigateToEdit: (Long) -> Unit,
@@ -84,18 +74,13 @@ fun ItemDetailScreen(
             when (action) {
                 is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
                 is ItemDetailUiAction.NavigateToEdit -> updatedOnNavigateToEdit(action.itemId)
-                is ItemDetailUiAction.ShareText -> context.startActivity(
-                    Intent.createChooser(
-                        Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, action.text),
-                        null,
-                    ),
-                )
+                is ItemDetailUiAction.ShareText -> context.shareText(action.text)
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }
         }
     }
 
-    ItemDetailContent(
+    ItemDetailContentV2(
         uiState = uiState,
         dialogState = dialogState,
         onEvent = viewModel::onEvent,
@@ -105,7 +90,7 @@ fun ItemDetailScreen(
 }
 
 @Composable
-private fun ItemDetailContent(
+private fun ItemDetailContentV2(
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
     onEvent: (ItemDetailEvent) -> Unit,
@@ -119,21 +104,34 @@ private fun ItemDetailContent(
             UnideasTopBar(
                 title = (uiState as? ItemDetailUiState.Success)?.item?.title.orEmpty(),
                 onNavigateBack = updatedOnNavigateBack,
-                actions = { if (uiState is ItemDetailUiState.Success) ItemDetailActions(uiState.item, onEvent) },
+                actions = {
+                    if (uiState is ItemDetailUiState.Success) {
+                        ItemDetailActionsV2(
+                            uiState.item,
+                            onEvent
+                        )
+                    }
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         when (uiState) {
-            is ItemDetailUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
+            is ItemDetailUiState.Loading -> UnideasLoadingContent(
+                modifier = Modifier.padding(
+                    padding
+                )
+            )
+
             is ItemDetailUiState.Error ->
                 UnideasErrorContent(
                     messageRes = uiState.messageRes,
                     onRetry = { onEvent(ItemDetailEvent.OnRetryClicked) },
                     modifier = Modifier.padding(padding),
                 )
+
             is ItemDetailUiState.Success ->
-                ItemDetailBody(state = uiState, modifier = Modifier.padding(padding))
+                ItemDetailBodyV2(state = uiState, modifier = Modifier.padding(padding))
         }
     }
 
@@ -148,68 +146,49 @@ private fun ItemDetailContent(
 }
 
 @Composable
-private fun ItemDetailActions(item: Item, onEvent: (ItemDetailEvent) -> Unit) {
-    Row {
-        IconButton(onClick = { onEvent(ItemDetailEvent.OnShareClicked) }) {
-            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.item_detail_share))
-        }
-        IconButton(onClick = { onEvent(ItemDetailEvent.OnEditClicked) }) {
-            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.item_detail_edit))
-        }
-        IconButton(onClick = { onEvent(ItemDetailEvent.OnDeleteClicked) }) {
-            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.item_detail_delete))
-        }
-        if (item.type == ItemType.TASK && !item.isCompleted) {
-            IconButton(onClick = { onEvent(ItemDetailEvent.OnCompleteClicked) }) {
-                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.item_detail_complete))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ItemDetailBody(state: ItemDetailUiState.Success, modifier: Modifier = Modifier) {
+private fun ItemDetailBodyV2(state: ItemDetailUiState.Success, modifier: Modifier = Modifier) {
     val item = state.item
+    val showRecurrence = item.dueDate != null && item.isRecurring
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState()),
     ) {
-        SelectionContainer {
-            Column {
-                Text(text = item.title, style = MaterialTheme.typography.titleLarge)
-                item.description?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
-                }
-            }
-        }
+        TitleSubtitle(
+            title = item.title,
+            subtitle = item.description,
+            modifier = Modifier.padding(16.dp)
+        )
 
-        val typeRes = if (item.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
-        Text(text = stringResource(typeRes), modifier = Modifier.padding(top = 16.dp))
+        val typeRes =
+            if (item.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+        TextBadge(
+            text = stringResource(typeRes),
+            background = MaterialTheme.colorScheme.primaryContainer,
+            content = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
+        )
 
-        MetadataRow(
+        MetaRow(
             label = stringResource(R.string.item_detail_section_label),
             value = state.sectionName ?: stringResource(R.string.item_form_section_none),
         )
 
         if (item.tags.isNotEmpty()) {
-            Column(modifier = Modifier.padding(top = 16.dp)) {
-                Text(text = stringResource(R.string.item_detail_tags_label))
-                TagChipRow(
-                    tags = item.tags.map { it.id to it.name },
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
+            MetaChipsRow(
+                label = stringResource(R.string.item_detail_tags_label),
+                chips = item.tags.map { it.name }
+            )
         }
 
-        DateAndUrgencyRow(item)
+        DueDateRowV2(item = item, isLast = !showRecurrence)
 
-        if (item.dueDate != null && item.isRecurring) {
-            MetadataRow(
+        if (showRecurrence) {
+            MetaRow(
                 label = stringResource(R.string.item_detail_recurrence_label),
-                value = recurrenceLabel(item),
+                value = recurrenceLabelV2(item.recurrence),
+                isLast = true,
             )
         }
 
@@ -217,45 +196,14 @@ private fun ItemDetailBody(state: ItemDetailUiState.Success, modifier: Modifier 
             Text(
                 text = stringResource(R.string.item_detail_completed_label),
                 style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(16.dp),
             )
         }
     }
 }
 
 @Composable
-private fun MetadataRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth().padding(top = 16.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
-        Text(text = value, modifier = Modifier.padding(start = 8.dp))
-    }
-}
-
-@Composable
-private fun DateAndUrgencyRow(item: Item) {
-    Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-        Text(text = stringResource(R.string.item_detail_date_label), style = MaterialTheme.typography.labelLarge)
-        Text(
-            text = item.dueDate?.toFormattedDateString() ?: stringResource(R.string.item_form_date_none),
-            modifier = Modifier.padding(start = 8.dp),
-        )
-        if (item.dueDate != null) {
-            UrgencyIndicator(
-                level = item.urgency(LocalDate.now(), Constants.DUE_SOON_DAYS).toIndicatorLevel(),
-                modifier = Modifier.padding(start = 8.dp),
-            )
-        }
-    }
-}
-
-private fun UrgencyLevel.toIndicatorLevel(): UrgencyIndicatorLevel = when (this) {
-    UrgencyLevel.OVERDUE -> UrgencyIndicatorLevel.OVERDUE
-    UrgencyLevel.DUE_SOON -> UrgencyIndicatorLevel.DUE_SOON
-    UrgencyLevel.NORMAL -> UrgencyIndicatorLevel.NORMAL
-}
-
-@Composable
-private fun recurrenceLabel(item: Item): String = when (item.recurrence) {
+private fun recurrenceLabelV2(recurrence: Recurrence): String = when (recurrence) {
     Recurrence.Daily -> stringResource(R.string.item_form_recurrence_daily)
     Recurrence.Weekly -> stringResource(R.string.item_form_recurrence_weekly)
     Recurrence.Monthly -> stringResource(R.string.item_form_recurrence_monthly)
@@ -264,11 +212,11 @@ private fun recurrenceLabel(item: Item): String = when (item.recurrence) {
 
 @PreviewLightDark
 @Composable
-private fun ItemDetailScreenPreview(
+private fun ItemDetailScreenV2Preview(
     @PreviewParameter(ItemDetailPreviewProvider::class) uiState: ItemDetailUiState,
 ) {
     UdsTheme {
-        ItemDetailContent(
+        ItemDetailContentV2(
             uiState = uiState,
             dialogState = ItemDetailDialogState.None,
             onEvent = {},

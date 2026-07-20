@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen
+import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreenV2
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreen
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreenV2
 import com.seucaio.unideas.feature.items.features.list.screen.ItemsListScreen
@@ -37,11 +38,20 @@ fun NavGraphBuilder.itemsNavGraph(
     }
     composable<ItemsRoute.Detail> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()
-        ItemDetailScreen(
-            itemId = route.itemId,
-            onNavigateBack = onNavigateBack,
-            onNavigateToEdit = onNavigateToEdit
-        )
+        val useV2 by DevScreenVersionToggle.useV2.collectAsStateWithLifecycle()
+        if (useV2) {
+            ItemDetailScreenV2(
+                itemId = route.itemId,
+                onNavigateBack = onNavigateBack,
+                onNavigateToEdit = onNavigateToEdit,
+            )
+        } else {
+            ItemDetailScreen(
+                itemId = route.itemId,
+                onNavigateBack = onNavigateBack,
+                onNavigateToEdit = onNavigateToEdit,
+            )
+        }
     }
     composable<ItemsRoute.List> {
         ItemsListScreen(

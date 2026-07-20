@@ -52,6 +52,14 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * V1 — superseded by [HomeScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
+ * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
+ * merges. Don't add new behavior here — any fix belongs in V2 too.
+ */
+@Deprecated(
+    "Superseded by HomeScreenV2 (#84) — kept only for the dev toggle comparison.",
+)
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Long) -> Unit,

@@ -40,7 +40,7 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.lists.GroupHeader
+import com.seucaio.unideas.ds.components.lists.ListSection
 import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
@@ -176,44 +176,47 @@ private fun SettingsBodyV2(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        GroupHeader(stringResource(R.string.settings_organize_section))
-        NavRow(
-            icon = Icons.Outlined.Folder,
-            label = stringResource(R.string.settings_organize_sections),
-            onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
-        )
-        NavRow(
-            icon = Icons.AutoMirrored.Outlined.Label,
-            label = stringResource(R.string.settings_organize_tags),
-            onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
-        )
+        ListSection(title = stringResource(R.string.settings_organize_section)) {
+            NavRow(
+                icon = Icons.Outlined.Folder,
+                label = stringResource(R.string.settings_organize_sections),
+                onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
+            )
+            NavRow(
+                icon = Icons.AutoMirrored.Outlined.Label,
+                label = stringResource(R.string.settings_organize_tags),
+                onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
+            )
+        }
 
-        GroupHeader(stringResource(R.string.settings_backup_section))
-        NavRow(
-            icon = Icons.Outlined.CloudUpload,
-            label = stringResource(R.string.settings_backup_section),
-            subtitle = backupStatusSubtitle(backupUiState),
-            onClick = onBackupClick,
-        )
+        ListSection(title = stringResource(R.string.settings_backup_section)) {
+            NavRow(
+                icon = Icons.Outlined.CloudUpload,
+                label = stringResource(R.string.settings_backup_section),
+                subtitle = backupStatusSubtitle(backupUiState),
+                onClick = onBackupClick,
+            )
+        }
 
         if (showDebugSection) {
-            GroupHeader(stringResource(R.string.settings_debug_section))
-            NavRow(
-                icon = Icons.AutoMirrored.Outlined.List,
-                label = stringResource(R.string.settings_debug_items),
-                onClick = { onEvent(SettingsEvent.OnItemsClicked) },
-            )
-            NavRow(
-                icon = Icons.Outlined.Storage,
-                label = stringResource(R.string.settings_debug_seed),
-                onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
-            )
-            NavRow(
-                icon = Icons.Outlined.DeleteSweep,
-                label = stringResource(R.string.settings_debug_clear),
-                onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
-            )
-            UseV2ScreensRowV2()
+            ListSection(title = stringResource(R.string.settings_debug_section)) {
+                NavRow(
+                    icon = Icons.AutoMirrored.Outlined.List,
+                    label = stringResource(R.string.settings_debug_items),
+                    onClick = { onEvent(SettingsEvent.OnItemsClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.Storage,
+                    label = stringResource(R.string.settings_debug_seed),
+                    onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.DeleteSweep,
+                    label = stringResource(R.string.settings_debug_clear),
+                    onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
+                )
+                UseV2ScreensRowV2()
+            }
         }
     }
 }

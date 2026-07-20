@@ -31,8 +31,8 @@ Organized by role, not by the screen that originally used them:
 
 - `buttons/` — `AppIconButton`, `AppFab`, `MiniFabAction`, `SegmentedControl`
 - `chips/` — `SelectableChip`, `SelectableChipRow` (+ `SelectableChipUi`), `RemovableChip`, `TextBadge`, `DueBadge`
-- `inputs/` — `AppTextField`, `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`
-- `lists/` — `ListItemRow` (+ `ListItemUi`), `ManageListRow`, `MetaRow`, `MetaChipsRow`, `ActionRow`, `NavRow`, `GroupHeader`
+- `inputs/` — `AppTextField`, `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`, `InlineEditRow`
+- `lists/` — `ListItemRow` (+ `ListItemUi`), `ManageListRow`, `MetaRow`, `MetaChipsRow`, `ActionRow`, `NavRow`, `GroupHeader`, `ListSection`, `TitleSubtitle`
 - `navigation/` — `TabItem`, `AppTabRow`
 - `panels/` — `PriorityPanel` (+ `PriorityRowUi`)
 - `feedback/` — `AppSnackbarHost`

@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
+                        onNavigateToBrowse = { navController.navigate(HomeRoute.Browse) },
                     )
                     settingsNavGraph(
                         config = SettingsScreenConfig(

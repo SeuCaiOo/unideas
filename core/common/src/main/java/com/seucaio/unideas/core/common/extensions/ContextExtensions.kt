@@ -15,3 +15,9 @@ fun Context.restartApplication() {
     startActivity(launchIntent)
     Runtime.getRuntime().exit(0)
 }
+
+/** Opens the system share sheet for plain [text] (e.g. an item's title/description). */
+fun Context.shareText(text: String) {
+    val sendIntent = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+    startActivity(Intent.createChooser(sendIntent, null))
+}

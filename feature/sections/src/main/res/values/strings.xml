@@ -11,6 +11,7 @@
     <string name="sections_rename_label">Section name</string>
     <string name="section_options">Section options</string>
     <string name="section_rename_action">Rename</string>
+    <string name="section_rename_cancel">Cancel rename</string>
     <string name="section_delete_action">Delete</string>
     <string name="section_delete_confirm_title">Delete section?</string>
     <string name="section_delete_confirm_message">This action cannot be undone.</string>

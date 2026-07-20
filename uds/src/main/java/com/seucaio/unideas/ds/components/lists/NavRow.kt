@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,11 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
-fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun NavRow(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+) {
     Row(
         modifier
             .fillMaxWidth()
@@ -41,13 +50,17 @@ fun NavRow(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modi
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(21.dp)
         )
-        Text(
-            label,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                label,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (subtitle != null) {
+                Text(subtitle, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary)
+            }
+        }
         Icon(
             Icons.Outlined.ChevronRight,
             contentDescription = null,
@@ -63,6 +76,16 @@ private fun NavRowPreview() {
     UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
             NavRow(icon = Icons.Outlined.Label, label = "Tags", onClick = {})
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun NavRowWithSubtitlePreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+            NavRow(icon = Icons.Outlined.CloudUpload, label = "Backup", subtitle = "Not connected", onClick = {})
         }
     }
 }

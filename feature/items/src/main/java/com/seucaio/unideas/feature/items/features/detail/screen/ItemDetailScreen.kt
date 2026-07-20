@@ -57,6 +57,14 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.time.LocalDate
 
+/**
+ * V1 — superseded by [ItemDetailScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
+ * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
+ * merges. Don't add new behavior here — any fix belongs in V2 too.
+ */
+@Deprecated(
+    "Superseded by ItemDetailScreenV2 (#84) — kept only for the dev toggle comparison.",
+)
 @Composable
 fun ItemDetailScreen(
     itemId: Long,

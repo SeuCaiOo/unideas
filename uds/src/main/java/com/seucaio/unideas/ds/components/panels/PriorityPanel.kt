@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,7 +51,8 @@ fun PriorityPanel(
     footerLabel: String?,
     onFooterClick: () -> Unit,
     onRowClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    emptyText: String = ""
 ) {
     Column(
         modifier
@@ -59,10 +61,17 @@ fun PriorityPanel(
             .padding(top = 6.dp, bottom = 14.dp)
             .clip(RoundedCornerShape(Radii.Panel))
             .background(LocalUdsExtendedColors.current.panelBackground)
-            .border(1.dp, LocalUdsExtendedColors.current.panelBorder, RoundedCornerShape(Radii.Panel))
+            .border(
+                1.dp,
+                LocalUdsExtendedColors.current.panelBorder,
+                RoundedCornerShape(Radii.Panel)
+            )
             .padding(top = 14.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Icon(
                 icon,
                 contentDescription = null,
@@ -78,40 +87,56 @@ fun PriorityPanel(
             )
         }
         Spacer(Modifier.height(4.dp))
-        rows.forEach { row ->
-            Row(
-                Modifier.fillMaxWidth()
-                    .clickable { onRowClick(row.id) }
-                    .padding(vertical = 9.dp, horizontal = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(row.badgeColor))
-                Text(
-                    row.title,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                if (row.badgeLabel != null) {
-                    Text(row.badgeLabel, style = AppType.DueBadge, color = row.badgeColor)
+
+        if (rows.isEmpty()) {
+            Text(
+                text = emptyText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 12.dp),
+            )
+        } else {
+            rows.forEach { row ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onRowClick(row.id) }
+                        .padding(vertical = 9.dp, horizontal = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(row.badgeColor)
+                    )
+                    Text(
+                        row.title,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (row.badgeLabel != null) {
+                        Text(row.badgeLabel, style = AppType.DueBadge, color = row.badgeColor)
+                    }
                 }
             }
-        }
-        if (footerLabel != null) {
-            Text(
-                footerLabel,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                modifier = Modifier
-                    .clickable(onClick = onFooterClick)
-                    .padding(vertical = 9.dp, horizontal = 2.dp)
-                    .padding(bottom = 4.dp)
-            )
+            if (footerLabel != null) {
+                Text(
+                    footerLabel,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp,
+                    modifier = Modifier
+                        .clickable(onClick = onFooterClick)
+                        .padding(vertical = 9.dp, horizontal = 2.dp)
+                        .padding(bottom = 4.dp)
+                )
+            }
         }
     }
 }
@@ -120,28 +145,39 @@ fun PriorityPanel(
 @Composable
 private fun PriorityPanelPreview() {
     UdsTheme {
-        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            PriorityPanel(
-                title = "Priorities",
-                icon = Icons.Outlined.Flag,
-                rows = listOf(
-                    PriorityRowUi(
-                        id = 1L,
-                        title = "Pay electricity bill",
-                        badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error
+        Surface {
+            Column {
+                PriorityPanel(
+                    title = "Priorities",
+                    icon = Icons.Outlined.Flag,
+                    rows = listOf(
+                        PriorityRowUi(
+                            id = 1L,
+                            title = "Pay electricity bill",
+                            badgeLabel = "6 days overdue",
+                            badgeColor = MaterialTheme.colorScheme.error
+                        ),
+                        PriorityRowUi(
+                            id = 2L,
+                            title = "Morning stretch",
+                            badgeLabel = "due today",
+                            badgeColor = LocalUdsExtendedColors.current.warning
+                        )
                     ),
-                    PriorityRowUi(
-                        id = 2L,
-                        title = "Morning stretch",
-                        badgeLabel = "due today",
-                        badgeColor = LocalUdsExtendedColors.current.warning
-                    )
-                ),
-                footerLabel = "view all (6)",
-                onFooterClick = {},
-                onRowClick = {}
-            )
+                    footerLabel = "view all (6)",
+                    onFooterClick = {},
+                    onRowClick = {}
+                )
+                PriorityPanel(
+                    title = "Priorities",
+                    icon = Icons.Outlined.Flag,
+                    rows = emptyList(),
+                    footerLabel = null,
+                    onFooterClick = {},
+                    onRowClick = {},
+                    emptyText = "No priorities"
+                )
+            }
         }
     }
 }

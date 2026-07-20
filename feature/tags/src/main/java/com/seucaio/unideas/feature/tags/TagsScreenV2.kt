@@ -20,8 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
+import com.seucaio.unideas.ds.components.inputs.InlineEditRow
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
@@ -66,6 +66,7 @@ fun TagsScreenV2(
             val message = when (action) {
                 is TagsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
+
                 is TagsUiAction.ShowError -> action.message
             }
             snackbarHostState.showSnackbar(message)
@@ -93,11 +94,19 @@ private fun TagsContentV2(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(title = stringResource(R.string.tags_title), onNavigateBack = updatedOnNavigateBack)
+            UnideasTopBar(
+                title = stringResource(R.string.tags_title),
+                onNavigateBack = updatedOnNavigateBack
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        TagsBodyV2(uiState = uiState, dialogState = dialogState, padding = padding, onEvent = onEvent)
+        TagsBodyV2(
+            uiState = uiState,
+            dialogState = dialogState,
+            padding = padding,
+            onEvent = onEvent
+        )
     }
 
     TagsDialogsV2(dialogState = dialogState, onEvent = onEvent)
@@ -118,8 +127,13 @@ private fun TagsBodyV2(
                 onRetry = { onEvent(TagsEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
+
         is TagsUiState.Success ->
-            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) {
                 var newTagName by remember { mutableStateOf("") }
                 AddEntryRow(
                     value = newTagName,
@@ -138,50 +152,36 @@ private fun TagsBodyV2(
                     items = uiState.tags,
                     key = { it.id },
                     emptyContent = {
-                        UnideasEmptyContent(messageRes = R.string.tags_empty, modifier = Modifier.fillMaxSize())
+                        UnideasEmptyContent(
+                            messageRes = R.string.tags_empty,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     },
                     itemContent = { tag ->
                         if (tag.id == renamingTagId) {
-                            TagRenameRowV2(tag = tag, onEvent = onEvent)
+                            InlineEditRow(
+                                key = tag.id,
+                                initialValue = tag.name,
+                                placeholder = stringResource(R.string.tags_rename_label),
+                                confirmContentDescription = stringResource(R.string.tag_rename_action),
+                                cancelContentDescription = stringResource(R.string.tag_rename_cancel),
+                                onConfirm = { onEvent(TagsEvent.OnRenameConfirmClicked(it)) },
+                                onCancel = { onEvent(TagsEvent.OnDialogDismissed) },
+                            )
                         } else {
-                            TagRowV2(tag = tag, onEvent = onEvent)
+                            EntityListItemWithMenu(
+                                title = tag.name,
+                                optionsContentDescription = stringResource(R.string.tag_options),
+                                renameLabel = stringResource(R.string.tag_rename_action),
+                                deleteLabel = stringResource(R.string.tag_delete_action),
+                                onRenameClick = { onEvent(TagsEvent.OnRenameClicked(tag)) },
+                                onDeleteClick = { onEvent(TagsEvent.OnDeleteClicked(tag)) },
+                            )
                         }
                     },
                 )
             }
     }
-}
-
-@Composable
-private fun TagRowV2(
-    tag: Tag,
-    onEvent: (TagsEvent) -> Unit,
-) {
-    EntityListItemWithMenu(
-        title = tag.name,
-        optionsContentDescription = stringResource(R.string.tag_options),
-        renameLabel = stringResource(R.string.tag_rename_action),
-        deleteLabel = stringResource(R.string.tag_delete_action),
-        onRenameClick = { onEvent(TagsEvent.OnRenameClicked(tag)) },
-        onDeleteClick = { onEvent(TagsEvent.OnDeleteClicked(tag)) },
-    )
-}
-
-@Composable
-private fun TagRenameRowV2(
-    tag: Tag,
-    onEvent: (TagsEvent) -> Unit,
-) {
-    var name by remember(tag.id) { mutableStateOf(tag.name) }
-    AddEntryRow(
-        value = name,
-        onValueChange = { name = it },
-        placeholder = stringResource(R.string.tags_rename_label),
-        addContentDescription = stringResource(R.string.tag_rename_action),
-        onSubmit = { if (name.isNotBlank()) onEvent(TagsEvent.OnRenameConfirmClicked(name)) },
-        onCancel = { onEvent(TagsEvent.OnDialogDismissed) },
-        cancelContentDescription = stringResource(R.string.tag_rename_cancel),
-    )
 }
 
 @Composable

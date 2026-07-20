@@ -20,8 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
+import com.seucaio.unideas.ds.components.inputs.InlineEditRow
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
@@ -158,46 +158,29 @@ private fun SectionsBodyV2(
                     },
                     itemContent = { section ->
                         if (section.id == renamingSectionId) {
-                            SectionRenameRowV2(section = section, onEvent = onEvent)
+                            InlineEditRow(
+                                key = section.id,
+                                initialValue = section.name,
+                                placeholder = stringResource(R.string.sections_rename_label),
+                                confirmContentDescription = stringResource(R.string.section_rename_action),
+                                cancelContentDescription = stringResource(R.string.section_rename_cancel),
+                                onConfirm = { onEvent(SectionsEvent.OnRenameConfirmClicked(it)) },
+                                onCancel = { onEvent(SectionsEvent.OnDialogDismissed) },
+                            )
                         } else {
-                            SectionRowV2(section = section, onEvent = onEvent)
+                            EntityListItemWithMenu(
+                                title = section.name,
+                                optionsContentDescription = stringResource(R.string.section_options),
+                                renameLabel = stringResource(R.string.section_rename_action),
+                                deleteLabel = stringResource(R.string.section_delete_action),
+                                onRenameClick = { onEvent(SectionsEvent.OnRenameClicked(section)) },
+                                onDeleteClick = { onEvent(SectionsEvent.OnDeleteClicked(section)) },
+                            )
                         }
                     },
                 )
             }
     }
-}
-
-@Composable
-private fun SectionRowV2(
-    section: Section,
-    onEvent: (SectionsEvent) -> Unit,
-) {
-    EntityListItemWithMenu(
-        title = section.name,
-        optionsContentDescription = stringResource(R.string.section_options),
-        renameLabel = stringResource(R.string.section_rename_action),
-        deleteLabel = stringResource(R.string.section_delete_action),
-        onRenameClick = { onEvent(SectionsEvent.OnRenameClicked(section)) },
-        onDeleteClick = { onEvent(SectionsEvent.OnDeleteClicked(section)) },
-    )
-}
-
-@Composable
-private fun SectionRenameRowV2(
-    section: Section,
-    onEvent: (SectionsEvent) -> Unit,
-) {
-    var name by remember(section.id) { mutableStateOf(section.name) }
-    AddEntryRow(
-        value = name,
-        onValueChange = { name = it },
-        placeholder = stringResource(R.string.sections_rename_label),
-        addContentDescription = stringResource(R.string.section_rename_action),
-        onSubmit = { if (name.isNotBlank()) onEvent(SectionsEvent.OnRenameConfirmClicked(name)) },
-        onCancel = { onEvent(SectionsEvent.OnDialogDismissed) },
-        cancelContentDescription = stringResource(R.string.section_rename_cancel),
-    )
 }
 
 @Composable

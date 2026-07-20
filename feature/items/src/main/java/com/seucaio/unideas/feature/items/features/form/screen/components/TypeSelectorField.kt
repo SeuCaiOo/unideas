@@ -1,10 +1,13 @@
 package com.seucaio.unideas.feature.items.features.form.screen.components
 
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.buttons.SegmentedControl
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
@@ -20,4 +23,14 @@ fun TypeSelectorFieldV2(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifi
         },
         modifier = modifier,
     )
+}
+
+@PreviewLightDark
+@Composable
+private fun TypeSelectorFieldV2Preview() {
+    UdsTheme {
+        Surface {
+            TypeSelectorFieldV2(type = ItemType.TASK, onEvent = {})
+        }
+    }
 }

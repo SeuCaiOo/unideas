@@ -1,11 +1,16 @@
 package com.seucaio.unideas.feature.items.features.form.screen.components
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
@@ -36,5 +41,19 @@ fun RecurrenceFieldV2(recurrence: Recurrence, onEvent: (ItemFormEvent) -> Unit, 
                 onEvent(ItemFormEvent.OnRecurrenceChanged(newRecurrence))
             },
         )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun RecurrenceFieldV2Preview() {
+    UdsTheme {
+        Surface {
+            RecurrenceFieldV2(
+                recurrence = Recurrence.Weekly,
+                onEvent = {},
+                modifier = Modifier.padding(16.dp),
+            )
+        }
     }
 }

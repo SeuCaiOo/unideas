@@ -138,9 +138,7 @@ uds/
     ├── UnideasErrorContent.kt
     ├── UnideasEmptyContent.kt          — estado vazio com texto orientador
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
-    ├── DeleteConfirmationDialog.kt / NameInputDialog.kt
-    ├── UrgencyIndicator.kt             — cor de prazo (vermelho/âmbar) — uso EXCLUSIVO de prazo
-    ├── TagChip.kt / TagChipRow.kt / SectionDropdown.kt / LabeledOptionDropdown.kt
+    ├── DeleteConfirmationDialog.kt
     ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```

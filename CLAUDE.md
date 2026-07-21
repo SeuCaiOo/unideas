@@ -60,6 +60,10 @@ Strict order for every implementation step on a plan item — no skipping, no re
 
 Confirmed the hard way (2026-07-21): building/testing/marking-done a UI change before the user had looked at the code wasted real time on both sides when it turned out not to be what they wanted — they had to stop the flow and have it reverted. This applies project-wide, not just to one task.
 
+**While an item is mid-implementation, GitHub stays untouched.** Progress updates during work go only into the local plan file (`.claude/plans/*.md`) — never into a GitHub issue's checklist, never a new GitHub issue, never the project board. GitHub sync is a separate step tied to the `open-pr`/`finish-issue` skills, at the point a PR actually exists — not something to do reactively mid-task just because a plan item feels finished. A checked box or a new issue on GitHub is a claim that work is real; if there's no push and no PR backing it, that claim is false. Confirmed the hard way (2026-07-21, issue #86): a checklist item got marked done on GitHub, and a new sub-issue got created via the `new-issue` skill, while the code was still local-only (commits ahead of `origin`, nothing pushed) — both had to be reverted; nobody had asked for either.
+
+**Right before opening a PR, actually read the issue's DoD/checklist and check it against the diff.** Not a skim, not a rubber stamp — walk each checklist item and confirm it's genuinely backed by what's in the diff before checking it off in the `open-pr`/`finish-issue` DoD-reconciliation step.
+
 ## Commits & branches
 
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/), **English**, `type: short description` (`feat`, `fix`, `build`, `chore`, `ci`, `docs`). Enforced by the `commit-msg` hook.

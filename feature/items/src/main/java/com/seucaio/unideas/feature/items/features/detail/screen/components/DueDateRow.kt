@@ -37,7 +37,7 @@ import java.time.LocalDateTime
  * replaces conveyed, which `MetaRow`'s plain-text value slot can't express on its own.
  */
 @Composable
-fun DueDateRowV2(item: Item, isLast: Boolean, modifier: Modifier = Modifier) {
+fun DueDateRow(item: Item, isLast: Boolean, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
@@ -76,11 +76,11 @@ private const val OVERDUE_DAYS = 3L
 
 @PreviewLightDark
 @Composable
-private fun DueDateRowV2Preview() {
+private fun DueDateRowPreview() {
     UdsTheme {
         Surface {
             Column {
-                DueDateRowV2(
+                DueDateRow(
                     item = Item(
                         type = ItemType.TASK,
                         title = "Overdue",
@@ -89,7 +89,7 @@ private fun DueDateRowV2Preview() {
                     ),
                     isLast = false,
                 )
-                DueDateRowV2(
+                DueDateRow(
                     item = Item(type = ItemType.TASK, title = "No date", createdAt = previewCreatedAt),
                     isLast = true,
                 )

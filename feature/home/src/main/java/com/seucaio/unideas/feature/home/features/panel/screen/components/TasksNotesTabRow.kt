@@ -11,15 +11,15 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 
 /**
- * V2 (#84): thin [ItemType]<->index bridge over `:uds`'s domain-agnostic `AppTabRow` (real
- * Material3 `SecondaryTabRow`/`Tab` under the hood, styled with `:uds` tokens). Shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreenV2] and
+ * Thin [ItemType]<->index bridge over `:uds`'s domain-agnostic `AppTabRow` (real Material3
+ * `SecondaryTabRow`/`Tab` under the hood, styled with `:uds` tokens). Shared between
+ * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
  * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` — both switch the same
  * [ItemType] tab over the same
  * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel] state.
  */
 @Composable
-fun TasksNotesTabRowV2(activeTab: ItemType, onTabSelect: (ItemType) -> Unit, modifier: Modifier = Modifier) {
+fun TasksNotesTabRow(activeTab: ItemType, onTabSelect: (ItemType) -> Unit, modifier: Modifier = Modifier) {
     AppTabRow(
         tabs = listOf(stringResource(R.string.home_tab_tasks), stringResource(R.string.home_tab_notes)),
         selectedIndex = activeTab.tabIndex(),
@@ -40,10 +40,10 @@ private fun Int.toItemType(): ItemType = when (this) {
 
 @PreviewLightDark
 @Composable
-private fun TasksNotesTabRowV2Preview() {
+private fun TasksNotesTabRowPreview() {
     UdsTheme {
         Surface {
-            TasksNotesTabRowV2(activeTab = ItemType.TASK, onTabSelect = {})
+            TasksNotesTabRow(activeTab = ItemType.TASK, onTabSelect = {})
         }
     }
 }

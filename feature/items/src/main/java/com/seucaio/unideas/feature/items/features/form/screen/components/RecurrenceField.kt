@@ -15,7 +15,7 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun RecurrenceFieldV2(recurrence: Recurrence, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun RecurrenceField(recurrence: Recurrence, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
     val dailyLabel = stringResource(R.string.item_form_recurrence_daily)
     val weeklyLabel = stringResource(R.string.item_form_recurrence_weekly)
     val monthlyLabel = stringResource(R.string.item_form_recurrence_monthly)
@@ -46,10 +46,10 @@ fun RecurrenceFieldV2(recurrence: Recurrence, onEvent: (ItemFormEvent) -> Unit, 
 
 @PreviewLightDark
 @Composable
-private fun RecurrenceFieldV2Preview() {
+private fun RecurrenceFieldPreview() {
     UdsTheme {
         Surface {
-            RecurrenceFieldV2(
+            RecurrenceField(
                 recurrence = Recurrence.Weekly,
                 onEvent = {},
                 modifier = Modifier.padding(16.dp),

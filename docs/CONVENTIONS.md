@@ -127,7 +127,7 @@ val uiState: StateFlow<UiState> = combine(_internalState, itemsFlow) { internal,
 - Sem dividers entre itens de lista — usar espaçamento vertical (8/12dp).
 - Sem borders pra separar blocos — usar hierarquia de superfície (shifts de background).
 - Texto de corpo em `onSurfaceVariant`, nunca `#FFFFFF` puro.
-- **Vermelho/âmbar reservados EXCLUSIVAMENTE pra indicação de prazo** (`UrgencyIndicator`) — nunca em outros elementos.
+- **Vermelho/âmbar reservados EXCLUSIVAMENTE pra indicação de prazo** (`:uds`'s native `DueBadge`, ou `badgeColor` nos `ListItemRow`/`PriorityPanel`) — nunca em outros elementos.
 - Sem gamificação (confetti, level-up, progress com estrelas).
 
 ### Teclado / IME (edge-to-edge)

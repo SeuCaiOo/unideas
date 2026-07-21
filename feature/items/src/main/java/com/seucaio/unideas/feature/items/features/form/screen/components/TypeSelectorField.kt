@@ -12,7 +12,7 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun TypeSelectorFieldV2(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun TypeSelectorField(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
     val taskLabel = stringResource(R.string.item_form_type_task)
     val noteLabel = stringResource(R.string.item_form_type_note)
     SegmentedControl(
@@ -27,10 +27,10 @@ fun TypeSelectorFieldV2(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifi
 
 @PreviewLightDark
 @Composable
-private fun TypeSelectorFieldV2Preview() {
+private fun TypeSelectorFieldPreview() {
     UdsTheme {
         Surface {
-            TypeSelectorFieldV2(type = ItemType.TASK, onEvent = {})
+            TypeSelectorField(type = ItemType.TASK, onEvent = {})
         }
     }
 }

@@ -20,9 +20,9 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
 import java.time.LocalDateTime
 
-/** The Share/Edit/Delete/Complete action row shown in `ItemDetailScreenV2`'s top bar. */
+/** The Share/Edit/Delete/Complete action row shown in `ItemDetailScreen`'s top bar. */
 @Composable
-fun ItemDetailActionsV2(item: Item, onEvent: (ItemDetailEvent) -> Unit, modifier: Modifier = Modifier) {
+fun ItemDetailActions(item: Item, onEvent: (ItemDetailEvent) -> Unit, modifier: Modifier = Modifier) {
     Row(modifier) {
         IconButton(onClick = { onEvent(ItemDetailEvent.OnShareClicked) }) {
             Icon(Icons.Default.Share, contentDescription = stringResource(R.string.item_detail_share))
@@ -49,10 +49,10 @@ private val previewItem = Item(
 
 @PreviewLightDark
 @Composable
-private fun ItemDetailActionsV2Preview() {
+private fun ItemDetailActionsPreview() {
     UdsTheme {
         Surface {
-            ItemDetailActionsV2(item = previewItem, onEvent = {})
+            ItemDetailActions(item = previewItem, onEvent = {})
         }
     }
 }

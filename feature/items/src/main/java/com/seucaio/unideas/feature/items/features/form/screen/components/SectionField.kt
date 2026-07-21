@@ -15,7 +15,7 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun SectionFieldV2(
+fun SectionField(
     availableSections: List<Section>,
     sectionId: Long?,
     onEvent: (ItemFormEvent) -> Unit,
@@ -38,10 +38,10 @@ private val previewSections = listOf(Section(id = 1L, name = "Trabalho"), Sectio
 
 @PreviewLightDark
 @Composable
-private fun SectionFieldV2Preview() {
+private fun SectionFieldPreview() {
     UdsTheme {
         Surface {
-            SectionFieldV2(
+            SectionField(
                 availableSections = previewSections,
                 sectionId = 1L,
                 onEvent = {},

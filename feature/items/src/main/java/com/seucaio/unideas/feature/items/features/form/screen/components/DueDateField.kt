@@ -29,7 +29,7 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DueDateFieldV2(dueDate: LocalDate?, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun DueDateField(dueDate: LocalDate?, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
     var showDatePicker by remember { mutableStateOf(false) }
 
     FormField(label = stringResource(R.string.item_form_date_label), modifier = modifier) {
@@ -69,10 +69,10 @@ private val previewDueDate = LocalDate.of(2026, 7, 20)
 
 @PreviewLightDark
 @Composable
-private fun DueDateFieldV2Preview() {
+private fun DueDateFieldPreview() {
     UdsTheme {
         Surface {
-            DueDateFieldV2(
+            DueDateField(
                 dueDate = previewDueDate,
                 onEvent = {},
                 modifier = Modifier.padding(16.dp),

@@ -14,9 +14,9 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 /**
- * V2-only (#84): `:uds`'s native `ListItemRow`/`PriorityPanel` take a pre-formatted
- * `badgeLabel: String?` + `badgeColor: Color` — this derives both from [Item.dueDate], purely
- * presentational, no new domain data.
+ * `:uds`'s native `ListItemRow`/`PriorityPanel` take a pre-formatted `badgeLabel: String?` +
+ * `badgeColor: Color` — this derives both from [Item.dueDate], purely presentational, no new
+ * domain data.
  */
 @Composable
 internal fun dueBadgeLabel(item: Item, today: LocalDate = LocalDate.now()): String? {

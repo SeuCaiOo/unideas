@@ -15,6 +15,8 @@
     <string name="home_empty_onboarding">Nada por aqui ainda — toque no botão + abaixo para criar sua primeira tarefa ou anotação.</string>
     <string name="home_section_filter_none">Todas as seções</string>
     <string name="home_group_no_section">Sem seção</string>
+    <string name="home_view_mode_switch_to_grid">Mudar para visualização em grade</string>
+    <string name="home_view_mode_switch_to_list">Mudar para visualização em lista</string>
     <string name="home_item_recurring_content_description">Item recorrente</string>
     <string name="all_priorities_title">Todas as prioridades</string>
     <string name="all_priorities_empty">Nada vencido ou a vencer.</string>

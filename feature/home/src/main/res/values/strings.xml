@@ -15,6 +15,8 @@
     <string name="home_empty_onboarding">Nothing here yet — tap the + button below to create your first task or note.</string>
     <string name="home_section_filter_none">All sections</string>
     <string name="home_group_no_section">No section</string>
+    <string name="home_view_mode_switch_to_grid">Switch to grid view</string>
+    <string name="home_view_mode_switch_to_list">Switch to list view</string>
     <string name="home_item_recurring_content_description">Recurring item</string>
     <string name="all_priorities_title">All priorities</string>
     <string name="all_priorities_empty">Nothing overdue or due soon.</string>

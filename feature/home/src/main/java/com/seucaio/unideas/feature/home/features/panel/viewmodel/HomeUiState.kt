@@ -28,6 +28,11 @@ sealed interface HomeUiState {
      * @property hasAnyItem false only when the user has never created an item anywhere in the
      *   app — distinguishes the true first-run empty state from [tabItems] just being empty
      *   because of the active tab/filters.
+     * @property viewMode list vs. grid presentation. Lives here (not local `remember` state in
+     *   the Composable) because [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
+     *   and `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` are screens
+     *   sharing this same ViewModel, not a component — same rationale as [activeTab]/
+     *   [sectionFilter]/[tagFilters] already being here instead of per-screen state.
      */
     data class Success(
         val priorityItems: List<Item>,
@@ -40,6 +45,7 @@ sealed interface HomeUiState {
         val availableSections: List<Section>,
         val availableTags: List<Tag>,
         val hasAnyItem: Boolean,
+        val viewMode: ItemsViewMode,
     ) : HomeUiState
 
     data class Error(@StringRes val messageRes: Int) : HomeUiState
@@ -55,3 +61,11 @@ data class ItemSectionGroup(
     val sectionName: String?,
     val items: List<Item>,
 )
+
+/**
+ * Display mode for [HomeUiState.Success.tabItems] — a presentation-only choice (via
+ * [com.seucaio.unideas.ds.components.buttons.ViewModeToggleButton] at the call site), does not
+ * touch grouping/filtering. [LIST] and [GRID] are equal siblings — the user picks one, neither
+ * replaces the other.
+ */
+enum class ItemsViewMode { LIST, GRID }

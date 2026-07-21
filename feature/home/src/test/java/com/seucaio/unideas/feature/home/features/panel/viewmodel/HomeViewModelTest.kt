@@ -147,6 +147,20 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when OnViewModeChanged should switch the view mode`() = runTest {
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(ItemsViewMode.LIST, (awaitItem() as HomeUiState.Success).viewMode)
+            vm.onEvent(HomeEvent.OnViewModeChanged(ItemsViewMode.GRID))
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(ItemsViewMode.GRID, state.viewMode)
+        }
+    }
+
+    @Test
     fun `when loading reference data succeeds should surface available sections and tags`() = runTest {
         val sections = listOf(Section(id = 1L, name = "Casa"))
         val tags = listOf(Tag(id = 1L, name = "Urgente"))

@@ -11,6 +11,8 @@ sealed interface HomeEvent {
 
     data class OnTagFilterToggled(val tagId: Long) : HomeEvent
 
+    data class OnViewModeChanged(val viewMode: ItemsViewMode) : HomeEvent
+
     data class OnItemClicked(val itemId: Long) : HomeEvent
 
     data class OnCompleteClicked(val itemId: Long) : HomeEvent

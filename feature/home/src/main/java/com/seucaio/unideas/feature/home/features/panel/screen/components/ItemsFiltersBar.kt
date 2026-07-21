@@ -14,6 +14,7 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.buttons.ViewModeToggleButton
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
 
 /**
  * [Filters] plus the list/grid [ViewModeToggleButton], side by side — shared between

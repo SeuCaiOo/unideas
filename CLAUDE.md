@@ -47,6 +47,19 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 - **Kover**: 70% min via `koverVerify` on real logic — use cases, repos, mappers, **and ViewModels** (the `*ViewModel*` exclusion was removed as of #41; each tested `:feature:*` ViewModel must be added to `app/build.gradle.kts`'s `kover(project(...))` aggregation). Composables/PreviewProviders/entry points stay excluded. CI fails the PR if coverage drops below.
 - **Lint**: `abortOnError = false` — reports only.
 
+## Implementation workflow
+
+Strict order for every implementation step on a plan item — no skipping, no reordering, no doing two at once:
+
+1. **Plan** — write/update the plan (`.claude/plans/`).
+2. **Code** — implement exactly what the plan says for that item. Then **stop**.
+3. **Wait for the user to validate the code** — don't self-assess it as correct or say "vou validar." The user reviews it and tells you explicitly it's right. Nothing past this point happens until they do.
+4. **Test** — only after that explicit validation, and only if the user actually asks for it (validation doesn't imply a test request). Never run the app/emulator against code the user hasn't validated — that tests something they never signed off on.
+5. **Commit** — only after a requested test passes, or right after validation if no test was requested.
+6. **Mark the plan item done** — only after a commit exists for it. Uncommitted code is not "done": it can be discarded at any point, so checking an item off without a backing commit misrepresents the project's real state.
+
+Confirmed the hard way (2026-07-21): building/testing/marking-done a UI change before the user had looked at the code wasted real time on both sides when it turned out not to be what they wanted — they had to stop the flow and have it reverted. This applies project-wide, not just to one task.
+
 ## Commits & branches
 
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/), **English**, `type: short description` (`feat`, `fix`, `build`, `chore`, `ci`, `docs`). Enforced by the `commit-msg` hook.

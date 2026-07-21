@@ -1,38 +1,34 @@
 package com.seucaio.unideas.feature.tags
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.ds.components.legacy.ConditionalFab
+import com.seucaio.unideas.ds.components.inputs.AddEntryRow
+import com.seucaio.unideas.ds.components.inputs.InlineEditRow
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
-import com.seucaio.unideas.ds.components.legacy.NameInputDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListContent
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.tags.viewmodel.TagsDialogState
 import com.seucaio.unideas.feature.tags.viewmodel.TagsEvent
@@ -42,15 +38,15 @@ import com.seucaio.unideas.feature.tags.viewmodel.TagsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * V1 — superseded by [TagsScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
- * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
- * merges. Don't add new behavior here — any fix belongs in V2 too (or V2-only, if the fix is
- * about something V1 no longer does, like the Add/Rename dialogs V2 replaced).
+ * Row keeps the legacy [EntityListItemWithMenu] (kebab + rename/delete) since `:uds`'s native
+ * `ManageListRow` requires a subtitle Tag has no data for (item count isn't tracked). Add **and**
+ * Rename both use `:uds`'s native [AddEntryRow]/[InlineEditRow] — Add always visible above the
+ * list, Rename in place of the row being renamed (kebab menu still triggers it, but the row
+ * itself becomes editable instead of opening a modal). Both are pure screen-side swaps: they
+ * still call the exact same [TagsEvent.OnAddConfirmClicked]/[TagsEvent.OnRenameConfirmClicked];
+ * the dialog states just gate which row renders as editable. Delete keeps its confirmation
+ * dialog. Mirrors [com.seucaio.unideas.feature.sections.SectionsScreen]'s decisions exactly.
  */
-@Deprecated(
-    "Superseded by TagsScreenV2 (#84) — kept only for the dev toggle comparison.",
-    ReplaceWith("TagsScreenV2(onNavigateBack)"),
-)
 @Composable
 fun TagsScreen(
     onNavigateBack: (() -> Unit)?,
@@ -66,6 +62,7 @@ fun TagsScreen(
             val message = when (action) {
                 is TagsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
+
                 is TagsUiAction.ShowError -> action.message
             }
             snackbarHostState.showSnackbar(message)
@@ -81,7 +78,6 @@ fun TagsScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TagsContent(
     uiState: TagsUiState,
@@ -94,18 +90,19 @@ private fun TagsContent(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(title = stringResource(R.string.tags_title), onNavigateBack = updatedOnNavigateBack)
-        },
-        floatingActionButton = {
-            ConditionalFab(visible = uiState is TagsUiState.Success) {
-                FloatingActionButton(onClick = { onEvent(TagsEvent.OnAddClicked) }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.tags_add))
-                }
-            }
+            UnideasTopBar(
+                title = stringResource(R.string.tags_title),
+                onNavigateBack = updatedOnNavigateBack
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        TagsBody(uiState = uiState, padding = padding, onEvent = onEvent)
+        TagsBody(
+            uiState = uiState,
+            dialogState = dialogState,
+            padding = padding,
+            onEvent = onEvent
+        )
     }
 
     TagsDialogs(dialogState = dialogState, onEvent = onEvent)
@@ -114,6 +111,7 @@ private fun TagsContent(
 @Composable
 private fun TagsBody(
     uiState: TagsUiState,
+    dialogState: TagsDialogState,
     padding: PaddingValues,
     onEvent: (TagsEvent) -> Unit,
 ) {
@@ -125,33 +123,61 @@ private fun TagsBody(
                 onRetry = { onEvent(TagsEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-        is TagsUiState.Success -> {
-            if (uiState.tags.isEmpty()) {
-                UnideasEmptyContent(messageRes = R.string.tags_empty, modifier = Modifier.padding(padding))
-            } else {
-                LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
-                    items(uiState.tags, key = { it.id }) { tag ->
-                        TagRow(tag = tag, onEvent = onEvent)
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun TagRow(
-    tag: Tag,
-    onEvent: (TagsEvent) -> Unit,
-) {
-    EntityListItemWithMenu(
-        title = tag.name,
-        optionsContentDescription = stringResource(R.string.tag_options),
-        renameLabel = stringResource(R.string.tag_rename_action),
-        deleteLabel = stringResource(R.string.tag_delete_action),
-        onRenameClick = { onEvent(TagsEvent.OnRenameClicked(tag)) },
-        onDeleteClick = { onEvent(TagsEvent.OnDeleteClicked(tag)) },
-    )
+        is TagsUiState.Success ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) {
+                var newTagName by remember { mutableStateOf("") }
+                AddEntryRow(
+                    value = newTagName,
+                    onValueChange = { newTagName = it },
+                    placeholder = stringResource(R.string.tags_add_label),
+                    addContentDescription = stringResource(R.string.tags_add),
+                    onSubmit = {
+                        if (newTagName.isNotBlank()) {
+                            onEvent(TagsEvent.OnAddConfirmClicked(newTagName))
+                            newTagName = ""
+                        }
+                    },
+                )
+                val renamingTagId = (dialogState as? TagsDialogState.Rename)?.tag?.id
+                ListContent(
+                    items = uiState.tags,
+                    key = { it.id },
+                    emptyContent = {
+                        UnideasEmptyContent(
+                            messageRes = R.string.tags_empty,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    },
+                    itemContent = { tag ->
+                        if (tag.id == renamingTagId) {
+                            InlineEditRow(
+                                key = tag.id,
+                                initialValue = tag.name,
+                                placeholder = stringResource(R.string.tags_rename_label),
+                                confirmContentDescription = stringResource(R.string.tag_rename_action),
+                                cancelContentDescription = stringResource(R.string.tag_rename_cancel),
+                                onConfirm = { onEvent(TagsEvent.OnRenameConfirmClicked(it)) },
+                                onCancel = { onEvent(TagsEvent.OnDialogDismissed) },
+                            )
+                        } else {
+                            EntityListItemWithMenu(
+                                title = tag.name,
+                                optionsContentDescription = stringResource(R.string.tag_options),
+                                renameLabel = stringResource(R.string.tag_rename_action),
+                                deleteLabel = stringResource(R.string.tag_delete_action),
+                                onRenameClick = { onEvent(TagsEvent.OnRenameClicked(tag)) },
+                                onDeleteClick = { onEvent(TagsEvent.OnDeleteClicked(tag)) },
+                            )
+                        }
+                    },
+                )
+            }
+    }
 }
 
 @Composable
@@ -160,22 +186,7 @@ private fun TagsDialogs(
     onEvent: (TagsEvent) -> Unit,
 ) {
     when (dialogState) {
-        is TagsDialogState.None -> Unit
-        is TagsDialogState.Add ->
-            NameInputDialog(
-                title = stringResource(R.string.tags_add),
-                label = stringResource(R.string.tags_add_label),
-                onConfirm = { name -> onEvent(TagsEvent.OnAddConfirmClicked(name)) },
-                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
-            )
-        is TagsDialogState.Rename ->
-            NameInputDialog(
-                title = stringResource(R.string.tags_rename),
-                label = stringResource(R.string.tags_rename_label),
-                initialValue = dialogState.tag.name,
-                onConfirm = { newName -> onEvent(TagsEvent.OnRenameConfirmClicked(newName)) },
-                onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },
-            )
+        is TagsDialogState.None, is TagsDialogState.Add, is TagsDialogState.Rename -> Unit
         is TagsDialogState.Delete ->
             DeleteConfirmationDialog(
                 titleRes = R.string.tag_delete_confirm_title,

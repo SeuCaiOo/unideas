@@ -1,38 +1,34 @@
 package com.seucaio.unideas.feature.sections
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.domain.model.Section
-import com.seucaio.unideas.ds.components.legacy.ConditionalFab
+import com.seucaio.unideas.ds.components.inputs.AddEntryRow
+import com.seucaio.unideas.ds.components.inputs.InlineEditRow
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
-import com.seucaio.unideas.ds.components.legacy.NameInputDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListContent
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsDialogState
 import com.seucaio.unideas.feature.sections.viewmodel.SectionsEvent
@@ -42,15 +38,14 @@ import com.seucaio.unideas.feature.sections.viewmodel.SectionsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * V1 — superseded by [SectionsScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
- * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
- * merges. Don't add new behavior here — any fix belongs in V2 too (or V2-only, if the fix is
- * about something V1 no longer does, like the Add/Rename dialogs V2 replaced).
+ * Row keeps the legacy [EntityListItemWithMenu] (kebab + rename/delete) since `:uds`'s native
+ * `ManageListRow` requires a subtitle Section has no data for (item count isn't tracked). Add
+ * **and** Rename both use `:uds`'s native [AddEntryRow]/[InlineEditRow] — Add always visible
+ * above the list, Rename in place of the row being renamed (kebab menu still triggers it, but the
+ * row itself becomes editable instead of opening a modal). Both are pure screen-side swaps: they
+ * still call the exact same [SectionsEvent.OnAddConfirmClicked]/[SectionsEvent.OnRenameConfirmClicked];
+ * the dialog states just gate which row renders as editable. Delete keeps its confirmation dialog.
  */
-@Deprecated(
-    "Superseded by SectionsScreenV2 (#84) — kept only for the dev toggle comparison.",
-    ReplaceWith("SectionsScreenV2(onNavigateBack)"),
-)
 @Composable
 fun SectionsScreen(
     onNavigateBack: (() -> Unit)?,
@@ -66,6 +61,7 @@ fun SectionsScreen(
             val message = when (action) {
                 is SectionsUiAction.ShowSnackbar ->
                     resources.getString(action.messageRes, *action.formatArgs.toTypedArray())
+
                 is SectionsUiAction.ShowError -> action.message
             }
             snackbarHostState.showSnackbar(message)
@@ -81,7 +77,6 @@ fun SectionsScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SectionsContent(
     uiState: SectionsUiState,
@@ -94,18 +89,19 @@ private fun SectionsContent(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(title = stringResource(R.string.sections_title), onNavigateBack = updatedOnNavigateBack)
-        },
-        floatingActionButton = {
-            ConditionalFab(visible = uiState is SectionsUiState.Success) {
-                FloatingActionButton(onClick = { onEvent(SectionsEvent.OnAddClicked) }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.sections_add))
-                }
-            }
+            UnideasTopBar(
+                title = stringResource(R.string.sections_title),
+                onNavigateBack = updatedOnNavigateBack
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        SectionsBody(uiState = uiState, padding = padding, onEvent = onEvent)
+        SectionsBody(
+            uiState = uiState,
+            dialogState = dialogState,
+            padding = padding,
+            onEvent = onEvent
+        )
     }
 
     SectionsDialogs(dialogState = dialogState, onEvent = onEvent)
@@ -114,6 +110,7 @@ private fun SectionsContent(
 @Composable
 private fun SectionsBody(
     uiState: SectionsUiState,
+    dialogState: SectionsDialogState,
     padding: PaddingValues,
     onEvent: (SectionsEvent) -> Unit,
 ) {
@@ -125,33 +122,61 @@ private fun SectionsBody(
                 onRetry = { onEvent(SectionsEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-        is SectionsUiState.Success -> {
-            if (uiState.sections.isEmpty()) {
-                UnideasEmptyContent(messageRes = R.string.sections_empty, modifier = Modifier.padding(padding))
-            } else {
-                LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
-                    items(uiState.sections, key = { it.id }) { section ->
-                        SectionRow(section = section, onEvent = onEvent)
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun SectionRow(
-    section: Section,
-    onEvent: (SectionsEvent) -> Unit,
-) {
-    EntityListItemWithMenu(
-        title = section.name,
-        optionsContentDescription = stringResource(R.string.section_options),
-        renameLabel = stringResource(R.string.section_rename_action),
-        deleteLabel = stringResource(R.string.section_delete_action),
-        onRenameClick = { onEvent(SectionsEvent.OnRenameClicked(section)) },
-        onDeleteClick = { onEvent(SectionsEvent.OnDeleteClicked(section)) },
-    )
+        is SectionsUiState.Success ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) {
+                var newSectionName by remember { mutableStateOf("") }
+                AddEntryRow(
+                    value = newSectionName,
+                    onValueChange = { newSectionName = it },
+                    placeholder = stringResource(R.string.sections_add_label),
+                    addContentDescription = stringResource(R.string.sections_add),
+                    onSubmit = {
+                        if (newSectionName.isNotBlank()) {
+                            onEvent(SectionsEvent.OnAddConfirmClicked(newSectionName))
+                            newSectionName = ""
+                        }
+                    },
+                )
+                val renamingSectionId = (dialogState as? SectionsDialogState.Rename)?.section?.id
+                ListContent(
+                    items = uiState.sections,
+                    key = { it.id },
+                    emptyContent = {
+                        UnideasEmptyContent(
+                            messageRes = R.string.sections_empty,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    },
+                    itemContent = { section ->
+                        if (section.id == renamingSectionId) {
+                            InlineEditRow(
+                                key = section.id,
+                                initialValue = section.name,
+                                placeholder = stringResource(R.string.sections_rename_label),
+                                confirmContentDescription = stringResource(R.string.section_rename_action),
+                                cancelContentDescription = stringResource(R.string.section_rename_cancel),
+                                onConfirm = { onEvent(SectionsEvent.OnRenameConfirmClicked(it)) },
+                                onCancel = { onEvent(SectionsEvent.OnDialogDismissed) },
+                            )
+                        } else {
+                            EntityListItemWithMenu(
+                                title = section.name,
+                                optionsContentDescription = stringResource(R.string.section_options),
+                                renameLabel = stringResource(R.string.section_rename_action),
+                                deleteLabel = stringResource(R.string.section_delete_action),
+                                onRenameClick = { onEvent(SectionsEvent.OnRenameClicked(section)) },
+                                onDeleteClick = { onEvent(SectionsEvent.OnDeleteClicked(section)) },
+                            )
+                        }
+                    },
+                )
+            }
+    }
 }
 
 @Composable
@@ -160,22 +185,7 @@ private fun SectionsDialogs(
     onEvent: (SectionsEvent) -> Unit,
 ) {
     when (dialogState) {
-        is SectionsDialogState.None -> Unit
-        is SectionsDialogState.Add ->
-            NameInputDialog(
-                title = stringResource(R.string.sections_add),
-                label = stringResource(R.string.sections_add_label),
-                onConfirm = { name -> onEvent(SectionsEvent.OnAddConfirmClicked(name)) },
-                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
-            )
-        is SectionsDialogState.Rename ->
-            NameInputDialog(
-                title = stringResource(R.string.sections_rename),
-                label = stringResource(R.string.sections_rename_label),
-                initialValue = dialogState.section.name,
-                onConfirm = { newName -> onEvent(SectionsEvent.OnRenameConfirmClicked(newName)) },
-                onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },
-            )
+        is SectionsDialogState.None, is SectionsDialogState.Add, is SectionsDialogState.Rename -> Unit
         is SectionsDialogState.Delete ->
             DeleteConfirmationDialog(
                 titleRes = R.string.section_delete_confirm_title,

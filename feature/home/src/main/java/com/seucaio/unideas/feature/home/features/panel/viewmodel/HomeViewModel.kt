@@ -33,10 +33,10 @@ import java.time.LocalDateTime
 /**
  * ViewModel for the Home priority panel + tabs + filters screen.
  *
- * The active tab, section/tag filters and reference data (available sections/tags, loaded once
- * via [GetSectionsAndTagsUseCase] — they can't change while this screen is open) are real
- * UI-only [InternalState], combined with the two domain flows exposed by [HomeUseCase]
- * (`getPriorityItems` for the fixed panel, `getItems` for the active tab's list) — same
+ * The active tab, section/tag filters, view mode (list/grid) and reference data (available
+ * sections/tags, loaded once via [GetSectionsAndTagsUseCase] — they can't change while this
+ * screen is open) are real UI-only [InternalState], combined with the two domain flows exposed by
+ * [HomeUseCase] (`getPriorityItems` for the fixed panel, `getItems` for the active tab's list) — same
  * `combine`/`InternalState` pattern as
  * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel]. [HomeUseCase]
  * is a facade over the single-purpose Item use cases this screen needs — same shape as
@@ -58,6 +58,7 @@ class HomeViewModel(
         val tagFilters: Set<Long> = emptySet(),
         val availableSections: List<Section> = emptyList(),
         val availableTags: List<Tag> = emptyList(),
+        val viewMode: ItemsViewMode = ItemsViewMode.LIST,
     )
 
     private val internalState = MutableStateFlow(InternalState())
@@ -89,11 +90,13 @@ class HomeViewModel(
                     showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,
                     activeTab = internal.activeTab,
                     tabItems = tabItems,
+                    groupedTabItems = tabItems.groupBySection(internal.availableSections),
                     sectionFilter = internal.sectionFilter,
                     tagFilters = internal.tagFilters,
                     availableSections = internal.availableSections,
                     availableTags = internal.availableTags,
                     hasAnyItem = hasAnyItem,
+                    viewMode = internal.viewMode,
                 ) as HomeUiState
             }
                 .onStart { emit(HomeUiState.Loading) }
@@ -121,6 +124,7 @@ class HomeViewModel(
             is HomeEvent.OnTabChanged -> internalState.update { it.copy(activeTab = event.type) }
             is HomeEvent.OnSectionFilterChanged -> internalState.update { it.copy(sectionFilter = event.sectionId) }
             is HomeEvent.OnTagFilterToggled -> internalState.update { it.toggleTag(event.tagId) }
+            is HomeEvent.OnViewModeChanged -> internalState.update { it.copy(viewMode = event.viewMode) }
             is HomeEvent.OnItemClicked -> sendUiAction(HomeUiAction.NavigateToDetail(event.itemId))
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToForm(event.type))

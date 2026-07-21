@@ -147,6 +147,20 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when OnViewModeChanged should switch the view mode`() = runTest {
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(ItemsViewMode.LIST, (awaitItem() as HomeUiState.Success).viewMode)
+            vm.onEvent(HomeEvent.OnViewModeChanged(ItemsViewMode.GRID))
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(ItemsViewMode.GRID, state.viewMode)
+        }
+    }
+
+    @Test
     fun `when loading reference data succeeds should surface available sections and tags`() = runTest {
         val sections = listOf(Section(id = 1L, name = "Casa"))
         val tags = listOf(Tag(id = 1L, name = "Urgente"))
@@ -196,6 +210,48 @@ class HomeViewModelTest {
         vm.uiState.test {
             val state = awaitItem() as HomeUiState.Success
             assertEquals(false, state.hasAnyItem)
+        }
+    }
+
+    @Test
+    fun `when tab items span multiple sections should group them in section order with unsectioned last`() = runTest {
+        val work = Section(id = 1L, name = "Work")
+        val personal = Section(id = 2L, name = "Personal")
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work, personal), emptyList())
+        val personalItem = ItemStub.task(id = 1L, sectionId = personal.id)
+        val workItem = ItemStub.task(id = 2L, sectionId = work.id)
+        val unsectionedItem = ItemStub.task(id = 3L, sectionId = null)
+        every { homeUseCase.getItems(ItemType.TASK, null, emptyList()) } returns
+            flowOf(listOf(personalItem, workItem, unsectionedItem))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(
+                listOf(
+                    ItemSectionGroup(work.id, work.name, listOf(workItem)),
+                    ItemSectionGroup(personal.id, personal.name, listOf(personalItem)),
+                    ItemSectionGroup(sectionId = null, sectionName = null, items = listOf(unsectionedItem)),
+                ),
+                state.groupedTabItems,
+            )
+        }
+    }
+
+    @Test
+    fun `when a section filter is active should still expose groupedTabItems for that section only`() = runTest {
+        val work = Section(id = 7L, name = "Work")
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work), emptyList())
+        val item = ItemStub.task(id = 1L, sectionId = work.id)
+        every { homeUseCase.getItems(ItemType.TASK, 7L, emptyList()) } returns flowOf(listOf(item))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            awaitItem()
+            vm.onEvent(HomeEvent.OnSectionFilterChanged(7L))
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(listOf(ItemSectionGroup(work.id, work.name, listOf(item))), state.groupedTabItems)
         }
     }
 

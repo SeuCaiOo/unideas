@@ -1,10 +1,11 @@
 package com.seucaio.unideas.feature.home.features.panel.screen.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,11 +17,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.lists.CollapsibleGroupHeader
 import com.seucaio.unideas.ds.components.lists.ListContent
 import com.seucaio.unideas.ds.components.lists.ListItemRow
+import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
@@ -29,66 +32,61 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
 
 /**
- * Sentinel standing in for [ItemSectionGroup.sectionId] `null` (unsectioned bucket) in the local
- * collapse-state set — Room section IDs are always positive.
- */
-private const val NO_SECTION_KEY = -1L
-
-/**
- * Home's tab-items list, on top of `:uds`'s generic [ListContent] — maps [Item] to
- * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent], leaving list-shape
- * concerns (empty/list/footer) to [ListContent]. Shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`.
+ * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
+ * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent]. Called from
+ * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes
+ * [HomeUiState.Success.tabItems] is non-empty, [ItemsContent] already handles the empty state.
+ * [ItemsGridContent] is the [ItemsViewMode.GRID] sibling.
  *
  * When [HomeUiState.Success.sectionFilter] is `null`, renders [HomeUiState.Success.groupedTabItems]
  * instead — a header per Section, collapsible, ahead of that group's rows. Collapse state is
  * local UI-only state (not in the ViewModel — purely cosmetic, no business logic, nothing to test
- * at the VM level per `mvi.md`). [modifier] is applied once, at this root [Box] — the branches
- * below use a fresh `Modifier` (compose-rules `ModifierReused`).
+ * at the VM level per `mvi.md`). [footer], if present, renders as the list's last row — a plain
+ * `@Composable` so callers (and [ItemsContent]) don't need to know this renders on a `LazyColumn`
+ * (as opposed to [ItemsGridContent]'s `LazyVerticalGrid`).
  */
 @Composable
 internal fun ItemsListContent(
     state: HomeUiState.Success,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    itemModifier: Modifier = Modifier,
-    footer: (LazyListScope.() -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
     val noSectionLabel = stringResource(R.string.home_group_no_section)
-    val emptyMessageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
 
-    Box(modifier = modifier.fillMaxSize()) {
-        when {
-            state.tabItems.isEmpty() -> UnideasEmptyContent(
-                messageRes = emptyMessageRes,
-                modifier = Modifier.fillMaxSize()
-            )
-            state.sectionFilter == null -> GroupedItemsList(
-                groups = state.groupedTabItems,
-                noSectionLabel = noSectionLabel,
-                checkContentDescription = checkContentDescription,
-                onEvent = onEvent,
-                modifier = Modifier.fillMaxSize(),
-                itemModifier = itemModifier,
-                footer = footer,
-            )
-            else -> ListContent(
-                items = state.tabItems,
-                key = { it.id },
-                emptyContent = { UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize()) },
-                itemContent = { item ->
-                    ListItemRow(
-                        ui = item.toListItemUi(checkContentDescription),
-                        onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
-                        onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
-                        modifier = itemModifier,
-                    )
-                },
-                footer = footer,
-            )
-        }
+    if (state.sectionFilter == null) {
+        GroupedItemsList(
+            groups = state.groupedTabItems,
+            noSectionLabel = noSectionLabel,
+            checkContentDescription = checkContentDescription,
+            onEvent = onEvent,
+            modifier = modifier,
+            footer = footer,
+        )
+    } else {
+        ListContent(
+            items = state.tabItems,
+            key = { it.id },
+            emptyContent = {
+                // Unreachable in practice — ItemsContent already routes empty tabItems away from
+                // here — kept because ListContent's emptyContent param isn't nullable.
+                UnideasEmptyContent(
+                    messageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            itemContent = { item ->
+                ListItemRow(
+                    ui = item.toListItemUi(checkContentDescription),
+                    onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
+                    onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            },
+            modifier = modifier,
+            footer = footer?.let { content -> { item { content() } } },
+        )
     }
 }
 
@@ -99,8 +97,7 @@ private fun GroupedItemsList(
     checkContentDescription: String,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    itemModifier: Modifier = Modifier,
-    footer: (LazyListScope.() -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
 
@@ -125,17 +122,21 @@ private fun GroupedItemsList(
                         ui = item.toListItemUi(checkContentDescription),
                         onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
                         onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
-                        modifier = itemModifier,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
             }
         }
-        footer?.invoke(this)
+        if (footer != null) {
+            item { footer() }
+        }
     }
 }
 
 internal class ItemsListPreviewProvider : PreviewParameterProvider<HomeUiState.Success> {
-    override val values = HomePreviewProvider().values.filterIsInstance<HomeUiState.Success>()
+    override val values = HomePreviewProvider().values
+        .filterIsInstance<HomeUiState.Success>()
+        .filter { it.tabItems.isNotEmpty() }
 }
 
 @PreviewLightDark
@@ -145,10 +146,25 @@ private fun ItemsListContentPreview(
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(
-                state = state,
-                onEvent = {},
-            )
+            ItemsListContent(state = state, onEvent = {})
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ItemsListContentWithFooterPreview(
+    @PreviewParameter(ItemsListPreviewProvider::class) state: HomeUiState.Success,
+) {
+    UdsTheme {
+        Surface {
+            ItemsListContent(state = state, onEvent = {}) {
+                NavRow(
+                    icon = Icons.AutoMirrored.Outlined.List,
+                    label = "View all items",
+                    onClick = {},
+                )
+            }
         }
     }
 }

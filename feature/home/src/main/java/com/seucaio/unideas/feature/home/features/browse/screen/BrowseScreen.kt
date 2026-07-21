@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -26,8 +25,8 @@ import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.screen.components.Filters
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsListContent
+import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsContent
+import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsFiltersBar
 import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
@@ -125,18 +124,19 @@ private fun BrowseSuccessBody(
             onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
         )
         HorizontalDivider()
-        Filters(
+        ItemsFiltersBar(
             sections = state.availableSections,
             tags = state.availableTags,
             sectionFilter = state.sectionFilter,
             tagFilters = state.tagFilters,
             onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
             onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
+            viewMode = state.viewMode,
+            onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
         )
-        ItemsListContent(
+        ItemsContent(
             state = state,
             onEvent = onEvent,
-            itemModifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }

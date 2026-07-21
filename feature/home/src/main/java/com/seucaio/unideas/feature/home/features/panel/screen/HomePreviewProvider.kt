@@ -9,6 +9,7 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -38,42 +39,59 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
 
     override val values: Sequence<HomeUiState> = sequenceOf(
         HomeUiState.Loading,
+        // grouped, multiple items per group: 2+ items in "Trabalho"/"Casa" so the grid view
+        // actually shows 2 columns side by side within a group, not just one card per row —
+        // a single-item-per-group fixture can't tell a broken 2-column grid from a correct one.
         run {
-            val workItem = task(1L, "Pagar contas", LocalDate.of(2026, 6, 25), sectionId = work.id)
-            val homeItem =
-                task(2L, "Renovar assinatura", LocalDate.of(2026, 7, 10), Recurrence.Monthly, sectionId = home.id)
-            val unsectionedItem = task(3L, "Ler artigo", LocalDate.of(2026, 7, 15))
+            val workItems = listOf(
+                task(1L, "Pagar contas", LocalDate.of(2026, 6, 25), sectionId = work.id),
+                task(5L, "Enviar relatório", LocalDate.of(2026, 6, 28), sectionId = work.id),
+            )
+            val homeItems = listOf(
+                task(2L, "Renovar assinatura", LocalDate.of(2026, 7, 10), Recurrence.Monthly, sectionId = home.id),
+                task(6L, "Consertar torneira", LocalDate.of(2026, 6, 30), sectionId = home.id),
+            )
+            // odd count on purpose — last row of the grid should show one card + one empty cell
+            val unsectionedItems = listOf(task(3L, "Ler artigo", LocalDate.of(2026, 7, 15)))
+            val allItems = workItems + homeItems + unsectionedItems
             HomeUiState.Success(
-                priorityItems = listOf(workItem),
+                priorityItems = listOf(workItems.first()),
                 showSeeAllButton = false,
                 activeTab = ItemType.TASK,
-                tabItems = listOf(workItem, homeItem, unsectionedItem),
+                tabItems = allItems,
                 groupedTabItems = listOf(
-                    ItemSectionGroup(work.id, work.name, listOf(workItem)),
-                    ItemSectionGroup(home.id, home.name, listOf(homeItem)),
-                    ItemSectionGroup(sectionId = null, sectionName = null, items = listOf(unsectionedItem)),
+                    ItemSectionGroup(work.id, work.name, workItems),
+                    ItemSectionGroup(home.id, home.name, homeItems),
+                    ItemSectionGroup(sectionId = null, sectionName = null, items = unsectionedItems),
                 ),
                 sectionFilter = null,
                 tagFilters = emptySet(),
                 availableSections = sections,
                 availableTags = tags,
                 hasAnyItem = true,
+                viewMode = ItemsViewMode.LIST,
             )
         },
-        // filtered-to-one-section: exercises the flat (non-grouped, no header) list branch
+        // filtered-to-one-section, multiple items: exercises the flat (non-grouped, no header)
+        // branch in both LIST and GRID modes with more than one card, same reasoning as above
         run {
-            val filteredItem = task(4L, "Consertar torneira", LocalDate.of(2026, 6, 30), sectionId = home.id)
+            val filteredItems = listOf(
+                task(4L, "Consertar torneira", LocalDate.of(2026, 6, 30), sectionId = home.id),
+                task(7L, "Renovar assinatura", LocalDate.of(2026, 7, 10), Recurrence.Monthly, sectionId = home.id),
+                task(8L, "Organizar armário", null, sectionId = home.id),
+            )
             HomeUiState.Success(
                 priorityItems = emptyList(),
                 showSeeAllButton = false,
                 activeTab = ItemType.TASK,
-                tabItems = listOf(filteredItem),
-                groupedTabItems = listOf(ItemSectionGroup(home.id, home.name, listOf(filteredItem))),
+                tabItems = filteredItems,
+                groupedTabItems = listOf(ItemSectionGroup(home.id, home.name, filteredItems)),
                 sectionFilter = home.id,
                 tagFilters = emptySet(),
                 availableSections = sections,
                 availableTags = tags,
                 hasAnyItem = true,
+                viewMode = ItemsViewMode.LIST,
             )
         },
         // filtered-to-zero: user has items elsewhere, just none match this tab/filter
@@ -88,6 +106,7 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
             availableSections = sections,
             availableTags = tags,
             hasAnyItem = true,
+            viewMode = ItemsViewMode.LIST,
         ),
         // true first-run empty state: no items anywhere in the app
         HomeUiState.Success(
@@ -101,6 +120,7 @@ class HomePreviewProvider : PreviewParameterProvider<HomeUiState> {
             availableSections = emptyList(),
             availableTags = emptyList(),
             hasAnyItem = false,
+            viewMode = ItemsViewMode.LIST,
         ),
         HomeUiState.Error(R.string.home_load_error),
     )

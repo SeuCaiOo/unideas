@@ -45,8 +45,8 @@ import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.components.Filters
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsListContent
+import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsContent
+import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsFiltersBar
 import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
@@ -58,8 +58,8 @@ import org.koin.androidx.compose.koinViewModel
 
 /**
  * `:uds` native, 1a-Tonal-styled components (`PriorityPanel`, `TabItem`, `AppFab` +
- * `MiniFabAction`, `ListItemRow` via [ItemsListContent], `FilterDropdownPill`/`SelectableChip` via
- * [Filters]).
+ * `MiniFabAction`, `ListItemRow`/`ListItemCard` via [ItemsContent], `FilterDropdownPill`/`SelectableChip` via
+ * [ItemsFiltersBar]).
  */
 @Composable
 fun HomeScreen(
@@ -227,26 +227,25 @@ private fun HomeSuccessBody(
             onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
         )
 
-        Filters(
+        ItemsFiltersBar(
             sections = state.availableSections,
             tags = state.availableTags,
             sectionFilter = state.sectionFilter,
             tagFilters = state.tagFilters,
             onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
             onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
+            viewMode = state.viewMode,
+            onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
         )
-        ItemsListContent(
+        ItemsContent(
             state = state,
             onEvent = onEvent,
-            itemModifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            item {
-                NavRow(
-                    icon = Icons.AutoMirrored.Outlined.List,
-                    label = stringResource(R.string.browse_action),
-                    onClick = onNavigateToBrowse,
-                )
-            }
+            NavRow(
+                icon = Icons.AutoMirrored.Outlined.List,
+                label = stringResource(R.string.browse_action),
+                onClick = onNavigateToBrowse,
+            )
         }
     }
 }

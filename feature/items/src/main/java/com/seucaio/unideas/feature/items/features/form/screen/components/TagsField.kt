@@ -16,7 +16,7 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun TagsFieldV2(
+fun TagsField(
     availableTags: List<Tag>,
     selectedTagIds: Set<Long>,
     onEvent: (ItemFormEvent) -> Unit,
@@ -36,10 +36,10 @@ private val previewTags = listOf(Tag(id = 1L, name = "urgente"), Tag(id = 2L, na
 
 @PreviewLightDark
 @Composable
-private fun TagsFieldV2Preview() {
+private fun TagsFieldPreview() {
     UdsTheme {
         Surface {
-            TagsFieldV2(
+            TagsField(
                 availableTags = previewTags,
                 selectedTagIds = setOf(1L),
                 onEvent = {},

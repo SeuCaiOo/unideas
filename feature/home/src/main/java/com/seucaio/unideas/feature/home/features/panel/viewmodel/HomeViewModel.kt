@@ -89,6 +89,7 @@ class HomeViewModel(
                     showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,
                     activeTab = internal.activeTab,
                     tabItems = tabItems,
+                    groupedTabItems = tabItems.groupBySection(internal.availableSections),
                     sectionFilter = internal.sectionFilter,
                     tagFilters = internal.tagFilters,
                     availableSections = internal.availableSections,

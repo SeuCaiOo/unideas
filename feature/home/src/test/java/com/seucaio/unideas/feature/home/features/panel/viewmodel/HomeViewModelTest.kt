@@ -200,6 +200,48 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when tab items span multiple sections should group them in section order with unsectioned last`() = runTest {
+        val work = Section(id = 1L, name = "Work")
+        val personal = Section(id = 2L, name = "Personal")
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work, personal), emptyList())
+        val personalItem = ItemStub.task(id = 1L, sectionId = personal.id)
+        val workItem = ItemStub.task(id = 2L, sectionId = work.id)
+        val unsectionedItem = ItemStub.task(id = 3L, sectionId = null)
+        every { homeUseCase.getItems(ItemType.TASK, null, emptyList()) } returns
+            flowOf(listOf(personalItem, workItem, unsectionedItem))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(
+                listOf(
+                    ItemSectionGroup(work.id, work.name, listOf(workItem)),
+                    ItemSectionGroup(personal.id, personal.name, listOf(personalItem)),
+                    ItemSectionGroup(sectionId = null, sectionName = null, items = listOf(unsectionedItem)),
+                ),
+                state.groupedTabItems,
+            )
+        }
+    }
+
+    @Test
+    fun `when a section filter is active should still expose groupedTabItems for that section only`() = runTest {
+        val work = Section(id = 7L, name = "Work")
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work), emptyList())
+        val item = ItemStub.task(id = 1L, sectionId = work.id)
+        every { homeUseCase.getItems(ItemType.TASK, 7L, emptyList()) } returns flowOf(listOf(item))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            awaitItem()
+            vm.onEvent(HomeEvent.OnSectionFilterChanged(7L))
+            assertEquals(HomeUiState.Loading, awaitItem())
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(listOf(ItemSectionGroup(work.id, work.name, listOf(item))), state.groupedTabItems)
+        }
+    }
+
+    @Test
     fun `when the priority items flow throws should emit Error`() = runTest {
         every { homeUseCase.getPriorityItems(any(), any()) } returns flow { throw IllegalStateException("boom") }
         val vm = viewModel()

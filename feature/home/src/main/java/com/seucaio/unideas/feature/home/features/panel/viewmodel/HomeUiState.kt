@@ -21,6 +21,10 @@ sealed interface HomeUiState {
      * @property priorityItems fixed panel content (overdue + due-soon), independent of [activeTab].
      * @property showSeeAllButton true when [priorityItems] was truncated to fit the panel's limit.
      * @property tabItems the active tab's list, filtered by [sectionFilter]/[tagFilters].
+     * @property groupedTabItems [tabItems] grouped by Section, in [availableSections] order, with
+     *   an unsectioned bucket ([ItemSectionGroup.sectionName] `null`) last if present. Only
+     *   meaningful (and only rendered as such) when [sectionFilter] is `null` — a single-section
+     *   filter already narrows the list to one section, so grouping chrome would be redundant.
      * @property hasAnyItem false only when the user has never created an item anywhere in the
      *   app — distinguishes the true first-run empty state from [tabItems] just being empty
      *   because of the active tab/filters.
@@ -30,6 +34,7 @@ sealed interface HomeUiState {
         val showSeeAllButton: Boolean,
         val activeTab: ItemType,
         val tabItems: List<Item>,
+        val groupedTabItems: List<ItemSectionGroup>,
         val sectionFilter: Long?,
         val tagFilters: Set<Long>,
         val availableSections: List<Section>,
@@ -39,3 +44,14 @@ sealed interface HomeUiState {
 
     data class Error(@StringRes val messageRes: Int) : HomeUiState
 }
+
+/**
+ * One Section's slice of [HomeUiState.Success.tabItems]. [sectionName] `null` means the
+ * unsectioned bucket (items with no [Item.sectionId]) — resolved to a localized label at the
+ * Composable layer, not here (this class stays domain-agnostic like the rest of `HomeUiState`).
+ */
+data class ItemSectionGroup(
+    val sectionId: Long?,
+    val sectionName: String?,
+    val items: List<Item>,
+)

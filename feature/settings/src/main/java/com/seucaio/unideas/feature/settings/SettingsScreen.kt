@@ -1,18 +1,18 @@
 package com.seucaio.unideas.feature.settings
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -31,10 +30,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
-import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
-import com.seucaio.unideas.ds.components.legacy.UnideasListItem
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListSection
+import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
@@ -46,13 +45,10 @@ import java.time.format.DateTimeFormatter
 import com.seucaio.unideas.core.backup.R as BackupR
 
 /**
- * V1 — superseded by [SettingsScreenV2] (#84). Kept only for the `DevScreenVersionToggle`
- * side-by-side comparison; scheduled for removal once V2 is confirmed and the epic branch
- * merges. Don't add new behavior here — any fix belongs in V2 too.
+ * Rows use `:uds`'s native [NavRow] (icon + label + chevron) grouped by [ListSection] (title +
+ * items). `SeedScopeBottomSheet`, `UnideasTopBar` and `AppVersionFooter` stay legacy — no native
+ * equivalent yet.
  */
-@Deprecated(
-    "Superseded by SettingsScreenV2 (#84) — kept only for the dev toggle comparison.",
-)
 @Composable
 fun SettingsScreen(
     versionName: String,
@@ -111,7 +107,6 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsContent(
     uiState: SettingsUiState,
@@ -169,38 +164,47 @@ private fun SettingsBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        SettingsSectionHeader(stringResource(R.string.settings_organize_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_sections),
-            onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
-        )
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_tags),
-            onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
-        )
+        ListSection(title = stringResource(R.string.settings_organize_section)) {
+            NavRow(
+                icon = Icons.Outlined.Folder,
+                label = stringResource(R.string.settings_organize_sections),
+                onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
+            )
+            NavRow(
+                icon = Icons.AutoMirrored.Outlined.Label,
+                label = stringResource(R.string.settings_organize_tags),
+                onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
+            )
+        }
 
-        SettingsSectionHeader(stringResource(R.string.settings_backup_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_backup_section),
-            subtitle = backupStatusSubtitle(backupUiState),
-            onClick = onBackupClick,
-        )
+        ListSection(title = stringResource(R.string.settings_backup_section)) {
+            NavRow(
+                icon = Icons.Outlined.CloudUpload,
+                label = stringResource(R.string.settings_backup_section),
+                subtitle = backupStatusSubtitle(backupUiState),
+                onClick = onBackupClick,
+            )
+        }
 
         if (showDebugSection) {
-            SettingsSectionHeader(stringResource(R.string.settings_debug_section))
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_items),
-                onClick = { onEvent(SettingsEvent.OnItemsClicked) },
-            )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_seed),
-                onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
-            )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_clear),
-                onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
-            )
-            UseV2ScreensRow()
+            ListSection(title = stringResource(R.string.settings_debug_section)) {
+                NavRow(
+                    icon = Icons.AutoMirrored.Outlined.List,
+                    label = stringResource(R.string.settings_debug_items),
+                    onClick = { onEvent(SettingsEvent.OnItemsClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.Storage,
+                    label = stringResource(R.string.settings_debug_seed),
+                    onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.DeleteSweep,
+                    label = stringResource(R.string.settings_debug_clear),
+                    onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
+                )
+                UseV2ScreensRow()
+            }
         }
     }
 }
@@ -218,35 +222,6 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
 }
 
 private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
-
-/**
- * Dev-only toggle for #84 — picks V1 vs V2 per screen while both coexist. Reads/writes
- * [DevScreenVersionToggle] directly, orthogonal to [SettingsUiState] on purpose (same spirit as
- * the Seed/Clear database dev actions above).
- */
-@Composable
-private fun UseV2ScreensRow() {
-    val useV2 by DevScreenVersionToggle.useV2.collectAsStateWithLifecycle()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(stringResource(R.string.settings_debug_use_v2_screens))
-        Switch(checked = useV2, onCheckedChange = DevScreenVersionToggle::set)
-    }
-}
-
-@Composable
-private fun SettingsSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-    )
-}
 
 @PreviewLightDark
 @Composable

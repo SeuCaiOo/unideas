@@ -20,10 +20,13 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
  * [Filters] plus the list/grid [ViewModeToggleButton], side by side — shared between
  * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
  * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` (same pairing as
- * [Filters]/[ItemsListContent]/[TasksNotesTabRow] already are), so a UI element used by both
+ * [Filters]/[ItemsContent]/[TasksNotesTabRow] already are), so a UI element used by both
  * screens has exactly one call site instead of being duplicated inline in each
- * (`docs/CONVENTIONS.md` § Screen (Compose)). [viewMode] stays hoisted at the screen — this
- * composable only computes the flip and reports it via [onViewModeChange].
+ * (`docs/CONVENTIONS.md` § Screen (Compose)). [viewMode] lives in
+ * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState.Success] — both screens
+ * share [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel], same as
+ * `activeTab`/`sectionFilter`/`tagFilters` — this composable only computes the flip and reports
+ * it via [onViewModeChange].
  */
 @Composable
 internal fun ItemsFiltersBar(

@@ -11,15 +11,16 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.ds.components.legacy.SectionDropdown
-import com.seucaio.unideas.ds.components.legacy.TagChipRow
+import com.seucaio.unideas.ds.components.chips.SelectableChipRow
+import com.seucaio.unideas.ds.components.chips.SelectableChipUi
+import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 
 /**
- * Section (single-select dropdown) + tags (multi-select chips) filter row. Not Home-specific
- * in its own right (no [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent]
- * dependency, plain callbacks instead), just the filter bar that happens to live on Home.
+ * Rendered via `:uds`'s native `FilterDropdownPill` + `SelectableChipRow`. Both `:uds` pieces
+ * are domain-agnostic (`String`/[SelectableChipUi]); the [Section]/[Tag] name<->id bridging
+ * stays here, in the feature that owns those domain types.
  */
 @Composable
 fun Filters(
@@ -33,21 +34,21 @@ fun Filters(
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         if (sections.isNotEmpty()) {
-            SectionDropdown(
-                options = sections.map { it.id to it.name },
-                selectedId = sectionFilter,
-                onSelect = onSectionFilterChange,
-                noFilterLabel = stringResource(R.string.home_section_filter_none),
-                modifier = Modifier.fillMaxWidth(),
+            val selectedName = sections.firstOrNull { it.id == sectionFilter }?.name.orEmpty()
+            FilterDropdownPill(
+                options = sections.map { it.name },
+                selected = selectedName,
+                allOptionLabel = stringResource(R.string.home_section_filter_none),
+                onSelect = { name -> onSectionFilterChange(sections.firstOrNull { it.name == name }?.id) },
             )
         }
         if (tags.isNotEmpty()) {
-            TagChipRow(
-                tags = tags.map { it.id to it.name },
-                selectedIds = tagFilters,
-                onToggle = onTagFilterToggle,
-                wrap = true,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            SelectableChipRow(
+                chips = tags.map { tag ->
+                    SelectableChipUi(id = tag.id.toString(), label = tag.name, selected = tag.id in tagFilters)
+                },
+                onToggle = { id -> onTagFilterToggle(id.toLong()) },
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }

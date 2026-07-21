@@ -26,9 +26,9 @@ import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.screen.components.FiltersV2
+import com.seucaio.unideas.feature.home.features.panel.screen.components.Filters
 import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsListContent
-import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRowV2
+import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
@@ -37,12 +37,11 @@ import org.koin.androidx.compose.koinViewModel
 
 /**
  * New screen (#84, user-directed extrapolation beyond the original visual-swap scope): the same
- * Tasks/Notes tab + filters + list [HomeScreenV2] shows, but full-screen — no Priorities panel,
- * easier to browse the complete list. Reuses [HomeViewModel]/[HomeUiState]/[HomeEvent]/
- * [HomeUiAction] as-is (same data need, just a different presentation), rather than a new
- * ViewModel/use-case stack for what's the same underlying data. Reached from [HomeScreenV2]'s
- * TopBar action; [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] (V1) is
- * untouched and has no entry point into this screen.
+ * Tasks/Notes tab + filters + list [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
+ * shows, but full-screen — no Priorities panel, easier to browse the complete list. Reuses
+ * [HomeViewModel]/[HomeUiState]/[HomeEvent]/[HomeUiAction] as-is (same data need, just a
+ * different presentation), rather than a new ViewModel/use-case stack for what's the same
+ * underlying data. Reached from Home's TopBar action.
  */
 @Composable
 fun BrowseScreen(
@@ -121,12 +120,12 @@ private fun BrowseSuccessBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        TasksNotesTabRowV2(
+        TasksNotesTabRow(
             activeTab = state.activeTab,
             onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
         )
         HorizontalDivider()
-        FiltersV2(
+        Filters(
             sections = state.availableSections,
             tags = state.availableTags,
             sectionFilter = state.sectionFilter,

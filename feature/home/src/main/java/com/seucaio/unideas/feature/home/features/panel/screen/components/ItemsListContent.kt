@@ -14,10 +14,10 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 
 /**
- * V2 (#84): home's tab-items list, on top of `:uds`'s generic [ListContent] — maps [Item] to
+ * Home's tab-items list, on top of `:uds`'s generic [ListContent] — maps [Item] to
  * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent], leaving list-shape
  * concerns (empty/list/footer) to [ListContent]. Shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreenV2] and
+ * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
  * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`.
  */
 @Composable

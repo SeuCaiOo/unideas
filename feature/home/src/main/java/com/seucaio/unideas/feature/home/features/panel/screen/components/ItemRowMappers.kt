@@ -6,9 +6,9 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.lists.ListItemUi
 
 /**
- * V2 (#84): maps [Item] to `:uds`'s domain-agnostic [ListItemUi], so screens can call `:uds`'s
+ * Maps [Item] to `:uds`'s domain-agnostic [ListItemUi], so screens can call `:uds`'s
  * `ListItemRow` directly instead of going through a feature-local wrapper composable. Shared
- * between [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreenV2] and
+ * between [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
  * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`.
  */
 @Composable

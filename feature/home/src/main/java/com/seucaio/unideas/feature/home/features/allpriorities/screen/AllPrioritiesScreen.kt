@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -109,6 +110,7 @@ private fun AllPrioritiesBody(
                             ui = item.toListItemUi(checkContentDescription),
                             onClick = { onEvent(AllPrioritiesEvent.OnItemClicked(item.id)) },
                             onToggleCheck = { onEvent(AllPrioritiesEvent.OnCompleteClicked(item.id)) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
                 }

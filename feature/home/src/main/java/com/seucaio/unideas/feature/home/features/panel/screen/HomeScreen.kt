@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -21,12 +22,18 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -55,11 +62,17 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
 import org.koin.androidx.compose.koinViewModel
+import kotlin.math.roundToInt
 
 /**
  * `:uds` native, 1a-Tonal-styled components (`PriorityPanel`, `TabItem`, `AppFab` +
  * `MiniFabAction`, `ListItemRow`/`ListItemCard` via [ItemsContent], `FilterDropdownPill`/`SelectableChip` via
  * [ItemsFiltersBar]).
+ *
+ * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls (2026-07-21, #86 Pacote 1) —
+ * a nested scroll connection gives the panel first claim on the scroll delta, shrinking it via
+ * [collapsible] before [ItemsContent] gets to consume the rest. [TasksNotesTabRow]/
+ * [ItemsFiltersBar] stay pinned. [ItemsContent] itself is untouched.
  */
 @Composable
 fun HomeScreen(
@@ -211,7 +224,20 @@ private fun HomeSuccessBody(
     onNavigateToBrowse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
+    var panelOffsetPx by remember { mutableFloatStateOf(0f) }
+    var panelHeightPx by remember { mutableFloatStateOf(0f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val previous = panelOffsetPx
+                panelOffsetPx = (panelOffsetPx + available.y).coerceIn(-panelHeightPx, 0f)
+                return Offset(0f, panelOffsetPx - previous)
+            }
+        }
+    }
+
+    Column(modifier = modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
         PriorityPanel(
             title = stringResource(R.string.home_panel_title),
             icon = Icons.Outlined.Flag,
@@ -220,6 +246,12 @@ private fun HomeSuccessBody(
             onFooterClick = { onEvent(HomeEvent.OnSeeAllClicked) },
             onRowClick = { id -> onEvent(HomeEvent.OnItemClicked(id)) },
             emptyText = stringResource(R.string.home_panel_empty),
+            modifier = Modifier
+                .fillMaxWidth()
+                .collapsible(
+                    offsetPx = { panelOffsetPx },
+                    onNaturalHeightChanged = { panelHeightPx = it },
+                ),
         )
 
         TasksNotesTabRow(
@@ -247,6 +279,25 @@ private fun HomeSuccessBody(
                 onClick = onNavigateToBrowse,
             )
         }
+    }
+}
+
+/**
+ * Measures [PriorityPanel] at its natural height (ignoring the incoming min height), reports
+ * [onNaturalHeightChanged] every pass, then lays out a height of `naturalHeight + offsetPx()`
+ * (never negative) and shifts it up by the same amount — shrinks the space the panel claims in
+ * [HomeSuccessBody]'s [Column] as [offsetPx] goes negative (driven by the nested scroll
+ * connection above), rather than just visually sliding content underneath it.
+ */
+private fun Modifier.collapsible(
+    offsetPx: () -> Float,
+    onNaturalHeightChanged: (Float) -> Unit,
+): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minHeight = 0))
+    onNaturalHeightChanged(placeable.height.toFloat())
+    val height = (placeable.height + offsetPx()).roundToInt().coerceAtLeast(0)
+    layout(placeable.width, height) {
+        placeable.placeRelative(0, offsetPx().roundToInt())
     }
 }
 

@@ -23,7 +23,7 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
  * [Filters]/[ItemsContent]/[TasksNotesTabRow] already are), so a UI element used by both
  * screens has exactly one call site instead of being duplicated inline in each
  * (`docs/CONVENTIONS.md` § Screen (Compose)). [viewMode] lives in
- * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState.Success] — both screens
+ * [com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState] — both screens
  * share [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel], same as
  * `activeTab`/`sectionFilter`/`tagFilters` — this composable only computes the flip and reports
  * it via [onViewModeChange].

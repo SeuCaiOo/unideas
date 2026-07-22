@@ -28,26 +28,28 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 
 /**
  * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
  * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent]. Called from
- * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes
- * [HomeUiState.Success.tabItems] is non-empty, [ItemsContent] already handles the empty state.
- * [ItemsGridContent] is the [ItemsViewMode.GRID] sibling.
+ * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [ItemsState.tabItems] is
+ * non-empty, [ItemsContent] already handles the empty state. [ItemsGridContent] is the
+ * [ItemsViewMode.GRID] sibling.
  *
- * When [HomeUiState.Success.sectionFilter] is `null`, renders [HomeUiState.Success.groupedTabItems]
- * instead — a header per Section, collapsible, ahead of that group's rows. Collapse state is
- * local UI-only state (not in the ViewModel — purely cosmetic, no business logic, nothing to test
- * at the VM level per `mvi.md`). [footer], if present, renders as the list's last row — a plain
- * `@Composable` so callers (and [ItemsContent]) don't need to know this renders on a `LazyColumn`
- * (as opposed to [ItemsGridContent]'s `LazyVerticalGrid`).
+ * When [sectionFilter] is `null`, renders [ItemsState.groupedTabItems] instead — a header per
+ * Section, collapsible, ahead of that group's rows. Collapse state is local UI-only state (not in
+ * the ViewModel — purely cosmetic, no business logic, nothing to test at the VM level per
+ * `mvi.md`). [footer], if present, renders as the list's last row — a plain `@Composable` so
+ * callers (and [ItemsContent]) don't need to know this renders on a `LazyColumn` (as opposed to
+ * [ItemsGridContent]'s `LazyVerticalGrid`).
  */
 @Composable
 internal fun ItemsListContent(
-    state: HomeUiState.Success,
+    itemsState: ItemsState,
+    sectionFilter: Long?,
+    hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
@@ -55,9 +57,9 @@ internal fun ItemsListContent(
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
     val noSectionLabel = stringResource(R.string.home_group_no_section)
 
-    if (state.sectionFilter == null) {
+    if (sectionFilter == null) {
         GroupedItemsList(
-            groups = state.groupedTabItems,
+            groups = itemsState.groupedTabItems,
             noSectionLabel = noSectionLabel,
             checkContentDescription = checkContentDescription,
             onEvent = onEvent,
@@ -66,13 +68,13 @@ internal fun ItemsListContent(
         )
     } else {
         ListContent(
-            items = state.tabItems,
+            items = itemsState.tabItems,
             key = { it.id },
             emptyContent = {
                 // Unreachable in practice — ItemsContent already routes empty tabItems away from
                 // here — kept because ListContent's emptyContent param isn't nullable.
                 UnideasEmptyContent(
-                    messageRes = if (state.hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding,
+                    messageRes = if (hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding,
                     modifier = Modifier.fillMaxSize(),
                 )
             },
@@ -133,20 +135,20 @@ private fun GroupedItemsList(
     }
 }
 
-internal class ItemsListPreviewProvider : PreviewParameterProvider<HomeUiState.Success> {
+internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsState> {
     override val values = HomePreviewProvider().values
-        .filterIsInstance<HomeUiState.Success>()
+        .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsListContentPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) state: HomeUiState.Success,
+    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: ItemsState,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(state = state, onEvent = {})
+            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {})
         }
     }
 }
@@ -154,11 +156,11 @@ private fun ItemsListContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsListContentWithFooterPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) state: HomeUiState.Success,
+    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: ItemsState,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(state = state, onEvent = {}) {
+            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {}) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

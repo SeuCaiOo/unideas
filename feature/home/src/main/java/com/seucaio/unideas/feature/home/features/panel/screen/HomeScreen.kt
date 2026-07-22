@@ -57,22 +57,19 @@ import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsFi
 import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
 /**
- * `:uds` native, 1a-Tonal-styled components (`PriorityPanel`, `TabItem`, `AppFab` +
- * `MiniFabAction`, `ListItemRow`/`ListItemCard` via [ItemsContent], `FilterDropdownPill`/`SelectableChip` via
- * [ItemsFiltersBar]).
- *
- * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls (2026-07-21, #86 Pacote 1) —
- * a nested scroll connection gives the panel first claim on the scroll delta, shrinking it via
- * [collapsible] before [ItemsContent] gets to consume the rest. [TasksNotesTabRow]/
- * [ItemsFiltersBar] stay pinned. [ItemsContent] itself is untouched.
+ * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls — a nested scroll connection
+ * gives the panel first claim on the scroll delta, shrinking it via [collapsible] before
+ * [ItemsContent] consumes the rest. [TasksNotesTabRow]/[ItemsFiltersBar] stay pinned.
  */
 @Composable
 fun HomeScreen(
@@ -84,6 +81,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val filterState by viewModel.filterState.collectAsStateWithLifecycle()
+    val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToForm by rememberUpdatedState(onNavigateToForm)
@@ -104,6 +103,8 @@ fun HomeScreen(
 
     HomeContent(
         uiState = uiState,
+        filterState = filterState,
+        itemsState = itemsState,
         onEvent = viewModel::onEvent,
         onNavigateToBrowse = onNavigateToBrowse,
         snackbarHostState = snackbarHostState,
@@ -113,6 +114,8 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
+    filterState: FilterState,
+    itemsState: ItemsState,
     onEvent: (HomeEvent) -> Unit,
     onNavigateToBrowse: () -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -154,6 +157,8 @@ private fun HomeContent(
     ) { padding ->
         HomeBody(
             uiState = uiState,
+            filterState = filterState,
+            itemsState = itemsState,
             padding = padding,
             onEvent = onEvent,
             onNavigateToBrowse = updatedOnNavigateToBrowse,
@@ -194,6 +199,8 @@ private fun HomeAddFab(
 @Composable
 private fun HomeBody(
     uiState: HomeUiState,
+    filterState: FilterState,
+    itemsState: ItemsState,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
     onNavigateToBrowse: () -> Unit,
@@ -209,7 +216,9 @@ private fun HomeBody(
 
         is HomeUiState.Success ->
             HomeSuccessBody(
-                state = uiState,
+                hasAnyItem = uiState.hasAnyItem,
+                filterState = filterState,
+                itemsState = itemsState,
                 modifier = Modifier.padding(padding),
                 onEvent = onEvent,
                 onNavigateToBrowse = onNavigateToBrowse,
@@ -219,7 +228,9 @@ private fun HomeBody(
 
 @Composable
 private fun HomeSuccessBody(
-    state: HomeUiState.Success,
+    hasAnyItem: Boolean,
+    filterState: FilterState,
+    itemsState: ItemsState,
     onEvent: (HomeEvent) -> Unit,
     onNavigateToBrowse: () -> Unit,
     modifier: Modifier = Modifier,
@@ -241,8 +252,8 @@ private fun HomeSuccessBody(
         PriorityPanel(
             title = stringResource(R.string.home_panel_title),
             icon = Icons.Outlined.Flag,
-            rows = state.priorityItems.map { it.toPriorityRowUi() },
-            footerLabel = if (state.showSeeAllButton) stringResource(R.string.home_see_all) else null,
+            rows = itemsState.priorityItems.map { it.toPriorityRowUi() },
+            footerLabel = if (itemsState.showSeeAllButton) stringResource(R.string.home_see_all) else null,
             onFooterClick = { onEvent(HomeEvent.OnSeeAllClicked) },
             onRowClick = { id -> onEvent(HomeEvent.OnItemClicked(id)) },
             emptyText = stringResource(R.string.home_panel_empty),
@@ -255,22 +266,24 @@ private fun HomeSuccessBody(
         )
 
         TasksNotesTabRow(
-            activeTab = state.activeTab,
+            activeTab = filterState.activeTab,
             onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
         )
 
         ItemsFiltersBar(
-            sections = state.availableSections,
-            tags = state.availableTags,
-            sectionFilter = state.sectionFilter,
-            tagFilters = state.tagFilters,
+            sections = filterState.availableSections,
+            tags = filterState.availableTags,
+            sectionFilter = filterState.sectionFilter,
+            tagFilters = filterState.tagFilters,
             onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
             onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
-            viewMode = state.viewMode,
+            viewMode = filterState.viewMode,
             onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
         )
         ItemsContent(
-            state = state,
+            itemsState = itemsState,
+            filterState = filterState,
+            hasAnyItem = hasAnyItem,
             onEvent = onEvent,
         ) {
             NavRow(
@@ -312,11 +325,13 @@ private fun Item.toPriorityRowUi(): PriorityRowUi = PriorityRowUi(
 @PreviewLightDark
 @Composable
 private fun HomeScreenPreview(
-    @PreviewParameter(HomePreviewProvider::class) uiState: HomeUiState,
+    @PreviewParameter(HomePreviewProvider::class) fixture: HomePreviewFixture,
 ) {
     UdsTheme {
         HomeContent(
-            uiState = uiState,
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            filterState = fixture.filterState,
+            itemsState = fixture.itemsState,
             onEvent = {},
             onNavigateToBrowse = {},
             snackbarHostState = remember { SnackbarHostState() },

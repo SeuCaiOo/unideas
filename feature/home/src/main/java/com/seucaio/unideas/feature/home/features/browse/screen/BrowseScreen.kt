@@ -38,14 +38,9 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * New screen (#84, user-directed extrapolation beyond the original visual-swap scope): the same
- * Tasks/Notes tab + filters + list [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
- * shows, but full-screen — no Priorities panel, easier to browse the complete list. Reuses
- * [HomeViewModel]/[HomeEvent]/[HomeUiAction] as-is (same data need, just a different
- * presentation), rather than a new ViewModel/use-case stack for what's the same underlying data.
- * Collects [HomeViewModel.filterState]/[HomeViewModel.itemsState]/[HomeViewModel.uiState]
- * independently (#102, 2026-07-22), same as [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] —
- * there's just no priority panel here to worry about. Reached from Home's TopBar action.
+ * Same Tasks/Notes tab + filters + list [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
+ * shows, but full-screen — no priority panel. Reuses [HomeViewModel] as-is. Reached from Home's
+ * TopBar action.
  */
 @Composable
 fun BrowseScreen(

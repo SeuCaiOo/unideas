@@ -31,34 +31,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * ViewModel for the Home priority panel + tabs + filters screen.
- *
- * Three independent `StateFlow`s (#102, 2026-07-22) instead of one `combine`d [HomeUiState], each
- * collected directly by [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] /
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`:
- * - [filterState]: activeTab, section/tag filters, reference data, view mode — real UI-only
- *   state, never fails/loads, mutated directly by [onEvent].
- * - [itemsState]: priority panel + active tab's list — query results, no load/error of their own;
- *   a failure just degrades to an empty list, same rationale as [loadReferenceData].
- * - [uiState] ([HomeUiState]): the only place that knows about Loading/Error, scoped to just
- *   `hasAnyItem` — it has no item data at all, so it needs no `combine()` to build itself.
- *
- * Switching tabs restarts only [itemsState]; [uiState] never reloads for that — the original bug
- * this replaced was a single `flatMapLatest` over one `InternalState` blob, which reissued a
- * screen-wide `Loading` on every tab/filter change (hid the priority panel/tabs/filters too, not
- * just the list, and dropped Compose-local `remember` state like scroll position). Splitting the
- * concerns by *who writes them and when* — [filterState] is user-event-driven, [itemsState] is
- * query-derived, [uiState] is screen-readiness-derived — removes the need for that blob and the
- * race-avoidance tricks it required.
- *
- * [HomeUseCase] is a facade over the single-purpose Item use cases this screen needs — same shape
- * as [com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase]/
- * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase]. `getPriorityItems` returns the full
- * ordered list uncapped; this ViewModel applies the panel's display limit and derives
- * `showSeeAllButton` from whether the list was truncated.
- *
- * Member order follows the Kotlin coding conventions (properties/`init` first, grouped by what
- * each piece feeds into; methods last) — https://kotlinlang.org/docs/coding-conventions.html#class-layout.
+ * Exposes [filterState]/[itemsState]/[uiState] as independent `StateFlow`s instead of one
+ * `combine`d state — a tab switch only restarts [itemsState], so [uiState] never re-flashes
+ * `Loading` for it. `getPriorityItems` returns the full list uncapped; capping and
+ * `showSeeAllButton` happen here.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
@@ -66,20 +42,16 @@ class HomeViewModel(
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
 ) : ViewModel() {
 
-    //region filterState — UI-only, user-event-driven (see onEvent)
+    //region filterState
 
     private val _filterState = MutableStateFlow(FilterState())
     internal val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
 
     //endregion
 
-    //region itemsState — derived from filterState + the item queries, no load/error of its own
+    //region itemsState
 
-    // No load/error here — a query failure just degrades to an empty list, same rationale as
-    // loadReferenceData() below. There's nothing for OnRetryClicked to restart: an empty result
-    // isn't an error state to recover from, it's just what "no data (yet or ever)" looks like.
-    // Restart the query only on the three fields it actually depends on — no need for a bespoke
-    // key type, Triple already has structural equality for distinctUntilChangedBy.
+    // Query failures degrade to an empty list — no error state to retry from.
     private val itemsFlow: Flow<List<Item>> = filterState
         .distinctUntilChangedBy { Triple(it.activeTab, it.sectionFilter, it.tagFilters) }
         .flatMapLatest { filter ->
@@ -101,24 +73,20 @@ class HomeViewModel(
             )
         }.stateIn(viewModelScope, WhileSubscribed(5_000), ItemsState())
 
-    // Mirrors the latest itemsState lists without casting itemsState.value (forbidden by
-    // mvi.md's spirit) — handleComplete needs the domain Item. Kept subscribed via init below.
+    // handleComplete needs the domain Item, not just itemsState's last value.
     private var currentItems: List<Item> = emptyList()
 
     //endregion
 
-    //region uiState — screen readiness only (Loading/Success/Error)
+    //region uiState
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
-    // Scoped to just "can the screen render" — no item data, so no combine() needed to build it.
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
             homeUseCase.hasAnyItem()
                 .map<Boolean, HomeUiState> { HomeUiState.Success(hasAnyItem = it) }
                 .onStart { emit(HomeUiState.Loading) }
-                // Caught per-inner-flow (not on the outer chain) so a failure only ends this
-                // attempt — retryTrigger stays collected and OnRetryClicked can still restart it.
                 .catch { emit(HomeUiState.Error(R.string.home_load_error)) }
         }
         .stateIn(viewModelScope, WhileSubscribed(5_000), HomeUiState.Loading)
@@ -155,8 +123,7 @@ class HomeViewModel(
     }
 
     private suspend fun loadReferenceData() {
-        // Failure here just leaves availableSections/availableTags empty — same silent-degrade
-        // rationale as ItemFormViewModel, GetSectionsAndTagsUseCase already falls back on its own.
+        // Failure just leaves availableSections/availableTags empty.
         runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
             _filterState.update {
                 it.setFilters(sections = referenceData.sections, tags = referenceData.tags)

@@ -29,13 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-/**
- * #102 (2026-07-22): [HomeViewModel] exposes [HomeViewModel.filterState]/[HomeViewModel.itemsState]/
- * [HomeViewModel.uiState] as three independent `StateFlow`s — tests target whichever one actually
- * owns the behavior under test, instead of casting a single combined `uiState` everywhere.
- * [ItemsState] carries no load/error of its own (a query failure just degrades to an empty list);
- * only [HomeUiState] (driven by `hasAnyItem()`) can go [HomeUiState.Error].
- */
+/** Each test targets whichever of `filterState`/`itemsState`/`uiState` owns the behavior. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 

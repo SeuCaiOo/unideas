@@ -67,20 +67,9 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
 /**
- * `:uds` native, 1a-Tonal-styled components (`PriorityPanel`, `TabItem`, `AppFab` +
- * `MiniFabAction`, `ListItemRow`/`ListItemCard` via [ItemsContent], `FilterDropdownPill`/`SelectableChip` via
- * [ItemsFiltersBar]).
- *
- * Collects [HomeViewModel.filterState]/[HomeViewModel.itemsState]/[HomeViewModel.uiState]
- * independently (#102, 2026-07-22) — [uiState] only decides Loading/Error/ready-to-render,
- * [filterState]/[itemsState] carry the actual data, so a tab switch (which only changes
- * [itemsState]) never tears down this Composable's local `remember` state (list scroll position,
- * the collapsible priority panel's offset below).
- *
- * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls (2026-07-21, #86 Pacote 1) —
- * a nested scroll connection gives the panel first claim on the scroll delta, shrinking it via
- * [collapsible] before [ItemsContent] gets to consume the rest. [TasksNotesTabRow]/
- * [ItemsFiltersBar] stay pinned. [ItemsContent] itself is untouched.
+ * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls — a nested scroll connection
+ * gives the panel first claim on the scroll delta, shrinking it via [collapsible] before
+ * [ItemsContent] consumes the rest. [TasksNotesTabRow]/[ItemsFiltersBar] stay pinned.
  */
 @Composable
 fun HomeScreen(

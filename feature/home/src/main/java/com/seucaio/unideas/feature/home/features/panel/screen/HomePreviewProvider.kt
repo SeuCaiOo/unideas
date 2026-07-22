@@ -13,12 +13,7 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * A `Success`-shaped fixture (#102, 2026-07-22) — [HomeViewModel][com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel]
- * exposes [ItemsState]/[FilterState]/`hasAnyItem` as three independent `StateFlow`s instead of one
- * combined type, so previews need all three together to render a screen/component the same way
- * the real Screen would compose them.
- */
+/** Bundles the three `StateFlow`s a "Success" preview needs together. */
 internal data class HomePreviewFixture(
     val itemsState: ItemsState,
     val filterState: FilterState,

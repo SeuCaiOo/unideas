@@ -7,54 +7,29 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 
 /**
- * UI state for the Home priority panel + tabs + filters screen.
- *
- * Unlike the item form ([com.seucaio.unideas.feature.items] exception 2), Home is genuinely
- * reactive — the panel and the active tab's list can each fail or become empty independently
- * at any time — so it keeps the traditional `Loading`/`Success`/`Error` shape.
+ * Screen-readiness state for the Home priority panel + tabs + filters screen — deliberately scoped
+ * to just "can the screen render / did it fail to load" (#102, 2026-07-22). No item data lives
+ * here: [FilterState] (UI-only, never fails) and [ItemsState] (query results, no load/error of
+ * their own — a query either produced a list or, on failure, silently degrades to an empty one)
+ * are collected as their own `StateFlow`s by
+ * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]/
+ * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`, independent of this one.
+ * [Success.hasAnyItem] survives here because it's the one item-adjacent signal the *screen* itself
+ * needs — whether to render the true first-run empty state at all — not a concern of [ItemsState].
  */
 sealed interface HomeUiState {
 
     data object Loading : HomeUiState
 
-    /**
-     * @property priorityItems fixed panel content (overdue + due-soon), independent of [activeTab].
-     * @property showSeeAllButton true when [priorityItems] was truncated to fit the panel's limit.
-     * @property tabItems the active tab's list, filtered by [sectionFilter]/[tagFilters].
-     * @property groupedTabItems [tabItems] grouped by Section, in [availableSections] order, with
-     *   an unsectioned bucket ([ItemSectionGroup.sectionName] `null`) last if present. Only
-     *   meaningful (and only rendered as such) when [sectionFilter] is `null` — a single-section
-     *   filter already narrows the list to one section, so grouping chrome would be redundant.
-     * @property hasAnyItem false only when the user has never created an item anywhere in the
-     *   app — distinguishes the true first-run empty state from [tabItems] just being empty
-     *   because of the active tab/filters.
-     * @property viewMode list vs. grid presentation. Lives here (not local `remember` state in
-     *   the Composable) because [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
-     *   and `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` are screens
-     *   sharing this same ViewModel, not a component — same rationale as [activeTab]/
-     *   [sectionFilter]/[tagFilters] already being here instead of per-screen state.
-     */
-    data class Success(
-        val priorityItems: List<Item>,
-        val showSeeAllButton: Boolean,
-        val activeTab: ItemType,
-        val tabItems: List<Item>,
-        val groupedTabItems: List<ItemSectionGroup>,
-        val sectionFilter: Long?,
-        val tagFilters: Set<Long>,
-        val availableSections: List<Section>,
-        val availableTags: List<Tag>,
-        val hasAnyItem: Boolean,
-        val viewMode: ItemsViewMode,
-    ) : HomeUiState
+    data class Success(val hasAnyItem: Boolean) : HomeUiState
 
     data class Error(@StringRes val messageRes: Int) : HomeUiState
 }
 
 /**
- * One Section's slice of [HomeUiState.Success.tabItems]. [sectionName] `null` means the
- * unsectioned bucket (items with no [Item.sectionId]) — resolved to a localized label at the
- * Composable layer, not here (this class stays domain-agnostic like the rest of `HomeUiState`).
+ * One Section's slice of [ItemsState.tabItems]. [sectionName] `null` means the unsectioned bucket
+ * (items with no [Item.sectionId]) — resolved to a localized label at the Composable layer, not
+ * here (this class stays domain-agnostic like the rest of this file).
  */
 data class ItemSectionGroup(
     val sectionId: Long?,
@@ -63,9 +38,48 @@ data class ItemSectionGroup(
 )
 
 /**
- * Display mode for [HomeUiState.Success.tabItems] — a presentation-only choice (via
+ * Display mode for [ItemsState.tabItems] — a presentation-only choice (via
  * [com.seucaio.unideas.ds.components.buttons.ViewModeToggleButton] at the call site), does not
  * touch grouping/filtering. [LIST] and [GRID] are equal siblings — the user picks one, neither
  * replaces the other.
  */
 enum class ItemsViewMode { LIST, GRID }
+
+/**
+ * [HomeViewModel.filterState] — UI-only: active tab, section/tag filters, reference data
+ * (available sections/tags), view mode. Never fails, never loads — always has a value.
+ */
+internal data class FilterState(
+    val activeTab: ItemType = ItemType.TASK,
+    val sectionFilter: Long? = null,
+    val tagFilters: Set<Long> = emptySet(),
+    val availableSections: List<Section> = emptyList(),
+    val availableTags: List<Tag> = emptyList(),
+    val viewMode: ItemsViewMode = ItemsViewMode.LIST,
+) {
+    fun toggleTag(tagId: Long): FilterState {
+        val isTagSelected = tagId in tagFilters
+        return copy(tagFilters = if (isTagSelected) tagFilters - tagId else tagFilters + tagId)
+    }
+
+    fun toggleViewMode(viewMode: ItemsViewMode): FilterState = copy(viewMode = viewMode)
+
+    fun sectionFilter(sectionId: Long?): FilterState = copy(sectionFilter = sectionId)
+
+    fun changeTab(type: ItemType): FilterState = copy(activeTab = type)
+
+    fun setFilters(sections: List<Section>, tags: List<Tag>): FilterState =
+        copy(availableSections = sections, availableTags = tags)
+}
+
+/**
+ * [HomeViewModel.itemsState] — priority panel + active tab's list, together since both come from
+ * the same item queries. No load/error of its own (see [HomeUiState] doc) — a query failure just
+ * leaves the previous (or default empty) value in place.
+ */
+data class ItemsState(
+    val priorityItems: List<Item> = emptyList(),
+    val showSeeAllButton: Boolean = false,
+    val tabItems: List<Item> = emptyList(),
+    val groupedTabItems: List<ItemSectionGroup> = emptyList(),
+)

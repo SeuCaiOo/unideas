@@ -27,7 +27,7 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 
 /** Column count for [ItemsGridContent]'s grid. */
 private const val ITEMS_GRID_COLUMNS = 2
@@ -36,30 +36,31 @@ private const val ITEMS_GRID_COLUMNS = 2
  * Home's tab-items **grid** — [ItemsViewMode.GRID] sibling of [ItemsListContent], same grouping/
  * collapse behavior, [ListItemCard] cells instead of [ListItemRow] (that doesn't fit a half-width
  * cell — its title has nowhere to go, confirmed on-device). Called from [ItemsContent]; assumes
- * [HomeUiState.Success.tabItems] is non-empty, [ItemsContent] already handles the empty state.
+ * [ItemsState.tabItems] is non-empty, [ItemsContent] already handles the empty state.
  *
- * When [HomeUiState.Success.sectionFilter] is `null`, renders [HomeUiState.Success.groupedTabItems]
- * with a header per Section, collapsible, spanning both columns — same as [ItemsListContent].
- * Collapse state is local UI-only state (not in the ViewModel — purely cosmetic, no business
- * logic, nothing to test at the VM level per `mvi.md`). [footer], if present, renders as a
- * full-width row after the last group — same content type as [ItemsListContent]'s, adapted here to
- * a spanning grid item instead of a plain list row.
+ * When [sectionFilter] is `null`, renders [ItemsState.groupedTabItems] with a header per Section,
+ * collapsible, spanning both columns — same as [ItemsListContent]. Collapse state is local
+ * UI-only state (not in the ViewModel — purely cosmetic, no business logic, nothing to test at the
+ * VM level per `mvi.md`). [footer], if present, renders as a full-width row after the last group —
+ * same content type as [ItemsListContent]'s, adapted here to a spanning grid item instead of a
+ * plain list row.
  */
 @Composable
 internal fun ItemsGridContent(
-    state: HomeUiState.Success,
+    itemsState: ItemsState,
+    sectionFilter: Long?,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
     val noSectionLabel = stringResource(R.string.home_group_no_section)
-    val showHeaders = state.sectionFilter == null
+    val showHeaders = sectionFilter == null
 
     var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
 
     LazyVerticalGrid(columns = GridCells.Fixed(ITEMS_GRID_COLUMNS), modifier = modifier) {
-        state.groupedTabItems.forEach { group ->
+        itemsState.groupedTabItems.forEach { group ->
             val key = group.sectionId ?: NO_SECTION_KEY
             val expanded = key !in collapsedKeys
 
@@ -92,20 +93,20 @@ internal fun ItemsGridContent(
     }
 }
 
-internal class ItemsGridPreviewProvider : PreviewParameterProvider<HomeUiState.Success> {
+internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsState> {
     override val values = HomePreviewProvider().values
-        .filterIsInstance<HomeUiState.Success>()
+        .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) state: HomeUiState.Success,
+    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: ItemsState,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(state = state, onEvent = {})
+            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {})
         }
     }
 }
@@ -113,11 +114,11 @@ private fun ItemsGridContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentWithFooterPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) state: HomeUiState.Success,
+    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: ItemsState,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(state = state, onEvent = {}) {
+            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {}) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

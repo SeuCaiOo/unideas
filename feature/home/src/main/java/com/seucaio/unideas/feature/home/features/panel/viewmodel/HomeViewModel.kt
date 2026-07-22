@@ -4,9 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Section
-import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.feature.home.R
@@ -17,9 +14,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -35,24 +33,32 @@ import java.time.LocalDateTime
 /**
  * ViewModel for the Home priority panel + tabs + filters screen.
  *
- * The active tab, section/tag filters, view mode (list/grid) and reference data (available
- * sections/tags, loaded once via [GetSectionsAndTagsUseCase] — they can't change while this
- * screen is open) are real UI-only [InternalState]. [HomeUseCase] is a facade over the
- * single-purpose Item use cases this screen needs — same shape as
- * [com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase]/
- * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase], named after this screen since Item's
- * use cases split unevenly across screens. `getPriorityItems` returns the full ordered list
- * uncapped; this ViewModel applies the panel's display limit and derives `showSeeAllButton` from
- * whether the list was truncated.
+ * Three independent `StateFlow`s (#102, 2026-07-22) instead of one `combine`d [HomeUiState], each
+ * collected directly by [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] /
+ * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`:
+ * - [filterState]: activeTab, section/tag filters, reference data, view mode — real UI-only
+ *   state, never fails/loads, mutated directly by [onEvent].
+ * - [itemsState]: priority panel + active tab's list — query results, no load/error of their own;
+ *   a failure just degrades to an empty list, same rationale as [loadReferenceData].
+ * - [uiState] ([HomeUiState]): the only place that knows about Loading/Error, scoped to just
+ *   `hasAnyItem` — it has no item data at all, so it needs no `combine()` to build itself.
  *
- * [uiState] deliberately does **not** `flatMapLatest` over all of [InternalState] the way
- * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel] does (#102,
- * fixed 2026-07-21) — `getPriorityItems`/`hasAnyItem` don't depend on the active tab/filters, so
- * restarting them on every tab switch reissued a screen-wide [HomeUiState.Loading] that hid the
- * priority panel/tabs/filters too, not just the list, and dropped any Compose-local `remember`
- * state (list scroll position, the collapsible priority panel's offset) since the whole
- * `Success` subtree got torn down and rebuilt. Only [homeTabItemsWithState] restarts on tab/filter
- * change.
+ * Switching tabs restarts only [itemsState]; [uiState] never reloads for that — the original bug
+ * this replaced was a single `flatMapLatest` over one `InternalState` blob, which reissued a
+ * screen-wide `Loading` on every tab/filter change (hid the priority panel/tabs/filters too, not
+ * just the list, and dropped Compose-local `remember` state like scroll position). Splitting the
+ * concerns by *who writes them and when* — [filterState] is user-event-driven, [itemsState] is
+ * query-derived, [uiState] is screen-readiness-derived — removes the need for that blob and the
+ * race-avoidance tricks it required.
+ *
+ * [HomeUseCase] is a facade over the single-purpose Item use cases this screen needs — same shape
+ * as [com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase]/
+ * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase]. `getPriorityItems` returns the full
+ * ordered list uncapped; this ViewModel applies the panel's display limit and derives
+ * `showSeeAllButton` from whether the list was truncated.
+ *
+ * Member order follows the Kotlin coding conventions (properties/`init` first, grouped by what
+ * each piece feeds into; methods last) — https://kotlinlang.org/docs/coding-conventions.html#class-layout.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
@@ -60,75 +66,56 @@ class HomeViewModel(
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
 ) : ViewModel() {
 
-    private data class InternalState(
-        val activeTab: ItemType = ItemType.TASK,
-        val sectionFilter: Long? = null,
-        val tagFilters: Set<Long> = emptySet(),
-        val availableSections: List<Section> = emptyList(),
-        val availableTags: List<Tag> = emptyList(),
-        val viewMode: ItemsViewMode = ItemsViewMode.LIST,
-    )
+    //region filterState — UI-only, user-event-driven (see onEvent)
 
-    private val internalState = MutableStateFlow(InternalState())
+    private val _filterState = MutableStateFlow(FilterState())
+    internal val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
+
+    //endregion
+
+    //region itemsState — derived from filterState + the item queries, no load/error of its own
+
+    // No load/error here — a query failure just degrades to an empty list, same rationale as
+    // loadReferenceData() below. There's nothing for OnRetryClicked to restart: an empty result
+    // isn't an error state to recover from, it's just what "no data (yet or ever)" looks like.
+    // Restart the query only on the three fields it actually depends on — no need for a bespoke
+    // key type, Triple already has structural equality for distinctUntilChangedBy.
+    private val itemsFlow: Flow<List<Item>> = filterState
+        .distinctUntilChangedBy { Triple(it.activeTab, it.sectionFilter, it.tagFilters) }
+        .flatMapLatest { filter ->
+            homeUseCase.getItems(filter.activeTab, filter.sectionFilter, filter.tagFilters.toList())
+                .catch { emit(emptyList()) }
+        }
+
+    private val priorityFlow: Flow<List<Item>> =
+        homeUseCase.getPriorityItems(today = LocalDate.now(), dueSoonDays = Constants.DUE_SOON_DAYS)
+            .catch { emit(emptyList()) }
+
+    val itemsState: StateFlow<ItemsState> =
+        combine(priorityFlow, itemsFlow, filterState) { priorityItems, tabItems, filter ->
+            ItemsState(
+                priorityItems = priorityItems.take(Constants.PRIORITY_PANEL_LIMIT),
+                showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,
+                tabItems = tabItems,
+                groupedTabItems = tabItems.groupBySection(filter.availableSections),
+            )
+        }.stateIn(viewModelScope, WhileSubscribed(5_000), ItemsState())
+
+    // Mirrors the latest itemsState lists without casting itemsState.value (forbidden by
+    // mvi.md's spirit) — handleComplete needs the domain Item. Kept subscribed via init below.
+    private var currentItems: List<Item> = emptyList()
+
+    //endregion
+
+    //region uiState — screen readiness only (Loading/Success/Error)
+
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
-    init {
-        viewModelScope.launch { loadReferenceData() }
-    }
-
-    private suspend fun loadReferenceData() {
-        // Failure here just leaves availableSections/availableTags empty — same silent-degrade
-        // rationale as ItemFormViewModel, GetSectionsAndTagsUseCase already falls back on its own.
-        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            internalState.update {
-                it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)
-            }
-        }
-    }
-
-    /** Only the three keys [homeTabItemsWithState] actually needs to restart [HomeUseCase.getItems] on. */
-    private data class TabFilterKey(val activeTab: ItemType, val sectionFilter: Long?, val tagFilters: Set<Long>)
-
-    /**
-     * Pairs the current [InternalState] with the tab items for its [TabFilterKey], atomically —
-     * combining [internalState] directly *and* a copy of it derived via `flatMapLatest` (keyed on
-     * [TabFilterKey]) in the same downstream `combine` would race: on a real key change the two
-     * update at different times, so the combined result could briefly show the new `activeTab`
-     * paired with the previous tab's items. Combining `internalState` only *inside* the
-     * `flatMapLatest` block sidesteps that — a key change restarts this flow and it simply doesn't
-     * emit again until the new query resolves, instead of emitting a mismatched pair.
-     */
-    private val homeTabItemsWithState: Flow<Pair<InternalState, List<Item>>> = internalState
-        .map { TabFilterKey(it.activeTab, it.sectionFilter, it.tagFilters) }
-        .distinctUntilChanged()
-        .flatMapLatest { key ->
-            combine(internalState, homeUseCase.getItems(key.activeTab, key.sectionFilter, key.tagFilters.toList())) {
-                    internal, items ->
-                internal to items
-            }
-        }
-
+    // Scoped to just "can the screen render" — no item data, so no combine() needed to build it.
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
-            combine(
-                homeUseCase.getPriorityItems(today = LocalDate.now(), dueSoonDays = Constants.DUE_SOON_DAYS),
-                homeUseCase.hasAnyItem(),
-                homeTabItemsWithState,
-            ) { priorityItems, hasAnyItem, (internal, tabItems) ->
-                HomeUiState.Success(
-                    priorityItems = priorityItems.take(Constants.PRIORITY_PANEL_LIMIT),
-                    showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,
-                    activeTab = internal.activeTab,
-                    tabItems = tabItems,
-                    groupedTabItems = tabItems.groupBySection(internal.availableSections),
-                    sectionFilter = internal.sectionFilter,
-                    tagFilters = internal.tagFilters,
-                    availableSections = internal.availableSections,
-                    availableTags = internal.availableTags,
-                    hasAnyItem = hasAnyItem,
-                    viewMode = internal.viewMode,
-                ) as HomeUiState
-            }
+            homeUseCase.hasAnyItem()
+                .map<Boolean, HomeUiState> { HomeUiState.Success(hasAnyItem = it) }
                 .onStart { emit(HomeUiState.Loading) }
                 // Caught per-inner-flow (not on the outer chain) so a failure only ends this
                 // attempt — retryTrigger stays collected and OnRetryClicked can still restart it.
@@ -136,25 +123,28 @@ class HomeViewModel(
         }
         .stateIn(viewModelScope, WhileSubscribed(5_000), HomeUiState.Loading)
 
-    // Mirrors the latest Success lists without casting uiState.value (forbidden by mvi.md) —
-    // handleComplete needs the domain Item, not just the sealed UI state.
-    private var currentItems: List<Item> = emptyList()
+    //endregion
 
-    init {
-        uiState.onEach { state ->
-            if (state is HomeUiState.Success) currentItems = state.priorityItems + state.tabItems
-        }.launchIn(viewModelScope)
-    }
+    //region one-shot navigation/snackbar events
 
     private val _uiAction = Channel<HomeUiAction>(Channel.BUFFERED)
     val uiAction: Flow<HomeUiAction> = _uiAction.receiveAsFlow()
 
+    //endregion
+
+    init {
+        viewModelScope.launch { loadReferenceData() }
+        itemsState
+            .onEach { state -> currentItems = state.priorityItems + state.tabItems }
+            .launchIn(viewModelScope)
+    }
+
     fun onEvent(event: HomeEvent) {
         when (event) {
-            is HomeEvent.OnTabChanged -> internalState.update { it.copy(activeTab = event.type) }
-            is HomeEvent.OnSectionFilterChanged -> internalState.update { it.copy(sectionFilter = event.sectionId) }
-            is HomeEvent.OnTagFilterToggled -> internalState.update { it.toggleTag(event.tagId) }
-            is HomeEvent.OnViewModeChanged -> internalState.update { it.copy(viewMode = event.viewMode) }
+            is HomeEvent.OnTabChanged -> _filterState.update { it.changeTab(event.type) }
+            is HomeEvent.OnSectionFilterChanged -> _filterState.update { it.sectionFilter(event.sectionId) }
+            is HomeEvent.OnTagFilterToggled -> _filterState.update { it.toggleTag(event.tagId) }
+            is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
             is HomeEvent.OnItemClicked -> sendUiAction(HomeUiAction.NavigateToDetail(event.itemId))
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToForm(event.type))
@@ -164,8 +154,15 @@ class HomeViewModel(
         }
     }
 
-    private fun InternalState.toggleTag(tagId: Long): InternalState =
-        copy(tagFilters = if (tagId in tagFilters) tagFilters - tagId else tagFilters + tagId)
+    private suspend fun loadReferenceData() {
+        // Failure here just leaves availableSections/availableTags empty — same silent-degrade
+        // rationale as ItemFormViewModel, GetSectionsAndTagsUseCase already falls back on its own.
+        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
+            _filterState.update {
+                it.setFilters(sections = referenceData.sections, tags = referenceData.tags)
+            }
+        }
+    }
 
     private fun handleComplete(itemId: Long) = viewModelScope.launch {
         val item = currentItems.firstOrNull { it.id == itemId } ?: return@launch
@@ -173,5 +170,6 @@ class HomeViewModel(
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
-    private fun sendUiAction(action: HomeUiAction) = viewModelScope.launch { _uiAction.send(action) }
+    private fun sendUiAction(action: HomeUiAction) =
+        viewModelScope.launch { _uiAction.send(action) }
 }

@@ -15,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -91,11 +92,28 @@ class HomeViewModelTest {
         vm.uiState.test {
             assertEquals(taskItems, (awaitItem() as HomeUiState.Success).tabItems)
             vm.onEvent(HomeEvent.OnTabChanged(ItemType.NOTE))
-            assertEquals(HomeUiState.Loading, awaitItem())
+            // #102: no HomeUiState.Loading in between — only the tab items flow restarts, not the
+            // whole screen.
             val state = awaitItem() as HomeUiState.Success
             assertEquals(ItemType.NOTE, state.activeTab)
             assertEquals(noteItems, state.tabItems)
         }
+    }
+
+    @Test
+    fun `when OnTabChanged should not restart the priority panel or hasAnyItem flows`() = runTest {
+        every { homeUseCase.getItems(ItemType.TASK, null, emptyList()) } returns flowOf(emptyList())
+        every { homeUseCase.getItems(ItemType.NOTE, null, emptyList()) } returns flowOf(emptyList())
+        val vm = viewModel()
+
+        vm.uiState.test {
+            awaitItem()
+            vm.onEvent(HomeEvent.OnTabChanged(ItemType.NOTE))
+            awaitItem()
+        }
+
+        verify(exactly = 1) { homeUseCase.getPriorityItems(any(), any()) }
+        verify(exactly = 1) { homeUseCase.hasAnyItem() }
     }
 
     @Test
@@ -108,7 +126,6 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onEvent(HomeEvent.OnSectionFilterChanged(7L))
-            assertEquals(HomeUiState.Loading, awaitItem())
             val state = awaitItem() as HomeUiState.Success
             assertEquals(7L, state.sectionFilter)
             coVerify { homeUseCase.getItems(ItemType.TASK, 7L, emptyList()) }
@@ -124,7 +141,6 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onEvent(HomeEvent.OnTagFilterToggled(9L))
-            assertEquals(HomeUiState.Loading, awaitItem())
             val state = awaitItem() as HomeUiState.Success
             assertEquals(setOf(9L), state.tagFilters)
         }
@@ -138,10 +154,8 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onEvent(HomeEvent.OnTagFilterToggled(9L))
-            assertEquals(HomeUiState.Loading, awaitItem())
             assertEquals(setOf(9L), (awaitItem() as HomeUiState.Success).tagFilters)
             vm.onEvent(HomeEvent.OnTagFilterToggled(9L))
-            assertEquals(HomeUiState.Loading, awaitItem())
             assertEquals(emptySet<Long>(), (awaitItem() as HomeUiState.Success).tagFilters)
         }
     }
@@ -154,7 +168,6 @@ class HomeViewModelTest {
         vm.uiState.test {
             assertEquals(ItemsViewMode.LIST, (awaitItem() as HomeUiState.Success).viewMode)
             vm.onEvent(HomeEvent.OnViewModeChanged(ItemsViewMode.GRID))
-            assertEquals(HomeUiState.Loading, awaitItem())
             val state = awaitItem() as HomeUiState.Success
             assertEquals(ItemsViewMode.GRID, state.viewMode)
         }
@@ -249,7 +262,6 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem()
             vm.onEvent(HomeEvent.OnSectionFilterChanged(7L))
-            assertEquals(HomeUiState.Loading, awaitItem())
             val state = awaitItem() as HomeUiState.Success
             assertEquals(listOf(ItemSectionGroup(work.id, work.name, listOf(item))), state.groupedTabItems)
         }

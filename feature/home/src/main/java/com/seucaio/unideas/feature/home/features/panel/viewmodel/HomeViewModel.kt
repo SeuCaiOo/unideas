@@ -19,8 +19,10 @@ import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -35,16 +37,22 @@ import java.time.LocalDateTime
  *
  * The active tab, section/tag filters, view mode (list/grid) and reference data (available
  * sections/tags, loaded once via [GetSectionsAndTagsUseCase] — they can't change while this
- * screen is open) are real UI-only [InternalState], combined with the two domain flows exposed by
- * [HomeUseCase] (`getPriorityItems` for the fixed panel, `getItems` for the active tab's list) — same
- * `combine`/`InternalState` pattern as
- * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel]. [HomeUseCase]
- * is a facade over the single-purpose Item use cases this screen needs — same shape as
+ * screen is open) are real UI-only [InternalState]. [HomeUseCase] is a facade over the
+ * single-purpose Item use cases this screen needs — same shape as
  * [com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase]/
  * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase], named after this screen since Item's
  * use cases split unevenly across screens. `getPriorityItems` returns the full ordered list
  * uncapped; this ViewModel applies the panel's display limit and derives `showSeeAllButton` from
  * whether the list was truncated.
+ *
+ * [uiState] deliberately does **not** `flatMapLatest` over all of [InternalState] the way
+ * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel] does (#102,
+ * fixed 2026-07-21) — `getPriorityItems`/`hasAnyItem` don't depend on the active tab/filters, so
+ * restarting them on every tab switch reissued a screen-wide [HomeUiState.Loading] that hid the
+ * priority panel/tabs/filters too, not just the list, and dropped any Compose-local `remember`
+ * state (list scroll position, the collapsible priority panel's offset) since the whole
+ * `Success` subtree got torn down and rebuilt. Only [homeTabItemsWithState] restarts on tab/filter
+ * change.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
@@ -78,13 +86,35 @@ class HomeViewModel(
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(retryTrigger, internalState) { _, internal -> internal }
-        .flatMapLatest { internal ->
+    /** Only the three keys [homeTabItemsWithState] actually needs to restart [HomeUseCase.getItems] on. */
+    private data class TabFilterKey(val activeTab: ItemType, val sectionFilter: Long?, val tagFilters: Set<Long>)
+
+    /**
+     * Pairs the current [InternalState] with the tab items for its [TabFilterKey], atomically —
+     * combining [internalState] directly *and* a copy of it derived via `flatMapLatest` (keyed on
+     * [TabFilterKey]) in the same downstream `combine` would race: on a real key change the two
+     * update at different times, so the combined result could briefly show the new `activeTab`
+     * paired with the previous tab's items. Combining `internalState` only *inside* the
+     * `flatMapLatest` block sidesteps that — a key change restarts this flow and it simply doesn't
+     * emit again until the new query resolves, instead of emitting a mismatched pair.
+     */
+    private val homeTabItemsWithState: Flow<Pair<InternalState, List<Item>>> = internalState
+        .map { TabFilterKey(it.activeTab, it.sectionFilter, it.tagFilters) }
+        .distinctUntilChanged()
+        .flatMapLatest { key ->
+            combine(internalState, homeUseCase.getItems(key.activeTab, key.sectionFilter, key.tagFilters.toList())) {
+                    internal, items ->
+                internal to items
+            }
+        }
+
+    val uiState: StateFlow<HomeUiState> = retryTrigger
+        .flatMapLatest {
             combine(
                 homeUseCase.getPriorityItems(today = LocalDate.now(), dueSoonDays = Constants.DUE_SOON_DAYS),
-                homeUseCase.getItems(internal.activeTab, internal.sectionFilter, internal.tagFilters.toList()),
                 homeUseCase.hasAnyItem(),
-            ) { priorityItems, tabItems, hasAnyItem ->
+                homeTabItemsWithState,
+            ) { priorityItems, hasAnyItem, (internal, tabItems) ->
                 HomeUiState.Success(
                     priorityItems = priorityItems.take(Constants.PRIORITY_PANEL_LIMIT),
                     showSeeAllButton = priorityItems.size > Constants.PRIORITY_PANEL_LIMIT,

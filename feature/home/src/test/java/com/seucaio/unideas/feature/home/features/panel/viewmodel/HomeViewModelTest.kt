@@ -103,15 +103,14 @@ class HomeViewModelTest {
     fun `when OnTabChanged should not restart the priority panel query`() = runTest {
         every { homeUseCase.getItems(ItemType.TASK, null, emptyList()) } returns flowOf(emptyList())
         every { homeUseCase.getItems(ItemType.NOTE, null, emptyList()) } returns flowOf(emptyList())
+        // itemsState for TASK/NOTE is identical here (both empty) — StateFlow won't re-emit an
+        // equal value, so this asserts via mock call counts instead of awaiting a second item.
         val vm = viewModel()
 
-        vm.itemsState.test {
-            awaitItem()
-            vm.onEvent(HomeEvent.OnTabChanged(ItemType.NOTE))
-            awaitItem()
-        }
+        vm.onEvent(HomeEvent.OnTabChanged(ItemType.NOTE))
 
         verify(exactly = 1) { homeUseCase.getPriorityItems(any(), any()) }
+        coVerify { homeUseCase.getItems(ItemType.NOTE, null, emptyList()) }
     }
 
     @Test
@@ -293,7 +292,9 @@ class HomeViewModelTest {
         vm.uiState.test {
             assertEquals(HomeUiState.Error(R.string.home_load_error), awaitItem())
             vm.onEvent(HomeEvent.OnRetryClicked)
-            assertEquals(HomeUiState.Loading, awaitItem())
+            // Under UnconfinedTestDispatcher, Error -> Loading -> Success runs synchronously;
+            // the transient Loading can be overwritten before Turbine observes it (StateFlow
+            // conflation), so only the terminal state is asserted here.
             val state = awaitItem() as HomeUiState.Success
             assertEquals(true, state.hasAnyItem)
         }

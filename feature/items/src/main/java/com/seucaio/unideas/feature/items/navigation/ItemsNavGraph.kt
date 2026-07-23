@@ -9,8 +9,8 @@ import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreen
-import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreenV4
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormSheet
+import com.seucaio.unideas.feature.items.features.form.screen.ItemScreen
 import com.seucaio.unideas.feature.items.features.list.screen.ItemsListScreen
 
 fun NavGraphBuilder.itemsNavGraph(
@@ -24,10 +24,8 @@ fun NavGraphBuilder.itemsNavGraph(
         when (route.version) {
             ScreenVersion.V1 ->
                 ItemFormScreen(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
-            ScreenVersion.V2 ->
-                ItemFormSheet(initialType = route.type, onNavigateBack = onNavigateBack)
-            ScreenVersion.V3, ScreenVersion.V4, ScreenVersion.V5 ->
-                ItemFormScreenV4(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
+            ScreenVersion.V2, ScreenVersion.V3, ScreenVersion.V4, ScreenVersion.V5 ->
+                ItemScreen(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
         }
     }
     dialog<ItemsRoute.FormSheet>(

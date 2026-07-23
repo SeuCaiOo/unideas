@@ -34,7 +34,7 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * #86 Pacote 2, direção V4: a tela nasce **sempre editável** — não existe nenhum estado de
- * leitura, nem um botão de "editar" para sair dele (ao contrário de [ItemFormScreenV2]/
+ * leitura, nem um botão de "editar" para sair dele (ao contrário de [ItemFormSheet]/
  * [ItemFormScreenV3], que alternam entre um estado read-only e um editável). O real ponto de
  * comparação dessa direção é de navegação, não visual: tocar num item levaria direto pra cá,
  * pulando [com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen] por
@@ -45,7 +45,7 @@ import org.koin.core.parameter.parametersOf
  * ainda — visível só via `@PreviewLightDark`.
  */
 @Composable
-fun ItemFormScreenV4(
+fun ItemScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
@@ -68,7 +68,7 @@ fun ItemFormScreenV4(
         }
     }
 
-    ItemFormV4Content(
+    ItemScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
@@ -78,7 +78,7 @@ fun ItemFormScreenV4(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemFormV4Content(
+private fun ItemScreenContent(
     uiState: ItemFormUiState,
     onEvent: (ItemFormEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
@@ -109,11 +109,11 @@ private fun ItemFormV4Content(
 
 @PreviewLightDark
 @Composable
-private fun ItemFormScreenV4Preview(
+private fun ItemScreenPreview(
     @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
 ) {
     UdsTheme {
-        ItemFormV4Content(
+        ItemScreenContent(
             uiState = previewState.uiState,
             onEvent = {},
             onNavigateBack = {},

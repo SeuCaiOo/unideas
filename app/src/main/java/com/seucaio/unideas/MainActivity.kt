@@ -77,12 +77,7 @@ class MainActivity : ComponentActivity() {
  * dialog-hosted [FormSheet] for creation — it has no bottom sheet variant of its own (#86/#97).
  */
 private fun NavController.navigateToItemForm(type: ItemType) {
-    val version = DevScreenVersionToggle.selectedVersion.value
-    if (version == ScreenVersion.V2 || version == ScreenVersion.V4) {
-        navigate(ItemsRoute.FormSheet(type = type))
-    } else {
-        navigate(ItemsRoute.Form(type = type))
-    }
+    navigate(ItemsRoute.FormSheet(type = type))
 }
 
 /** Edit entry point from within [ItemDetailScreen]'s edit button — V1/V2/V3 only, V4 has no detail screen to edit from. */

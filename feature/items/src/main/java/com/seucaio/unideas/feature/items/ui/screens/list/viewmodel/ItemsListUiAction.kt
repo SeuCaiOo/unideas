@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.list.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.list.viewmodel
 
 /** One-shot navigation actions for the dev-only item listing screen. */
 sealed interface ItemsListUiAction {

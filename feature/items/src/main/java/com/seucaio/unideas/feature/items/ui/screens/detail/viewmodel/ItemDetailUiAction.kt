@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import androidx.annotation.StringRes
 

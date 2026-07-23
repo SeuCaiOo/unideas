@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.form.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.form.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

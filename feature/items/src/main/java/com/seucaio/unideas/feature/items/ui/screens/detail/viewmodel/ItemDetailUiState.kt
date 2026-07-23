@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence

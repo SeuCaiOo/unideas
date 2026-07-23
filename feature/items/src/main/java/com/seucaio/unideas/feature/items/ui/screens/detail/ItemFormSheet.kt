@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail
+package com.seucaio.unideas.feature.items.ui.screens.detail
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,12 +18,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
-import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
-import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
-import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState
-import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailEvent
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiAction
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -40,7 +40,11 @@ import org.koin.core.parameter.parametersOf
 fun ItemFormSheet(
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
-    viewModel: ItemDetailViewModel = koinViewModel { parametersOf(initialType) },
+    viewModel: com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel = koinViewModel {
+        parametersOf(
+            initialType
+        )
+    },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.list.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.list.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

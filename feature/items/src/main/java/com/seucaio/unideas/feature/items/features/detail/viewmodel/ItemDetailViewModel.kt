@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.features.detail.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
@@ -28,9 +29,10 @@ import java.time.LocalDateTime
 class ItemDetailViewModel(
     private val createItem: CreateItemUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ItemDetailUiState())
+    private val _uiState = MutableStateFlow(ItemDetailUiState(type = initialType))
     val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
 
     private val _uiAction = Channel<ItemDetailUiAction>(Channel.BUFFERED)

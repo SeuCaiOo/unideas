@@ -18,6 +18,12 @@ val itemsModule = module {
             initialType = params.get(),
         )
     }
-    viewModelOf(::ItemDetailViewModel)
+    viewModel { params ->
+        ItemDetailViewModel(
+            createItem = get(),
+            getSectionsAndTags = get(),
+            initialType = params.get(),
+        )
+    }
     viewModelOf(::ItemsListViewModel)
 }

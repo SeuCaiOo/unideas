@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
@@ -26,7 +26,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ItemDetailViewModelTest {
+class AddItemViewModelTest {
 
     @MockK
     private lateinit var createItem: CreateItemUseCase
@@ -46,7 +46,7 @@ class ItemDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = ItemDetailViewModel(createItem, getSectionsAndTags)
+    private fun viewModel() = AddItemViewModel(createItem, getSectionsAndTags)
 
     @Test
     fun `when created should show blank fields with available sections and tags`() = runTest {
@@ -78,7 +78,7 @@ class ItemDetailViewModelTest {
 
         vm.uiState.test {
             awaitItem()
-            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            vm.onEvent(AddItemEvent.OnTitleChanged("Nova tarefa"))
             val state = awaitItem()
             assertEquals("Nova tarefa", state.title)
         }
@@ -90,13 +90,13 @@ class ItemDetailViewModelTest {
 
         vm.uiState.test {
             awaitItem()
-            vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
-            vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
+            vm.onEvent(AddItemEvent.OnDueDateChanged(ItemStub.TODAY))
+            vm.onEvent(AddItemEvent.OnRecurrenceChanged(Recurrence.Weekly))
             awaitItem()
             val withRecurrence = awaitItem()
             assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
 
-            vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
+            vm.onEvent(AddItemEvent.OnDueDateChanged(null))
             val cleared = awaitItem()
             assertEquals(Recurrence.None, cleared.recurrence)
         }
@@ -108,12 +108,12 @@ class ItemDetailViewModelTest {
         val vm = viewModel()
 
         vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
-        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+        vm.onEvent(AddItemEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(AddItemEvent.OnTagToggled(TagStub.tags().first().id))
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            vm.onEvent(AddItemEvent.OnSaveClicked)
+            assertEquals(AddItemUiAction.NavigateBack, awaitItem())
         }
 
         coVerify(exactly = 1) {
@@ -129,8 +129,8 @@ class ItemDetailViewModelTest {
         vm.uiState.test { awaitItem() }
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
+            vm.onEvent(AddItemEvent.OnSaveClicked)
+            assertEquals(AddItemUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
         }
     }
 
@@ -140,11 +140,11 @@ class ItemDetailViewModelTest {
         val vm = viewModel()
 
         vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(AddItemEvent.OnTitleChanged("Nova tarefa"))
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
+            vm.onEvent(AddItemEvent.OnSaveClicked)
+            assertEquals(AddItemUiAction.ShowError("boom"), awaitItem())
         }
     }
 }

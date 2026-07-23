@@ -19,8 +19,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.ItemFormPreviewProvider
-import com.seucaio.unideas.feature.items.features.form.ItemFormPreviewState
 import com.seucaio.unideas.feature.items.ui.components.fields.DueDateField
 import com.seucaio.unideas.feature.items.ui.components.fields.RecurrenceField
 import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
@@ -29,6 +27,8 @@ import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFi
 import com.seucaio.unideas.feature.items.ui.components.fields.TypeSelectorField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
+import com.seucaio.unideas.feature.items.ui.screens.form.ItemFormPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.form.ItemFormPreviewState
 
 /**
  * Field set + save action common to every `ItemFormScreen*` POC (#86/#97): type selector, title,

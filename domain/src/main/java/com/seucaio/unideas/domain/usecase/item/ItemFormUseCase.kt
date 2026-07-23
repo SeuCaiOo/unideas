@@ -9,10 +9,10 @@ import java.time.LocalDateTime
  * Convenience facade over the single-purpose item use cases the create/edit form needs (kept
  * as-is, still usable on their own) — one method per operation, each just delegating. No
  * repository access here — every call just delegates. Scoped to
- * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel], which also now
+ * [com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormViewModel], which also now
  * backs `ItemDetailScreen`'s share/delete/complete actions — merged in from the old
  * `ItemDetailUseCase` facade as that screen's editing moved onto this same ViewModel/form layout.
- * `ItemDetailUseCase`/[com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel]
+ * `ItemDetailUseCase`/[com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemViewModel]
  * were later reformulated into the add-item screen, calling [CreateItemUseCase] directly instead.
  */
 class ItemFormUseCase(

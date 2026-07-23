@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.form.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.form.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence

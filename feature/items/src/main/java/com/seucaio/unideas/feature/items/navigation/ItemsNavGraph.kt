@@ -7,7 +7,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemFormSheet
+import com.seucaio.unideas.feature.items.ui.screens.additem.ItemFormSheet
 import com.seucaio.unideas.feature.items.ui.screens.form.ItemFormScreen
 import com.seucaio.unideas.feature.items.ui.screens.form.ItemScreen
 import com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen
@@ -21,13 +21,13 @@ fun NavGraphBuilder.itemsNavGraph(
         val route = backStackEntry.toRoute<ItemsRoute.Form>()
         when (route.version) {
             ScreenVersion.V1 ->
-                _root_ide_package_.com.seucaio.unideas.feature.items.ui.screens.form.ItemFormScreen(
+                ItemFormScreen(
                     itemId = route.itemId,
                     initialType = route.type,
                     onNavigateBack = onNavigateBack
                 )
             ScreenVersion.V2, ScreenVersion.V3, ScreenVersion.V4, ScreenVersion.V5 ->
-                _root_ide_package_.com.seucaio.unideas.feature.items.ui.screens.form.ItemScreen(
+                ItemScreen(
                     itemId = route.itemId,
                     initialType = route.type,
                     onNavigateBack = onNavigateBack
@@ -38,20 +38,20 @@ fun NavGraphBuilder.itemsNavGraph(
         dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.FormSheet>()
-        _root_ide_package_.com.seucaio.unideas.feature.items.ui.screens.detail.ItemFormSheet(
+        ItemFormSheet(
             initialType = route.type,
             onNavigateBack = onNavigateBack
         )
     }
     composable<ItemsRoute.Detail> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()
-        _root_ide_package_.com.seucaio.unideas.feature.items.ui.screens.form.ItemScreen(
+        ItemScreen(
             itemId = route.itemId,
             onNavigateBack = onNavigateBack
         )
     }
     composable<ItemsRoute.List> {
-        _root_ide_package_.com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen(
+        ItemsListScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToForm = { onNavigateToForm(ItemType.TASK) },

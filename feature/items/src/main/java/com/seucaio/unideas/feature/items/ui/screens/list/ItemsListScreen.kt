@@ -29,10 +29,10 @@ import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListEvent
-import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListUiAction
-import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListUiState
-import com.seucaio.unideas.feature.items.features.list.viewmodel.ItemsListViewModel
+import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListEvent
+import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListUiAction
+import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListUiState
+import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

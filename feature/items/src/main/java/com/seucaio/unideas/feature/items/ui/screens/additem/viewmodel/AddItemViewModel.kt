@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,21 +22,21 @@ import java.time.LocalDateTime
  * ViewModel for the add-item screen — its only job is creating a new [Item] via
  * [CreateItemUseCase], called directly (no facade: a single-method need doesn't earn one, unlike
  * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase] which covers edit/delete/share/complete
- * for [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel]). Same
+ * for [com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormViewModel]). Same
  * no-`Loading`/`Error` shape as that ViewModel's `UiState` — fields always render, blank until
  * `loadFormData` fills in sections/tags.
  */
-class ItemDetailViewModel(
+class AddItemViewModel(
     private val createItem: CreateItemUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ItemDetailUiState(type = initialType))
-    val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(AddItemUiState(type = initialType))
+    val uiState: StateFlow<AddItemUiState> = _uiState.asStateFlow()
 
-    private val _uiAction = Channel<ItemDetailUiAction>(Channel.BUFFERED)
-    val uiAction: Flow<ItemDetailUiAction> = _uiAction.receiveAsFlow()
+    private val _uiAction = Channel<AddItemUiAction>(Channel.BUFFERED)
+    val uiAction: Flow<AddItemUiAction> = _uiAction.receiveAsFlow()
 
     init {
         viewModelScope.launch { loadFormData() }
@@ -52,21 +52,21 @@ class ItemDetailViewModel(
         }
     }
 
-    fun onEvent(event: ItemDetailEvent) {
+    fun onEvent(event: AddItemEvent) {
         when (event) {
-            is ItemDetailEvent.OnTypeChanged -> _uiState.update { it.changeType(event.type) }
-            is ItemDetailEvent.OnTitleChanged -> _uiState.update { it.changeTitle(event.title) }
-            is ItemDetailEvent.OnDescriptionChanged -> _uiState.update { it.changeDescription(event.description) }
-            is ItemDetailEvent.OnSectionChanged -> _uiState.update { it.setSection(event.sectionId) }
-            is ItemDetailEvent.OnTagToggled -> _uiState.update { it.setTag(event.tagId) }
-            is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
+            is AddItemEvent.OnTypeChanged -> _uiState.update { it.changeType(event.type) }
+            is AddItemEvent.OnTitleChanged -> _uiState.update { it.changeTitle(event.title) }
+            is AddItemEvent.OnDescriptionChanged -> _uiState.update { it.changeDescription(event.description) }
+            is AddItemEvent.OnSectionChanged -> _uiState.update { it.setSection(event.sectionId) }
+            is AddItemEvent.OnTagToggled -> _uiState.update { it.setTag(event.tagId) }
+            is AddItemEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,
                     recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
                 )
             }
-            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
-            is ItemDetailEvent.OnSaveClicked -> handleSave()
+            is AddItemEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is AddItemEvent.OnSaveClicked -> handleSave()
         }
     }
 
@@ -85,16 +85,16 @@ class ItemDetailViewModel(
                 createdAt = LocalDateTime.now(),
                 tags = selectedTags,
             ),
-        ).onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+        ).onSuccess { sendUiAction(AddItemUiAction.NavigateBack) }.onFailure { handleFailure(it) }
     }
 
     private suspend fun handleFailure(error: Throwable) {
         if (error is IllegalArgumentException) {
-            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
+            sendUiAction(AddItemUiAction.ShowSnackbar(R.string.item_title_required))
         } else {
-            sendUiAction(ItemDetailUiAction.ShowError(error.message.orEmpty()))
+            sendUiAction(AddItemUiAction.ShowError(error.message.orEmpty()))
         }
     }
 
-    private suspend fun sendUiAction(action: ItemDetailUiAction) = _uiAction.send(action)
+    private suspend fun sendUiAction(action: AddItemUiAction) = _uiAction.send(action)
 }

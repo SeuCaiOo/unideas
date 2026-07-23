@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -14,7 +14,7 @@ import java.time.LocalDate
  * [com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase], never surfaced here) — nothing
  * about typing a title depends on it.
  */
-data class ItemDetailUiState(
+data class AddItemUiState(
     override val type: ItemType = ItemType.TASK,
     override val title: String = "",
     override val description: String = "",
@@ -32,15 +32,15 @@ data class ItemDetailUiState(
 
     override val typeIsTask: Boolean get() = type == ItemType.TASK
 
-    fun changeType(type: ItemType): ItemDetailUiState = copy(type = type)
+    fun changeType(type: ItemType): AddItemUiState = copy(type = type)
 
-    fun changeTitle(title: String): ItemDetailUiState = copy(title = title)
+    fun changeTitle(title: String): AddItemUiState = copy(title = title)
 
-    fun changeDescription(description: String): ItemDetailUiState = copy(description = description)
+    fun changeDescription(description: String): AddItemUiState = copy(description = description)
 
-    fun setSection(sectionId: Long?): ItemDetailUiState = copy(sectionId = sectionId)
+    fun setSection(sectionId: Long?): AddItemUiState = copy(sectionId = sectionId)
 
-    fun setTag(tagId: Long): ItemDetailUiState = copy(
+    fun setTag(tagId: Long): AddItemUiState = copy(
         selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId
     )
 }

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.list.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.list.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.ItemType

@@ -4,7 +4,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
+import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormUiState
 import java.time.LocalDate
 
 data class ItemFormPreviewState(

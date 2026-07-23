@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,7 @@ fun DateFieldButton(
     clearContentDescription: String,
     modifier: Modifier = Modifier,
     defaultValue: String = "",
+    valueColor: Color? = null,
 ) {
     Row(
         modifier
@@ -48,10 +50,10 @@ fun DateFieldButton(
     ) {
         Text(
             valueLabel ?: defaultValue,
-            color = if (valueLabel != null) {
-                MaterialTheme.colorScheme.onSurface
-            } else {
-                LocalUdsExtendedColors.current.textTertiary
+            color = when {
+                valueLabel != null && valueColor != null -> valueColor
+                valueLabel != null -> MaterialTheme.colorScheme.onSurface
+                else -> LocalUdsExtendedColors.current.textTertiary
             },
             fontSize = 15.sp
         )

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -14,13 +15,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.common.extensions.toEpochMilliUtc
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
+import com.seucaio.unideas.core.common.util.Constants
+import com.seucaio.unideas.domain.model.UrgencyLevel
 import com.seucaio.unideas.ds.components.inputs.DateFieldButton
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
@@ -41,6 +46,7 @@ fun DueDateField(
         onClick = { showDatePicker = true },
         onClear = { onEvent(ItemFormEvent.OnDueDateChanged(null)) },
         clearContentDescription = stringResource(R.string.item_form_date_clear),
+        valueColor = dueDateUrgencyColor(dueDate),
         modifier = modifier
     )
 
@@ -66,6 +72,16 @@ fun DueDateField(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+}
+
+@Composable
+private fun dueDateUrgencyColor(dueDate: LocalDate?, today: LocalDate = LocalDate.now()): Color? {
+    if (dueDate == null) return null
+    return when (UrgencyLevel.of(dueDate, today, Constants.DUE_SOON_DAYS)) {
+        UrgencyLevel.OVERDUE -> MaterialTheme.colorScheme.error
+        UrgencyLevel.DUE_SOON -> LocalUdsExtendedColors.current.warning
+        UrgencyLevel.NORMAL -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 }
 

@@ -96,6 +96,14 @@ fun ItemFormBody(
             }
         }
 
+        if (state.isCompleted) {
+            Text(
+                text = stringResource(R.string.item_detail_completed_label),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        }
+
         Button(
             onClick = { onEvent(ItemFormEvent.OnSaveClicked) },
             enabled = state.isTitleValid,

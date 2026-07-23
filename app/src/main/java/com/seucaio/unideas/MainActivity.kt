@@ -60,7 +60,6 @@ class MainActivity : ComponentActivity() {
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToEdit = navController::navigateToItemEdit,
                         onNavigateToDetail = navController::navigateToItemDetail,
                         onNavigateToForm = navController::navigateToItemForm,
                     )
@@ -78,15 +77,6 @@ class MainActivity : ComponentActivity() {
  */
 private fun NavController.navigateToItemForm(type: ItemType) {
     navigate(ItemsRoute.FormSheet(type = type))
-}
-
-/** Edit entry point from within [ItemDetailScreen]'s edit button — V1/V2/V3 only, V4 has no detail screen to edit from. */
-private fun NavController.navigateToItemEdit(itemId: Long) {
-    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V2) {
-        navigate(ItemsRoute.FormSheet(itemId = itemId))
-    } else {
-        navigate(ItemsRoute.Form(itemId = itemId))
-    }
 }
 
 /**

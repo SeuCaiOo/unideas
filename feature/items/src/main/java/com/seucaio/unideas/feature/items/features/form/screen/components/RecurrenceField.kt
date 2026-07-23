@@ -15,33 +15,36 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun RecurrenceField(recurrence: Recurrence, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun RecurrenceField(
+    recurrence: Recurrence,
+    onEvent: (ItemFormEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val dailyLabel = stringResource(R.string.item_form_recurrence_daily)
     val weeklyLabel = stringResource(R.string.item_form_recurrence_weekly)
     val monthlyLabel = stringResource(R.string.item_form_recurrence_monthly)
     val noneLabel = stringResource(R.string.item_form_recurrence_none)
 
-    FormField(label = stringResource(R.string.item_form_recurrence_label), modifier = modifier) {
-        DropdownField(
-            options = listOf(dailyLabel, weeklyLabel, monthlyLabel),
-            selected = when (recurrence) {
-                Recurrence.Daily -> dailyLabel
-                Recurrence.Weekly -> weeklyLabel
-                Recurrence.Monthly -> monthlyLabel
-                else -> ""
-            },
-            emptyOptionLabel = noneLabel,
-            onSelect = { label ->
-                val newRecurrence = when (label) {
-                    dailyLabel -> Recurrence.Daily
-                    weeklyLabel -> Recurrence.Weekly
-                    monthlyLabel -> Recurrence.Monthly
-                    else -> Recurrence.None
-                }
-                onEvent(ItemFormEvent.OnRecurrenceChanged(newRecurrence))
-            },
-        )
-    }
+    DropdownField(
+        options = listOf(dailyLabel, weeklyLabel, monthlyLabel),
+        selected = when (recurrence) {
+            Recurrence.Daily -> dailyLabel
+            Recurrence.Weekly -> weeklyLabel
+            Recurrence.Monthly -> monthlyLabel
+            else -> ""
+        },
+        emptyOptionLabel = noneLabel,
+        onSelect = { label ->
+            val newRecurrence = when (label) {
+                dailyLabel -> Recurrence.Daily
+                weeklyLabel -> Recurrence.Weekly
+                monthlyLabel -> Recurrence.Monthly
+                else -> Recurrence.None
+            }
+            onEvent(ItemFormEvent.OnRecurrenceChanged(newRecurrence))
+        },
+        modifier = modifier,
+    )
 }
 
 @PreviewLightDark

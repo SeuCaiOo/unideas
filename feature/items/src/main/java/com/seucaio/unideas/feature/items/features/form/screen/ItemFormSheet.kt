@@ -23,8 +23,8 @@ import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEve
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel
-import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
-import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormFieldsEvents
+import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
+import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 

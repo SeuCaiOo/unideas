@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail.screen.components
+package com.seucaio.unideas.feature.items.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

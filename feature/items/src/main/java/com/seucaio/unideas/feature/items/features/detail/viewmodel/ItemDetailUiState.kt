@@ -4,7 +4,7 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormFieldsState
+import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import java.time.LocalDate
 
 /**

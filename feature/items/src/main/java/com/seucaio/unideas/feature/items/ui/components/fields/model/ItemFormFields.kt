@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.form.screen.components
+package com.seucaio.unideas.feature.items.ui.components.fields.model
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -7,7 +7,7 @@ import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 
 /**
- * Field values common to every screen that renders [ItemFormBody] — implemented by both
+ * Field values common to every screen that renders [com.seucaio.unideas.feature.items.ui.components.ItemFormBody] — implemented by both
  * `ItemFormUiState` (create/edit) and `ItemDetailUiState` (create-only), so the body/fields don't
  * couple to either ViewModel's own state type. [isCompleted]/[isEditing] default to `false` since
  * only `ItemFormUiState` has a real notion of either.
@@ -29,7 +29,7 @@ interface ItemFormFieldsState {
     val isEditing: Boolean get() = false
 }
 
-/** Field callbacks common to every screen that renders [ItemFormBody] — see [ItemFormFieldsState]. */
+/** Field callbacks common to every screen that renders [com.seucaio.unideas.feature.items.ui.components.ItemFormBody] — see [ItemFormFieldsState]. */
 data class ItemFormFieldsEvents(
     val onTypeChanged: (ItemType) -> Unit,
     val onTitleChanged: (String) -> Unit,

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.form.screen.components
+package com.seucaio.unideas.feature.items.ui.components.fields
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable

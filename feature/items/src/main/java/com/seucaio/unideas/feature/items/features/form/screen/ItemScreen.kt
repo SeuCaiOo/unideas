@@ -25,14 +25,14 @@ import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.components.ItemActions
-import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
-import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormDialogState
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel
+import com.seucaio.unideas.feature.items.ui.components.ItemActions
+import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
+import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 

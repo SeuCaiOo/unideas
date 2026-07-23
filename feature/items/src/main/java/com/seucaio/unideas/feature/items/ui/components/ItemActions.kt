@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.components
+package com.seucaio.unideas.feature.items.ui.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons

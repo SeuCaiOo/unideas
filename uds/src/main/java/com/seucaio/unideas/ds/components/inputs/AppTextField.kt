@@ -38,6 +38,7 @@ fun AppTextField(
     fillWidth: Boolean = true,
     borderColor: Color = MaterialTheme.colorScheme.outline,
     readOnly: Boolean = false,
+    imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null
 ) {
     var sized = modifier
@@ -61,15 +62,14 @@ fun AppTextField(
             cursorColor = MaterialTheme.colorScheme.primary
         ),
         keyboardOptions = if (onImeAction != null) {
-            KeyboardOptions(
-                imeAction = ImeAction.Done
-            )
+            KeyboardOptions(imeAction = imeAction)
         } else {
             KeyboardOptions.Default
         },
         keyboardActions = if (onImeAction != null) {
             KeyboardActions(
-                onDone = { onImeAction() }
+                onDone = { if (imeAction == ImeAction.Done) onImeAction() },
+                onNext = { if (imeAction == ImeAction.Next) onImeAction() },
             )
         } else {
             KeyboardActions.Default

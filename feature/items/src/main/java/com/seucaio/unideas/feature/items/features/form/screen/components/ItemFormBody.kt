@@ -12,14 +12,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.components.inputs.AppTextField
 import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormPreviewProvider
@@ -49,7 +52,7 @@ fun ItemFormBody(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .imePadding()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
     ) {
         titleDescriptionFields(state, onEvent)
 
@@ -111,11 +114,23 @@ private fun DefaultTitleDescriptionFields(
     state: ItemFormUiState,
     onEvent: (ItemFormEvent) -> Unit
 ) {
+    val titleFocusRequester = remember { FocusRequester() }
+    val descriptionFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (!state.isEditing) {
+            titleFocusRequester.requestFocus()
+        }
+    }
+
     BorderlessTextField(
         value = state.title,
         onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
         placeholder = stringResource(R.string.item_form_title_label),
         textStyle = MaterialTheme.typography.headlineLarge,
+        modifier = Modifier.focusRequester(titleFocusRequester),
+        imeAction = ImeAction.Next,
+        onImeAction = { descriptionFocusRequester.requestFocus() },
     )
 
     BorderlessTextField(
@@ -123,7 +138,10 @@ private fun DefaultTitleDescriptionFields(
         onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
         placeholder = stringResource(R.string.item_form_description_label),
         singleLine = false,
-        minHeight = 96.dp,
+        minHeight = 32.dp,
+        modifier = Modifier
+            .padding(vertical = 16.dp)
+            .focusRequester(descriptionFocusRequester),
         textStyle = MaterialTheme.typography.titleLarge,
     )
 }

@@ -7,12 +7,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -22,13 +24,15 @@ enum class UnideasTopBarVariant {
     Standard, Large
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnideasTopBar(
-    title: String,
     modifier: Modifier = Modifier,
+    title: String = "",
     onNavigateBack: (() -> Unit)? = null,
     navigationBackIcon: ImageVector = Icons.AutoMirrored.Filled.ArrowBack,
     variant: UnideasTopBarVariant = UnideasTopBarVariant.Standard,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val navigationIcon: @Composable () -> Unit = {
@@ -40,53 +44,21 @@ fun UnideasTopBar(
     }
 
     when (variant) {
-        UnideasTopBarVariant.Standard -> TopAppBarCompat(
-            title = title,
+        UnideasTopBarVariant.Standard -> TopAppBar(
+            title = { Text(title) },
             navigationIcon = navigationIcon,
             actions = actions,
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
             modifier = modifier,
         )
-        UnideasTopBarVariant.Large -> LargeTopAppBarCompat(
-            title = title,
+        UnideasTopBarVariant.Large -> LargeTopAppBar(
+            title = { Text(title) },
             navigationIcon = navigationIcon,
             actions = actions,
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
             modifier = modifier,
         )
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TopAppBarCompat(
-    title: String,
-    navigationIcon: @Composable () -> Unit,
-    actions: @Composable RowScope.() -> Unit,
-    modifier: Modifier,
-) {
-    TopAppBar(
-        title = { Text(title) },
-        navigationIcon = navigationIcon,
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(),
-        modifier = modifier,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LargeTopAppBarCompat(
-    title: String,
-    navigationIcon: @Composable () -> Unit,
-    actions: @Composable RowScope.() -> Unit,
-    modifier: Modifier,
-) {
-    LargeTopAppBar(
-        title = { Text(title) },
-        navigationIcon = navigationIcon,
-        actions = actions,
-        colors = TopAppBarDefaults.largeTopAppBarColors(),
-        modifier = modifier,
-    )
 }
 
 @PreviewLightDark

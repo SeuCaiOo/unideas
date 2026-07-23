@@ -71,14 +71,20 @@ fun ItemFormBody(
             )
         }
 
-        DueDateField(dueDate = state.dueDate, onEvent = onEvent, modifier = Modifier.padding(top = 16.dp))
-
-        if (state.canPickRecurrence) {
-            RecurrenceField(
-                recurrence = state.recurrence,
+        if (state.typeIsTask) {
+            DueDateField(
+                dueDate = state.dueDate,
                 onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.padding(top = 16.dp)
             )
+
+            if (state.canPickRecurrence) {
+                RecurrenceField(
+                    recurrence = state.recurrence,
+                    onEvent = onEvent,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
         }
 
         Button(
@@ -95,8 +101,14 @@ fun ItemFormBody(
 
 /** Default title/description rendering shared by V1/V2/V4 — outlined [AppTextField] under a [FormField] label. */
 @Composable
-private fun DefaultTitleDescriptionFields(state: ItemFormUiState, onEvent: (ItemFormEvent) -> Unit) {
-    FormField(label = stringResource(R.string.item_form_title_label), modifier = Modifier.padding(top = 16.dp)) {
+private fun DefaultTitleDescriptionFields(
+    state: ItemFormUiState,
+    onEvent: (ItemFormEvent) -> Unit
+) {
+    FormField(
+        label = stringResource(R.string.item_form_title_label),
+        modifier = Modifier.padding(top = 16.dp)
+    ) {
         AppTextField(
             value = state.title,
             onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },

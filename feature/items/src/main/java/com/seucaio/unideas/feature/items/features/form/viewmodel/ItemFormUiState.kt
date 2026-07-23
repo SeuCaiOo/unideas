@@ -31,4 +31,6 @@ data class ItemFormUiState(
     val isTitleValid: Boolean get() = title.isNotBlank()
 
     val canPickRecurrence: Boolean get() = dueDate != null
+
+    val typeIsTask: Boolean get() = type == ItemType.TASK
 }

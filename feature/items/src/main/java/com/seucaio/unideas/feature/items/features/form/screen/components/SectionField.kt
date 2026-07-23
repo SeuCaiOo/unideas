@@ -9,7 +9,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.ds.components.inputs.DropdownField
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
@@ -21,20 +20,20 @@ fun SectionField(
     onEvent: (ItemFormEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FormField(label = stringResource(R.string.item_form_section_label), modifier = modifier) {
-        DropdownField(
-            options = availableSections.map { it.name },
-            selected = availableSections.firstOrNull { it.id == sectionId }?.name.orEmpty(),
-            emptyOptionLabel = stringResource(R.string.item_form_section_none),
-            onSelect = { name ->
-                val newSectionId = availableSections.firstOrNull { it.name == name }?.id
-                onEvent(ItemFormEvent.OnSectionChanged(newSectionId))
-            },
-        )
-    }
+    DropdownField(
+        options = availableSections.map { it.name },
+        selected = availableSections.firstOrNull { it.id == sectionId }?.name.orEmpty(),
+        emptyOptionLabel = stringResource(R.string.item_form_section_none),
+        onSelect = { name ->
+            val newSectionId = availableSections.firstOrNull { it.name == name }?.id
+            onEvent(ItemFormEvent.OnSectionChanged(newSectionId))
+        },
+        modifier = modifier,
+    )
 }
 
-private val previewSections = listOf(Section(id = 1L, name = "Trabalho"), Section(id = 2L, name = "Casa"))
+private val previewSections =
+    listOf(Section(id = 1L, name = "Trabalho"), Section(id = 2L, name = "Casa"))
 
 @PreviewLightDark
 @Composable

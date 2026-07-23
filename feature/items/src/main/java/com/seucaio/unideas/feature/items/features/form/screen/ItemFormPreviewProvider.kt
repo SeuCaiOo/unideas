@@ -20,20 +20,26 @@ class ItemFormPreviewProvider : PreviewParameterProvider<ItemFormPreviewState> {
     override val values: Sequence<ItemFormPreviewState> = sequenceOf(
         // Screen right after opening, before the reference-data load resolves — the form is
         // already fully usable, no spinner blocking it.
-        ItemFormPreviewState(isEditing = false, uiState = ItemFormUiState(isEditing = false)),
+        ItemFormPreviewState(
+            isEditing = false,
+            uiState = ItemFormUiState(isEditing = false, type = ItemType.NOTE)
+        ),
         ItemFormPreviewState(
             isEditing = false,
             uiState = ItemFormUiState(
+                type = ItemType.NOTE,
+                title = "Pay bills",
+                description = "Electricity and water",
                 isEditing = false,
                 availableSections = sections,
                 availableTags = tags,
             ),
         ),
+        ItemFormPreviewState(isEditing = false, uiState = ItemFormUiState(isEditing = false)),
         ItemFormPreviewState(
             isEditing = true,
             uiState = ItemFormUiState(
                 isEditing = true,
-                type = ItemType.TASK,
                 title = "Pay bills",
                 description = "Electricity and water",
                 sectionId = 1L,

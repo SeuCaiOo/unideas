@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -44,7 +45,16 @@ fun DropdownField(
                 .clickable { expanded = true }
                 .padding(horizontal = 14.dp, vertical = 13.dp)
         ) {
-            Text(selected.ifEmpty { emptyOptionLabel }, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
+            Text(
+                text = selected.ifEmpty { emptyOptionLabel },
+                color = if (!selected.isEmpty()) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    LocalUdsExtendedColors.current.textTertiary
+                },
+
+                fontSize = 15.sp
+            )
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text(emptyOptionLabel) }, onClick = {
@@ -66,7 +76,11 @@ fun DropdownField(
 private fun DropdownFieldPreview() {
     UdsTheme {
         var selected by remember { mutableStateOf("") }
-        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+        Box(
+            Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
+        ) {
             DropdownField(
                 options = listOf(
                     "Personal",

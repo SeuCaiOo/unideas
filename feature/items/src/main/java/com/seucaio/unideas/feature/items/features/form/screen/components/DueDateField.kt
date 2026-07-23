@@ -21,7 +21,6 @@ import com.seucaio.unideas.core.common.extensions.toEpochMilliUtc
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.core.common.extensions.toLocalDateUtc
 import com.seucaio.unideas.ds.components.inputs.DateFieldButton
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
@@ -29,20 +28,25 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DueDateField(dueDate: LocalDate?, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun DueDateField(
+    dueDate: LocalDate?,
+    onEvent: (ItemFormEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     var showDatePicker by remember { mutableStateOf(false) }
 
-    FormField(label = stringResource(R.string.item_form_date_label), modifier = modifier) {
-        DateFieldButton(
-            valueLabel = dueDate?.toFormattedDateString(),
-            onClick = { showDatePicker = true },
-            onClear = { onEvent(ItemFormEvent.OnDueDateChanged(null)) },
-            clearContentDescription = stringResource(R.string.item_form_date_clear),
-        )
-    }
+    DateFieldButton(
+        valueLabel = dueDate?.toFormattedDateString(),
+        defaultValue = stringResource(R.string.item_form_date_label),
+        onClick = { showDatePicker = true },
+        onClear = { onEvent(ItemFormEvent.OnDueDateChanged(null)) },
+        clearContentDescription = stringResource(R.string.item_form_date_clear),
+        modifier = modifier
+    )
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dueDate?.toEpochMilliUtc())
+        val datePickerState =
+            rememberDatePickerState(initialSelectedDateMillis = dueDate?.toEpochMilliUtc())
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {

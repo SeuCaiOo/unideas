@@ -32,7 +32,8 @@ fun DateFieldButton(
     onClick: () -> Unit,
     onClear: () -> Unit,
     clearContentDescription: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    defaultValue: String = "",
 ) {
     Row(
         modifier
@@ -46,7 +47,7 @@ fun DateFieldButton(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            valueLabel ?: "",
+            valueLabel ?: defaultValue,
             color = if (valueLabel != null) {
                 MaterialTheme.colorScheme.onSurface
             } else {

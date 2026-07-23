@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     homeNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToDetail = navController::navigateToItemDetail,
                         onNavigateToForm = navController::navigateToItemForm,
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
                         onNavigateToEdit = navController::navigateToItemEdit,
-                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
+                        onNavigateToDetail = navController::navigateToItemDetail,
                         onNavigateToForm = navController::navigateToItemForm,
                     )
                 }
@@ -73,20 +73,36 @@ class MainActivity : ComponentActivity() {
 /**
  * Centralizes the create-form routing decision so every caller (Home, Items list, Settings
  * debug entry) automatically picks up the right destination type per POC version, without
- * each Screen needing to know about [ScreenVersion.V2]'s dialog-hosted presentation (#86).
+ * each Screen needing to know about it. [ScreenVersion.V4] reuses [ScreenVersion.V2]'s
+ * dialog-hosted [FormSheet] for creation — it has no bottom sheet variant of its own (#86/#97).
  */
 private fun NavController.navigateToItemForm(type: ItemType) {
-    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V2) {
+    val version = DevScreenVersionToggle.selectedVersion.value
+    if (version == ScreenVersion.V2 || version == ScreenVersion.V4) {
         navigate(ItemsRoute.FormSheet(type = type))
     } else {
         navigate(ItemsRoute.Form(type = type))
     }
 }
 
+/** Edit entry point from within [ItemDetailScreen]'s edit button — V1/V2/V3 only, V4 has no detail screen to edit from. */
 private fun NavController.navigateToItemEdit(itemId: Long) {
     if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V2) {
         navigate(ItemsRoute.FormSheet(itemId = itemId))
     } else {
         navigate(ItemsRoute.Form(itemId = itemId))
+    }
+}
+
+/**
+ * [ScreenVersion.V4] skips [ItemDetailScreen] entirely: tapping an item lands directly on
+ * [ItemFormScreenV4]'s regular full-screen destination, already editable — no separate
+ * read-only state, no extra "editar" tap.
+ */
+private fun NavController.navigateToItemDetail(itemId: Long) {
+    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V4) {
+        navigate(ItemsRoute.Form(itemId = itemId))
+    } else {
+        navigate(ItemsRoute.Detail(itemId))
     }
 }

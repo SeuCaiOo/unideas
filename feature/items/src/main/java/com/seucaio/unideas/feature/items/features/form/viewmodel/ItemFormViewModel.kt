@@ -21,14 +21,16 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 /**
- * ViewModel for the single create/edit Item form. Unlike Sections/Tags/the detail screen, this
- * uiState is **not** derived from a reactive domain [kotlinx.coroutines.flow.Flow] — there is
- * nothing here to keep observing after the initial load: sections/tags can't change while this
- * screen is open (only Settings creates/edits them), and the item being edited isn't mutated by
- * anything else while the user is typing. So `uiState` is a plain [MutableStateFlow] mutated
- * directly by `onEvent`/the one-shot load in `init`, not a mapped/combined [Flow] — no
- * `Loading`/`Error` screen state exists (see [ItemFormUiState]'s doc), so there's nothing to
- * retry either.
+ * ViewModel for the single create/edit Item form. Unlike Sections/Tags, this uiState is **not**
+ * derived from a reactive domain [kotlinx.coroutines.flow.Flow] — there is nothing here to keep
+ * observing after the initial load: sections/tags can't change while this screen is open (only
+ * Settings creates/edits them), and the item being edited can't be mutated by anything else while
+ * you're inside this screen either. So `uiState` is a plain [MutableStateFlow] mutated directly by
+ * `onEvent`/the one-shot load in `init`, not a mapped/combined [Flow]. No full `Loading`/`Error`
+ * triad wrapping the screen (see [ItemFormUiState]'s doc) — but fetching the item being edited
+ * does get [ItemFormUiState.isLoading]/[ItemFormUiState.loadFailed] + a retry path
+ * ([ItemFormEvent.OnRetryClicked]), since this ViewModel is the only place that fetches the item
+ * now (#97).
  */
 class ItemFormViewModel(
     private val itemId: Long?,
@@ -43,7 +45,9 @@ class ItemFormViewModel(
 
     // initialType only seeds creation mode — loadItem() overwrites it with the real type when
     // editing, so an edit deep-link can't be nudged into a different type by a stale nav arg.
-    private val _uiState = MutableStateFlow(ItemFormUiState(isEditing = itemId != null, type = initialType))
+    private val _uiState = MutableStateFlow(
+        ItemFormUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
+    )
     val uiState: StateFlow<ItemFormUiState> = _uiState.asStateFlow()
 
     private val _uiAction = Channel<ItemFormUiAction>(Channel.BUFFERED)
@@ -72,12 +76,13 @@ class ItemFormViewModel(
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
             sendUiAction(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error))
-            _uiState.update { it.copy(loadFailed = true) }
+            _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             return
         }
         originalItem = item
         _uiState.update {
             it.copy(
+                isLoading = false,
                 type = item.type,
                 title = item.title,
                 description = item.description.orEmpty(),
@@ -118,6 +123,7 @@ class ItemFormViewModel(
 
     private fun retryLoad() {
         val id = itemId ?: return
+        _uiState.update { it.copy(isLoading = true, loadFailed = false) }
         viewModelScope.launch { loadItem(id) }
     }
 

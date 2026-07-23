@@ -17,6 +17,7 @@ import java.time.LocalDate
  */
 data class ItemFormUiState(
     val isEditing: Boolean = false,
+    val isLoading: Boolean = false,
     val type: ItemType = ItemType.TASK,
     val title: String = "",
     val description: String = "",

@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
+import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -105,14 +106,14 @@ private fun ItemFormContent(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        if (uiState.loadFailed) {
-            UnideasErrorContent(
+        when {
+            uiState.isLoading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
+            uiState.loadFailed -> UnideasErrorContent(
                 messageRes = R.string.item_form_load_error,
                 onRetry = { onEvent(ItemFormEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-        } else {
-            ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
+            else -> ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
         }
     }
 }

@@ -4,7 +4,9 @@
     <string name="item_title_required">O título é obrigatório</string>
     <string name="item_form_title_create">Novo item</string>
     <string name="item_form_title_edit">Editar item</string>
+    <string name="item_form_title_view">Item</string>
     <string name="item_form_save">Salvar</string>
+    <string name="item_form_v2_edit">Editar</string>
     <string name="item_form_type_task">Tarefa</string>
     <string name="item_form_type_note">Anotação</string>
     <string name="item_form_title_label">Título</string>

@@ -4,7 +4,9 @@
     <string name="item_title_required">Title is required</string>
     <string name="item_form_title_create">New item</string>
     <string name="item_form_title_edit">Edit item</string>
+    <string name="item_form_title_view">Item</string>
     <string name="item_form_save">Save</string>
+    <string name="item_form_v2_edit">Edit</string>
     <string name="item_form_type_task">Task</string>
     <string name="item_form_type_note">Note</string>
     <string name="item_form_title_label">Title</string>

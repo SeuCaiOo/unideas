@@ -37,6 +37,7 @@ fun AppTextField(
     singleLine: Boolean = true,
     fillWidth: Boolean = true,
     borderColor: Color = MaterialTheme.colorScheme.outline,
+    readOnly: Boolean = false,
     onImeAction: (() -> Unit)? = null
 ) {
     var sized = modifier
@@ -46,6 +47,7 @@ fun AppTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        readOnly = readOnly,
         placeholder = { Text(placeholder, color = LocalUdsExtendedColors.current.textTertiary) },
         singleLine = singleLine,
         shape = RoundedCornerShape(Radii.Field),

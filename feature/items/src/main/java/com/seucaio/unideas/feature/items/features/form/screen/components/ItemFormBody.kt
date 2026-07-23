@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +18,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.inputs.AppTextField
+import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
 import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -49,9 +51,13 @@ fun ItemFormBody(
             .imePadding()
             .padding(16.dp),
     ) {
-        TypeSelectorField(type = state.type, onEvent = onEvent)
-
         titleDescriptionFields(state, onEvent)
+
+        TypeSelectorField(
+            type = state.type,
+            onEvent = onEvent,
+            modifier = Modifier.padding(top = 16.dp)
+        )
 
         if (state.availableSections.isNotEmpty()) {
             SectionField(
@@ -105,29 +111,21 @@ private fun DefaultTitleDescriptionFields(
     state: ItemFormUiState,
     onEvent: (ItemFormEvent) -> Unit
 ) {
-    FormField(
-        label = stringResource(R.string.item_form_title_label),
-        modifier = Modifier.padding(top = 16.dp)
-    ) {
-        AppTextField(
-            value = state.title,
-            onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
-            placeholder = stringResource(R.string.item_form_title_label),
-        )
-    }
+    BorderlessTextField(
+        value = state.title,
+        onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
+        placeholder = stringResource(R.string.item_form_title_label),
+        textStyle = MaterialTheme.typography.headlineLarge,
+    )
 
-    FormField(
-        label = stringResource(R.string.item_form_description_label),
-        modifier = Modifier.padding(top = 16.dp),
-    ) {
-        AppTextField(
-            value = state.description,
-            onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
-            placeholder = stringResource(R.string.item_form_description_label),
-            singleLine = false,
-            minHeight = 96.dp,
-        )
-    }
+    BorderlessTextField(
+        value = state.description,
+        onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
+        placeholder = stringResource(R.string.item_form_description_label),
+        singleLine = false,
+        minHeight = 96.dp,
+        textStyle = MaterialTheme.typography.titleLarge,
+    )
 }
 
 @PreviewLightDark

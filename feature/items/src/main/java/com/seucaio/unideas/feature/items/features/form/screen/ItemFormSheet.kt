@@ -27,19 +27,19 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * #86 Pacote 2, direção V2: renders as a [ModalBottomSheet] (`skipPartiallyExpanded = true`, so it
- * opens fully expanded like a screen) instead of a regular destination — the other visual variant
- * under comparison, alongside V3/V4's plain `Scaffold` destinations. No top bar — the sheet's own
- * dismiss (drag/back/outside tap) covers "voltar"; the save action lives inside the shared
- * [ItemFormBody] (full-width button at the end of the form) instead of a toolbar action.
+ * Item creation as a [ModalBottomSheet] (`skipPartiallyExpanded = true`, so it opens fully
+ * expanded like a screen) instead of a regular destination — the adopted direction for adding a
+ * new item (#86/#97), used only for creation; viewing/editing an existing item stays on
+ * [ItemFormScreenV4]'s full-screen destination. No top bar — the sheet's own dismiss (drag/back/
+ * outside tap) covers "voltar"; the save action lives inside the shared [ItemFormBody] (full-width
+ * button at the end of the form) instead of a toolbar action.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItemFormScreenV2(
-    itemId: Long?,
+fun ItemFormSheet(
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
-    viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId, initialType) },
+    viewModel: ItemFormViewModel = koinViewModel { parametersOf(null, initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -63,7 +63,7 @@ fun ItemFormScreenV2(
         onDismissRequest = { updatedOnNavigateBack?.invoke() },
         sheetState = sheetState,
     ) {
-        ItemFormV2Content(
+        ItemFormSheetContent(
             uiState = uiState,
             onEvent = viewModel::onEvent,
             snackbarHostState = snackbarHostState,
@@ -72,7 +72,7 @@ fun ItemFormScreenV2(
 }
 
 @Composable
-private fun ItemFormV2Content(
+private fun ItemFormSheetContent(
     uiState: ItemFormUiState,
     onEvent: (ItemFormEvent) -> Unit,
     snackbarHostState: SnackbarHostState,
@@ -85,12 +85,12 @@ private fun ItemFormV2Content(
 
 @PreviewLightDark
 @Composable
-private fun ItemFormScreenV2Preview(
+private fun ItemFormSheetPreview(
     @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
 ) {
     UdsTheme {
         Surface {
-            ItemFormV2Content(
+            ItemFormSheetContent(
                 uiState = previewState.uiState,
                 onEvent = {},
                 snackbarHostState = remember { SnackbarHostState() },

@@ -1,7 +1,9 @@
 package com.seucaio.unideas.feature.items.navigation
 
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
@@ -31,6 +33,12 @@ fun NavGraphBuilder.itemsNavGraph(
             ScreenVersion.V4, ScreenVersion.V5 ->
                 ItemFormScreenV4(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
         }
+    }
+    dialog<ItemsRoute.FormSheet>(
+        dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    ) { backStackEntry ->
+        val route = backStackEntry.toRoute<ItemsRoute.FormSheet>()
+        ItemFormScreenV2(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
     }
     composable<ItemsRoute.Detail> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()

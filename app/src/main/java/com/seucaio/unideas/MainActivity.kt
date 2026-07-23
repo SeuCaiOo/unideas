@@ -6,8 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
+import com.seucaio.unideas.core.common.dev.ScreenVersion
+import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
@@ -36,7 +40,7 @@ class MainActivity : ComponentActivity() {
                     homeNavGraph(
                         onNavigateBack = navController::popBackStack,
                         onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
-                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        onNavigateToForm = navController::navigateToItemForm,
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
                         onNavigateToBrowse = { navController.navigate(HomeRoute.Browse) },
@@ -56,12 +60,33 @@ class MainActivity : ComponentActivity() {
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
+                        onNavigateToEdit = navController::navigateToItemEdit,
                         onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
-                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        onNavigateToForm = navController::navigateToItemForm,
                     )
                 }
             }
         }
+    }
+}
+
+/**
+ * Centralizes the create-form routing decision so every caller (Home, Items list, Settings
+ * debug entry) automatically picks up the right destination type per POC version, without
+ * each Screen needing to know about [ScreenVersion.V2]'s dialog-hosted presentation (#86).
+ */
+private fun NavController.navigateToItemForm(type: ItemType) {
+    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V2) {
+        navigate(ItemsRoute.FormSheet(type = type))
+    } else {
+        navigate(ItemsRoute.Form(type = type))
+    }
+}
+
+private fun NavController.navigateToItemEdit(itemId: Long) {
+    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V2) {
+        navigate(ItemsRoute.FormSheet(itemId = itemId))
+    } else {
+        navigate(ItemsRoute.Form(itemId = itemId))
     }
 }

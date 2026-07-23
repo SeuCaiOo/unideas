@@ -3,16 +3,21 @@ package com.seucaio.unideas.core.common.dev
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/** Screen implementation variants available for dev comparison — extend this enum as new POC versions appear. */
+enum class ScreenVersion {
+    V1, V2, V3, V4, V5
+}
+
 /**
- * Dev-only, in-memory (not persisted — resets on process death) switch for comparing each
- * screen's current implementation against its `V2` clone (#84) while both exist side by side.
- * Temporary: removed once a version is picked and the losing side is deleted.
+ * Dev-only, in-memory (not persisted — resets on process death) selector for comparing a
+ * screen's POC implementations (#84) side by side. Only one version is active at a time.
+ * Defaults to [ScreenVersion.V1] — the current shipped implementation.
  */
 object DevScreenVersionToggle {
-    private val _useV2 = MutableStateFlow(false)
-    val useV2: StateFlow<Boolean> = _useV2
+    private val _selectedVersion = MutableStateFlow(ScreenVersion.V1)
+    val selectedVersion: StateFlow<ScreenVersion> = _selectedVersion
 
-    fun set(value: Boolean) {
-        _useV2.value = value
+    fun select(version: ScreenVersion) {
+        _selectedVersion.value = version
     }
 }

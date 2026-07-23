@@ -11,7 +11,7 @@
     <string name="settings_debug_seed_success">Dados de exemplo adicionados</string>
     <string name="settings_debug_clear">Limpar banco de dados</string>
     <string name="settings_debug_clear_success">Banco de dados limpo</string>
-    <string name="settings_debug_use_v2_screens">Usar telas V2</string>
+    <string name="settings_debug_screen_version">Versão da tela</string>
     <string name="seed_scope_sheet_title">O que devemos popular?</string>
     <string name="seed_scope_confirm">Popular</string>
     <string name="seed_scope_empty">Vazio</string>

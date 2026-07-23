@@ -203,7 +203,7 @@ private fun SettingsBody(
                     label = stringResource(R.string.settings_debug_clear),
                     onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
                 )
-                UseV2ScreensRow()
+                ScreenVersionRow()
             }
         }
     }

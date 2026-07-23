@@ -26,6 +26,7 @@ data class ItemFormUiState(
     val recurrence: Recurrence = Recurrence.None,
     val availableSections: List<Section> = emptyList(),
     val availableTags: List<Tag> = emptyList(),
+    val isCompleted: Boolean = false,
 ) {
 
     val isTitleValid: Boolean get() = title.isNotBlank()

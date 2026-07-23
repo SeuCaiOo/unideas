@@ -12,10 +12,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
@@ -44,6 +46,7 @@ fun ItemFormSheet(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val context = LocalContext.current
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val sheetState = rememberModalBottomSheetState()
 
@@ -55,6 +58,7 @@ fun ItemFormSheet(
                     resources.getString(action.messageRes)
                 )
                 is ItemFormUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is ItemFormUiAction.ShareText -> context.shareText(action.text)
             }
         }
     }

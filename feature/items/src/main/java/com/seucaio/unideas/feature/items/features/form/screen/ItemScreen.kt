@@ -15,11 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -54,6 +56,7 @@ fun ItemScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val context = LocalContext.current
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
 
     LaunchedEffect(Unit) {
@@ -64,6 +67,7 @@ fun ItemScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemFormUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is ItemFormUiAction.ShareText -> context.shareText(action.text)
             }
         }
     }

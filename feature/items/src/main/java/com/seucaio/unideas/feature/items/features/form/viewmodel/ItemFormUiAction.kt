@@ -13,4 +13,7 @@ sealed interface ItemFormUiAction {
 
     /** Unexpected repository failure — raw exception message, not localized. */
     data class ShowError(val message: String) : ItemFormUiAction
+
+    /** Launch the system share sheet with [text]. */
+    data class ShareText(val text: String) : ItemFormUiAction
 }

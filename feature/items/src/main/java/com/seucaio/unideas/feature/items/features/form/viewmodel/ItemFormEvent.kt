@@ -22,4 +22,15 @@ sealed interface ItemFormEvent {
     data class OnRecurrenceChanged(val recurrence: Recurrence) : ItemFormEvent
 
     data object OnSaveClicked : ItemFormEvent
+
+    /** Share/delete/complete — merged in from `ItemDetailEvent` as editing moved onto this screen. */
+    data object OnShareClicked : ItemFormEvent
+
+    data object OnDeleteClicked : ItemFormEvent
+
+    data object OnDeleteConfirmClicked : ItemFormEvent
+
+    data object OnDialogDismissed : ItemFormEvent
+
+    data object OnCompleteClicked : ItemFormEvent
 }

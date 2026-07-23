@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.items.features.form.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -48,6 +49,9 @@ class ItemFormViewModel(
     private val _uiAction = Channel<ItemFormUiAction>(Channel.BUFFERED)
     val uiAction: Flow<ItemFormUiAction> = _uiAction.receiveAsFlow()
 
+    private val _dialogState = MutableStateFlow<ItemFormDialogState>(ItemFormDialogState.None)
+    val dialogState: StateFlow<ItemFormDialogState> = _dialogState.asStateFlow()
+
     init {
         viewModelScope.launch { loadFormData() }
     }
@@ -81,6 +85,7 @@ class ItemFormViewModel(
                 selectedTagIds = item.tags.map { tag -> tag.id }.toSet(),
                 dueDate = item.dueDate,
                 recurrence = item.recurrence,
+                isCompleted = item.isCompleted,
             )
         }
     }
@@ -101,6 +106,11 @@ class ItemFormViewModel(
             }
             is ItemFormEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
             is ItemFormEvent.OnSaveClicked -> handleSave()
+            is ItemFormEvent.OnShareClicked -> handleShare()
+            is ItemFormEvent.OnDeleteClicked -> _dialogState.update { ItemFormDialogState.DeleteConfirm }
+            is ItemFormEvent.OnDialogDismissed -> _dialogState.update { ItemFormDialogState.None }
+            is ItemFormEvent.OnDeleteConfirmClicked -> handleDelete()
+            is ItemFormEvent.OnCompleteClicked -> handleComplete()
         }
     }
 
@@ -148,6 +158,32 @@ class ItemFormViewModel(
         } else {
             sendUiAction(ItemFormUiAction.ShowError(error.message.orEmpty()))
         }
+    }
+
+    private fun handleDelete() = viewModelScope.launch {
+        val id = itemId ?: return@launch
+        _dialogState.update { ItemFormDialogState.None }
+        runCatching { itemFormUseCase.delete(id) }
+            .onSuccess { sendUiAction(ItemFormUiAction.NavigateBack) }
+            .onFailure { sendUiAction(ItemFormUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleComplete() = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        if (item.type != ItemType.TASK) return@launch
+        itemFormUseCase.complete(item, LocalDateTime.now())
+            .onFailure { sendUiAction(ItemFormUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleShare() = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        sendUiAction(ItemFormUiAction.ShareText(buildShareText(item)))
+    }
+
+    private fun buildShareText(item: Item): String = buildString {
+        appendLine(item.title)
+        item.description?.let { appendLine(it) }
+        item.dueDate?.let { appendLine(it.toFormattedDateString()) }
     }
 
     private suspend fun sendUiAction(action: ItemFormUiAction) = _uiAction.send(action)

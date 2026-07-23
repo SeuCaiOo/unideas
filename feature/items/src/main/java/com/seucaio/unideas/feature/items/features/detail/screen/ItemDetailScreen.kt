@@ -35,8 +35,8 @@ import com.seucaio.unideas.ds.components.lists.MetaRow
 import com.seucaio.unideas.ds.components.lists.TitleSubtitle
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.components.ItemActions
 import com.seucaio.unideas.feature.items.features.detail.screen.components.DueDateRow
-import com.seucaio.unideas.feature.items.features.detail.screen.components.ItemDetailActions
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailDialogState
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
@@ -104,9 +104,13 @@ private fun ItemDetailContent(
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
                     if (uiState is ItemDetailUiState.Success) {
-                        ItemDetailActions(
-                            uiState.item,
-                            onEvent
+                        val item = uiState.item
+                        ItemActions(
+                            canComplete = item.type == ItemType.TASK && !item.isCompleted,
+                            onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+                            onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
+                            onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
+                            onEditClicked = { onEvent(ItemDetailEvent.OnEditClicked) },
                         )
                     }
                 },

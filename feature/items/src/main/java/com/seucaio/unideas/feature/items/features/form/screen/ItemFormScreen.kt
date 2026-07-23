@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.items.features.form.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -125,6 +126,7 @@ private fun ItemFormBody(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(16.dp),
     ) {
         TypeSelectorField(type = state.type, onEvent = onEvent)

@@ -3,9 +3,13 @@ package com.seucaio.unideas.feature.items.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreen
+import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreenV2
+import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreenV3
+import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreenV4
 import com.seucaio.unideas.feature.items.features.list.screen.ItemsListScreen
 
 fun NavGraphBuilder.itemsNavGraph(
@@ -16,11 +20,17 @@ fun NavGraphBuilder.itemsNavGraph(
 ) {
     composable<ItemsRoute.Form> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Form>()
-        ItemFormScreen(
-            itemId = route.itemId,
-            initialType = route.type,
-            onNavigateBack = onNavigateBack
-        )
+        when (route.version) {
+            ScreenVersion.V1 ->
+                ItemFormScreen(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
+            ScreenVersion.V2 ->
+                ItemFormScreenV2(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
+            ScreenVersion.V3 ->
+                ItemFormScreenV3(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
+            // No ItemFormScreenV5 yet — falls back to V4 until one is built.
+            ScreenVersion.V4, ScreenVersion.V5 ->
+                ItemFormScreenV4(itemId = route.itemId, initialType = route.type, onNavigateBack = onNavigateBack)
+        }
     }
     composable<ItemsRoute.Detail> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()

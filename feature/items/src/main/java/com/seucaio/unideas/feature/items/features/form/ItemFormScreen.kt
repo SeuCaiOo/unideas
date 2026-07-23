@@ -1,7 +1,11 @@
-package com.seucaio.unideas.feature.items.features.form.screen
+package com.seucaio.unideas.feature.items.features.form
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -19,44 +23,34 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormDialogState
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel
-import com.seucaio.unideas.feature.items.ui.components.ItemActions
 import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * #86 Pacote 2, direção V4: a tela nasce **sempre editável** — não existe nenhum estado de
- * leitura, nem um botão de "editar" para sair dele (ao contrário de [ItemFormSheet]/
- * [ItemFormScreenV3], que alternam entre um estado read-only e um editável). O real ponto de
- * comparação dessa direção é de navegação, não visual: tocar num item levaria direto pra cá,
- * pulando [com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen] por
- * completo — decisão de rota ainda adiada (#86), então essa tela por si só acaba ficando parecida
- * com [ItemFormScreen] hoje (o mesmo corpo de campos), só sem a distinção de título
- * criar/editar, já que aqui não faz sentido diferenciar os dois — é sempre "editando". Reaproveita
- * [ItemFormViewModel]/[ItemFormUiState]/[ItemFormEvent] como estão. Sem rota nova no nav graph
- * ainda — visível só via `@PreviewLightDark`.
+ * Each field is extracted into its own composable under `screen/components/` (type selector,
+ * section/recurrence dropdowns, tags, due date) since they carry their own domain-to-UI mapping
+ * (`Section`/`Recurrence` → `DropdownField` strings) — too much for this file to inline per
+ * field. `UnideasTopBar` and the date `DatePickerDialog` stay legacy — no native equivalent yet.
  */
 @Composable
-fun ItemScreen(
+fun ItemFormScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId, initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -75,9 +69,9 @@ fun ItemScreen(
         }
     }
 
-    ItemScreenContent(
+    ItemFormContent(
+        isEditing = itemId != null,
         uiState = uiState,
-        dialogState = dialogState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -86,14 +80,15 @@ fun ItemScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemScreenContent(
+private fun ItemFormContent(
+    isEditing: Boolean,
     uiState: ItemFormUiState,
-    dialogState: ItemFormDialogState,
     onEvent: (ItemFormEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    val title = stringResource(if (isEditing) R.string.item_form_title_edit else R.string.item_form_title_create)
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
             onTypeChanged = { onEvent(ItemFormEvent.OnTypeChanged(it)) },
@@ -110,15 +105,15 @@ private fun ItemScreenContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                title = stringResource(R.string.item_form_title_view) + " — V4",
+                title = title,
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
-                    ItemActions(
-                        canComplete = uiState.typeIsTask && !uiState.isCompleted,
-                        onShareClicked = { onEvent(ItemFormEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemFormEvent.OnDeleteClicked) },
-                        onCompleteClicked = { onEvent(ItemFormEvent.OnCompleteClicked) },
-                    )
+                    IconButton(
+                        onClick = { onEvent(ItemFormEvent.OnSaveClicked) },
+                        enabled = uiState.isTitleValid,
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.item_form_save))
+                    }
                 },
             )
         },
@@ -138,26 +133,17 @@ private fun ItemScreenContent(
             )
         }
     }
-
-    if (dialogState is ItemFormDialogState.DeleteConfirm) {
-        DeleteConfirmationDialog(
-            titleRes = R.string.item_detail_delete_title,
-            messageRes = R.string.item_detail_delete_message,
-            onDismiss = { onEvent(ItemFormEvent.OnDialogDismissed) },
-            onConfirm = { onEvent(ItemFormEvent.OnDeleteConfirmClicked) },
-        )
-    }
 }
 
 @PreviewLightDark
 @Composable
-private fun ItemScreenPreview(
+private fun ItemFormScreenPreview(
     @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
 ) {
     UdsTheme {
-        ItemScreenContent(
+        ItemFormContent(
+            isEditing = previewState.isEditing,
             uiState = previewState.uiState,
-            dialogState = ItemFormDialogState.None,
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

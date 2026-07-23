@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.detail.screen
+package com.seucaio.unideas.feature.items.features.detail
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.ItemType

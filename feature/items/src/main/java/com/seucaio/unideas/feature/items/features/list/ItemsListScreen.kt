@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.list.screen
+package com.seucaio.unideas.feature.items.features.list
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding

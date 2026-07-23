@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.features.form.screen
+package com.seucaio.unideas.feature.items.features.detail
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,7 +18,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
-import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState

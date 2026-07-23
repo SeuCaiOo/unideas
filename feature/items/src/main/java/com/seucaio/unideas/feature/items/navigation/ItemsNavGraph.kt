@@ -7,10 +7,10 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreen
-import com.seucaio.unideas.feature.items.features.form.screen.ItemFormSheet
-import com.seucaio.unideas.feature.items.features.form.screen.ItemScreen
-import com.seucaio.unideas.feature.items.features.list.screen.ItemsListScreen
+import com.seucaio.unideas.feature.items.features.detail.ItemFormSheet
+import com.seucaio.unideas.feature.items.features.form.ItemFormScreen
+import com.seucaio.unideas.feature.items.features.form.ItemScreen
+import com.seucaio.unideas.feature.items.features.list.ItemsListScreen
 
 fun NavGraphBuilder.itemsNavGraph(
     onNavigateBack: (() -> Unit)?,

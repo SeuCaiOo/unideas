@@ -1,11 +1,6 @@
 package com.seucaio.unideas.feature.items.features.form.screen
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,19 +19,12 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.ds.components.inputs.AppTextField
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.screen.components.DueDateField
-import com.seucaio.unideas.feature.items.features.form.screen.components.RecurrenceField
-import com.seucaio.unideas.feature.items.features.form.screen.components.SectionField
-import com.seucaio.unideas.feature.items.features.form.screen.components.TagsField
-import com.seucaio.unideas.feature.items.features.form.screen.components.TypeSelectorField
+import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
@@ -113,72 +101,6 @@ private fun ItemFormContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
-    }
-}
-
-@Composable
-private fun ItemFormBody(
-    state: ItemFormUiState,
-    onEvent: (ItemFormEvent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(16.dp),
-    ) {
-        TypeSelectorField(type = state.type, onEvent = onEvent)
-
-        FormField(label = stringResource(R.string.item_form_title_label), modifier = Modifier.padding(top = 16.dp)) {
-            AppTextField(
-                value = state.title,
-                onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
-                placeholder = stringResource(R.string.item_form_title_label),
-            )
-        }
-
-        FormField(
-            label = stringResource(R.string.item_form_description_label),
-            modifier = Modifier.padding(top = 16.dp),
-        ) {
-            AppTextField(
-                value = state.description,
-                onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
-                placeholder = stringResource(R.string.item_form_description_label),
-                singleLine = false,
-                minHeight = 96.dp,
-            )
-        }
-
-        if (state.availableSections.isNotEmpty()) {
-            SectionField(
-                availableSections = state.availableSections,
-                sectionId = state.sectionId,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
-
-        if (state.availableTags.isNotEmpty()) {
-            TagsField(
-                availableTags = state.availableTags,
-                selectedTagIds = state.selectedTagIds,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
-
-        DueDateField(dueDate = state.dueDate, onEvent = onEvent, modifier = Modifier.padding(top = 16.dp))
-
-        if (state.canPickRecurrence) {
-            RecurrenceField(
-                recurrence = state.recurrence,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
     }
 }
 

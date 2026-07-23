@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,18 +42,13 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.chips.TextBadge
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.components.lists.MetaChipsRow
 import com.seucaio.unideas.ds.components.lists.MetaRow
 import com.seucaio.unideas.ds.components.lists.TitleSubtitle
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.screen.components.DueDateField
-import com.seucaio.unideas.feature.items.features.form.screen.components.RecurrenceField
-import com.seucaio.unideas.feature.items.features.form.screen.components.SectionField
-import com.seucaio.unideas.feature.items.features.form.screen.components.TagsField
-import com.seucaio.unideas.feature.items.features.form.screen.components.TypeSelectorField
+import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
@@ -65,8 +59,8 @@ import org.koin.core.parameter.parametersOf
 /**
  * #86 Pacote 2, direção V3: **uma única tela**, sem navegar, alternando entre o layout de leitura
  * de hoje ([com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen] —
- * [TitleSubtitle]/[MetaRow]/[MetaChipsRow]/[TextBadge]) e o layout de edição de hoje
- * ([ItemFormScreen] — campos [FormField]). Ao contrário de [ItemFormScreenV2]
+ * [TitleSubtitle]/[MetaRow]/[MetaChipsRow]/[TextBadge]) e o layout de edição, que reaproveita o
+ * [ItemFormBody] compartilhado (só título/descrição têm estilo próprio aqui). Ao contrário de [ItemFormScreenV2]
  * (que unifica visualmente os dois estados sob o mesmo layout de formulário), V3 mantém os dois
  * visuais existentes intocados — o que muda é que agora vivem na mesma tela/rota, sem duas
  * navegações separadas. Reaproveita [ItemFormViewModel]/[ItemFormUiState]/[ItemFormEvent] como
@@ -149,72 +143,36 @@ private fun ItemFormV3Content(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         if (isEditingFields) {
-            ItemFormV3EditBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
+            ItemFormBody(
+                state = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.padding(padding),
+                titleDescriptionFields = { state, fieldEvent -> ItemFormV3TitleDescriptionFields(state, fieldEvent) },
+            )
         } else {
             ItemFormV3ViewBody(state = uiState, modifier = Modifier.padding(padding))
         }
     }
 }
 
+/** V3-only title/description rendering — filled [TextField] (Material3 default), not outlined like [ItemFormBody]'s default. */
 @Composable
-private fun ItemFormV3EditBody(
-    state: ItemFormUiState,
-    onEvent: (ItemFormEvent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(16.dp),
-    ) {
-        TypeSelectorField(type = state.type, onEvent = onEvent)
+private fun ItemFormV3TitleDescriptionFields(state: ItemFormUiState, onEvent: (ItemFormEvent) -> Unit) {
+    ItemFormV3TextField(
+        value = state.title,
+        onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
+        placeholder = stringResource(R.string.item_form_title_label),
+        textStyle = MaterialTheme.typography.headlineLarge,
+    )
 
-        ItemFormV3TextField(
-            value = state.title,
-            onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
-            placeholder = stringResource(R.string.item_form_title_label),
-            textStyle = MaterialTheme.typography.headlineLarge,
-        )
-
-        ItemFormV3TextField(
-            value = state.description,
-            onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
-            placeholder = stringResource(R.string.item_form_description_label),
-            singleLine = false,
-            minHeight = 96.dp,
-            textStyle = MaterialTheme.typography.titleLarge,
-        )
-
-        if (state.availableSections.isNotEmpty()) {
-            SectionField(
-                availableSections = state.availableSections,
-                sectionId = state.sectionId,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
-
-        if (state.availableTags.isNotEmpty()) {
-            TagsField(
-                availableTags = state.availableTags,
-                selectedTagIds = state.selectedTagIds,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
-
-        DueDateField(dueDate = state.dueDate, onEvent = onEvent, modifier = Modifier.padding(top = 16.dp))
-
-        if (state.canPickRecurrence) {
-            RecurrenceField(
-                recurrence = state.recurrence,
-                onEvent = onEvent,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-        }
-    }
+    ItemFormV3TextField(
+        value = state.description,
+        onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
+        placeholder = stringResource(R.string.item_form_description_label),
+        singleLine = false,
+        minHeight = 96.dp,
+        textStyle = MaterialTheme.typography.titleLarge,
+    )
 }
 
 /** V3-only text field style: filled (Material3 default), not outlined like [com.seucaio.unideas.ds.components.inputs.AppTextField]. */

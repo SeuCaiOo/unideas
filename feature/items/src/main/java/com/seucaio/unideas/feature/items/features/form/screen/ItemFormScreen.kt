@@ -29,6 +29,7 @@ import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
+import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
@@ -88,6 +89,18 @@ private fun ItemFormContent(
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val title = stringResource(if (isEditing) R.string.item_form_title_edit else R.string.item_form_title_create)
+    val fieldsEvents = remember(onEvent) {
+        ItemFormFieldsEvents(
+            onTypeChanged = { onEvent(ItemFormEvent.OnTypeChanged(it)) },
+            onTitleChanged = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
+            onDescriptionChanged = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
+            onSectionChanged = { onEvent(ItemFormEvent.OnSectionChanged(it)) },
+            onTagToggled = { onEvent(ItemFormEvent.OnTagToggled(it)) },
+            onDueDateChanged = { onEvent(ItemFormEvent.OnDueDateChanged(it)) },
+            onRecurrenceChanged = { onEvent(ItemFormEvent.OnRecurrenceChanged(it)) },
+            onSaveClicked = { onEvent(ItemFormEvent.OnSaveClicked) },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -113,7 +126,11 @@ private fun ItemFormContent(
                 onRetry = { onEvent(ItemFormEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-            else -> ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
+            else -> ItemFormBody(
+                state = uiState,
+                events = fieldsEvents,
+                modifier = Modifier.padding(padding),
+            )
         }
     }
 }

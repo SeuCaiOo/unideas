@@ -12,19 +12,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailEvent
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiAction
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel
+import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormFieldsEvents
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -41,24 +41,22 @@ import org.koin.core.parameter.parametersOf
 fun ItemFormSheet(
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
-    viewModel: ItemFormViewModel = koinViewModel { parametersOf(null, initialType) },
+    viewModel: ItemDetailViewModel = koinViewModel { parametersOf(initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
-    val context = LocalContext.current
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is ItemFormUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
-                is ItemFormUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
+                is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
+                is ItemDetailUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
                     resources.getString(action.messageRes)
                 )
-                is ItemFormUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemFormUiAction.ShareText -> context.shareText(action.text)
+                is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }
         }
     }
@@ -77,12 +75,25 @@ fun ItemFormSheet(
 
 @Composable
 private fun ItemFormSheetContent(
-    uiState: ItemFormUiState,
-    onEvent: (ItemFormEvent) -> Unit,
+    uiState: ItemDetailUiState,
+    onEvent: (ItemDetailEvent) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
+    val fieldsEvents = remember(onEvent) {
+        ItemFormFieldsEvents(
+            onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
+            onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
+            onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
+            onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
+            onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
+            onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
+            onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
+            onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
+        )
+    }
+
     Column {
-        ItemFormBody(state = uiState, onEvent = onEvent)
+        ItemFormBody(state = uiState, events = fieldsEvents)
         SnackbarHost(hostState = snackbarHostState)
     }
 }
@@ -90,12 +101,12 @@ private fun ItemFormSheetContent(
 @PreviewLightDark
 @Composable
 private fun ItemFormSheetPreview(
-    @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
+    @PreviewParameter(ItemDetailPreviewProvider::class) previewState: ItemDetailUiState,
 ) {
     UdsTheme {
         Surface {
             ItemFormSheetContent(
-                uiState = previewState.uiState,
+                uiState = previewState,
                 onEvent = {},
                 snackbarHostState = remember { SnackbarHostState() },
             )

@@ -72,7 +72,7 @@ class ItemFormViewModel(
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
             sendUiAction(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error))
-            sendUiAction(ItemFormUiAction.NavigateBack)
+            _uiState.update { it.copy(loadFailed = true) }
             return
         }
         originalItem = item
@@ -86,6 +86,7 @@ class ItemFormViewModel(
                 dueDate = item.dueDate,
                 recurrence = item.recurrence,
                 isCompleted = item.isCompleted,
+                loadFailed = false,
             )
         }
     }
@@ -111,7 +112,13 @@ class ItemFormViewModel(
             is ItemFormEvent.OnDialogDismissed -> _dialogState.update { ItemFormDialogState.None }
             is ItemFormEvent.OnDeleteConfirmClicked -> handleDelete()
             is ItemFormEvent.OnCompleteClicked -> handleComplete()
+            is ItemFormEvent.OnRetryClicked -> retryLoad()
         }
+    }
+
+    private fun retryLoad() {
+        val id = itemId ?: return
+        viewModelScope.launch { loadItem(id) }
     }
 
     private fun ItemFormUiState.toggleTag(tagId: Long): ItemFormUiState =

@@ -33,4 +33,7 @@ sealed interface ItemFormEvent {
     data object OnDialogDismissed : ItemFormEvent
 
     data object OnCompleteClicked : ItemFormEvent
+
+    /** Retry loading the item after [ItemFormUiState.loadFailed] — edit mode only. */
+    data object OnRetryClicked : ItemFormEvent
 }

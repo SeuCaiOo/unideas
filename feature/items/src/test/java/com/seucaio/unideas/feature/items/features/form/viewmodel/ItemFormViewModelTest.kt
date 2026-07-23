@@ -82,24 +82,42 @@ class ItemFormViewModelTest {
     }
 
     @Test
-    fun `when the item is not found should show a snackbar and navigate back`() = runTest {
+    fun `when the item is not found should show a snackbar and mark loadFailed`() = runTest {
         every { itemFormUseCase.get(1L) } returns flowOf(null)
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
             assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
-            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
         }
+        assertEquals(true, vm.uiState.value.loadFailed)
     }
 
     @Test
-    fun `when loading the item throws should show a snackbar and navigate back`() = runTest {
+    fun `when loading the item throws should show a snackbar and mark loadFailed`() = runTest {
         every { itemFormUseCase.get(1L) } returns flow { throw IllegalStateException("boom") }
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
             assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
-            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
+        }
+        assertEquals(true, vm.uiState.value.loadFailed)
+    }
+
+    @Test
+    fun `when OnRetryClicked after a load failure succeeds should clear loadFailed`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(null), flowOf(item))
+        val vm = viewModel(itemId = 1L)
+
+        vm.uiState.test { awaitItem() }
+        assertEquals(true, vm.uiState.value.loadFailed)
+
+        vm.onEvent(ItemFormEvent.OnRetryClicked)
+
+        vm.uiState.test {
+            val state = awaitItem()
+            assertEquals(false, state.loadFailed)
+            assertEquals(item.title, state.title)
         }
     }
 

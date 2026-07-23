@@ -23,10 +23,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.components.ItemActions
 import com.seucaio.unideas.feature.items.features.form.screen.components.ItemFormBody
+import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormDialogState
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiAction
 import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
@@ -54,6 +58,7 @@ fun ItemScreen(
     viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId, initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -74,6 +79,7 @@ fun ItemScreen(
 
     ItemScreenContent(
         uiState = uiState,
+        dialogState = dialogState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -84,6 +90,7 @@ fun ItemScreen(
 @Composable
 private fun ItemScreenContent(
     uiState: ItemFormUiState,
+    dialogState: ItemFormDialogState,
     onEvent: (ItemFormEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
@@ -96,6 +103,12 @@ private fun ItemScreenContent(
                 title = stringResource(R.string.item_form_title_view) + " — V4",
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
+                    ItemActions(
+                        canComplete = uiState.typeIsTask && !uiState.isCompleted,
+                        onShareClicked = { onEvent(ItemFormEvent.OnShareClicked) },
+                        onDeleteClicked = { onEvent(ItemFormEvent.OnDeleteClicked) },
+                        onCompleteClicked = { onEvent(ItemFormEvent.OnCompleteClicked) },
+                    )
                     IconButton(
                         onClick = { onEvent(ItemFormEvent.OnSaveClicked) },
                         enabled = uiState.isTitleValid,
@@ -107,7 +120,24 @@ private fun ItemScreenContent(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
+        if (uiState.loadFailed) {
+            UnideasErrorContent(
+                messageRes = R.string.item_form_load_error,
+                onRetry = { onEvent(ItemFormEvent.OnRetryClicked) },
+                modifier = Modifier.padding(padding),
+            )
+        } else {
+            ItemFormBody(state = uiState, onEvent = onEvent, modifier = Modifier.padding(padding))
+        }
+    }
+
+    if (dialogState is ItemFormDialogState.DeleteConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = R.string.item_detail_delete_title,
+            messageRes = R.string.item_detail_delete_message,
+            onDismiss = { onEvent(ItemFormEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemFormEvent.OnDeleteConfirmClicked) },
+        )
     }
 }
 
@@ -119,6 +149,7 @@ private fun ItemScreenPreview(
     UdsTheme {
         ItemScreenContent(
             uiState = previewState.uiState,
+            dialogState = ItemFormDialogState.None,
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

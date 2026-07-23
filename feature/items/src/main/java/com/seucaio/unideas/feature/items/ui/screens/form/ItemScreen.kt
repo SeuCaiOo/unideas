@@ -13,7 +13,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,16 +36,12 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * #86 Pacote 2, direção V4: a tela nasce **sempre editável** — não existe nenhum estado de
- * leitura, nem um botão de "editar" para sair dele (ao contrário de [ItemFormSheet]/
- * [ItemFormScreenV3], que alternam entre um estado read-only e um editável). O real ponto de
- * comparação dessa direção é de navegação, não visual: tocar num item levaria direto pra cá,
- * pulando [com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen] por
- * completo — decisão de rota ainda adiada (#86), então essa tela por si só acaba ficando parecida
- * com [ItemFormScreen] hoje (o mesmo corpo de campos), só sem a distinção de título
- * criar/editar, já que aqui não faz sentido diferenciar os dois — é sempre "editando". Reaproveita
- * [ItemFormViewModel]/[ItemFormUiState]/[ItemFormEvent] como estão. Sem rota nova no nav graph
- * ainda — visível só via `@PreviewLightDark`.
+ * Full-screen destination for viewing/editing an existing item (#86/#97) — reached via
+ * `ItemsRoute.Detail`. Always editable, no separate read-only state: [ItemActions]
+ * (share/delete/complete) lives in the top bar instead of a distinct "editar" affordance.
+ * Creating a new item is a separate flow ([ItemFormSheet], the bottom sheet reached via
+ * `ItemsRoute.FormSheet`) — this screen is edit-only in practice, though `itemId` stays nullable
+ * to keep [ItemFormViewModel] reusable for either case.
  */
 @Composable
 fun ItemScreen(
@@ -110,7 +105,6 @@ private fun ItemScreenContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                title = stringResource(R.string.item_form_title_view) + " — V4",
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
                     ItemActions(
@@ -152,11 +146,11 @@ private fun ItemScreenContent(
 @PreviewLightDark
 @Composable
 private fun ItemScreenPreview(
-    @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormPreviewState,
+    @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormUiState,
 ) {
     UdsTheme {
         ItemScreenContent(
-            uiState = previewState.uiState,
+            uiState = previewState,
             dialogState = ItemFormDialogState.None,
             onEvent = {},
             onNavigateBack = {},

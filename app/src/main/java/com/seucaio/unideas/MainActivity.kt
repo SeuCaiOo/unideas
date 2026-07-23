@@ -9,8 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
-import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
@@ -69,25 +67,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * Centralizes the create-form routing decision so every caller (Home, Items list, Settings
- * debug entry) automatically picks up the right destination type per POC version, without
- * each Screen needing to know about it. [ScreenVersion.V4] reuses [ScreenVersion.V2]'s
- * dialog-hosted [FormSheet] for creation — it has no bottom sheet variant of its own (#86/#97).
- */
+/** Creating a new item always opens the dialog-hosted bottom sheet (#86/#97). */
 private fun NavController.navigateToItemForm(type: ItemType) {
     navigate(ItemsRoute.FormSheet(type = type))
 }
 
-/**
- * [ScreenVersion.V4] skips [ItemDetailScreen] entirely: tapping an item lands directly on
- * [ItemFormScreenV4]'s regular full-screen destination, already editable — no separate
- * read-only state, no extra "editar" tap.
- */
+/** Tapping an item lands directly on its full-screen destination, already editable. */
 private fun NavController.navigateToItemDetail(itemId: Long) {
-    if (DevScreenVersionToggle.selectedVersion.value == ScreenVersion.V4) {
-        navigate(ItemsRoute.Form(itemId = itemId))
-    } else {
-        navigate(ItemsRoute.Detail(itemId))
-    }
+    navigate(ItemsRoute.Detail(itemId))
 }

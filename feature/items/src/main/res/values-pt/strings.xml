@@ -2,8 +2,6 @@
 <resources>
     <string name="item_form_load_error">Não foi possível carregar o item</string>
     <string name="item_title_required">O título é obrigatório</string>
-    <string name="item_form_title_create">Novo item</string>
-    <string name="item_form_title_edit">Editar item</string>
     <string name="item_form_title_view">Item</string>
     <string name="item_form_save">Salvar</string>
     <string name="item_form_v2_edit">Editar</string>

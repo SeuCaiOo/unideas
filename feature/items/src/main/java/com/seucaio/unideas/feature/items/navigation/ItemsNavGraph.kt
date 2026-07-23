@@ -5,10 +5,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
-import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.ui.screens.additem.ItemFormSheet
-import com.seucaio.unideas.feature.items.ui.screens.form.ItemFormScreen
 import com.seucaio.unideas.feature.items.ui.screens.form.ItemScreen
 import com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen
 
@@ -17,23 +15,6 @@ fun NavGraphBuilder.itemsNavGraph(
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToForm: (ItemType) -> Unit,
 ) {
-    composable<ItemsRoute.Form> { backStackEntry ->
-        val route = backStackEntry.toRoute<ItemsRoute.Form>()
-        when (route.version) {
-            ScreenVersion.V1 ->
-                ItemFormScreen(
-                    itemId = route.itemId,
-                    initialType = route.type,
-                    onNavigateBack = onNavigateBack
-                )
-            ScreenVersion.V2, ScreenVersion.V3, ScreenVersion.V4, ScreenVersion.V5 ->
-                ItemScreen(
-                    itemId = route.itemId,
-                    initialType = route.type,
-                    onNavigateBack = onNavigateBack
-                )
-        }
-    }
     dialog<ItemsRoute.FormSheet>(
         dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) { backStackEntry ->

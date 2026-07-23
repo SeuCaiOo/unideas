@@ -13,13 +13,12 @@ import com.seucaio.unideas.ds.components.chips.SelectableChipUi
 import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
 fun TagsField(
     availableTags: List<Tag>,
     selectedTagIds: Set<Long>,
-    onEvent: (ItemFormEvent) -> Unit,
+    onTagToggled: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FormField(label = stringResource(R.string.item_form_tags_label), modifier = modifier) {
@@ -27,7 +26,7 @@ fun TagsField(
             chips = availableTags.map { tag ->
                 SelectableChipUi(id = tag.id.toString(), label = tag.name, selected = tag.id in selectedTagIds)
             },
-            onToggle = { id -> onEvent(ItemFormEvent.OnTagToggled(id.toLong())) },
+            onToggle = { id -> onTagToggled(id.toLong()) },
         )
     }
 }
@@ -42,7 +41,7 @@ private fun TagsFieldPreview() {
             TagsField(
                 availableTags = previewTags,
                 selectedTagIds = setOf(1L),
-                onEvent = {},
+                onTagToggled = {},
                 modifier = Modifier.padding(16.dp),
             )
         }

@@ -11,13 +11,12 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
 fun SectionField(
     availableSections: List<Section>,
     sectionId: Long?,
-    onEvent: (ItemFormEvent) -> Unit,
+    onSectionChanged: (Long?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     DropdownField(
@@ -25,8 +24,7 @@ fun SectionField(
         selected = availableSections.firstOrNull { it.id == sectionId }?.name.orEmpty(),
         emptyOptionLabel = stringResource(R.string.item_form_section_none),
         onSelect = { name ->
-            val newSectionId = availableSections.firstOrNull { it.name == name }?.id
-            onEvent(ItemFormEvent.OnSectionChanged(newSectionId))
+            onSectionChanged(availableSections.firstOrNull { it.name == name }?.id)
         },
         modifier = modifier,
     )
@@ -43,7 +41,7 @@ private fun SectionFieldPreview() {
             SectionField(
                 availableSections = previewSections,
                 sectionId = 1L,
-                onEvent = {},
+                onSectionChanged = {},
                 modifier = Modifier.padding(16.dp),
             )
         }

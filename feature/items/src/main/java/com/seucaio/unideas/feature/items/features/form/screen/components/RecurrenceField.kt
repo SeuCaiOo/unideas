@@ -9,15 +9,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.inputs.DropdownField
-import com.seucaio.unideas.ds.components.inputs.FormField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
 fun RecurrenceField(
     recurrence: Recurrence,
-    onEvent: (ItemFormEvent) -> Unit,
+    onRecurrenceChanged: (Recurrence) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dailyLabel = stringResource(R.string.item_form_recurrence_daily)
@@ -41,7 +39,7 @@ fun RecurrenceField(
                 monthlyLabel -> Recurrence.Monthly
                 else -> Recurrence.None
             }
-            onEvent(ItemFormEvent.OnRecurrenceChanged(newRecurrence))
+            onRecurrenceChanged(newRecurrence)
         },
         modifier = modifier,
     )
@@ -54,7 +52,7 @@ private fun RecurrenceFieldPreview() {
         Surface {
             RecurrenceField(
                 recurrence = Recurrence.Weekly,
-                onEvent = {},
+                onRecurrenceChanged = {},
                 modifier = Modifier.padding(16.dp),
             )
         }

@@ -28,14 +28,13 @@ import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DueDateField(
     dueDate: LocalDate?,
-    onEvent: (ItemFormEvent) -> Unit,
+    onDueDateChanged: (LocalDate?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -44,7 +43,7 @@ fun DueDateField(
         valueLabel = dueDate?.toFormattedDateString(),
         defaultValue = stringResource(R.string.item_form_date_label),
         onClick = { showDatePicker = true },
-        onClear = { onEvent(ItemFormEvent.OnDueDateChanged(null)) },
+        onClear = { onDueDateChanged(null) },
         clearContentDescription = stringResource(R.string.item_form_date_clear),
         valueColor = dueDateUrgencyColor(dueDate),
         modifier = modifier
@@ -58,7 +57,7 @@ fun DueDateField(
             confirmButton = {
                 TextButton(onClick = {
                     val newDate = datePickerState.selectedDateMillis?.toLocalDateUtc()
-                    newDate?.let { onEvent(ItemFormEvent.OnDueDateChanged(it)) }
+                    newDate?.let { onDueDateChanged(it) }
                     showDatePicker = false
                 }) {
                     Text(stringResource(android.R.string.ok))
@@ -94,7 +93,7 @@ private fun DueDateFieldPreview() {
         Surface {
             DueDateField(
                 dueDate = previewDueDate,
-                onEvent = {},
+                onDueDateChanged = {},
                 modifier = Modifier.padding(16.dp),
             )
         }

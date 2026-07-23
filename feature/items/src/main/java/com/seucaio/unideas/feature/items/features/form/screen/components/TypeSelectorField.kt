@@ -9,18 +9,15 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.buttons.SegmentedControl
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
 
 @Composable
-fun TypeSelectorField(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifier: Modifier = Modifier) {
+fun TypeSelectorField(type: ItemType, onTypeChanged: (ItemType) -> Unit, modifier: Modifier = Modifier) {
     val taskLabel = stringResource(R.string.item_form_type_task)
     val noteLabel = stringResource(R.string.item_form_type_note)
     SegmentedControl(
         options = listOf(taskLabel, noteLabel),
         selectedIndex = if (type == ItemType.TASK) 0 else 1,
-        onSelect = { index ->
-            onEvent(ItemFormEvent.OnTypeChanged(if (index == 0) ItemType.TASK else ItemType.NOTE))
-        },
+        onSelect = { index -> onTypeChanged(if (index == 0) ItemType.TASK else ItemType.NOTE) },
         modifier = modifier,
     )
 }
@@ -30,7 +27,7 @@ fun TypeSelectorField(type: ItemType, onEvent: (ItemFormEvent) -> Unit, modifier
 private fun TypeSelectorFieldPreview() {
     UdsTheme {
         Surface {
-            TypeSelectorField(type = ItemType.TASK, onEvent = {})
+            TypeSelectorField(type = ItemType.TASK, onTypeChanged = {})
         }
     }
 }

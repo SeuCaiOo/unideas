@@ -27,8 +27,6 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormPreviewProvider
 import com.seucaio.unideas.feature.items.features.form.screen.ItemFormPreviewState
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormEvent
-import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
 
 /**
  * Field set + save action common to every `ItemFormScreen*` POC (#86/#97): type selector, title,
@@ -36,15 +34,30 @@ import com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormUiState
  * point of variation across POCs is how title/description render — [titleDescriptionFields] lets a
  * caller (V3) swap in its own styling while keeping everything else (order, conditions, save
  * action) identical everywhere else. Deliberately doesn't own the screen chrome around it
- * (`Scaffold`/`topBar`/`ModalBottomSheet`) — that stays specific to each screen.
+ * (`Scaffold`/`topBar`/`ModalBottomSheet`) — that stays specific to each screen. Takes
+ * [ItemFormFieldsState]/[ItemFormFieldsEvents] instead of a specific ViewModel's own state/event
+ * types, so both `ItemFormViewModel` (create/edit) and `ItemDetailViewModel` (create-only) can
+ * drive it.
  */
 @Composable
 fun ItemFormBody(
-    state: ItemFormUiState,
-    onEvent: (ItemFormEvent) -> Unit,
+    state: ItemFormFieldsState,
+    events: ItemFormFieldsEvents,
     modifier: Modifier = Modifier,
-    titleDescriptionFields: @Composable (ItemFormUiState, (ItemFormEvent) -> Unit) -> Unit = { s, e ->
-        DefaultTitleDescriptionFields(state = s, onEvent = e)
+    titleDescriptionFields: @Composable (
+        title: String,
+        description: String,
+        onTitleChanged: (String) -> Unit,
+        onDescriptionChanged: (String) -> Unit,
+        isEditing: Boolean,
+    ) -> Unit = { title, description, onTitleChanged, onDescriptionChanged, isEditing ->
+        DefaultTitleDescriptionFields(
+            title = title,
+            description = description,
+            onTitleChanged = onTitleChanged,
+            onDescriptionChanged = onDescriptionChanged,
+            isEditing = isEditing,
+        )
     },
 ) {
     Column(
@@ -54,11 +67,17 @@ fun ItemFormBody(
             .imePadding()
             .padding(horizontal = 16.dp),
     ) {
-        titleDescriptionFields(state, onEvent)
+        titleDescriptionFields(
+            state.title,
+            state.description,
+            events.onTitleChanged,
+            events.onDescriptionChanged,
+            state.isEditing,
+        )
 
         TypeSelectorField(
             type = state.type,
-            onEvent = onEvent,
+            onTypeChanged = events.onTypeChanged,
             modifier = Modifier.padding(top = 16.dp)
         )
 
@@ -66,7 +85,7 @@ fun ItemFormBody(
             SectionField(
                 availableSections = state.availableSections,
                 sectionId = state.sectionId,
-                onEvent = onEvent,
+                onSectionChanged = events.onSectionChanged,
                 modifier = Modifier.padding(top = 16.dp),
             )
         }
@@ -75,7 +94,7 @@ fun ItemFormBody(
             TagsField(
                 availableTags = state.availableTags,
                 selectedTagIds = state.selectedTagIds,
-                onEvent = onEvent,
+                onTagToggled = events.onTagToggled,
                 modifier = Modifier.padding(top = 16.dp),
             )
         }
@@ -83,14 +102,14 @@ fun ItemFormBody(
         if (state.typeIsTask) {
             DueDateField(
                 dueDate = state.dueDate,
-                onEvent = onEvent,
+                onDueDateChanged = events.onDueDateChanged,
                 modifier = Modifier.padding(top = 16.dp)
             )
 
             if (state.canPickRecurrence) {
                 RecurrenceField(
                     recurrence = state.recurrence,
-                    onEvent = onEvent,
+                    onRecurrenceChanged = events.onRecurrenceChanged,
                     modifier = Modifier.padding(top = 16.dp),
                 )
             }
@@ -105,7 +124,7 @@ fun ItemFormBody(
         }
 
         Button(
-            onClick = { onEvent(ItemFormEvent.OnSaveClicked) },
+            onClick = events.onSaveClicked,
             enabled = state.isTitleValid,
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,21 +138,24 @@ fun ItemFormBody(
 /** Default title/description rendering shared by V1/V2/V4 — outlined [AppTextField] under a [FormField] label. */
 @Composable
 private fun DefaultTitleDescriptionFields(
-    state: ItemFormUiState,
-    onEvent: (ItemFormEvent) -> Unit
+    title: String,
+    description: String,
+    onTitleChanged: (String) -> Unit,
+    onDescriptionChanged: (String) -> Unit,
+    isEditing: Boolean,
 ) {
     val titleFocusRequester = remember { FocusRequester() }
     val descriptionFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        if (!state.isEditing) {
+        if (!isEditing) {
             titleFocusRequester.requestFocus()
         }
     }
 
     BorderlessTextField(
-        value = state.title,
-        onValueChange = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
+        value = title,
+        onValueChange = onTitleChanged,
         placeholder = stringResource(R.string.item_form_title_label),
         textStyle = MaterialTheme.typography.headlineLarge,
         modifier = Modifier.focusRequester(titleFocusRequester),
@@ -142,8 +164,8 @@ private fun DefaultTitleDescriptionFields(
     )
 
     BorderlessTextField(
-        value = state.description,
-        onValueChange = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
+        value = description,
+        onValueChange = onDescriptionChanged,
         placeholder = stringResource(R.string.item_form_description_label),
         singleLine = false,
         minHeight = 32.dp,
@@ -161,7 +183,19 @@ private fun ItemFormBodyPreview(
 ) {
     UdsTheme {
         Surface {
-            ItemFormBody(state = previewState.uiState, onEvent = {})
+            ItemFormBody(
+                state = previewState.uiState,
+                events = ItemFormFieldsEvents(
+                    onTypeChanged = {},
+                    onTitleChanged = {},
+                    onDescriptionChanged = {},
+                    onSectionChanged = {},
+                    onTagToggled = {},
+                    onDueDateChanged = {},
+                    onRecurrenceChanged = {},
+                    onSaveClicked = {},
+                ),
+            )
         }
     }
 }

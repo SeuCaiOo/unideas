@@ -1,27 +1,27 @@
 package com.seucaio.unideas.feature.items.features.detail.viewmodel
 
 import app.cash.turbine.test
-import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.model.ItemDetail
-import com.seucaio.unideas.domain.model.outcome.CompletionResult
+import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.ItemStub
-import com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase
+import com.seucaio.unideas.domain.stub.SectionStub
+import com.seucaio.unideas.domain.stub.TagStub
+import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -29,12 +29,16 @@ import org.junit.Test
 class ItemDetailViewModelTest {
 
     @MockK
-    private lateinit var itemDetailUseCase: ItemDetailUseCase
+    private lateinit var createItem: CreateItemUseCase
+
+    @MockK
+    private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
     }
 
     @After
@@ -42,179 +46,105 @@ class ItemDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long = 1L) = ItemDetailViewModel(itemId, itemDetailUseCase)
-
-    private fun detailOf(item: Item, sectionName: String? = null) = ItemDetail(item, sectionName)
+    private fun viewModel() = ItemDetailViewModel(createItem, getSectionsAndTags)
 
     @Test
-    fun `when the flow emits an item should update uiState to Success`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item))
+    fun `when created should show blank fields with available sections and tags`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
-            assertEquals(ItemDetailUiState.Success(item), awaitItem())
+            val state = awaitItem()
+            assertEquals("", state.title)
+            assertEquals(SectionStub.sections(), state.availableSections)
+            assertEquals(TagStub.tags(), state.availableTags)
         }
     }
 
     @Test
-    fun `when the item has a section should surface its resolved name into uiState`() = runTest {
-        val item = ItemStub.task(id = 1L, sectionId = 2L)
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item, "Seção 2"))
+    fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() = runTest {
+        coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
         val vm = viewModel()
 
         vm.uiState.test {
-            assertEquals(ItemDetailUiState.Success(item, "Seção 2"), awaitItem())
+            val state = awaitItem()
+            assertTrue(state.availableSections.isEmpty())
+            assertTrue(state.availableTags.isEmpty())
         }
     }
 
     @Test
-    fun `when the item does not exist should emit Error`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(null)
+    fun `when OnTitleChanged should update uiState title`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
-            assertEquals(ItemDetailUiState.Error(R.string.item_detail_load_error), awaitItem())
+            awaitItem()
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            val state = awaitItem()
+            assertEquals("Nova tarefa", state.title)
         }
     }
 
     @Test
-    fun `when the flow throws should emit Error`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flow { throw IllegalStateException("boom") }
+    fun `when OnDueDateChanged clears the date should reset recurrence to None`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
-            assertEquals(ItemDetailUiState.Error(R.string.item_detail_load_error), awaitItem())
+            awaitItem()
+            vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
+            vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
+            awaitItem()
+            val withRecurrence = awaitItem()
+            assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
+
+            vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
+            val cleared = awaitItem()
+            assertEquals(Recurrence.None, cleared.recurrence)
         }
     }
 
     @Test
-    fun `when OnRetryClicked after an error should retry and succeed`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemDetailUseCase.getDetail(1L) } returnsMany listOf(flowOf(null), flowOf(detailOf(item)))
+    fun `when OnSaveClicked should call CreateItemUseCase and navigate back`() = runTest {
+        coEvery { createItem(any()) } returns Result.success(10L)
         val vm = viewModel()
 
-        vm.uiState.test {
-            assertEquals(ItemDetailUiState.Error(R.string.item_detail_load_error), awaitItem())
-            vm.onEvent(ItemDetailEvent.OnRetryClicked)
-            assertEquals(ItemDetailUiState.Success(item), awaitItem())
-        }
-    }
-
-    @Test
-    fun `when OnDeleteClicked should show the delete confirmation dialog`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
-        val vm = viewModel()
-
-        vm.onEvent(ItemDetailEvent.OnDeleteClicked)
-
-        assertEquals(ItemDetailDialogState.DeleteConfirm, vm.dialogState.value)
-    }
-
-    @Test
-    fun `when OnDialogDismissed should hide the dialog`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
-        val vm = viewModel()
-
-        vm.onEvent(ItemDetailEvent.OnDeleteClicked)
-        vm.onEvent(ItemDetailEvent.OnDialogDismissed)
-
-        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
-    }
-
-    @Test
-    fun `when OnDeleteConfirmClicked succeeds should navigate back and hide the dialog`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
-        coEvery { itemDetailUseCase.delete(1L) } returns Unit
-        val vm = viewModel()
-
-        vm.onEvent(ItemDetailEvent.OnDeleteClicked)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnDeleteConfirmClicked)
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
             assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
         }
-        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
-        coVerify(exactly = 1) { itemDetailUseCase.delete(1L) }
+
+        coVerify(exactly = 1) {
+            createItem(match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) })
+        }
     }
 
     @Test
-    fun `when OnDeleteConfirmClicked fails should emit ShowError`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
-        coEvery { itemDetailUseCase.delete(1L) } throws IllegalStateException("boom")
+    fun `when OnSaveClicked with blank title should emit a title-required snackbar`() = runTest {
+        coEvery { createItem(any()) } returns Result.failure(IllegalArgumentException("Title is required"))
         val vm = viewModel()
 
-        vm.onEvent(ItemDetailEvent.OnDeleteClicked)
+        vm.uiState.test { awaitItem() }
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnDeleteConfirmClicked)
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when the use case fails unexpectedly should emit ShowError with the exception message`() = runTest {
+        coEvery { createItem(any()) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
             assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
-        }
-    }
-
-    @Test
-    fun `when OnCompleteClicked for a task should call ItemDetailUseCase's complete`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item))
-        coEvery { itemDetailUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
-        val vm = viewModel()
-
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
-
-        coVerify(exactly = 1) { itemDetailUseCase.complete(item, any()) }
-    }
-
-    @Test
-    fun `when OnCompleteClicked for a note should not call ItemDetailUseCase's complete`() = runTest {
-        val item = ItemStub.note(id = 1L)
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item))
-        val vm = viewModel()
-
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
-
-        coVerify(exactly = 0) { itemDetailUseCase.complete(any(), any()) }
-    }
-
-    @Test
-    fun `when OnCompleteClicked fails should emit ShowError`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item))
-        coEvery { itemDetailUseCase.complete(item, any()) } returns Result.failure(IllegalStateException("boom"))
-        val vm = viewModel()
-
-        vm.uiState.test { awaitItem() }
-
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
-            assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
-        }
-    }
-
-    @Test
-    fun `when OnShareClicked should emit ShareText with the item title`() = runTest {
-        val item = ItemStub.task(id = 1L, title = "Pagar contas")
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(item))
-        val vm = viewModel()
-
-        vm.uiState.test { awaitItem() }
-
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnShareClicked)
-            val action = awaitItem() as ItemDetailUiAction.ShareText
-            assertEquals(true, action.text.contains("Pagar contas"))
-        }
-    }
-
-    @Test
-    fun `when OnEditClicked should emit NavigateToEdit with the item id`() = runTest {
-        every { itemDetailUseCase.getDetail(1L) } returns flowOf(detailOf(ItemStub.task(id = 1L)))
-        val vm = viewModel()
-
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnEditClicked)
-            assertEquals(ItemDetailUiAction.NavigateToEdit(1L), awaitItem())
         }
     }
 }

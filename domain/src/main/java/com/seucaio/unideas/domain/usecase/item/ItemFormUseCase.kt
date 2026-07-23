@@ -10,8 +10,10 @@ import java.time.LocalDateTime
  * as-is, still usable on their own) — one method per operation, each just delegating. No
  * repository access here — every call just delegates. Scoped to
  * [com.seucaio.unideas.feature.items.features.form.viewmodel.ItemFormViewModel], which also now
- * backs `ItemDetailScreen`'s share/delete/complete actions — merged in from
- * [ItemDetailUseCase] as that screen's editing moved onto this same ViewModel/form layout.
+ * backs `ItemDetailScreen`'s share/delete/complete actions — merged in from the old
+ * `ItemDetailUseCase` facade as that screen's editing moved onto this same ViewModel/form layout.
+ * `ItemDetailUseCase`/[com.seucaio.unideas.feature.items.features.detail.viewmodel.ItemDetailViewModel]
+ * were later reformulated into the add-item screen, calling [CreateItemUseCase] directly instead.
  */
 class ItemFormUseCase(
     private val getItem: GetItemUseCase,

@@ -1,19 +1,25 @@
 package com.seucaio.unideas.feature.items.features.detail.viewmodel
 
-/** User interactions on the item detail screen. */
+import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
+import java.time.LocalDate
+
+/** User interactions on the add-item screen. */
 sealed interface ItemDetailEvent {
 
-    data object OnDeleteClicked : ItemDetailEvent
+    data class OnTypeChanged(val type: ItemType) : ItemDetailEvent
 
-    data object OnDeleteConfirmClicked : ItemDetailEvent
+    data class OnTitleChanged(val title: String) : ItemDetailEvent
 
-    data object OnDialogDismissed : ItemDetailEvent
+    data class OnDescriptionChanged(val description: String) : ItemDetailEvent
 
-    data object OnEditClicked : ItemDetailEvent
+    data class OnSectionChanged(val sectionId: Long?) : ItemDetailEvent
 
-    data object OnCompleteClicked : ItemDetailEvent
+    data class OnTagToggled(val tagId: Long) : ItemDetailEvent
 
-    data object OnShareClicked : ItemDetailEvent
+    data class OnDueDateChanged(val dueDate: LocalDate?) : ItemDetailEvent
 
-    data object OnRetryClicked : ItemDetailEvent
+    data class OnRecurrenceChanged(val recurrence: Recurrence) : ItemDetailEvent
+
+    data object OnSaveClicked : ItemDetailEvent
 }

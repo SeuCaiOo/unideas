@@ -18,11 +18,6 @@ val itemsModule = module {
             initialType = params.get(),
         )
     }
-    viewModel { params ->
-        ItemDetailViewModel(
-            itemId = params.get(),
-            itemDetailUseCase = get(),
-        )
-    }
+    viewModelOf(::ItemDetailViewModel)
     viewModelOf(::ItemsListViewModel)
 }

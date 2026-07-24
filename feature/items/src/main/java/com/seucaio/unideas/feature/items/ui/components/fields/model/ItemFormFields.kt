@@ -5,6 +5,7 @@ import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 interface ItemFormFieldsState {
     val type: ItemType
@@ -20,6 +21,7 @@ interface ItemFormFieldsState {
     val canPickRecurrence: Boolean
     val typeIsTask: Boolean
     val isCompleted: Boolean get() = false
+    val completedAt: LocalDateTime? get() = null
     val isEditing: Boolean get() = false
 }
 
@@ -32,4 +34,5 @@ data class ItemFormFieldsEvents(
     val onDueDateChanged: (LocalDate?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,
     val onSaveClicked: () -> Unit,
+    val onCompleteClicked: () -> Unit = {},
 )

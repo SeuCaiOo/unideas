@@ -6,6 +6,7 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class ItemDetailUiState(
     override val isEditing: Boolean = false,
@@ -20,6 +21,7 @@ data class ItemDetailUiState(
     override val availableSections: List<Section> = emptyList(),
     override val availableTags: List<Tag> = emptyList(),
     override val isCompleted: Boolean = false,
+    override val completedAt: LocalDateTime? = null,
     val loadFailed: Boolean = false,
 ) : ItemFormFieldsState {
 

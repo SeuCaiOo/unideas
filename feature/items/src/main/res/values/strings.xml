@@ -25,11 +25,12 @@
     <string name="item_detail_tags_label">Tags</string>
     <string name="item_detail_date_label">Due date</string>
     <string name="item_detail_recurrence_label">Repeat</string>
-    <string name="item_detail_completed_label">Completed</string>
     <string name="item_detail_share">Share</string>
     <string name="item_detail_edit">Edit</string>
     <string name="item_detail_delete">Delete</string>
     <string name="item_detail_complete">Mark as complete</string>
+    <string name="item_detail_reopen">Reopen task</string>
+    <string name="item_detail_completed_on">Completed on %1$s</string>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="items_list_title">Items</string>

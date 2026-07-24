@@ -25,11 +25,12 @@
     <string name="item_detail_tags_label">Tags</string>
     <string name="item_detail_date_label">Data de vencimento</string>
     <string name="item_detail_recurrence_label">Repetir</string>
-    <string name="item_detail_completed_label">Concluído</string>
     <string name="item_detail_share">Compartilhar</string>
     <string name="item_detail_edit">Editar</string>
     <string name="item_detail_delete">Excluir</string>
     <string name="item_detail_complete">Marcar como concluído</string>
+    <string name="item_detail_reopen">Reabrir tarefa</string>
+    <string name="item_detail_completed_on">Concluída em %1$s</string>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_delete_message">Esta ação não pode ser desfeita.</string>
     <string name="items_list_title">Itens</string>

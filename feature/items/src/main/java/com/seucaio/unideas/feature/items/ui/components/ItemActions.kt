@@ -17,7 +17,6 @@ import com.seucaio.unideas.feature.items.R
 
 @Composable
 fun ItemActions(
-    canComplete: Boolean,
     onShareClicked: () -> Unit,
     onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
@@ -44,7 +43,6 @@ private fun ItemActionsPreview() {
     UdsTheme {
         Surface {
             ItemActions(
-                canComplete = true,
                 onShareClicked = {},
                 onDeleteClicked = {},
                 onEditClicked = {},

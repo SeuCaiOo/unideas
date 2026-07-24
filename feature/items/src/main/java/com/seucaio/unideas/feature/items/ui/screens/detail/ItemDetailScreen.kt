@@ -91,6 +91,7 @@ private fun ItemDetailScreenContent(
             onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
             onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
+            onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )
     }
 
@@ -100,7 +101,6 @@ private fun ItemDetailScreenContent(
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
                     ItemActions(
-                        canComplete = uiState.typeIsTask && !uiState.isCompleted,
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
                         onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) }
                     )

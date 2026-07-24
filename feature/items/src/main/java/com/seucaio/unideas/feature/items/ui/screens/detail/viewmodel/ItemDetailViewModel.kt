@@ -6,6 +6,7 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
@@ -72,6 +73,7 @@ class ItemDetailViewModel(
                 dueDate = item.dueDate,
                 recurrence = item.recurrence,
                 isCompleted = item.isCompleted,
+                completedAt = item.completedAt,
                 loadFailed = false,
             )
         }
@@ -165,7 +167,13 @@ class ItemDetailViewModel(
     private fun handleComplete() = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
-        itemFormUseCase.complete(item, LocalDateTime.now())
+        val now = LocalDateTime.now()
+        itemFormUseCase.complete(item, now)
+            .onSuccess { result ->
+                val completedAt = if (result is CompletionResult.Uncompleted) null else now
+                originalItem = item.copy(completedAt = completedAt)
+                _uiState.update { it.copy(isCompleted = completedAt != null, completedAt = completedAt) }
+            }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 

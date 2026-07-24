@@ -7,7 +7,7 @@ sealed interface HomeUiAction {
 
     data class NavigateToDetail(val itemId: Long) : HomeUiAction
 
-    data class NavigateToForm(val type: ItemType) : HomeUiAction
+    data class NavigateToAddItem(val type: ItemType) : HomeUiAction
 
     data object NavigateToAllPriorities : HomeUiAction
 

@@ -17,15 +17,14 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 
 /**
- * The Share/Delete/Complete action row shared by every screen backed by an item (currently
- * `ItemDetailScreen` and `ItemScreen`). Takes plain callbacks instead of a ViewModel's own event
- * type — neither `ItemFormViewModel` nor `ItemDetailViewModel` (still separate, #97) needs to
- * know the other exists for this to be reused; each caller just adapts its own event to these
- * lambdas. [canComplete] is the "task, not yet completed" check each ViewModel's state already
- * exposes differently (`ItemFormUiState.typeIsTask && !isCompleted` vs
- * `item.type == ItemType.TASK && !item.isCompleted`), so it's passed in already resolved.
- * [onEditClicked] is optional and `null` by default — only `ItemDetailScreen` still has a
- * separate "editar" destination to jump to; `ItemScreen` is already editable, so it omits it.
+ * The Share/Delete/Complete action row used by `ItemDetailScreen`, the only screen backed by an
+ * existing item today. Takes plain callbacks instead of a ViewModel's own event type — neither
+ * `ItemDetailViewModel` nor `AddItemViewModel` needs to know the other exists for this to be
+ * reused; each caller just adapts its own event to these lambdas. [canComplete] is the "task, not
+ * yet completed" check exposed as `ItemDetailUiState.typeIsTask && !isCompleted`, passed in
+ * already resolved. [onEditClicked] is optional and `null` by default — kept for a screen that
+ * needs a separate "editar" destination; no current caller passes it, `ItemDetailScreen` is
+ * always editable.
  */
 @Composable
 fun ItemActions(

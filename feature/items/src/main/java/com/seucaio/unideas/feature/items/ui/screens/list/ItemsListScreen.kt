@@ -39,18 +39,18 @@ import org.koin.androidx.compose.koinViewModel
 fun ItemsListScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToForm: () -> Unit,
+    onNavigateToAddItem: () -> Unit,
     viewModel: ItemsListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
-    val updatedOnNavigateToForm by rememberUpdatedState(onNavigateToForm)
+    val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
                 is ItemsListUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
-                is ItemsListUiAction.NavigateToForm -> updatedOnNavigateToForm()
+                is ItemsListUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem()
             }
         }
     }

@@ -12,7 +12,7 @@ sealed interface ItemsRoute {
      * transition would do.
      */
     @Serializable
-    data class FormSheet(val type: ItemType = ItemType.TASK) : ItemsRoute
+    data class AddItem(val type: ItemType = ItemType.TASK) : ItemsRoute
 
     /** Full-screen destination for viewing/editing an existing item. */
     @Serializable

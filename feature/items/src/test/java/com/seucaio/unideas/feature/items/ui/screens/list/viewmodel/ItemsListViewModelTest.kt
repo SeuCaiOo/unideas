@@ -98,12 +98,12 @@ class ItemsListViewModelTest {
     }
 
     @Test
-    fun `when OnAddClicked should emit NavigateToForm`() = runTest {
+    fun `when OnAddClicked should emit NavigateToAddItem`() = runTest {
         val vm = viewModel()
 
         vm.uiAction.test {
             vm.onEvent(ItemsListEvent.OnAddClicked)
-            assertEquals(ItemsListUiAction.NavigateToForm, awaitItem())
+            assertEquals(ItemsListUiAction.NavigateToAddItem, awaitItem())
         }
     }
 }

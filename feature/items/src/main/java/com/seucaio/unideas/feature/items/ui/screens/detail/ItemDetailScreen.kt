@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.form
+package com.seucaio.unideas.feature.items.ui.screens.detail
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,11 +27,11 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.ItemActions
 import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormDialogState
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormEvent
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormUiAction
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormUiState
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailDialogState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailEvent
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiAction
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -39,16 +39,16 @@ import org.koin.core.parameter.parametersOf
  * Full-screen destination for viewing/editing an existing item (#86/#97) — reached via
  * `ItemsRoute.Detail`. Always editable, no separate read-only state: [ItemActions]
  * (share/delete/complete) lives in the top bar instead of a distinct "editar" affordance.
- * Creating a new item is a separate flow ([ItemFormSheet], the bottom sheet reached via
- * `ItemsRoute.FormSheet`) — this screen is edit-only in practice, though `itemId` stays nullable
- * to keep [ItemFormViewModel] reusable for either case.
+ * Creating a new item is a separate flow ([AddItemSheet], the bottom sheet reached via
+ * `ItemsRoute.AddItem`) — this screen is edit-only in practice, though `itemId` stays nullable
+ * to keep [ItemDetailViewModel] reusable for either case.
  */
 @Composable
-fun ItemScreen(
+fun ItemDetailScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
-    viewModel: ItemFormViewModel = koinViewModel { parametersOf(itemId, initialType) },
+    viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
@@ -60,17 +60,17 @@ fun ItemScreen(
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is ItemFormUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
-                is ItemFormUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
+                is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
+                is ItemDetailUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
                     resources.getString(action.messageRes)
                 )
-                is ItemFormUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemFormUiAction.ShareText -> context.shareText(action.text)
+                is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is ItemDetailUiAction.ShareText -> context.shareText(action.text)
             }
         }
     }
 
-    ItemScreenContent(
+    ItemDetailScreenContent(
         uiState = uiState,
         dialogState = dialogState,
         onEvent = viewModel::onEvent,
@@ -81,24 +81,24 @@ fun ItemScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemScreenContent(
-    uiState: ItemFormUiState,
-    dialogState: ItemFormDialogState,
-    onEvent: (ItemFormEvent) -> Unit,
+private fun ItemDetailScreenContent(
+    uiState: ItemDetailUiState,
+    dialogState: ItemDetailDialogState,
+    onEvent: (ItemDetailEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
-            onTypeChanged = { onEvent(ItemFormEvent.OnTypeChanged(it)) },
-            onTitleChanged = { onEvent(ItemFormEvent.OnTitleChanged(it)) },
-            onDescriptionChanged = { onEvent(ItemFormEvent.OnDescriptionChanged(it)) },
-            onSectionChanged = { onEvent(ItemFormEvent.OnSectionChanged(it)) },
-            onTagToggled = { onEvent(ItemFormEvent.OnTagToggled(it)) },
-            onDueDateChanged = { onEvent(ItemFormEvent.OnDueDateChanged(it)) },
-            onRecurrenceChanged = { onEvent(ItemFormEvent.OnRecurrenceChanged(it)) },
-            onSaveClicked = { onEvent(ItemFormEvent.OnSaveClicked) },
+            onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
+            onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
+            onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
+            onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
+            onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
+            onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
+            onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
+            onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
         )
     }
 
@@ -109,9 +109,9 @@ private fun ItemScreenContent(
                 actions = {
                     ItemActions(
                         canComplete = uiState.typeIsTask && !uiState.isCompleted,
-                        onShareClicked = { onEvent(ItemFormEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemFormEvent.OnDeleteClicked) },
-                        onCompleteClicked = { onEvent(ItemFormEvent.OnCompleteClicked) },
+                        onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
+                        onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
                     )
                 },
             )
@@ -122,7 +122,7 @@ private fun ItemScreenContent(
             uiState.isLoading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
             uiState.loadFailed -> UnideasErrorContent(
                 messageRes = R.string.item_form_load_error,
-                onRetry = { onEvent(ItemFormEvent.OnRetryClicked) },
+                onRetry = { onEvent(ItemDetailEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
             else -> ItemFormBody(
@@ -133,25 +133,25 @@ private fun ItemScreenContent(
         }
     }
 
-    if (dialogState is ItemFormDialogState.DeleteConfirm) {
+    if (dialogState is ItemDetailDialogState.DeleteConfirm) {
         DeleteConfirmationDialog(
             titleRes = R.string.item_detail_delete_title,
             messageRes = R.string.item_detail_delete_message,
-            onDismiss = { onEvent(ItemFormEvent.OnDialogDismissed) },
-            onConfirm = { onEvent(ItemFormEvent.OnDeleteConfirmClicked) },
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnDeleteConfirmClicked) },
         )
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun ItemScreenPreview(
-    @PreviewParameter(ItemFormPreviewProvider::class) previewState: ItemFormUiState,
+private fun ItemDetailScreenPreview(
+    @PreviewParameter(ItemDetailPreviewProvider::class) previewState: ItemDetailUiState,
 ) {
     UdsTheme {
-        ItemScreenContent(
+        ItemDetailScreenContent(
             uiState = previewState,
-            dialogState = ItemFormDialogState.None,
+            dialogState = ItemDetailDialogState.None,
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.form.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
@@ -29,7 +29,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ItemFormViewModelTest {
+class ItemDetailViewModelTest {
 
     @MockK
     private lateinit var itemFormUseCase: ItemFormUseCase
@@ -50,7 +50,7 @@ class ItemFormViewModelTest {
     }
 
     private fun viewModel(itemId: Long? = null) =
-        ItemFormViewModel(itemId, itemFormUseCase, getSectionsAndTags)
+        ItemDetailViewModel(itemId, itemFormUseCase, getSectionsAndTags)
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
@@ -87,7 +87,7 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
-            assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
         }
         assertEquals(true, vm.uiState.value.loadFailed)
     }
@@ -98,7 +98,7 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
-            assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
         }
         assertEquals(true, vm.uiState.value.loadFailed)
     }
@@ -112,7 +112,7 @@ class ItemFormViewModelTest {
         vm.uiState.test { awaitItem() }
         assertEquals(true, vm.uiState.value.loadFailed)
 
-        vm.onEvent(ItemFormEvent.OnRetryClicked)
+        vm.onEvent(ItemDetailEvent.OnRetryClicked)
 
         vm.uiState.test {
             val state = awaitItem()
@@ -140,7 +140,7 @@ class ItemFormViewModelTest {
 
         vm.uiState.test {
             awaitItem()
-            vm.onEvent(ItemFormEvent.OnTitleChanged("Nova tarefa"))
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
             val state = awaitItem()
             assertEquals("Nova tarefa", state.title)
         }
@@ -152,13 +152,13 @@ class ItemFormViewModelTest {
 
         vm.uiState.test {
             awaitItem()
-            vm.onEvent(ItemFormEvent.OnDueDateChanged(ItemStub.TODAY))
-            vm.onEvent(ItemFormEvent.OnRecurrenceChanged(Recurrence.Weekly))
+            vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
+            vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
             awaitItem()
             val withRecurrence = awaitItem()
             assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
 
-            vm.onEvent(ItemFormEvent.OnDueDateChanged(null))
+            vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
             val cleared = awaitItem()
             assertEquals(Recurrence.None, cleared.recurrence)
         }
@@ -170,12 +170,12 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemFormEvent.OnTitleChanged("Nova tarefa"))
-        vm.onEvent(ItemFormEvent.OnTagToggled(TagStub.tags().first().id))
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
 
         vm.uiAction.test {
-            vm.onEvent(ItemFormEvent.OnSaveClicked)
-            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
         }
 
         coVerify(exactly = 1) {
@@ -193,11 +193,11 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemFormEvent.OnTitleChanged("Título editado"))
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Título editado"))
 
         vm.uiAction.test {
-            vm.onEvent(ItemFormEvent.OnSaveClicked)
-            assertEquals(ItemFormUiAction.NavigateBack, awaitItem())
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
         }
 
         coVerify(exactly = 1) { itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" }) }
@@ -211,8 +211,8 @@ class ItemFormViewModelTest {
         vm.uiState.test { awaitItem() }
 
         vm.uiAction.test {
-            vm.onEvent(ItemFormEvent.OnSaveClicked)
-            assertEquals(ItemFormUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
         }
     }
 
@@ -222,11 +222,11 @@ class ItemFormViewModelTest {
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemFormEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
 
         vm.uiAction.test {
-            vm.onEvent(ItemFormEvent.OnSaveClicked)
-            assertEquals(ItemFormUiAction.ShowError("boom"), awaitItem())
+            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
         }
     }
 }

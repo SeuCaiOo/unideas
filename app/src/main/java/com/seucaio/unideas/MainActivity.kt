@@ -6,10 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
@@ -37,8 +35,12 @@ class MainActivity : ComponentActivity() {
                 ) {
                     homeNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToDetail = navController::navigateToItemDetail,
-                        onNavigateToForm = navController::navigateToItemForm,
+                        onNavigateToDetail = { itemId ->
+                            navController.navigate(ItemsRoute.Detail(itemId))
+                        },
+                        onNavigateToAddItem = { type ->
+                            navController.navigate(ItemsRoute.AddItem(type))
+                        },
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
                         onNavigateToBrowse = { navController.navigate(HomeRoute.Browse) },
@@ -58,21 +60,15 @@ class MainActivity : ComponentActivity() {
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToDetail = navController::navigateToItemDetail,
-                        onNavigateToForm = navController::navigateToItemForm,
+                        onNavigateToDetail = { itemId ->
+                            navController.navigate(ItemsRoute.Detail(itemId))
+                        },
+                        onNavigateToAddItem = { type ->
+                            navController.navigate(ItemsRoute.AddItem(type))
+                        },
                     )
                 }
             }
         }
     }
-}
-
-/** Creating a new item always opens the dialog-hosted bottom sheet (#86/#97). */
-private fun NavController.navigateToItemForm(type: ItemType) {
-    navigate(ItemsRoute.FormSheet(type = type))
-}
-
-/** Tapping an item lands directly on its full-screen destination, already editable. */
-private fun NavController.navigateToItemDetail(itemId: Long) {
-    navigate(ItemsRoute.Detail(itemId))
 }

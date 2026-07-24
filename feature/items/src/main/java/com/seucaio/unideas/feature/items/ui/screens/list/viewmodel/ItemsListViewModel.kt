@@ -47,7 +47,7 @@ class ItemsListViewModel(private val getItems: GetItemsUseCase) : ViewModel() {
     fun onEvent(event: ItemsListEvent) {
         when (event) {
             is ItemsListEvent.OnItemClicked -> sendUiAction(ItemsListUiAction.NavigateToDetail(event.itemId))
-            is ItemsListEvent.OnAddClicked -> sendUiAction(ItemsListUiAction.NavigateToForm)
+            is ItemsListEvent.OnAddClicked -> sendUiAction(ItemsListUiAction.NavigateToAddItem)
             is ItemsListEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
         }
     }

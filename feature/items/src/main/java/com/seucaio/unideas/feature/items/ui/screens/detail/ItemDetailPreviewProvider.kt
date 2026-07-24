@@ -1,22 +1,22 @@
-package com.seucaio.unideas.feature.items.ui.screens.form
+package com.seucaio.unideas.feature.items.ui.screens.detail
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.ui.screens.form.viewmodel.ItemFormUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
 
-class ItemFormPreviewProvider : PreviewParameterProvider<ItemFormUiState> {
+class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
 
     private val sections = listOf(Section(id = 1L, name = "Work"), Section(id = 2L, name = "Home"))
     private val tags = listOf(Tag(id = 1L, name = "urgent"), Tag(id = 2L, name = "personal"))
 
-    override val values: Sequence<ItemFormUiState> = sequenceOf(
+    override val values: Sequence<ItemDetailUiState> = sequenceOf(
         // Screen right after opening, before the reference-data load resolves — the form is
         // already fully usable, no spinner blocking it.
-        ItemFormUiState(isEditing = false, type = ItemType.NOTE),
-        ItemFormUiState(
+        ItemDetailUiState(isEditing = false, type = ItemType.NOTE),
+        ItemDetailUiState(
             type = ItemType.NOTE,
             title = "Pay bills",
             description = "Electricity and water",
@@ -24,8 +24,8 @@ class ItemFormPreviewProvider : PreviewParameterProvider<ItemFormUiState> {
             availableSections = sections,
             availableTags = tags,
         ),
-        ItemFormUiState(isEditing = false),
-        ItemFormUiState(
+        ItemDetailUiState(isEditing = false),
+        ItemDetailUiState(
             isEditing = true,
             title = "Pay bills",
             description = "Electricity and water",

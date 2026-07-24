@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.form.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,12 +27,12 @@ import java.time.LocalDateTime
  * Settings creates/edits them), and the item being edited can't be mutated by anything else while
  * you're inside this screen either. So `uiState` is a plain [MutableStateFlow] mutated directly by
  * `onEvent`/the one-shot load in `init`, not a mapped/combined [Flow]. No full `Loading`/`Error`
- * triad wrapping the screen (see [ItemFormUiState]'s doc) — but fetching the item being edited
- * does get [ItemFormUiState.isLoading]/[ItemFormUiState.loadFailed] + a retry path
- * ([ItemFormEvent.OnRetryClicked]), since this ViewModel is the only place that fetches the item
+ * triad wrapping the screen (see [ItemDetailUiState]'s doc) — but fetching the item being edited
+ * does get [ItemDetailUiState.isLoading]/[ItemDetailUiState.loadFailed] + a retry path
+ * ([ItemDetailEvent.OnRetryClicked]), since this ViewModel is the only place that fetches the item
  * now (#97).
  */
-class ItemFormViewModel(
+class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
@@ -46,15 +46,15 @@ class ItemFormViewModel(
     // initialType only seeds creation mode — loadItem() overwrites it with the real type when
     // editing, so an edit deep-link can't be nudged into a different type by a stale nav arg.
     private val _uiState = MutableStateFlow(
-        ItemFormUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
+        ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
     )
-    val uiState: StateFlow<ItemFormUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
 
-    private val _uiAction = Channel<ItemFormUiAction>(Channel.BUFFERED)
-    val uiAction: Flow<ItemFormUiAction> = _uiAction.receiveAsFlow()
+    private val _uiAction = Channel<ItemDetailUiAction>(Channel.BUFFERED)
+    val uiAction: Flow<ItemDetailUiAction> = _uiAction.receiveAsFlow()
 
-    private val _dialogState = MutableStateFlow<ItemFormDialogState>(ItemFormDialogState.None)
-    val dialogState: StateFlow<ItemFormDialogState> = _dialogState.asStateFlow()
+    private val _dialogState = MutableStateFlow<ItemDetailDialogState>(ItemDetailDialogState.None)
+    val dialogState: StateFlow<ItemDetailDialogState> = _dialogState.asStateFlow()
 
     init {
         viewModelScope.launch { loadFormData() }
@@ -75,7 +75,7 @@ class ItemFormViewModel(
     private suspend fun loadItem(id: Long) {
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
-            sendUiAction(ItemFormUiAction.ShowSnackbar(R.string.item_form_load_error))
+            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error))
             _uiState.update { it.copy(isLoading = false, loadFailed = true) }
             return
         }
@@ -96,28 +96,28 @@ class ItemFormViewModel(
         }
     }
 
-    fun onEvent(event: ItemFormEvent) {
+    fun onEvent(event: ItemDetailEvent) {
         when (event) {
-            is ItemFormEvent.OnTypeChanged -> _uiState.update { it.copy(type = event.type) }
-            is ItemFormEvent.OnTitleChanged -> _uiState.update { it.copy(title = event.title) }
-            is ItemFormEvent.OnDescriptionChanged ->
+            is ItemDetailEvent.OnTypeChanged -> _uiState.update { it.copy(type = event.type) }
+            is ItemDetailEvent.OnTitleChanged -> _uiState.update { it.copy(title = event.title) }
+            is ItemDetailEvent.OnDescriptionChanged ->
                 _uiState.update { it.copy(description = event.description) }
-            is ItemFormEvent.OnSectionChanged -> _uiState.update { it.copy(sectionId = event.sectionId) }
-            is ItemFormEvent.OnTagToggled -> _uiState.update { it.toggleTag(event.tagId) }
-            is ItemFormEvent.OnDueDateChanged -> _uiState.update {
+            is ItemDetailEvent.OnSectionChanged -> _uiState.update { it.copy(sectionId = event.sectionId) }
+            is ItemDetailEvent.OnTagToggled -> _uiState.update { it.toggleTag(event.tagId) }
+            is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,
                     recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
                 )
             }
-            is ItemFormEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
-            is ItemFormEvent.OnSaveClicked -> handleSave()
-            is ItemFormEvent.OnShareClicked -> handleShare()
-            is ItemFormEvent.OnDeleteClicked -> _dialogState.update { ItemFormDialogState.DeleteConfirm }
-            is ItemFormEvent.OnDialogDismissed -> _dialogState.update { ItemFormDialogState.None }
-            is ItemFormEvent.OnDeleteConfirmClicked -> handleDelete()
-            is ItemFormEvent.OnCompleteClicked -> handleComplete()
-            is ItemFormEvent.OnRetryClicked -> retryLoad()
+            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is ItemDetailEvent.OnSaveClicked -> handleSave()
+            is ItemDetailEvent.OnShareClicked -> handleShare()
+            is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
+            is ItemDetailEvent.OnDialogDismissed -> _dialogState.update { ItemDetailDialogState.None }
+            is ItemDetailEvent.OnDeleteConfirmClicked -> handleDelete()
+            is ItemDetailEvent.OnCompleteClicked -> handleComplete()
+            is ItemDetailEvent.OnRetryClicked -> retryLoad()
         }
     }
 
@@ -127,7 +127,7 @@ class ItemFormViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    private fun ItemFormUiState.toggleTag(tagId: Long): ItemFormUiState =
+    private fun ItemDetailUiState.toggleTag(tagId: Long): ItemDetailUiState =
         copy(selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId)
 
     private fun handleSave() = viewModelScope.launch {
@@ -162,35 +162,35 @@ class ItemFormViewModel(
             )
         }
 
-        result.onSuccess { sendUiAction(ItemFormUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+        result.onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
     }
 
     private suspend fun handleFailure(error: Throwable) {
         if (error is IllegalArgumentException) {
-            sendUiAction(ItemFormUiAction.ShowSnackbar(R.string.item_title_required))
+            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
         } else {
-            sendUiAction(ItemFormUiAction.ShowError(error.message.orEmpty()))
+            sendUiAction(ItemDetailUiAction.ShowError(error.message.orEmpty()))
         }
     }
 
     private fun handleDelete() = viewModelScope.launch {
         val id = itemId ?: return@launch
-        _dialogState.update { ItemFormDialogState.None }
+        _dialogState.update { ItemDetailDialogState.None }
         runCatching { itemFormUseCase.delete(id) }
-            .onSuccess { sendUiAction(ItemFormUiAction.NavigateBack) }
-            .onFailure { sendUiAction(ItemFormUiAction.ShowError(it.message.orEmpty())) }
+            .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
+            .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 
     private fun handleComplete() = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         itemFormUseCase.complete(item, LocalDateTime.now())
-            .onFailure { sendUiAction(ItemFormUiAction.ShowError(it.message.orEmpty())) }
+            .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 
     private fun handleShare() = viewModelScope.launch {
         val item = originalItem ?: return@launch
-        sendUiAction(ItemFormUiAction.ShareText(buildShareText(item)))
+        sendUiAction(ItemDetailUiAction.ShareText(buildShareText(item)))
     }
 
     private fun buildShareText(item: Item): String = buildString {
@@ -199,5 +199,5 @@ class ItemFormViewModel(
         item.dueDate?.let { appendLine(it.toFormattedDateString()) }
     }
 
-    private suspend fun sendUiAction(action: ItemFormUiAction) = _uiAction.send(action)
+    private suspend fun sendUiAction(action: ItemDetailUiAction) = _uiAction.send(action)
 }

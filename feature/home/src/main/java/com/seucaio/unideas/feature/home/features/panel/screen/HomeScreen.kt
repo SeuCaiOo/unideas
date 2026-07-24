@@ -74,7 +74,7 @@ import kotlin.math.roundToInt
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToForm: (ItemType) -> Unit,
+    onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToBrowse: () -> Unit,
@@ -85,7 +85,7 @@ fun HomeScreen(
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
-    val updatedOnNavigateToForm by rememberUpdatedState(onNavigateToForm)
+    val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
 
@@ -93,7 +93,7 @@ fun HomeScreen(
         viewModel.uiAction.collect { action ->
             when (action) {
                 is HomeUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
-                is HomeUiAction.NavigateToForm -> updatedOnNavigateToForm(action.type)
+                is HomeUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
                 is HomeUiAction.NavigateToAllPriorities -> updatedOnNavigateToAllPriorities()
                 is HomeUiAction.NavigateToSettings -> updatedOnNavigateToSettings()
                 is HomeUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)

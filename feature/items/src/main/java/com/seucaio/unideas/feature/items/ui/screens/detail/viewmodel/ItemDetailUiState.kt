@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.form.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -13,10 +13,10 @@ import java.time.LocalDate
  * reference list is a background concern (already degrades to an empty list on failure inside
  * [com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase], never surfaced here) — nothing
  * about typing a title depends on it. The one real failure (editing an item that no longer
- * exists) has nothing to render either way, so it's a one-shot [ItemFormUiAction.ShowError] +
+ * exists) has nothing to render either way, so it's a one-shot [ItemDetailUiAction.ShowError] +
  * navigate-back, not a screen state.
  */
-data class ItemFormUiState(
+data class ItemDetailUiState(
     override val isEditing: Boolean = false,
     val isLoading: Boolean = false,
     override val type: ItemType = ItemType.TASK,

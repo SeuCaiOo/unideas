@@ -5,5 +5,5 @@ sealed interface ItemsListUiAction {
 
     data class NavigateToDetail(val itemId: Long) : ItemsListUiAction
 
-    data object NavigateToForm : ItemsListUiAction
+    data object NavigateToAddItem : ItemsListUiAction
 }

@@ -10,7 +10,7 @@ import com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen
 fun NavGraphBuilder.homeNavGraph(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToForm: (ItemType) -> Unit,
+    onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToBrowse: () -> Unit,
@@ -18,7 +18,7 @@ fun NavGraphBuilder.homeNavGraph(
     composable<HomeRoute.Panel> {
         HomeScreen(
             onNavigateToDetail = onNavigateToDetail,
-            onNavigateToForm = onNavigateToForm,
+            onNavigateToAddItem = onNavigateToAddItem,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToBrowse = onNavigateToBrowse,
@@ -34,7 +34,7 @@ fun NavGraphBuilder.homeNavGraph(
         BrowseScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToDetail = onNavigateToDetail,
-            onNavigateToForm = onNavigateToForm,
+            onNavigateToAddItem = onNavigateToAddItem,
         )
     }
 }

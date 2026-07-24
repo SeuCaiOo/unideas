@@ -8,9 +8,9 @@ import java.time.LocalDate
 
 /**
  * Field values common to every screen that renders [com.seucaio.unideas.feature.items.ui.components.ItemFormBody] — implemented by both
- * `ItemFormUiState` (create/edit) and `ItemDetailUiState` (create-only), so the body/fields don't
+ * `ItemDetailUiState` (create/edit) and `AddItemUiState` (create-only), so the body/fields don't
  * couple to either ViewModel's own state type. [isCompleted]/[isEditing] default to `false` since
- * only `ItemFormUiState` has a real notion of either.
+ * only `ItemDetailUiState` has a real notion of either.
  */
 interface ItemFormFieldsState {
     val type: ItemType

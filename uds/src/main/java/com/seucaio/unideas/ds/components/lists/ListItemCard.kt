@@ -33,6 +33,7 @@ import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.ds.theme.pinnedContainerColor
 
 /**
  * Grid-cell counterpart to [ListItemRow] — same [ListItemUi], title **above** meta/badge instead
@@ -43,12 +44,18 @@ import com.seucaio.unideas.ds.theme.UdsTheme
  * than a full-width row.
  */
 @Composable
-fun ListItemCard(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, modifier: Modifier = Modifier) {
+fun ListItemCard(
+    ui: ListItemUi,
+    onClick: () -> Unit,
+    onToggleCheck: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+) {
     Column(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Card))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(containerColor)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -125,6 +132,25 @@ private fun ListItemCardPreview() {
                 ),
                 onClick = {},
                 onToggleCheck = {},
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ListItemCardPinnedPreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp).width(170.dp)) {
+            ListItemCard(
+                ui = ListItemUi(
+                    id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+                    checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
+                    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
+                ),
+                onClick = {},
+                onToggleCheck = {},
+                containerColor = pinnedContainerColor(isPinned = true, base = MaterialTheme.colorScheme.surfaceVariant),
             )
         }
     }

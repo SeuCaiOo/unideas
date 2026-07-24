@@ -9,19 +9,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
+/**
+ * [emphasized], when `true`, uses [MaterialTheme.colorScheme.primary] and a larger size instead
+ * of the plain neutral label — for a meta-group divider (e.g. "Pinned") that must read as a
+ * parent grouping, not just another collapsible section header at the same visual weight.
+ */
 @Composable
-fun GroupHeader(text: String, modifier: Modifier = Modifier) {
+fun GroupHeader(text: String, modifier: Modifier = Modifier, emphasized: Boolean = false) {
     Text(
         text.uppercase(),
-        style = AppType.FieldLabel,
-        color = LocalUdsExtendedColors.current.textTertiary,
+        style = if (emphasized) AppType.FieldLabel.copy(fontSize = EMPHASIZED_FONT_SIZE) else AppType.FieldLabel,
+        color = if (emphasized) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary,
         modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp)
     )
 }
+
+private val EMPHASIZED_FONT_SIZE = 13.sp
 
 @PreviewLightDark
 @Composable
@@ -29,6 +37,16 @@ private fun GroupHeaderPreview() {
     UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             GroupHeader("Account")
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun GroupHeaderEmphasizedPreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+            GroupHeader("Pinned", emphasized = true)
         }
     }
 }

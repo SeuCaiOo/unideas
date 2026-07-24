@@ -1,8 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -10,20 +8,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
 import com.seucaio.unideas.feature.items.ui.components.fields.DueDateField
 import com.seucaio.unideas.feature.items.ui.components.fields.RecurrenceField
 import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
@@ -112,31 +107,12 @@ fun ItemFormBody(
         }
 
         if (state.typeIsTask && state.isEditing) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedButton(
-                    onClick = events.onCompleteClicked,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        stringResource(
-                            if (state.isCompleted) R.string.item_detail_reopen else R.string.item_detail_complete,
-                        ),
-                    )
-                }
-                state.completedAt?.let { completedAt ->
-                    Text(
-                        text = stringResource(R.string.item_detail_completed_on, completedAt.toFormattedDateString()),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            CompletionField(
+                isCompleted = state.isCompleted,
+                completedAt = state.completedAt,
+                onCompleteClicked = events.onCompleteClicked,
+                modifier = Modifier.padding(top = 16.dp),
+            )
         }
 
         Button(

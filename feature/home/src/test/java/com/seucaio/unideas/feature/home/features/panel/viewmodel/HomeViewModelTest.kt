@@ -311,12 +311,12 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `when OnAddClicked should emit NavigateToForm with the chosen type`() = runTest {
+    fun `when OnAddClicked should emit NavigateToAddItem with the chosen type`() = runTest {
         val vm = viewModel()
 
         vm.uiAction.test {
             vm.onEvent(HomeEvent.OnAddClicked(ItemType.NOTE))
-            assertEquals(HomeUiAction.NavigateToForm(ItemType.NOTE), awaitItem())
+            assertEquals(HomeUiAction.NavigateToAddItem(ItemType.NOTE), awaitItem())
         }
     }
 

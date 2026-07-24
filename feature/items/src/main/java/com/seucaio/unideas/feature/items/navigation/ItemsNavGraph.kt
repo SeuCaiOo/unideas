@@ -1,23 +1,25 @@
 package com.seucaio.unideas.feature.items.navigation
 
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.feature.items.features.detail.screen.ItemDetailScreen
-import com.seucaio.unideas.feature.items.features.form.screen.ItemFormScreen
-import com.seucaio.unideas.feature.items.features.list.screen.ItemsListScreen
+import com.seucaio.unideas.feature.items.ui.screens.additem.AddItemSheet
+import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailScreen
+import com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen
 
 fun NavGraphBuilder.itemsNavGraph(
     onNavigateBack: (() -> Unit)?,
-    onNavigateToEdit: (Long) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToForm: (ItemType) -> Unit,
+    onNavigateToAddItem: (ItemType) -> Unit,
 ) {
-    composable<ItemsRoute.Form> { backStackEntry ->
-        val route = backStackEntry.toRoute<ItemsRoute.Form>()
-        ItemFormScreen(
-            itemId = route.itemId,
+    dialog<ItemsRoute.AddItem>(
+        dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    ) { backStackEntry ->
+        val route = backStackEntry.toRoute<ItemsRoute.AddItem>()
+        AddItemSheet(
             initialType = route.type,
             onNavigateBack = onNavigateBack
         )
@@ -26,15 +28,14 @@ fun NavGraphBuilder.itemsNavGraph(
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()
         ItemDetailScreen(
             itemId = route.itemId,
-            onNavigateBack = onNavigateBack,
-            onNavigateToEdit = onNavigateToEdit,
+            onNavigateBack = onNavigateBack
         )
     }
     composable<ItemsRoute.List> {
         ItemsListScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToDetail = onNavigateToDetail,
-            onNavigateToForm = { onNavigateToForm(ItemType.TASK) },
+            onNavigateToAddItem = { onNavigateToAddItem(ItemType.TASK) },
         )
     }
 }

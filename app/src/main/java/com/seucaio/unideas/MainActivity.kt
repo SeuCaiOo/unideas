@@ -35,8 +35,12 @@ class MainActivity : ComponentActivity() {
                 ) {
                     homeNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
-                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        onNavigateToDetail = { itemId ->
+                            navController.navigate(ItemsRoute.Detail(itemId))
+                        },
+                        onNavigateToAddItem = { type ->
+                            navController.navigate(ItemsRoute.AddItem(type))
+                        },
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
                         onNavigateToBrowse = { navController.navigate(HomeRoute.Browse) },
@@ -49,16 +53,18 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = navController::popBackStack,
                         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
                         onNavigateToTags = { navController.navigate(TagsRoute.List) },
-                        // Debug-only entry point — Home is the real one now.
                         onNavigateToItems = { navController.navigate(ItemsRoute.List) },
                     )
                     sectionsNavGraph(onNavigateBack = navController::popBackStack)
                     tagsNavGraph(onNavigateBack = navController::popBackStack)
                     itemsNavGraph(
                         onNavigateBack = navController::popBackStack,
-                        onNavigateToEdit = { itemId -> navController.navigate(ItemsRoute.Form(itemId)) },
-                        onNavigateToDetail = { itemId -> navController.navigate(ItemsRoute.Detail(itemId)) },
-                        onNavigateToForm = { type -> navController.navigate(ItemsRoute.Form(type = type)) },
+                        onNavigateToDetail = { itemId ->
+                            navController.navigate(ItemsRoute.Detail(itemId))
+                        },
+                        onNavigateToAddItem = { type ->
+                            navController.navigate(ItemsRoute.AddItem(type))
+                        },
                     )
                 }
             }

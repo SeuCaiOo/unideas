@@ -115,7 +115,7 @@ class HomeViewModel(
             is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
             is HomeEvent.OnItemClicked -> sendUiAction(HomeUiAction.NavigateToDetail(event.itemId))
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
-            is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToForm(event.type))
+            is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnSeeAllClicked -> sendUiAction(HomeUiAction.NavigateToAllPriorities)
             is HomeEvent.OnSettingsClicked -> sendUiAction(HomeUiAction.NavigateToSettings)
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)

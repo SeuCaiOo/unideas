@@ -2,9 +2,9 @@
 <resources>
     <string name="item_form_load_error">Couldn\'t load the item</string>
     <string name="item_title_required">Title is required</string>
-    <string name="item_form_title_create">New item</string>
-    <string name="item_form_title_edit">Edit item</string>
+    <string name="item_form_title_view">Item</string>
     <string name="item_form_save">Save</string>
+    <string name="item_form_v2_edit">Edit</string>
     <string name="item_form_type_task">Task</string>
     <string name="item_form_type_note">Note</string>
     <string name="item_form_title_label">Title</string>
@@ -25,11 +25,12 @@
     <string name="item_detail_tags_label">Tags</string>
     <string name="item_detail_date_label">Due date</string>
     <string name="item_detail_recurrence_label">Repeat</string>
-    <string name="item_detail_completed_label">Completed</string>
     <string name="item_detail_share">Share</string>
     <string name="item_detail_edit">Edit</string>
     <string name="item_detail_delete">Delete</string>
     <string name="item_detail_complete">Mark as complete</string>
+    <string name="item_detail_reopen">Reopen task</string>
+    <string name="item_detail_completed_on">Completed on %1$s</string>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="items_list_title">Items</string>

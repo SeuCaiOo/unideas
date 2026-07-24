@@ -37,16 +37,11 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
 
-/**
- * Same Tasks/Notes tab + filters + list [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
- * shows, but full-screen — no priority panel. Reuses [HomeViewModel] as-is. Reached from Home's
- * TopBar action.
- */
 @Composable
 fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToForm: (ItemType) -> Unit,
+    onNavigateToAddItem: (ItemType) -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -54,13 +49,13 @@ fun BrowseScreen(
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
-    val updatedOnNavigateToForm by rememberUpdatedState(onNavigateToForm)
+    val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
                 is HomeUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
-                is HomeUiAction.NavigateToForm -> updatedOnNavigateToForm(action.type)
+                is HomeUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
                 is HomeUiAction.NavigateToAllPriorities -> Unit
                 is HomeUiAction.NavigateToSettings -> Unit
                 is HomeUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)

@@ -11,7 +11,7 @@
     <string name="settings_debug_seed_success">Sample data added</string>
     <string name="settings_debug_clear">Clear database</string>
     <string name="settings_debug_clear_success">Database cleared</string>
-    <string name="settings_debug_use_v2_screens">Use V2 screens</string>
+    <string name="settings_debug_screen_version">Screen version</string>
     <string name="seed_scope_sheet_title">What should we seed?</string>
     <string name="seed_scope_confirm">Seed</string>
     <string name="seed_scope_empty">Empty</string>

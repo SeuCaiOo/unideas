@@ -11,7 +11,6 @@ import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
-import com.seucaio.unideas.domain.usecase.item.ItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
@@ -28,10 +27,6 @@ import com.seucaio.unideas.domain.usecase.tag.TagUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
-/**
- * Koin module for `:domain` use cases. Included by `appModule` in `:app`.
- * Grows one screen's worth of use cases at a time.
- */
 val domainModule = module {
     factoryOf(::GetSectionsUseCase)
     factoryOf(::AddSectionUseCase)
@@ -58,7 +53,6 @@ val domainModule = module {
     factoryOf(::CompleteItemUseCase)
     factoryOf(::GetPriorityItemsUseCase)
     factoryOf(::HasAnyItemUseCase)
-    factoryOf(::ItemDetailUseCase)
     factoryOf(::ItemFormUseCase)
     factoryOf(::HomeUseCase)
 }

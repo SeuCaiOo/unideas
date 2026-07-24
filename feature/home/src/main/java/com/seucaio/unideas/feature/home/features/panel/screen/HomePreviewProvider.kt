@@ -23,7 +23,7 @@ internal data class HomePreviewFixture(
 internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture> {
 
     private val createdAt = LocalDateTime.of(2026, 6, 20, 10, 0)
-    private val work = Section(id = 1L, name = "Trabalho")
+    private val work = Section(id = 1L, name = "Trabalho", isPinned = true)
     private val home = Section(id = 2L, name = "Casa")
     private val sections = listOf(work, home)
     private val tags = listOf(Tag(id = 1L, name = "urgente"), Tag(id = 2L, name = "pessoal"))
@@ -66,7 +66,7 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
                     showSeeAllButton = false,
                     tabItems = allItems,
                     groupedTabItems = listOf(
-                        ItemSectionGroup(work.id, work.name, workItems),
+                        ItemSectionGroup(work.id, work.name, workItems, isPinned = work.isPinned),
                         ItemSectionGroup(home.id, home.name, homeItems),
                         ItemSectionGroup(sectionId = null, sectionName = null, items = unsectionedItems),
                     ),

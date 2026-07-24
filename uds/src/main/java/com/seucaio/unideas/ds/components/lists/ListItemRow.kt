@@ -31,6 +31,7 @@ import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.ds.theme.pinnedContainerColor
 
 data class ListItemUi(
     val id: Long,
@@ -45,12 +46,18 @@ data class ListItemUi(
 )
 
 @Composable
-fun ListItemRow(ui: ListItemUi, onClick: () -> Unit, onToggleCheck: () -> Unit, modifier: Modifier = Modifier) {
+fun ListItemRow(
+    ui: ListItemUi,
+    onClick: () -> Unit,
+    onToggleCheck: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+) {
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Card))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(containerColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -130,6 +137,25 @@ private fun ListItemRowPreview() {
                 ),
                 onClick = {},
                 onToggleCheck = {}
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ListItemRowPinnedPreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+            ListItemRow(
+                ui = ListItemUi(
+                    id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+                    checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
+                    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm"
+                ),
+                onClick = {},
+                onToggleCheck = {},
+                containerColor = pinnedContainerColor(isPinned = true, base = MaterialTheme.colorScheme.surfaceVariant),
             )
         }
     }

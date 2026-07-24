@@ -3,13 +3,14 @@ package com.seucaio.unideas.domain.usecase.item
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
+import com.seucaio.unideas.domain.usecase.section.SetSectionPinnedUseCase
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * Convenience facade over the single-purpose item use cases the Home priority panel screen
- * needs (kept as-is, still usable on their own) — one method per operation, each just
+ * Convenience facade over the single-purpose use cases the Home priority panel screen (and
+ * Browse, which reuses the same ViewModel) needs — one method per operation, each just
  * delegating. No repository access here. Scoped to
  * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel] only; see
  * [ItemDetailUseCase]/[ItemFormUseCase] for the other screens' own subsets — Item's use cases
@@ -24,6 +25,7 @@ class HomeUseCase(
     private val getItemsUseCase: GetItemsUseCase,
     private val completeItemUseCase: CompleteItemUseCase,
     private val hasAnyItemUseCase: HasAnyItemUseCase,
+    private val setSectionPinnedUseCase: SetSectionPinnedUseCase,
 ) {
 
     fun getPriorityItems(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
@@ -36,4 +38,7 @@ class HomeUseCase(
         completeItemUseCase(item, completedAt)
 
     fun hasAnyItem(): Flow<Boolean> = hasAnyItemUseCase()
+
+    suspend fun setSectionPinned(id: Long, isPinned: Boolean): Result<Unit> =
+        setSectionPinnedUseCase(id, isPinned)
 }

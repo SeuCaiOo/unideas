@@ -58,10 +58,11 @@ class ItemFormUseCaseTest {
 
     @Test
     fun `delete delegates to DeleteItemUseCase`() = runTest {
-        coEvery { deleteItem(1L) } returns Unit
+        coEvery { deleteItem(1L) } returns Result.success(Unit)
 
-        useCase.delete(1L)
+        val result = useCase.delete(1L)
 
+        assertEquals(Result.success(Unit), result)
         coVerify(exactly = 1) { deleteItem(1L) }
     }
 

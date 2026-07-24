@@ -15,4 +15,5 @@ data class SectionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val name: String,
+    val isPinned: Boolean = false,
 )

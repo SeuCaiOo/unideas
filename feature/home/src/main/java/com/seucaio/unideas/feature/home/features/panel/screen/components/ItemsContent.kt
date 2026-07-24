@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
@@ -25,6 +26,12 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
  * positive.
  */
 internal const val NO_SECTION_KEY = -1L
+
+/**
+ * Extra start indent for a pinned group's [CollapsibleGroupHeader], nesting it under the
+ * emphasized "Pinned" [GroupHeader] above it.
+ */
+internal val PINNED_INDENT = 12.dp
 
 /**
  * Home's tab-items content: the one empty-state check both view modes need, then dispatch by

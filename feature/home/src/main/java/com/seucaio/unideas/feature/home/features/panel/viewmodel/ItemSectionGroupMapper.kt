@@ -12,7 +12,14 @@ import com.seucaio.unideas.domain.model.Section
 internal fun List<Item>.groupBySection(sections: List<Section>): List<ItemSectionGroup> {
     val bySectionId = groupBy { it.sectionId }
     val named = sections.mapNotNull { section ->
-        bySectionId[section.id]?.let { items -> ItemSectionGroup(section.id, section.name, items) }
+        bySectionId[section.id]?.let { items ->
+            ItemSectionGroup(
+                sectionId = section.id,
+                sectionName = section.name,
+                items = items,
+                isPinned = section.isPinned
+            )
+        }
     }
     val unsectioned = bySectionId[null]?.let { items ->
         ItemSectionGroup(sectionId = null, sectionName = null, items = items)

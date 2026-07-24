@@ -174,6 +174,33 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when OnSectionPinToggled succeeds should reload sections reflecting the new pin state`() = runTest {
+        val section = Section(id = 1L, name = "Work", isPinned = false)
+        val pinnedSection = section.copy(isPinned = true)
+        coEvery { getSectionsAndTags() } returnsMany listOf(
+            SectionsAndTags(listOf(section), emptyList()),
+            SectionsAndTags(listOf(pinnedSection), emptyList()),
+        )
+        coEvery { homeUseCase.setSectionPinned(section.id, true) } returns Result.success(Unit)
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnSectionPinToggled(section.id, true))
+
+        assertEquals(listOf(pinnedSection), vm.filterState.value.availableSections)
+    }
+
+    @Test
+    fun `when OnSectionPinToggled fails should emit ShowError`() = runTest {
+        coEvery { homeUseCase.setSectionPinned(1L, true) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnSectionPinToggled(1L, true))
+            assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+    }
+
+    @Test
     fun `when OnCompleteClicked for a known item should call HomeUseCase's complete`() = runTest {
         val item = ItemStub.task(id = 1L)
         every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(listOf(item))

@@ -9,6 +9,7 @@ import com.seucaio.unideas.data.local.converter.Converters
 import com.seucaio.unideas.data.local.dao.ItemDao
 import com.seucaio.unideas.data.local.dao.SectionDao
 import com.seucaio.unideas.data.local.dao.TagDao
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_2_3
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
 import com.seucaio.unideas.data.local.entity.SectionEntity
@@ -21,9 +22,13 @@ import com.seucaio.unideas.data.local.entity.TagEntity
  * addition to the Koin registration, guaranteeing a single instance even
  * outside the DI graph (e.g. instrumented tests).
  *
- * `version` bumps without a `Migration`/`fallbackToDestructiveMigration` are
- * fine pre-release (0.0.x alpha, `exportSchema = false`, no external users)
- * — devs reinstall the debug build when the schema changes.
+ * Every `version` bump ships a real `Migration` (`data/local/database/migration/`), added via
+ * `.addMigrations(...)` — deliberately **no** `fallbackToDestructiveMigration()`. The app is
+ * local-only (Drive backup/restore is manual, opt-in, not automatic sync), so a missing migration
+ * failing loud (Room throws on open, already Timber/Crashlytics-logged via
+ * [com.seucaio.unideas.domain.util.logOnError]) is far safer than one silently wiping every item,
+ * section, and tag a user has ever saved. A build that reaches users without the right migration
+ * is a bug to fix and ship, never a reason to erase their data.
  */
 @Database(
     entities = [
@@ -76,6 +81,8 @@ abstract class UnideasDatabase : RoomDatabase() {
                 context.applicationContext,
                 UnideasDatabase::class.java,
                 DATABASE_NAME,
-            ).build()
+            )
+                .addMigrations(MIGRATION_2_3)
+                .build()
     }
 }

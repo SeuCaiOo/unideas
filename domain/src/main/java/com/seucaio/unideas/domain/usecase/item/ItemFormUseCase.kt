@@ -19,7 +19,7 @@ class ItemFormUseCase(
 
     suspend fun edit(item: Item): Result<Unit> = editItem(item)
 
-    suspend fun delete(id: Long) = deleteItem(id)
+    suspend fun delete(id: Long): Result<Unit> = deleteItem(id)
 
     suspend fun complete(item: Item, completedAt: LocalDateTime): Result<CompletionResult> =
         completeItem(item, completedAt)

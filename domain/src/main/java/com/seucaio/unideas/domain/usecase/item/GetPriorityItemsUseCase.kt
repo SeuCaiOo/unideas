@@ -2,6 +2,8 @@ package com.seucaio.unideas.domain.usecase.item
 
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.repository.ItemRepository
+import com.seucaio.unideas.domain.usecase.UseCase
+import com.seucaio.unideas.domain.util.logOnError
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -13,8 +15,9 @@ import java.time.LocalDate
  * [today] and [dueSoonDays] are explicit parameters — `:domain` cannot depend on `:core:common`,
  * where their configured values (`Constants.DUE_SOON_DAYS`) live; the caller passes them in.
  */
-class GetPriorityItemsUseCase(private val repository: ItemRepository) {
+class GetPriorityItemsUseCase(private val repository: ItemRepository) : UseCase {
 
     operator fun invoke(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
         repository.getPriorityItems(dueOnOrBefore = today.plusDays(dueSoonDays.toLong()))
+            .logOnError(this)
 }

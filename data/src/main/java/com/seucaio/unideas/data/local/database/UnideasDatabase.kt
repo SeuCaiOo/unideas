@@ -32,7 +32,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         TagEntity::class,
         ItemTagCrossRef::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

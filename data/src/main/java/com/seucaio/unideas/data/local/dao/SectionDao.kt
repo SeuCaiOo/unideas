@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SectionDao {
 
-    @Query("SELECT * FROM sections ORDER BY name ASC")
+    @Query("SELECT * FROM sections ORDER BY isPinned DESC, name ASC")
     fun getSections(): Flow<List<SectionEntity>>
 
     /** Sections with at least one item tagged with any of [tagIds] — empty [tagIds] matches nothing. */
@@ -20,7 +20,7 @@ interface SectionDao {
         INNER JOIN items i ON i.sectionId = s.id
         INNER JOIN item_tag it ON it.itemId = i.id
         WHERE it.tagId IN (:tagIds)
-        ORDER BY s.name ASC
+        ORDER BY s.isPinned DESC, s.name ASC
         """,
     )
     fun getSectionsByTags(tagIds: List<Long>): Flow<List<SectionEntity>>
@@ -30,6 +30,9 @@ interface SectionDao {
 
     @Update
     suspend fun update(section: SectionEntity)
+
+    @Query("UPDATE sections SET isPinned = :isPinned WHERE id = :id")
+    suspend fun setPinned(id: Long, isPinned: Boolean)
 
     @Query("DELETE FROM sections WHERE id = :id")
     suspend fun deleteById(id: Long)

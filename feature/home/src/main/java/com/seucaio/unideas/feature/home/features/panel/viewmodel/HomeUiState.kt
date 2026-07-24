@@ -21,6 +21,7 @@ data class ItemSectionGroup(
     val sectionId: Long?,
     val sectionName: String?,
     val items: List<Item>,
+    val isPinned: Boolean = false,
 )
 
 /** Display mode for [ItemsState.tabItems]. */

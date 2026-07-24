@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +31,8 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 /**
  * A clickable, collapsible variant of [GroupHeader] — title (+ item count) with a chevron that
  * rotates to reflect [expanded]. Used to group a lazy list's rows by section, expand/collapse per
- * group.
+ * group. [onTogglePin], when non-null, renders a pin toggle (filled when [isPinned]) — pinned
+ * groups sort first in the caller's list.
  */
 @Composable
 fun CollapsibleGroupHeader(
@@ -37,6 +41,8 @@ fun CollapsibleGroupHeader(
     expanded: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
+    isPinned: Boolean = false,
+    onTogglePin: (() -> Unit)? = null,
 ) {
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "chevronRotation")
 
@@ -44,7 +50,7 @@ fun CollapsibleGroupHeader(
         modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle)
-            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
+            .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -54,6 +60,16 @@ fun CollapsibleGroupHeader(
             color = LocalUdsExtendedColors.current.textTertiary,
             modifier = Modifier.weight(1f),
         )
+        if (onTogglePin != null) {
+            IconButton(onClick = onTogglePin, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                    contentDescription = null,
+                    tint = LocalUdsExtendedColors.current.textTertiary,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
         Icon(
             Icons.Outlined.ExpandMore,
             contentDescription = null,
@@ -79,6 +95,23 @@ private fun CollapsibleGroupHeaderCollapsedPreview() {
     UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
             CollapsibleGroupHeader(title = "Personal", itemCount = 12, expanded = false, onToggle = {})
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun CollapsibleGroupHeaderPinnedPreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
+            CollapsibleGroupHeader(
+                title = "Work",
+                itemCount = 4,
+                expanded = true,
+                onToggle = {},
+                isPinned = true,
+                onTogglePin = {},
+            )
         }
     }
 }

@@ -73,6 +73,12 @@ internal fun ItemsGridContent(
                         onToggle = {
                             collapsedKeys = if (expanded) collapsedKeys + key else collapsedKeys - key
                         },
+                        isPinned = group.isPinned,
+                        onTogglePin = group.sectionId?.let { sectionId ->
+                            {
+                                onEvent(HomeEvent.OnSectionPinToggled(sectionId, !group.isPinned))
+                            }
+                        },
                     )
                 }
             }

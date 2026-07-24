@@ -159,7 +159,7 @@ class ItemDetailViewModel(
     private fun handleDelete() = viewModelScope.launch {
         val id = itemId ?: return@launch
         _dialogState.update { ItemDetailDialogState.None }
-        runCatching { itemFormUseCase.delete(id) }
+        itemFormUseCase.delete(id)
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }

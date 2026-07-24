@@ -31,11 +31,6 @@ import com.seucaio.unideas.feature.items.R
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * Mirrors `:uds`'s native `MetaRow` row shape (label left, value right, divider) but swaps the
- * value for [DueBadge] — its dot + colored label is what the legacy `UrgencyIndicator` this
- * replaces conveyed, which `MetaRow`'s plain-text value slot can't express on its own.
- */
 @Composable
 fun DueDateRow(item: Item, isLast: Boolean, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth()) {

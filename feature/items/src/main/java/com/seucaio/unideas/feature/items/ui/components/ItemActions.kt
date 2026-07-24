@@ -15,16 +15,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 
-/**
- * The Share/Delete/Complete action row used by `ItemDetailScreen`, the only screen backed by an
- * existing item today. Takes plain callbacks instead of a ViewModel's own event type — neither
- * `ItemDetailViewModel` nor `AddItemViewModel` needs to know the other exists for this to be
- * reused; each caller just adapts its own event to these lambdas. [canComplete] is the "task, not
- * yet completed" check exposed as `ItemDetailUiState.typeIsTask && !isCompleted`, passed in
- * already resolved. [onEditClicked] is optional and `null` by default — kept for a screen that
- * needs a separate "editar" destination; no current caller passes it, `ItemDetailScreen` is
- * always editable.
- */
 @Composable
 fun ItemActions(
     canComplete: Boolean,

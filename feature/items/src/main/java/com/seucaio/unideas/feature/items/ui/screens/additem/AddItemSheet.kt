@@ -27,14 +27,6 @@ import com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemVie
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-/**
- * Item creation as a [ModalBottomSheet] (`skipPartiallyExpanded = true`, so it opens fully
- * expanded like a screen) instead of a regular destination — the adopted direction for adding a
- * new item (#86/#97), used only for creation; viewing/editing an existing item stays on
- * `ItemDetailScreen`'s full-screen destination. No top bar — the sheet's own dismiss (drag/back/
- * outside tap) covers "voltar"; the save action lives inside the shared [ItemFormBody] (full-width
- * button at the end of the form) instead of a toolbar action.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemSheet(

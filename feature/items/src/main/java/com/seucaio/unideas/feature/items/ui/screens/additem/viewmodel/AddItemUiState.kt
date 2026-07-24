@@ -7,13 +7,6 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import java.time.LocalDate
 
-/**
- * UI state for the add-item screen. No `Loading`/`Error` — the fields are always there, blank
- * until data arrives. Loading the section/tag reference list is a background concern (already
- * degrades to an empty list on failure inside
- * [com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase], never surfaced here) — nothing
- * about typing a title depends on it.
- */
 data class AddItemUiState(
     override val type: ItemType = ItemType.TASK,
     override val title: String = "",

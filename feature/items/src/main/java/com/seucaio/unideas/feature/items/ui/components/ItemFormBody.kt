@@ -30,16 +30,6 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFiel
 import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
 
-/**
- * Field set + save action shared by `ItemDetailScreen` (edit) and `AddItemSheet` (create) (#86/#97):
- * type selector, title, description, section/tags/due-date/recurrence, and a full-width save
- * button at the end. [titleDescriptionFields] lets a caller swap in its own title/description
- * styling while keeping everything else (order, conditions, save action) identical. Deliberately
- * doesn't own the screen chrome around it (`Scaffold`/`topBar`/`ModalBottomSheet`) — that stays
- * specific to each screen. Takes [ItemFormFieldsState]/[ItemFormFieldsEvents] instead of a
- * specific ViewModel's own state/event types, so both `ItemDetailViewModel` (create/edit) and
- * `AddItemViewModel` (create-only) can drive it.
- */
 @Composable
 fun ItemFormBody(
     state: ItemFormFieldsState,

@@ -6,12 +6,6 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 
-/**
- * Field values common to every screen that renders [com.seucaio.unideas.feature.items.ui.components.ItemFormBody] — implemented by both
- * `ItemDetailUiState` (create/edit) and `AddItemUiState` (create-only), so the body/fields don't
- * couple to either ViewModel's own state type. [isCompleted]/[isEditing] default to `false` since
- * only `ItemDetailUiState` has a real notion of either.
- */
 interface ItemFormFieldsState {
     val type: ItemType
     val title: String
@@ -29,7 +23,6 @@ interface ItemFormFieldsState {
     val isEditing: Boolean get() = false
 }
 
-/** Field callbacks common to every screen that renders [com.seucaio.unideas.feature.items.ui.components.ItemFormBody] — see [ItemFormFieldsState]. */
 data class ItemFormFieldsEvents(
     val onTypeChanged: (ItemType) -> Unit,
     val onTitleChanged: (String) -> Unit,

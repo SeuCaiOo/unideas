@@ -14,7 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDateTime
 
-/** [ItemFormUseCase] is a delegating facade — these tests only check the delegation itself. */
 class ItemFormUseCaseTest {
 
     private val getItem: GetItemUseCase = mockk()

@@ -14,11 +14,9 @@ sealed interface ItemsRoute {
     @Serializable
     data class AddItem(val type: ItemType = ItemType.TASK) : ItemsRoute
 
-    /** Full-screen destination for viewing/editing an existing item. */
     @Serializable
     data class Detail(val itemId: Long) : ItemsRoute
 
-    /** Dev-only listing until Home (#27) exists — see #62. */
     @Serializable
     data object List : ItemsRoute
 }

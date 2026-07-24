@@ -25,12 +25,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.UdsTheme
 
-/**
- * A [TextField] with fully transparent container/indicator colors — no outline, no fill, no
- * underline — so it reads as plain text until focused. Meant for contexts where the field should
- * blend into the surrounding content instead of announcing itself as a form input (e.g. a
- * note-style title/body, unlike [AppTextField]'s outlined box).
- */
 @Composable
 fun BorderlessTextField(
     value: String,

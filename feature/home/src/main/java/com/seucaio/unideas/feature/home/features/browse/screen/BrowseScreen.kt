@@ -37,11 +37,6 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
 
-/**
- * Same Tasks/Notes tab + filters + list [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen]
- * shows, but full-screen — no priority panel. Reuses [HomeViewModel] as-is. Reached from Home's
- * TopBar action.
- */
 @Composable
 fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,

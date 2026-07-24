@@ -66,11 +66,6 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.roundToInt
 
-/**
- * [PriorityPanel] collapses as [ItemsContent]'s list/grid scrolls — a nested scroll connection
- * gives the panel first claim on the scroll delta, shrinking it via [collapsible] before
- * [ItemsContent] consumes the rest. [TasksNotesTabRow]/[ItemsFiltersBar] stay pinned.
- */
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Long) -> Unit,

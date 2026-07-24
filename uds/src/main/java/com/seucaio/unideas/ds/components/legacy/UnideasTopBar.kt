@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.ds.theme.UdsTheme
 
-/** [UnideasTopBarVariant.Standard] is today's compact single-line bar; [UnideasTopBarVariant.Large] opts into Material3's `LargeTopAppBar` (bigger 2-line title). No scroll-collapse behavior wired up — no screen connects a nested scroll to it today. */
 enum class UnideasTopBarVariant {
     Standard, Large
 }

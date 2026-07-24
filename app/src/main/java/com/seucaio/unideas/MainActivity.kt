@@ -53,7 +53,6 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = navController::popBackStack,
                         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
                         onNavigateToTags = { navController.navigate(TagsRoute.List) },
-                        // Debug-only entry point — Home is the real one now.
                         onNavigateToItems = { navController.navigate(ItemsRoute.List) },
                     )
                     sectionsNavGraph(onNavigateBack = navController::popBackStack)

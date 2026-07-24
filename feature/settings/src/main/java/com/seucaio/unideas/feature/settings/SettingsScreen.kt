@@ -44,11 +44,6 @@ import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 import com.seucaio.unideas.core.backup.R as BackupR
 
-/**
- * Rows use `:uds`'s native [NavRow] (icon + label + chevron) grouped by [ListSection] (title +
- * items). `SeedScopeBottomSheet`, `UnideasTopBar` and `AppVersionFooter` stay legacy — no native
- * equivalent yet.
- */
 @Composable
 fun SettingsScreen(
     versionName: String,

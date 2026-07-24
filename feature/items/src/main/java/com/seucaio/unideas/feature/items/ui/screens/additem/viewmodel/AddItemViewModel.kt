@@ -18,14 +18,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
-/**
- * ViewModel for the add-item screen — its only job is creating a new [Item] via
- * [CreateItemUseCase], called directly (no facade: a single-method need doesn't earn one, unlike
- * [com.seucaio.unideas.domain.usecase.item.ItemFormUseCase] which covers edit/delete/share/complete
- * for [com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel]). Same
- * no-`Loading`/`Error` shape as that ViewModel's `UiState` — fields always render, blank until
- * `loadFormData` fills in sections/tags.
- */
 class AddItemViewModel(
     private val createItem: CreateItemUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
@@ -43,8 +35,6 @@ class AddItemViewModel(
     }
 
     private suspend fun loadFormData() {
-        // Failure here (rare — GetSectionsAndTagsUseCase already falls back to empty lists on
-        // its own) just leaves availableSections/availableTags empty, same as ItemDetailViewModel.
         runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
             _uiState.update {
                 it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)

@@ -24,12 +24,6 @@ import com.seucaio.unideas.core.common.dev.DevScreenVersionToggle
 import com.seucaio.unideas.core.common.dev.ScreenVersion
 import com.seucaio.unideas.ds.theme.UdsTheme
 
-/**
- * Dev-only version picker for #84 — chooses which POC implementation is active for a screen
- * while several coexist. Reads/writes [DevScreenVersionToggle] directly, orthogonal to
- * [com.seucaio.unideas.feature.settings.viewmodel.SettingsUiState] on purpose (same spirit as the
- * Seed/Clear database dev actions above).
- */
 @Composable
 internal fun ScreenVersionRow() {
     val selectedVersion by DevScreenVersionToggle.selectedVersion.collectAsStateWithLifecycle()

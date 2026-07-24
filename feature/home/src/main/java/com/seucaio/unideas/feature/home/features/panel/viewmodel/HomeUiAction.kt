@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.home.features.panel.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 
-/** One-shot UI actions for the Home priority panel screen. */
 sealed interface HomeUiAction {
 
     data class NavigateToDetail(val itemId: Long) : HomeUiAction

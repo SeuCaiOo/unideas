@@ -4,7 +4,6 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import java.time.LocalDate
 
-/** User interactions on the create/edit item form. */
 sealed interface ItemDetailEvent {
 
     data class OnTypeChanged(val type: ItemType) : ItemDetailEvent
@@ -23,7 +22,6 @@ sealed interface ItemDetailEvent {
 
     data object OnSaveClicked : ItemDetailEvent
 
-    /** Share/delete/complete — merged in from the original read-only detail screen's ViewModel (#97). */
     data object OnShareClicked : ItemDetailEvent
 
     data object OnDeleteClicked : ItemDetailEvent

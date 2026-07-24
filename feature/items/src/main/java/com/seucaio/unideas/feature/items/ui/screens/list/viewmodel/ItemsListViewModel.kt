@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.items.ui.screens.list.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
 import com.seucaio.unideas.feature.items.R
@@ -20,14 +19,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * Dev-only listing of every [Item], regardless of type — no tabs/filters/priority panel,
- * that's Home's (#27) scope. Discardable once Home ships (#62).
- *
- * There is no type-agnostic query in `:domain`/`:data` — [GetItemsUseCase] is scoped per Home
- * tab. Rather than add a throwaway "get all items" method there, this combines the TASK and
- * NOTE flows here and re-sorts, keeping the extra glue inside this disposable screen.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemsListViewModel(private val getItems: GetItemsUseCase) : ViewModel() {
 

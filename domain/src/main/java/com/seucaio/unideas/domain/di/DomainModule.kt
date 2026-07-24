@@ -27,10 +27,6 @@ import com.seucaio.unideas.domain.usecase.tag.TagUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
-/**
- * Koin module for `:domain` use cases. Included by `appModule` in `:app`.
- * Grows one screen's worth of use cases at a time.
- */
 val domainModule = module {
     factoryOf(::GetSectionsUseCase)
     factoryOf(::AddSectionUseCase)

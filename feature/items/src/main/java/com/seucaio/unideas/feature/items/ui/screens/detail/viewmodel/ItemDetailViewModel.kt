@@ -20,18 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
-/**
- * ViewModel for the single create/edit Item form. Unlike Sections/Tags, this uiState is **not**
- * derived from a reactive domain [kotlinx.coroutines.flow.Flow] — there is nothing here to keep
- * observing after the initial load: sections/tags can't change while this screen is open (only
- * Settings creates/edits them), and the item being edited can't be mutated by anything else while
- * you're inside this screen either. So `uiState` is a plain [MutableStateFlow] mutated directly by
- * `onEvent`/the one-shot load in `init`, not a mapped/combined [Flow]. No full `Loading`/`Error`
- * triad wrapping the screen (see [ItemDetailUiState]'s doc) — but fetching the item being edited
- * does get [ItemDetailUiState.isLoading]/[ItemDetailUiState.loadFailed] + a retry path
- * ([ItemDetailEvent.OnRetryClicked]), since this ViewModel is the only place that fetches the item
- * now (#97).
- */
 class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
@@ -39,12 +27,8 @@ class ItemDetailViewModel(
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
-    // Preserved once an existing item loads, so save() can carry over id/createdAt/completedAt
-    // without the editable fields needing to track them.
     private var originalItem: Item? = null
 
-    // initialType only seeds creation mode — loadItem() overwrites it with the real type when
-    // editing, so an edit deep-link can't be nudged into a different type by a stale nav arg.
     private val _uiState = MutableStateFlow(
         ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
     )
@@ -61,9 +45,6 @@ class ItemDetailViewModel(
     }
 
     private suspend fun loadFormData() {
-        // Failure here (rare — GetSectionsAndTagsUseCase already falls back to empty lists on
-        // its own) just leaves availableSections/availableTags empty, same as Sections/Tags
-        // screens showing an empty list — not a screen-level error, nothing to tell the user.
         runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
             _uiState.update {
                 it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)

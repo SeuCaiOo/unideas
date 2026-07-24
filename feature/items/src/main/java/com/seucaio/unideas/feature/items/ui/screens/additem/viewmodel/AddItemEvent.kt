@@ -4,7 +4,6 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import java.time.LocalDate
 
-/** User interactions on the add-item screen. */
 sealed interface AddItemEvent {
 
     data class OnTypeChanged(val type: ItemType) : AddItemEvent

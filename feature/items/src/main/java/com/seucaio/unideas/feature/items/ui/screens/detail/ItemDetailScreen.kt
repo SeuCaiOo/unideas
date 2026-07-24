@@ -35,14 +35,6 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailV
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-/**
- * Full-screen destination for viewing/editing an existing item (#86/#97) — reached via
- * `ItemsRoute.Detail`. Always editable, no separate read-only state: [ItemActions]
- * (share/delete/complete) lives in the top bar instead of a distinct "editar" affordance.
- * Creating a new item is a separate flow ([AddItemSheet], the bottom sheet reached via
- * `ItemsRoute.AddItem`) — this screen is edit-only in practice, though `itemId` stays nullable
- * to keep [ItemDetailViewModel] reusable for either case.
- */
 @Composable
 fun ItemDetailScreen(
     itemId: Long?,

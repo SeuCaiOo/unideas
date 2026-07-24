@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_load_error">Não foi possível carregar suas prioridades</string>
+    <string name="home_load_error">Não foi possível carregar seus itens</string>
     <string name="home_title">Início</string>
     <string name="home_settings_action">Configurações</string>
     <string name="home_add_action">Adicionar item</string>

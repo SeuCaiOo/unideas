@@ -110,8 +110,7 @@ private fun ItemDetailScreenContent(
                     ItemActions(
                         canComplete = uiState.typeIsTask && !uiState.isCompleted,
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
-                        onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
+                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) }
                     )
                 },
             )

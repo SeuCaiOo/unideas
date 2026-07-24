@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.items.ui.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
@@ -31,7 +30,6 @@ fun ItemActions(
     canComplete: Boolean,
     onShareClicked: () -> Unit,
     onDeleteClicked: () -> Unit,
-    onCompleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClicked: (() -> Unit)? = null,
 ) {
@@ -47,11 +45,6 @@ fun ItemActions(
         IconButton(onClick = onDeleteClicked) {
             Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.item_detail_delete))
         }
-        if (canComplete) {
-            IconButton(onClick = onCompleteClicked) {
-                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.item_detail_complete))
-            }
-        }
     }
 }
 
@@ -64,7 +57,6 @@ private fun ItemActionsPreview() {
                 canComplete = true,
                 onShareClicked = {},
                 onDeleteClicked = {},
-                onCompleteClicked = {},
                 onEditClicked = {},
             )
         }

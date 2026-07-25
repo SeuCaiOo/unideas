@@ -9,6 +9,13 @@
     <string name="item_form_type_note">Note</string>
     <string name="item_form_title_label">Title</string>
     <string name="item_form_description_label">Description</string>
+    <string name="item_form_markdown_bold">Bold</string>
+    <string name="item_form_markdown_italic">Italic</string>
+    <string name="item_form_markdown_strikethrough">Strikethrough</string>
+    <string name="item_form_markdown_bullet_list">Bullet list</string>
+    <string name="item_form_markdown_numbered_list">Numbered list</string>
+    <string name="item_form_markdown_checklist">Checklist</string>
+    <string name="item_form_markdown_preview_toggle">Toggle Markdown preview</string>
     <string name="item_form_section_label">Section</string>
     <string name="item_form_section_none">No section</string>
     <string name="item_form_tags_label">Tags</string>

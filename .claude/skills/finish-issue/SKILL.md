@@ -9,8 +9,8 @@ description: Validates DoD against what was implemented and updates issue checkb
 
 DoD validation is a **pre-merge gate**, not post-merge bookkeeping — it must happen before a PR becomes mergeable, not after. Two entry points, same skill either way:
 
-1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which opens the PR as **Draft** (always — see `open-pr` step 6, no exception for DoD status).
-2. **A Draft PR is already open** (opened early for CI feedback while still coding, or just because every PR opens Draft now) → run this once you believe the work is complete.
+1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which asks the user Draft-vs-ready+auto-merge at creation time (step 6) — DoD status never decides that on its own.
+2. **A Draft PR is already open** (user chose Draft at creation time, or it was opened early for CI feedback while still coding) → run this once you believe the work is complete.
 
 **This skill validates whether the work is done. It never decides whether the PR gets promoted to ready or gets auto-merge armed — that is the user's call, always, asked explicitly, with zero exceptions.** DoD passing is Claude's self-check that the checklist matches the diff; it is not the user having looked at the code. Confirmed the hard way: PR #38 (issue #24) got auto-merge armed the instant it opened, leaving no review window at all — the user then made explicit that Draft vs. ready is their decision alone, not something DoD status can authorize.
 
@@ -71,7 +71,7 @@ If a PR already exists (Draft, per `open-pr` step 6), ask the user now: "DoD val
 gh pr ready <pr-number>
 gh pr merge <pr-number> --auto --merge
 ```
-If no PR exists yet, hand off to `/open-pr` — it opens the PR as Draft and asks this same question itself (step 7), syncing the artifact at that point too.
+If no PR exists yet, hand off to `/open-pr` — it asks Draft-vs-ready itself at creation time (step 6), syncing the artifact right away if the answer is ready+auto-merge.
 
 **Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card stays in "In Progress" here, even with DoD green and the PR promoted. The sweep to "Done" (closing the issue, moving the card, syncing the parent epic) happens later, once the PR has actually merged into `dev`, on the next `/start-feature` run — that's a fact-check against reality (did it merge?), not a self-assessment, so it's kept separate from this skill. `Released` is a further, later step tied to an actual shipped version.
 

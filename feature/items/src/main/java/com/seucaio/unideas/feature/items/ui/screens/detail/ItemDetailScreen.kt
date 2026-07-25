@@ -132,6 +132,15 @@ private fun ItemDetailScreenContent(
             onConfirm = { onEvent(ItemDetailEvent.OnDeleteConfirmClicked) },
         )
     }
+
+    if (dialogState is ItemDetailDialogState.ReopenConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = R.string.item_detail_reopen_title,
+            messageRes = R.string.item_detail_reopen_message,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnCompleteConfirmClicked) },
+        )
+    }
 }
 
 @PreviewLightDark

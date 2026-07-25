@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.SectionsAndTags
+import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
@@ -228,5 +229,64 @@ class ItemDetailViewModelTest {
             vm.onEvent(ItemDetailEvent.OnSaveClicked)
             assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
         }
+    }
+
+    @Test
+    fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+        assertEquals(true, vm.uiState.value.isCompleted)
+        coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when OnCompleteClicked on a completed task should open the reopen confirmation dialog`() = runTest {
+        val item = ItemStub.completedTask(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        assertEquals(ItemDetailDialogState.ReopenConfirm, vm.dialogState.value)
+        coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when OnCompleteConfirmClicked should reopen the task and dismiss the dialog`() = runTest {
+        val item = ItemStub.completedTask(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        vm.onEvent(ItemDetailEvent.OnCompleteConfirmClicked)
+
+        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+        assertEquals(false, vm.uiState.value.isCompleted)
+        coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when OnDialogDismissed after OnCompleteClicked on a completed task should not reopen it`() = runTest {
+        val item = ItemStub.completedTask(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        vm.onEvent(ItemDetailEvent.OnDialogDismissed)
+
+        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+        assertEquals(true, vm.uiState.value.isCompleted)
+        coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
     }
 }

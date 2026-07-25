@@ -33,6 +33,8 @@
     <string name="item_detail_completed_on">Concluída em %1$s</string>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_delete_message">Esta ação não pode ser desfeita.</string>
+    <string name="item_detail_reopen_title">Reabrir tarefa?</string>
+    <string name="item_detail_reopen_message">Isso vai marcar a tarefa como pendente novamente e limpar a data de conclusão.</string>
     <string name="items_list_title">Itens</string>
     <string name="items_list_empty">Nenhum item ainda</string>
     <string name="items_list_load_error">Não foi possível carregar os itens</string>

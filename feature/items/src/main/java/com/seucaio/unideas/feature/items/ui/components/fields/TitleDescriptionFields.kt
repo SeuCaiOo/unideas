@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.components.fields
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -57,7 +58,7 @@ internal fun TitleDescriptionFields(
         }
     }
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.animateContentSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BorderlessTextField(
                 value = title,

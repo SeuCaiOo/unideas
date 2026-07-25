@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -24,6 +25,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.markdownAnnotator
+import com.mikepenz.markdown.model.markdownAnnotatorConfig
 import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -97,15 +100,19 @@ private fun DescriptionField(
     descriptionFocusRequester: FocusRequester,
 ) {
     if (isPreviewMode) {
+        // Same size as the edit field (titleLarge) but Normal weight, so **bold**/*italic* markers
+        // remain visually distinct from plain text instead of blending into an already-heavy base.
+        val previewTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
         Markdown(
             content = descriptionField.text,
             typography = markdownTypography(
-                text = MaterialTheme.typography.titleLarge,
-                paragraph = MaterialTheme.typography.titleLarge,
-                ordered = MaterialTheme.typography.titleLarge,
-                bullet = MaterialTheme.typography.titleLarge,
-                list = MaterialTheme.typography.titleLarge,
+                text = previewTextStyle,
+                paragraph = previewTextStyle,
+                ordered = previewTextStyle,
+                bullet = previewTextStyle,
+                list = previewTextStyle,
             ),
+            annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
             modifier = Modifier.padding(vertical = 16.dp),
         )
     } else {

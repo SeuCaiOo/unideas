@@ -28,6 +28,36 @@ class MarkdownSyntaxInserterTest {
     }
 
     @Test
+    fun `when bold applied to text already surrounded by markers should unwrap it`() {
+        val value = TextFieldValue(text = "**hello** world", selection = TextRange(2, 7))
+
+        val result = applyMarkdownFormat(value, MarkdownFormat.BOLD)
+
+        assertEquals("hello world", result.text)
+        assertEquals(TextRange(0, 5), result.selection)
+    }
+
+    @Test
+    fun `when bold applied to selection that includes the markers should unwrap it`() {
+        val value = TextFieldValue(text = "**hello** world", selection = TextRange(0, 9))
+
+        val result = applyMarkdownFormat(value, MarkdownFormat.BOLD)
+
+        assertEquals("hello world", result.text)
+        assertEquals(TextRange(0, 5), result.selection)
+    }
+
+    @Test
+    fun `when italic applied to text already surrounded by markers should unwrap it`() {
+        val value = TextFieldValue(text = "*hello* world", selection = TextRange(1, 6))
+
+        val result = applyMarkdownFormat(value, MarkdownFormat.ITALIC)
+
+        assertEquals("hello world", result.text)
+        assertEquals(TextRange(0, 5), result.selection)
+    }
+
+    @Test
     fun `when strikethrough applied with selection should wrap with double tilde`() {
         val value = TextFieldValue(text = "done task", selection = TextRange(0, 4))
 

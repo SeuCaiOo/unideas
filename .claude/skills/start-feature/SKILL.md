@@ -208,7 +208,7 @@ Build a structured plan based on the issue body AND the conventions loaded above
 ---
 
 ## Verification
-<mirror the DoD from the issue>
+<mirror the DoD from the issue, EXCEPT the "PR aberto/mergeado" line — that's GitHub-only state, not something the local plan file tracks>
 ```
 
 ### 6. Save plan

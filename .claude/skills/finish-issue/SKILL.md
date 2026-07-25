@@ -26,7 +26,9 @@ gh pr view <pr-number> --json number,title,url,headRefName,isDraft   # only if a
 
 ### 2. Reconcile DoD against the real diff
 
-Compare the issue's Checklist/DoD section against `git log dev..HEAD` / `git diff dev..HEAD`. Every item lands in one of three buckets:
+Start from the local plan file (`.claude/plans/<type>-#<number>-*.md`) — its `## Checklist`/`## Verification` boxes should already be checked as items were completed during implementation (per `CLAUDE.md`'s Implementation workflow step 6), so it's the fast path to what's done instead of re-deriving everything from the diff. Treat it as a starting hypothesis, not ground truth: confirm each checked box still holds against `git log dev..HEAD` / `git diff dev..HEAD` before relying on it, since the plan file can drift or be stale. The plan's `## Verification` section deliberately omits the issue DoD's "PR aberto/mergeado" line (that's GitHub-only state — see step 3 below), so that one always needs a live check regardless of what the plan file says.
+
+Compare the issue's Checklist/DoD section against that reconciled state. Every item lands in one of three buckets:
 
 - **Done as written** → will be checked `[x]` in step 3.
 - **Not done** → STOP (see below), don't open/promote the PR yet.
@@ -53,6 +55,8 @@ gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
 # check completed items; reword any reconciled items per step 2 (only after user confirmation)
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
+
+The DoD's "PR aberto, revisado e mergeado em `dev`" line stays unchecked here regardless of how green everything else is — it's only true once the PR has actually merged, which this step, by definition, runs before.
 
 ### 4. Report — and ask, don't act, on promotion
 

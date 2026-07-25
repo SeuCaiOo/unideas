@@ -99,7 +99,11 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
             is ItemDetailEvent.OnDialogDismissed -> _dialogState.update { ItemDetailDialogState.None }
             is ItemDetailEvent.OnDeleteConfirmClicked -> handleDelete()
-            is ItemDetailEvent.OnCompleteClicked -> handleComplete()
+            is ItemDetailEvent.OnCompleteClicked -> handleCompleteClicked()
+            is ItemDetailEvent.OnCompleteConfirmClicked -> {
+                _dialogState.update { ItemDetailDialogState.None }
+                handleComplete()
+            }
             is ItemDetailEvent.OnRetryClicked -> retryLoad()
         }
     }
@@ -162,6 +166,14 @@ class ItemDetailViewModel(
         itemFormUseCase.delete(id)
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleCompleteClicked() {
+        if (_uiState.value.isCompleted) {
+            _dialogState.update { ItemDetailDialogState.ReopenConfirm }
+        } else {
+            handleComplete()
+        }
     }
 
     private fun handleComplete() = viewModelScope.launch {

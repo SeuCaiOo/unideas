@@ -33,6 +33,8 @@
     <string name="item_detail_completed_on">Completed on %1$s</string>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
+    <string name="item_detail_reopen_title">Reopen task?</string>
+    <string name="item_detail_reopen_message">This will mark the task as pending again and clear its completion date.</string>
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>

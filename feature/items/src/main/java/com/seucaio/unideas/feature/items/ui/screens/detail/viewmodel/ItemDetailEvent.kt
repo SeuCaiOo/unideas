@@ -32,6 +32,8 @@ sealed interface ItemDetailEvent {
 
     data object OnCompleteClicked : ItemDetailEvent
 
+    data object OnCompleteConfirmClicked : ItemDetailEvent
+
     /** Retry loading the item after [ItemDetailUiState.loadFailed] — edit mode only. */
     data object OnRetryClicked : ItemDetailEvent
 }

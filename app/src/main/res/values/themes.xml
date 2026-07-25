@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.Unideas" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.Unideas.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.Unideas</item>
+    </style>
 </resources>

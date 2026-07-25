@@ -6,9 +6,11 @@ import com.seucaio.unideas.domain.model.Section
 internal fun SectionEntity.toDomain(): Section = Section(
     id = id,
     name = name,
+    isPinned = isPinned,
 )
 
 internal fun Section.toEntity(): SectionEntity = SectionEntity(
     id = id,
     name = name,
+    isPinned = isPinned,
 )

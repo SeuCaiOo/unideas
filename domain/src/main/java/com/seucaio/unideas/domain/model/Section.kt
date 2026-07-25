@@ -7,4 +7,5 @@ package com.seucaio.unideas.domain.model
 data class Section(
     val id: Long = 0L,
     val name: String,
+    val isPinned: Boolean = false,
 )

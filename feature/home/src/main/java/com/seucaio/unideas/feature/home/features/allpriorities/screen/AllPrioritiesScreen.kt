@@ -17,18 +17,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.ui.components.UnideasEmptyContent
-import com.seucaio.unideas.core.ui.components.UnideasErrorContent
-import com.seucaio.unideas.core.ui.components.UnideasLoadingContent
-import com.seucaio.unideas.core.ui.components.UnideasTopBar
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
+import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
+import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListItemRow
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesEvent
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesUiAction
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesUiState
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesViewModel
-import com.seucaio.unideas.feature.home.features.panel.screen.components.HomeItemRow
+import com.seucaio.unideas.feature.home.features.panel.screen.components.toListItemUi
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -101,12 +103,14 @@ private fun AllPrioritiesBody(
                     modifier = Modifier.padding(padding).fillMaxSize(),
                 )
             } else {
+                val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
                 LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
                     items(uiState.items, key = { it.id }) { item ->
-                        HomeItemRow(
-                            item = item,
+                        ListItemRow(
+                            ui = item.toListItemUi(checkContentDescription),
                             onClick = { onEvent(AllPrioritiesEvent.OnItemClicked(item.id)) },
-                            onComplete = { onEvent(AllPrioritiesEvent.OnCompleteClicked(item.id)) },
+                            onToggleCheck = { onEvent(AllPrioritiesEvent.OnCompleteClicked(item.id)) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
                 }
@@ -119,7 +123,7 @@ private fun AllPrioritiesBody(
 private fun AllPrioritiesScreenPreview(
     @PreviewParameter(AllPrioritiesPreviewProvider::class) uiState: AllPrioritiesUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         AllPrioritiesContent(
             uiState = uiState,
             onEvent = {},

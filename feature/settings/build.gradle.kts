@@ -27,7 +27,8 @@ android {
 
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:common"))
+    implementation(project(":uds"))
     implementation(project(":core:backup"))
 
     implementation(platform(libs.androidx.compose.bom))

@@ -1,0 +1,39 @@
+package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
+
+import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.Section
+import com.seucaio.unideas.domain.model.Tag
+import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
+import java.time.LocalDate
+
+data class AddItemUiState(
+    override val type: ItemType = ItemType.TASK,
+    override val title: String = "",
+    override val description: String = "",
+    override val sectionId: Long? = null,
+    override val selectedTagIds: Set<Long> = emptySet(),
+    override val dueDate: LocalDate? = null,
+    override val recurrence: Recurrence = Recurrence.None,
+    override val availableSections: List<Section> = emptyList(),
+    override val availableTags: List<Tag> = emptyList(),
+) : ItemFormFieldsState {
+
+    override val isTitleValid: Boolean get() = title.isNotBlank()
+
+    override val canPickRecurrence: Boolean get() = dueDate != null
+
+    override val typeIsTask: Boolean get() = type == ItemType.TASK
+
+    fun changeType(type: ItemType): AddItemUiState = copy(type = type)
+
+    fun changeTitle(title: String): AddItemUiState = copy(title = title)
+
+    fun changeDescription(description: String): AddItemUiState = copy(description = description)
+
+    fun setSection(sectionId: Long?): AddItemUiState = copy(sectionId = sectionId)
+
+    fun setTag(tagId: Long): AddItemUiState = copy(
+        selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId
+    )
+}

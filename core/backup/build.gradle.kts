@@ -27,7 +27,7 @@ android {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":core:common"))
-    implementation(project(":core:ui"))
+    implementation(project(":uds"))
     // Exception to the ":feature:* never depends on :data" rule — backup manipulates the
     // Room database file directly (close/checkpoint/path), not just via a repository interface.
     implementation(project(":data"))

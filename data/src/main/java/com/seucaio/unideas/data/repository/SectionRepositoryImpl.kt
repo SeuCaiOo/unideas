@@ -24,6 +24,9 @@ class SectionRepositoryImpl(
     override suspend fun updateSection(section: Section) =
         sectionDao.update(section.toEntity())
 
+    override suspend fun setSectionPinned(id: Long, isPinned: Boolean) =
+        sectionDao.setPinned(id, isPinned)
+
     override suspend fun deleteSection(id: Long) = sectionDao.deleteById(id)
 
     override suspend fun countLinkedItems(sectionId: Long): Int =

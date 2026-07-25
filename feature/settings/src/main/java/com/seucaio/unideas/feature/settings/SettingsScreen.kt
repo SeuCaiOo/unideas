@@ -3,12 +3,16 @@ package com.seucaio.unideas.feature.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Label
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,10 +30,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
-import com.seucaio.unideas.core.ui.components.AppVersionFooter
-import com.seucaio.unideas.core.ui.components.UnideasListItem
-import com.seucaio.unideas.core.ui.components.UnideasTopBar
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
+import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.ListSection
+import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
@@ -97,7 +102,6 @@ fun SettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsContent(
     uiState: SettingsUiState,
@@ -155,37 +159,47 @@ private fun SettingsBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        SettingsSectionHeader(stringResource(R.string.settings_organize_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_sections),
-            onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
-        )
-        UnideasListItem(
-            title = stringResource(R.string.settings_organize_tags),
-            onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
-        )
+        ListSection(title = stringResource(R.string.settings_organize_section)) {
+            NavRow(
+                icon = Icons.Outlined.Folder,
+                label = stringResource(R.string.settings_organize_sections),
+                onClick = { onEvent(SettingsEvent.OnOrganizeSectionsClicked) },
+            )
+            NavRow(
+                icon = Icons.AutoMirrored.Outlined.Label,
+                label = stringResource(R.string.settings_organize_tags),
+                onClick = { onEvent(SettingsEvent.OnOrganizeTagsClicked) },
+            )
+        }
 
-        SettingsSectionHeader(stringResource(R.string.settings_backup_section))
-        UnideasListItem(
-            title = stringResource(R.string.settings_backup_section),
-            subtitle = backupStatusSubtitle(backupUiState),
-            onClick = onBackupClick,
-        )
+        ListSection(title = stringResource(R.string.settings_backup_section)) {
+            NavRow(
+                icon = Icons.Outlined.CloudUpload,
+                label = stringResource(R.string.settings_backup_section),
+                subtitle = backupStatusSubtitle(backupUiState),
+                onClick = onBackupClick,
+            )
+        }
 
         if (showDebugSection) {
-            SettingsSectionHeader(stringResource(R.string.settings_debug_section))
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_items),
-                onClick = { onEvent(SettingsEvent.OnItemsClicked) },
-            )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_seed),
-                onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
-            )
-            UnideasListItem(
-                title = stringResource(R.string.settings_debug_clear),
-                onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
-            )
+            ListSection(title = stringResource(R.string.settings_debug_section)) {
+                NavRow(
+                    icon = Icons.AutoMirrored.Outlined.List,
+                    label = stringResource(R.string.settings_debug_items),
+                    onClick = { onEvent(SettingsEvent.OnItemsClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.Storage,
+                    label = stringResource(R.string.settings_debug_seed),
+                    onClick = { onEvent(SettingsEvent.OnSeedDatabaseClicked) },
+                )
+                NavRow(
+                    icon = Icons.Outlined.DeleteSweep,
+                    label = stringResource(R.string.settings_debug_clear),
+                    onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
+                )
+                ScreenVersionRow()
+            }
         }
     }
 }
@@ -204,21 +218,12 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
 
 private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
 
-@Composable
-private fun SettingsSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-    )
-}
-
 @PreviewLightDark
 @Composable
 private fun SettingsScreenPreview(
     @PreviewParameter(SettingsPreviewProvider::class) uiState: SettingsUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         SettingsContent(
             uiState = uiState,
             dialogState = SettingsDialogState.None,

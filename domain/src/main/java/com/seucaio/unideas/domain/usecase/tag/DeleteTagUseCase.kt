@@ -2,13 +2,15 @@ package com.seucaio.unideas.domain.usecase.tag
 
 import com.seucaio.unideas.domain.model.outcome.DeletionStatus
 import com.seucaio.unideas.domain.repository.TagRepository
+import com.seucaio.unideas.domain.usecase.UseCase
+import com.seucaio.unideas.domain.util.resultCatching
 
 /**
  * Deletes the tag with [id]; blocked if items are still linked to it.
  */
-class DeleteTagUseCase(private val repository: TagRepository) {
+class DeleteTagUseCase(private val repository: TagRepository) : UseCase {
 
-    suspend operator fun invoke(id: Long): Result<DeletionStatus> = runCatching {
+    suspend operator fun invoke(id: Long): Result<DeletionStatus> = resultCatching {
         val count = repository.countLinkedItems(id)
         if (count > 0) {
             DeletionStatus.BlockedByLinkedItems(count)

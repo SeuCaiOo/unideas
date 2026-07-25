@@ -44,7 +44,7 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.restartApplication
-import com.seucaio.unideas.core.ui.theme.UnideasTheme
+import com.seucaio.unideas.ds.theme.UdsTheme
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 
@@ -249,7 +249,7 @@ private fun RestoreBackupList(
 private fun BackupSheetContentPreview(
     @PreviewParameter(BackupPreviewProvider::class) uiState: BackupUiState,
 ) {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             BackupSheetContent(
                 uiState = uiState,
@@ -277,7 +277,7 @@ private val previewBackups = listOf(
 @PreviewLightDark
 @Composable
 private fun RestoreBackupListPreview() {
-    UnideasTheme {
+    UdsTheme {
         Surface {
             RestoreBackupList(
                 backups = previewBackups,

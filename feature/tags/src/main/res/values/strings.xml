@@ -11,6 +11,7 @@
     <string name="tags_rename_label">Tag name</string>
     <string name="tag_options">Tag options</string>
     <string name="tag_rename_action">Rename</string>
+    <string name="tag_rename_cancel">Cancel rename</string>
     <string name="tag_delete_action">Delete</string>
     <string name="tag_delete_confirm_title">Delete tag?</string>
     <string name="tag_delete_confirm_message">This action cannot be undone.</string>

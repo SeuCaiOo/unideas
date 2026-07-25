@@ -171,8 +171,9 @@ dependencies {
     kover(project(":feature:home"))
     kover(project(":core:backup"))
 
-    implementation(project(":core:ui"))
     implementation(project(":core:backup"))
+    implementation(project(":core:common"))
+    implementation(project(":uds"))
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":feature:sections"))
@@ -188,6 +189,7 @@ dependencies {
 
     // AndroidX
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)

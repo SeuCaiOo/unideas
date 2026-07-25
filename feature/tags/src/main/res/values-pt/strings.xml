@@ -11,6 +11,7 @@
     <string name="tags_rename_label">Nome da tag</string>
     <string name="tag_options">Opções da tag</string>
     <string name="tag_rename_action">Renomear</string>
+    <string name="tag_rename_cancel">Cancelar renomeação</string>
     <string name="tag_delete_action">Excluir</string>
     <string name="tag_delete_confirm_title">Excluir tag?</string>
     <string name="tag_delete_confirm_message">Esta ação não pode ser desfeita.</string>

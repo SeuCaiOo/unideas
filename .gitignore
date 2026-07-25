@@ -49,3 +49,6 @@ firebase.json
 .claude/memory/
 .claude/plans/
 .claude/settings.local.json
+
+# Design references / docs (large binaries, local-only)
+*.pdf

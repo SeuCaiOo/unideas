@@ -6,36 +6,55 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 
-/**
- * UI state for the Home priority panel + tabs + filters screen.
- *
- * Unlike the item form ([com.seucaio.unideas.feature.items] exception 2), Home is genuinely
- * reactive — the panel and the active tab's list can each fail or become empty independently
- * at any time — so it keeps the traditional `Loading`/`Success`/`Error` shape.
- */
+/** Screen readiness only — no item data. See [FilterState]/[ItemsState] for that. */
 sealed interface HomeUiState {
 
     data object Loading : HomeUiState
 
-    /**
-     * @property priorityItems fixed panel content (overdue + due-soon), independent of [activeTab].
-     * @property showSeeAllButton true when [priorityItems] was truncated to fit the panel's limit.
-     * @property tabItems the active tab's list, filtered by [sectionFilter]/[tagFilters].
-     * @property hasAnyItem false only when the user has never created an item anywhere in the
-     *   app — distinguishes the true first-run empty state from [tabItems] just being empty
-     *   because of the active tab/filters.
-     */
-    data class Success(
-        val priorityItems: List<Item>,
-        val showSeeAllButton: Boolean,
-        val activeTab: ItemType,
-        val tabItems: List<Item>,
-        val sectionFilter: Long?,
-        val tagFilters: Set<Long>,
-        val availableSections: List<Section>,
-        val availableTags: List<Tag>,
-        val hasAnyItem: Boolean,
-    ) : HomeUiState
+    data class Success(val hasAnyItem: Boolean) : HomeUiState
 
     data class Error(@StringRes val messageRes: Int) : HomeUiState
 }
+
+/** One Section's slice of [ItemsState.tabItems]. `null` [sectionName] means unsectioned. */
+data class ItemSectionGroup(
+    val sectionId: Long?,
+    val sectionName: String?,
+    val items: List<Item>,
+    val isPinned: Boolean = false,
+)
+
+/** Display mode for [ItemsState.tabItems]. */
+enum class ItemsViewMode { LIST, GRID }
+
+/** [HomeViewModel.filterState] — UI-only, never fails/loads. */
+internal data class FilterState(
+    val activeTab: ItemType = ItemType.TASK,
+    val sectionFilter: Long? = null,
+    val tagFilters: Set<Long> = emptySet(),
+    val availableSections: List<Section> = emptyList(),
+    val availableTags: List<Tag> = emptyList(),
+    val viewMode: ItemsViewMode = ItemsViewMode.LIST,
+) {
+    fun toggleTag(tagId: Long): FilterState {
+        val isTagSelected = tagId in tagFilters
+        return copy(tagFilters = if (isTagSelected) tagFilters - tagId else tagFilters + tagId)
+    }
+
+    fun toggleViewMode(viewMode: ItemsViewMode): FilterState = copy(viewMode = viewMode)
+
+    fun sectionFilter(sectionId: Long?): FilterState = copy(sectionFilter = sectionId)
+
+    fun changeTab(type: ItemType): FilterState = copy(activeTab = type)
+
+    fun setFilters(sections: List<Section>, tags: List<Tag>): FilterState =
+        copy(availableSections = sections, availableTags = tags)
+}
+
+/** [HomeViewModel.itemsState] — priority panel + active tab's list. No load/error of its own. */
+data class ItemsState(
+    val priorityItems: List<Item> = emptyList(),
+    val showSeeAllButton: Boolean = false,
+    val tabItems: List<Item> = emptyList(),
+    val groupedTabItems: List<ItemSectionGroup> = emptyList(),
+)

@@ -1,0 +1,60 @@
+package com.seucaio.unideas.feature.items.ui.components.fields
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.ds.components.inputs.DropdownField
+import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.items.R
+
+@Composable
+fun RecurrenceField(
+    recurrence: Recurrence,
+    onRecurrenceChanged: (Recurrence) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dailyLabel = stringResource(R.string.item_form_recurrence_daily)
+    val weeklyLabel = stringResource(R.string.item_form_recurrence_weekly)
+    val monthlyLabel = stringResource(R.string.item_form_recurrence_monthly)
+    val noneLabel = stringResource(R.string.item_form_recurrence_none)
+
+    DropdownField(
+        options = listOf(dailyLabel, weeklyLabel, monthlyLabel),
+        selected = when (recurrence) {
+            Recurrence.Daily -> dailyLabel
+            Recurrence.Weekly -> weeklyLabel
+            Recurrence.Monthly -> monthlyLabel
+            else -> ""
+        },
+        emptyOptionLabel = noneLabel,
+        onSelect = { label ->
+            val newRecurrence = when (label) {
+                dailyLabel -> Recurrence.Daily
+                weeklyLabel -> Recurrence.Weekly
+                monthlyLabel -> Recurrence.Monthly
+                else -> Recurrence.None
+            }
+            onRecurrenceChanged(newRecurrence)
+        },
+        modifier = modifier,
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun RecurrenceFieldPreview() {
+    UdsTheme {
+        Surface {
+            RecurrenceField(
+                recurrence = Recurrence.Weekly,
+                onRecurrenceChanged = {},
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+    }
+}

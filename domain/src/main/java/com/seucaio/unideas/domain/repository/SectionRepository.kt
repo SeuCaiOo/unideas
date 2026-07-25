@@ -20,6 +20,9 @@ interface SectionRepository {
     /** Updates [section] (rename) by [Section.id]. */
     suspend fun updateSection(section: Section)
 
+    /** Sets [Section.isPinned] for the section with [id] — pinned sections sort first. */
+    suspend fun setSectionPinned(id: Long, isPinned: Boolean)
+
     /**
      * Deletes the section with [id]. Callers must check [countLinkedItems]
      * first — deletion with linked items is blocked at the use-case level.

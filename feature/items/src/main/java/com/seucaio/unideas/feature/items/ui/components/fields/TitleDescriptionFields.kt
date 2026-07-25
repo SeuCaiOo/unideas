@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.components.fields
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -10,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -20,9 +22,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownTypography
 import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownPreviewToggle
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownToolbar
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.applyMarkdownFormat
 
@@ -38,7 +42,8 @@ internal fun TitleDescriptionFields(
     val titleFocusRequester = remember { FocusRequester() }
     val descriptionFocusRequester = remember { FocusRequester() }
     var descriptionField by remember { mutableStateOf(TextFieldValue(description)) }
-    var isPreviewMode by remember { mutableStateOf(false) }
+    // Existing items open read-only (preview); a brand-new item has nothing to preview yet.
+    var isPreviewMode by remember { mutableStateOf(isEditing) }
 
     LaunchedEffect(description) {
         if (description != descriptionField.text) {
@@ -53,45 +58,72 @@ internal fun TitleDescriptionFields(
     }
 
     Column(modifier = modifier) {
-        BorderlessTextField(
-            value = title,
-            onValueChange = onTitleChanged,
-            placeholder = stringResource(R.string.item_form_title_label),
-            textStyle = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.focusRequester(titleFocusRequester),
-            imeAction = ImeAction.Next,
-            onImeAction = { descriptionFocusRequester.requestFocus() },
-        )
-
-        if (isPreviewMode) {
-            Markdown(
-                content = descriptionField.text,
-                modifier = Modifier.padding(vertical = 16.dp),
-            )
-        } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             BorderlessTextField(
-                value = descriptionField,
-                onValueChange = {
-                    descriptionField = it
-                    onDescriptionChanged(it.text)
-                },
-                placeholder = stringResource(R.string.item_form_description_label),
-                singleLine = false,
-                minHeight = 32.dp,
+                value = title,
+                onValueChange = onTitleChanged,
+                placeholder = stringResource(R.string.item_form_title_label),
+                textStyle = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier
-                    .padding(vertical = 16.dp)
-                    .focusRequester(descriptionFocusRequester),
-                textStyle = MaterialTheme.typography.titleLarge,
+                    .weight(1f)
+                    .focusRequester(titleFocusRequester),
+                imeAction = ImeAction.Next,
+                onImeAction = { descriptionFocusRequester.requestFocus() },
+            )
+            MarkdownPreviewToggle(
+                isPreviewMode = isPreviewMode,
+                onClick = { isPreviewMode = !isPreviewMode },
             )
         }
 
-        MarkdownToolbar(
+        DescriptionField(
             isPreviewMode = isPreviewMode,
-            onFormatClick = { format ->
-                descriptionField = applyMarkdownFormat(descriptionField, format)
-                onDescriptionChanged(descriptionField.text)
+            descriptionField = descriptionField,
+            onDescriptionFieldChanged = {
+                descriptionField = it
+                onDescriptionChanged(it.text)
             },
-            onPreviewToggle = { isPreviewMode = !isPreviewMode },
+            descriptionFocusRequester = descriptionFocusRequester,
+        )
+    }
+}
+
+@Composable
+private fun DescriptionField(
+    isPreviewMode: Boolean,
+    descriptionField: TextFieldValue,
+    onDescriptionFieldChanged: (TextFieldValue) -> Unit,
+    descriptionFocusRequester: FocusRequester,
+) {
+    if (isPreviewMode) {
+        Markdown(
+            content = descriptionField.text,
+            typography = markdownTypography(
+                text = MaterialTheme.typography.titleLarge,
+                paragraph = MaterialTheme.typography.titleLarge,
+                ordered = MaterialTheme.typography.titleLarge,
+                bullet = MaterialTheme.typography.titleLarge,
+                list = MaterialTheme.typography.titleLarge,
+            ),
+            modifier = Modifier.padding(vertical = 16.dp),
+        )
+    } else {
+        BorderlessTextField(
+            value = descriptionField,
+            onValueChange = onDescriptionFieldChanged,
+            placeholder = stringResource(R.string.item_form_description_label),
+            singleLine = false,
+            minHeight = 32.dp,
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .focusRequester(descriptionFocusRequester),
+            textStyle = MaterialTheme.typography.titleLarge,
+        )
+
+        MarkdownToolbar(
+            onFormatClick = { format ->
+                onDescriptionFieldChanged(applyMarkdownFormat(descriptionField, format))
+            },
         )
     }
 }

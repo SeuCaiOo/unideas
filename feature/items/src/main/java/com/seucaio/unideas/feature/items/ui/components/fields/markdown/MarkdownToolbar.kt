@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatStrikethrough
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -25,54 +23,40 @@ import com.seucaio.unideas.feature.items.R
 
 @Composable
 fun MarkdownToolbar(
-    isPreviewMode: Boolean,
     onFormatClick: (MarkdownFormat) -> Unit,
-    onPreviewToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         FormatButton(
             icon = Icons.Default.FormatBold,
             contentDescription = stringResource(R.string.item_form_markdown_bold),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.BOLD) },
         )
         FormatButton(
             icon = Icons.Default.FormatItalic,
             contentDescription = stringResource(R.string.item_form_markdown_italic),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.ITALIC) },
         )
         FormatButton(
             icon = Icons.Default.FormatStrikethrough,
             contentDescription = stringResource(R.string.item_form_markdown_strikethrough),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.STRIKETHROUGH) },
         )
         FormatButton(
             icon = Icons.AutoMirrored.Filled.FormatListBulleted,
             contentDescription = stringResource(R.string.item_form_markdown_bullet_list),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.BULLET_LIST) },
         )
         FormatButton(
             icon = Icons.Default.FormatListNumbered,
             contentDescription = stringResource(R.string.item_form_markdown_numbered_list),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.NUMBERED_LIST) },
         )
         FormatButton(
             icon = Icons.Default.Checklist,
             contentDescription = stringResource(R.string.item_form_markdown_checklist),
-            enabled = !isPreviewMode,
             onClick = { onFormatClick(MarkdownFormat.CHECKLIST) },
         )
-        IconButton(onClick = onPreviewToggle) {
-            Icon(
-                if (isPreviewMode) Icons.Default.Edit else Icons.Default.Visibility,
-                contentDescription = stringResource(R.string.item_form_markdown_preview_toggle),
-            )
-        }
     }
 }
 
@@ -80,30 +64,19 @@ fun MarkdownToolbar(
 private fun FormatButton(
     icon: ImageVector,
     contentDescription: String,
-    enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick = onClick, enabled = enabled) {
+    IconButton(onClick = onClick) {
         Icon(icon, contentDescription = contentDescription)
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun MarkdownToolbarEditingPreview() {
+private fun MarkdownToolbarPreview() {
     UdsTheme {
         Surface {
-            MarkdownToolbar(isPreviewMode = false, onFormatClick = {}, onPreviewToggle = {})
-        }
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun MarkdownToolbarPreviewModePreview() {
-    UdsTheme {
-        Surface {
-            MarkdownToolbar(isPreviewMode = true, onFormatClick = {}, onPreviewToggle = {})
+            MarkdownToolbar(onFormatClick = {})
         }
     }
 }

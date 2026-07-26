@@ -30,9 +30,11 @@ import com.mikepenz.markdown.model.markdownAnnotatorConfig
 import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownFormat
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownPreviewToggle
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownToolbar
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.applyMarkdownFormat
+import com.seucaio.unideas.feature.items.ui.components.fields.markdown.markdownFormatContextMenuItems
 
 @Composable
 internal fun TitleDescriptionFields(
@@ -116,6 +118,10 @@ private fun DescriptionField(
             modifier = Modifier.padding(vertical = 16.dp),
         )
     } else {
+        val onFormatClick: (MarkdownFormat) -> Unit = { format ->
+            onDescriptionFieldChanged(applyMarkdownFormat(descriptionField, format))
+        }
+
         BorderlessTextField(
             value = descriptionField,
             onValueChange = onDescriptionFieldChanged,
@@ -124,15 +130,12 @@ private fun DescriptionField(
             minHeight = 32.dp,
             modifier = Modifier
                 .padding(vertical = 16.dp)
-                .focusRequester(descriptionFocusRequester),
+                .focusRequester(descriptionFocusRequester)
+                .markdownFormatContextMenuItems(onFormatClick),
             textStyle = MaterialTheme.typography.titleLarge,
         )
 
-        MarkdownToolbar(
-            onFormatClick = { format ->
-                onDescriptionFieldChanged(applyMarkdownFormat(descriptionField, format))
-            },
-        )
+        MarkdownToolbar(onFormatClick = onFormatClick)
     }
 }
 

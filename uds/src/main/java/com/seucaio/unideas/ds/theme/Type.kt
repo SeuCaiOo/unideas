@@ -34,27 +34,27 @@ val AppTypography = Typography(
         fontWeight = FontWeight.SemiBold,
         textAlign = TextAlign.Center
     ),
-    titleLarge = TextStyle(fontFamily = Roboto, fontSize = 19.sp, fontWeight = FontWeight.SemiBold),
+    titleLarge = TextStyle(fontFamily = Roboto, fontSize = 19.sp, fontWeight = FontWeight.Medium),
     titleMedium = TextStyle(fontFamily = Roboto, fontSize = 12.5.sp, fontWeight = FontWeight.Medium),
-    titleSmall = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Normal),
+    titleSmall = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Medium),
     bodyLarge = TextStyle(
         fontFamily = Roboto,
         fontSize = 15.sp,
         fontWeight = FontWeight.Normal,
         lineHeight = 24.sp
     ),
-    bodyMedium = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.SemiBold),
+    bodyMedium = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Normal),
     bodySmall = TextStyle(
         fontFamily = Roboto,
         fontSize = 11.5.sp,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Normal,
         letterSpacing = 0.8.sp
     ),
-    labelLarge = TextStyle(fontFamily = Roboto, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+    labelLarge = TextStyle(fontFamily = Roboto, fontSize = 14.sp, fontWeight = FontWeight.Medium),
     labelMedium = TextStyle(
         fontFamily = Roboto,
         fontSize = 11.5.sp,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Medium,
         letterSpacing = 0.9.sp
     )
 )

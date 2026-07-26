@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -34,6 +35,7 @@ import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.components.lists.ListSection
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.gallery.ComponentGallery
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
@@ -65,6 +67,7 @@ fun SettingsScreen(
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
     val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
     var showBackupSheet by remember { mutableStateOf(false) }
+    var showDesignSystemGallery by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -81,6 +84,20 @@ fun SettingsScreen(
         }
     }
 
+    if (showDesignSystemGallery) {
+        Scaffold(
+            topBar = {
+                UnideasTopBar(
+                    title = stringResource(R.string.settings_debug_design_system),
+                    onNavigateBack = { showDesignSystemGallery = false },
+                )
+            },
+        ) { padding ->
+            ComponentGallery(modifier = Modifier.padding(padding))
+        }
+        return
+    }
+
     SettingsContent(
         uiState = uiState,
         dialogState = dialogState,
@@ -89,6 +106,7 @@ fun SettingsScreen(
         showDebugSection = showDebugSection,
         onEvent = viewModel::onEvent,
         onBackupClick = { showBackupSheet = true },
+        onDesignSystemGalleryClick = { showDesignSystemGallery = true },
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
     )
@@ -111,6 +129,7 @@ private fun SettingsContent(
     showDebugSection: Boolean,
     onEvent: (SettingsEvent) -> Unit,
     onBackupClick: () -> Unit,
+    onDesignSystemGalleryClick: () -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -134,6 +153,7 @@ private fun SettingsContent(
                     onEvent = onEvent,
                     backupUiState = backupUiState,
                     onBackupClick = onBackupClick,
+                    onDesignSystemGalleryClick = onDesignSystemGalleryClick,
                     showDebugSection = showDebugSection,
                     modifier = Modifier.padding(padding),
                 )
@@ -155,6 +175,7 @@ private fun SettingsBody(
     onEvent: (SettingsEvent) -> Unit,
     backupUiState: BackupUiState,
     onBackupClick: () -> Unit,
+    onDesignSystemGalleryClick: () -> Unit,
     showDebugSection: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -198,6 +219,11 @@ private fun SettingsBody(
                     label = stringResource(R.string.settings_debug_clear),
                     onClick = { onEvent(SettingsEvent.OnClearDatabaseClicked) },
                 )
+                NavRow(
+                    icon = Icons.Outlined.Palette,
+                    label = stringResource(R.string.settings_debug_design_system),
+                    onClick = onDesignSystemGalleryClick,
+                )
                 ScreenVersionRow()
             }
         }
@@ -232,6 +258,7 @@ private fun SettingsScreenPreview(
             showDebugSection = true,
             onEvent = {},
             onBackupClick = {},
+            onDesignSystemGalleryClick = {},
             onNavigateBack = null,
             snackbarHostState = remember { SnackbarHostState() },
         )

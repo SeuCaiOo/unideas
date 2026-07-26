@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -105,18 +106,20 @@ private fun DescriptionField(
         // Same size as the edit field (titleLarge) but Normal weight, so **bold**/*italic* markers
         // remain visually distinct from plain text instead of blending into an already-heavy base.
         val previewTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
-        Markdown(
-            content = descriptionField.text,
-            typography = markdownTypography(
-                text = previewTextStyle,
-                paragraph = previewTextStyle,
-                ordered = previewTextStyle,
-                bullet = previewTextStyle,
-                list = previewTextStyle,
-            ),
-            annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
-            modifier = Modifier.padding(vertical = 16.dp),
-        )
+        SelectionContainer {
+            Markdown(
+                content = descriptionField.text,
+                typography = markdownTypography(
+                    text = previewTextStyle,
+                    paragraph = previewTextStyle,
+                    ordered = previewTextStyle,
+                    bullet = previewTextStyle,
+                    list = previewTextStyle,
+                ),
+                annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
+                modifier = Modifier.padding(vertical = 16.dp),
+            )
+        }
     } else {
         val onFormatClick: (MarkdownFormat) -> Unit = { format ->
             onDescriptionFieldChanged(applyMarkdownFormat(descriptionField, format))

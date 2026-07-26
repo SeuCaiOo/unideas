@@ -36,6 +36,7 @@ import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownP
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.MarkdownToolbar
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.applyMarkdownFormat
 import com.seucaio.unideas.feature.items.ui.components.fields.markdown.markdownFormatContextMenuItems
+import com.seucaio.unideas.feature.items.ui.components.fields.markdown.rememberMarkdownSyntaxHighlightTransformation
 
 @Composable
 internal fun TitleDescriptionFields(
@@ -136,6 +137,7 @@ private fun DescriptionField(
                 .focusRequester(descriptionFocusRequester)
                 .markdownFormatContextMenuItems(onFormatClick),
             textStyle = MaterialTheme.typography.titleLarge,
+            visualTransformation = rememberMarkdownSyntaxHighlightTransformation(),
         )
 
         MarkdownToolbar(onFormatClick = onFormatClick)

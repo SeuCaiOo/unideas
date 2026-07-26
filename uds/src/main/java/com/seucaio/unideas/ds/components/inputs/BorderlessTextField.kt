@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -83,6 +84,7 @@ fun BorderlessTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     var sized = modifier.fillMaxWidth()
     if (minHeight > 0.dp) sized = sized.defaultMinSize(minHeight = minHeight)
@@ -93,6 +95,7 @@ fun BorderlessTextField(
         placeholder = { Text(placeholder, style = textStyle) },
         singleLine = singleLine,
         textStyle = textStyle,
+        visualTransformation = visualTransformation,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,

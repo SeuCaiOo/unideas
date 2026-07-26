@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedBackgroundColor
@@ -65,7 +64,7 @@ fun CollapsibleGroupHeader(
     ) {
         Text(
             "${title.uppercase()} ($itemCount)",
-            style = AppType.FieldLabel,
+            style = MaterialTheme.typography.labelMedium,
             color = labelColor,
             modifier = Modifier.weight(1f),
         )

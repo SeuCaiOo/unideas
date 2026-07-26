@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -29,7 +28,7 @@ fun TabItem(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
     ) {
         Text(
             label,
-            style = AppType.TabLabel,
+            style = MaterialTheme.typography.headlineSmall,
             color = if (selected) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary
         )
         Spacer(Modifier.height(8.dp))

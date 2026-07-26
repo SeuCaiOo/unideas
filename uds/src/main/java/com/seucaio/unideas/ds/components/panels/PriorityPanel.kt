@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -121,7 +120,7 @@ fun PriorityPanel(
                         modifier = Modifier.weight(1f)
                     )
                     if (row.badgeLabel != null) {
-                        Text(row.badgeLabel, style = AppType.DueBadge, color = row.badgeColor)
+                        Text(row.badgeLabel, style = MaterialTheme.typography.bodyMedium, color = row.badgeColor)
                     }
                 }
             }

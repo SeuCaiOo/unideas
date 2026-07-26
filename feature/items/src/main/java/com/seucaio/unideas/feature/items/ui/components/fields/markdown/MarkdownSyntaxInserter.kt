@@ -5,7 +5,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 
 fun applyMarkdownFormat(value: TextFieldValue, format: MarkdownFormat): TextFieldValue = when (format) {
     MarkdownFormat.BOLD -> wrapSelection(value, "**")
-    MarkdownFormat.ITALIC -> wrapSelection(value, "*")
+    MarkdownFormat.ITALIC -> wrapSelection(value, "_")
     MarkdownFormat.STRIKETHROUGH -> wrapSelection(value, "~~")
     MarkdownFormat.BULLET_LIST -> prefixLine(value, "- ")
     MarkdownFormat.NUMBERED_LIST -> prefixLine(value, "1. ")

@@ -54,6 +54,7 @@ object AppType {
 }
 
 val AppTypography = Typography(
+    headlineLarge = AppType.ItemTitleDetail,
     bodyLarge = AppType.Body,
     titleLarge = AppType.ScreenTitle,
     labelLarge = AppType.ButtonLabel

@@ -18,16 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
+import com.mikepenz.markdown.model.markdownPadding
 import com.seucaio.unideas.ds.components.inputs.BorderlessTextField
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -66,23 +65,14 @@ internal fun TitleDescriptionFields(
     }
 
     Column(modifier = modifier.animateContentSize()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BorderlessTextField(
-                value = title,
-                onValueChange = onTitleChanged,
-                placeholder = stringResource(R.string.item_form_title_label),
-                textStyle = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(titleFocusRequester),
-                imeAction = ImeAction.Next,
-                onImeAction = { descriptionFocusRequester.requestFocus() },
-            )
-            MarkdownPreviewToggle(
-                isPreviewMode = isPreviewMode,
-                onClick = { isPreviewMode = !isPreviewMode },
-            )
-        }
+        TitleField(
+            title = title,
+            onTitleChanged = onTitleChanged,
+            isPreviewMode = isPreviewMode,
+            onPreviewModeToggled = { isPreviewMode = !isPreviewMode },
+            titleFocusRequester = titleFocusRequester,
+            onImeAction = { descriptionFocusRequester.requestFocus() },
+        )
 
         DescriptionField(
             isPreviewMode = isPreviewMode,
@@ -97,6 +87,31 @@ internal fun TitleDescriptionFields(
 }
 
 @Composable
+private fun TitleField(
+    title: String,
+    onTitleChanged: (String) -> Unit,
+    isPreviewMode: Boolean,
+    onPreviewModeToggled: () -> Unit,
+    titleFocusRequester: FocusRequester,
+    onImeAction: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        BorderlessTextField(
+            value = title,
+            onValueChange = onTitleChanged,
+            placeholder = stringResource(R.string.item_form_title_label),
+            textStyle = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(titleFocusRequester),
+            imeAction = ImeAction.Next,
+            onImeAction = onImeAction,
+        )
+        MarkdownPreviewToggle(isPreviewMode = isPreviewMode, onClick = onPreviewModeToggled)
+    }
+}
+
+@Composable
 private fun DescriptionField(
     isPreviewMode: Boolean,
     descriptionField: TextFieldValue,
@@ -104,21 +119,15 @@ private fun DescriptionField(
     descriptionFocusRequester: FocusRequester,
 ) {
     if (isPreviewMode) {
-        // Same size as the edit field (titleLarge) but Normal weight, so **bold**/*italic* markers
-        // remain visually distinct from plain text instead of blending into an already-heavy base.
-        val previewTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
         SelectionContainer {
             Markdown(
                 content = descriptionField.text,
-                typography = markdownTypography(
-                    text = previewTextStyle,
-                    paragraph = previewTextStyle,
-                    ordered = previewTextStyle,
-                    bullet = previewTextStyle,
-                    list = previewTextStyle,
-                ),
                 annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
-                modifier = Modifier.padding(vertical = 16.dp),
+                // Library default is 2.dp between blocks (paragraph/list/checklist), far tighter
+                // than a blank line's line-height in the raw edit text — bumped so toggling
+                // edit<->preview doesn't visibly jump in height.
+                padding = markdownPadding(block = 8.dp),
+                modifier = Modifier.padding(16.dp),
             )
         }
     } else {
@@ -133,10 +142,8 @@ private fun DescriptionField(
             singleLine = false,
             minHeight = 32.dp,
             modifier = Modifier
-                .padding(vertical = 16.dp)
                 .focusRequester(descriptionFocusRequester)
                 .markdownFormatContextMenuItems(onFormatClick),
-            textStyle = MaterialTheme.typography.titleLarge,
             visualTransformation = rememberMarkdownSyntaxHighlightTransformation(),
         )
 

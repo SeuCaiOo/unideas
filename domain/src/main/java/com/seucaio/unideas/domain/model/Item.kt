@@ -2,6 +2,7 @@ package com.seucaio.unideas.domain.model
 
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Core domain model: a task or a note.
@@ -9,6 +10,9 @@ import java.time.LocalDateTime
  * Dates are `java.time` types — epoch millis stay in the persistence layer.
  *
  * @property recurrence only valid when [dueDate] is not null.
+ * @property dueTime optional; only valid when [dueDate] is not null. Does not replace [dueDate]
+ *   with a `LocalDateTime` on purpose — [UrgencyLevel] and existing screens stay untouched.
+ * @property reminderWarning only valid when [dueDate] is not null. See [ReminderTier.of].
  * @property completedAt non-null means completed (only meaningful for [ItemType.TASK]).
  */
 data class Item(
@@ -18,7 +22,9 @@ data class Item(
     val description: String? = null,
     val sectionId: Long? = null,
     val dueDate: LocalDate? = null,
+    val dueTime: LocalTime? = null,
     val recurrence: Recurrence = Recurrence.None,
+    val reminderWarning: ReminderWarning = ReminderWarning.None,
     val completedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val tags: List<Tag> = emptyList(),

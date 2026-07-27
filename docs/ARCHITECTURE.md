@@ -203,7 +203,9 @@ title: String            obrigatório (não vazio)
 description: String?      opcional, multilinha
 sectionId: Long?          FK → sections.id (SET NULL on delete — mas exclusão é bloqueada antes, ver regra)
 dueDate: Long?            epoch millis, opcional
+dueTime: Int?             segundos do dia, opcional (só válido se dueDate != null; conversão no mapper, não em Converters)
 recurrence: String        NONE | DAILY | WEEKLY | MONTHLY (default NONE; só válido se dueDate != null)
+reminderWarning: String   NONE | DAYS_BEFORE:N (default NONE; só válido se dueDate != null)
 completedAt: Long?        epoch millis; != null = concluída (só faz sentido pra TASK)
 createdAt: Long           epoch millis, preenchido na criação
 ```
@@ -295,8 +297,10 @@ Não precisa client "Web" nem nada hardcoded no app — o código usa só `.requ
 | Camada | Tipo | Motivo |
 |---|---|---|
 | Entity (Room) | `Long` (epoch millis) | nativo, sem converter, ordenável |
-| Domain model | `LocalDate` / `LocalDateTime` | type-safe, legível na lógica |
+| Domain model | `LocalDate` / `LocalDateTime` / `LocalTime` | type-safe, legível na lógica |
 | Mapper | extensions em `:core:common` | `Long.toLocalDate()` / `LocalDate.toEpochMilli()` |
+| Entity (Room), hora-do-dia | `Int` (segundos do dia) | `Item.dueTime` (#114) — sem timezone envolvida, epoch millis seria overkill |
+| Mapper, hora-do-dia | extensions em `:core:common` | `Int.toLocalTime()` / `LocalTime.toSecondOfDayInt()` |
 | UI (picker) | `Long.toLocalDateUtc()` | Material3 DatePicker retorna **UTC midnight** — converter diferente do banco |
 
 `coreLibraryDesugaring` habilitado nos módulos que usam `java.time`.

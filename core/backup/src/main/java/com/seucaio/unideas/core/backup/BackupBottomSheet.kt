@@ -44,9 +44,9 @@ import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.restartApplication
+import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.ds.theme.UdsTheme
 import org.koin.androidx.compose.koinViewModel
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,8 +166,7 @@ private fun ConnectedBackupContent(
     onBackupClick: () -> Unit,
     onSyncClick: () -> Unit,
 ) {
-    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm") }
-    val subtitle = uiState.lastBackupAt?.format(formatter)
+    val subtitle = uiState.lastBackupAt?.toFormattedDateTimeString()
         ?.let { stringResource(R.string.backup_last_at, it) }
         ?: stringResource(R.string.backup_none)
 
@@ -213,7 +212,6 @@ private fun RestoreBackupList(
     onSelect: (fileId: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm") }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,7 +229,7 @@ private fun RestoreBackupList(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = backup.createdAt.format(formatter),
+                    text = backup.createdAt.toFormattedDateTimeString(),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

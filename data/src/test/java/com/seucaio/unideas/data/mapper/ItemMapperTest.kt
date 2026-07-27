@@ -5,6 +5,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
 import com.seucaio.unideas.data.local.relation.ItemWithTags
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.TagStub
 import org.junit.After
@@ -12,8 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.LocalTime
 import java.util.TimeZone
 
 class ItemMapperTest {
@@ -39,7 +39,9 @@ class ItemMapperTest {
             id = 10L,
             description = "detalhes",
             sectionId = 3L,
+            dueTime = LocalTime.of(14, 30),
             recurrence = Recurrence.Weekly,
+            reminderWarning = ReminderWarning.DaysBefore(2),
             completedAt = ItemStub.TODAY.atTime(9, 30),
         )
 
@@ -51,7 +53,9 @@ class ItemMapperTest {
         assertEquals("detalhes", entity.description)
         assertEquals(3L, entity.sectionId)
         assertEquals(item.dueDate?.toEpochMilli(), entity.dueDate)
+        assertEquals(52200, entity.dueTime)
         assertEquals(Recurrence.Weekly, entity.recurrence)
+        assertEquals(ReminderWarning.DaysBefore(2), entity.reminderWarning)
         assertEquals(item.completedAt?.toEpochMilli(), entity.completedAt)
         assertEquals(item.createdAt.toEpochMilli(), entity.createdAt)
     }
@@ -62,8 +66,10 @@ class ItemMapperTest {
 
         assertNull(entity.sectionId)
         assertNull(entity.dueDate)
+        assertNull(entity.dueTime)
         assertNull(entity.completedAt)
         assertEquals(Recurrence.None, entity.recurrence)
+        assertEquals(ReminderWarning.None, entity.reminderWarning)
     }
 
     @Test
@@ -82,7 +88,9 @@ class ItemMapperTest {
             id = 7L,
             description = "detalhes",
             sectionId = 2L,
+            dueTime = LocalTime.of(8, 15),
             recurrence = Recurrence.Monthly,
+            reminderWarning = ReminderWarning.DaysBefore(1),
             completedAt = ItemStub.TODAY.atTime(18, 45),
             tags = TagStub.tags(count = 2),
         )
@@ -102,22 +110,6 @@ class ItemMapperTest {
         val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
 
         assertEquals(original, row.toDomain())
-    }
-
-    @Test
-    fun `LocalDateTime toEpochMilli uses system default zone`() {
-        val dateTime = LocalDateTime.of(2026, 7, 9, 10, 30)
-
-        val expected = dateTime.atZone(ZoneId.of(SAO_PAULO)).toInstant().toEpochMilli()
-
-        assertEquals(expected, dateTime.toEpochMilli())
-    }
-
-    @Test
-    fun `LocalDateTime toEpochMilli and toLocalDateTime round-trip`() {
-        val dateTime = LocalDateTime.of(2026, 2, 28, 23, 59, 59)
-
-        assertEquals(dateTime, dateTime.toEpochMilli().toLocalDateTime())
     }
 
     private companion object {

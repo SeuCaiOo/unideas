@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.components.lists.ListSection
@@ -43,7 +44,6 @@ import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
-import java.time.format.DateTimeFormatter
 import com.seucaio.unideas.core.backup.R as BackupR
 
 @Composable
@@ -235,14 +235,12 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
     is BackupUiState.Loading -> stringResource(BackupR.string.backup_not_connected)
     is BackupUiState.Ready -> if (backupUiState.isConnected) {
         backupUiState.lastBackupAt
-            ?.let { stringResource(BackupR.string.backup_last_at, it.format(LAST_BACKUP_FORMATTER)) }
+            ?.let { stringResource(BackupR.string.backup_last_at, it.toFormattedDateTimeString()) }
             ?: stringResource(BackupR.string.backup_none)
     } else {
         stringResource(BackupR.string.backup_not_connected)
     }
 }
-
-private val LAST_BACKUP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm")
 
 @PreviewLightDark
 @Composable

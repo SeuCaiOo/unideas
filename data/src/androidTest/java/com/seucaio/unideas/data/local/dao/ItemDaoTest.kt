@@ -208,7 +208,7 @@ class ItemDaoTest {
     /** Seeds the `sections` table — `ItemEntity.sectionId` FKs to it. */
     private fun seedSection(id: Long, name: String) {
         database.openHelper.writableDatabase.execSQL(
-            "INSERT INTO sections (id, name) VALUES (?, ?)",
+            "INSERT INTO sections (id, name, isPinned) VALUES (?, ?, 0)",
             arrayOf(id, name),
         )
     }

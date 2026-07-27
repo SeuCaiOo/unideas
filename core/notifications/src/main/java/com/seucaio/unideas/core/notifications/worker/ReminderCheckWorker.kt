@@ -38,7 +38,8 @@ class ReminderCheckWorker(
             }
         }
 
-        notifier.notify(normal = normal, urgent = urgent)
+        val silent = inputData.getBoolean(ReminderScheduler.KEY_SILENT, false)
+        notifier.notify(normal = normal, urgent = urgent, silent = silent)
         return Result.success()
     }
 }

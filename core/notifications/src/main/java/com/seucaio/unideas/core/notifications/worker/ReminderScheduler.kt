@@ -1,6 +1,7 @@
 package com.seucaio.unideas.core.notifications.worker
 
 import android.content.Context
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit
 object ReminderScheduler {
 
     internal val CHECK_HOURS = listOf(0, 6, 12, 18)
+    internal const val KEY_SILENT = "silent"
     private const val CHECK_INTERVAL_HOURS = 6L
     private const val PERIODIC_WORK_NAME = "reminder_check"
     private const val REFRESH_WORK_NAME = "reminder_check_refresh"
@@ -37,9 +39,18 @@ object ReminderScheduler {
             .enqueueUniquePeriodicWork(PERIODIC_WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
     }
 
-    /** Requests an immediate out-of-cycle run — e.g. right after completing an item. */
-    fun refreshNow(context: Context) {
-        val request = OneTimeWorkRequestBuilder<ReminderCheckWorker>().build()
+    /**
+     * Requests an immediate out-of-cycle run. [silent] distinguishes *why* it's running: a
+     * completion-triggered refresh (e.g. [com.seucaio.unideas.core.notifications.worker.ReminderRefreshTriggerImpl])
+     * didn't discover anything new — it's just bookkeeping after the user resolved an item — so it
+     * shouldn't re-alert (sound/vibration) a notification the user already dismissed. The debug
+     * "run reminder check now" button in Settings passes `silent = false`, since it's meant to
+     * simulate a real periodic check end-to-end.
+     */
+    fun refreshNow(context: Context, silent: Boolean) {
+        val request = OneTimeWorkRequestBuilder<ReminderCheckWorker>()
+            .setInputData(Data.Builder().putBoolean(KEY_SILENT, silent).build())
+            .build()
         WorkManager.getInstance(context)
             .enqueueUniqueWork(REFRESH_WORK_NAME, ExistingWorkPolicy.REPLACE, request)
     }

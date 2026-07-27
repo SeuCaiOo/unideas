@@ -118,7 +118,7 @@ fun SettingsScreen(
         onBackupClick = { showBackupSheet = true },
         onDesignSystemGalleryClick = { showDesignSystemGallery = true },
         onRunReminderCheckClicked = {
-            ReminderScheduler.refreshNow(context)
+            ReminderScheduler.refreshNow(context, silent = false)
             coroutineScope.launch {
                 snackbarHostState.showSnackbar(resources.getString(R.string.settings_debug_run_reminder_check_success))
             }

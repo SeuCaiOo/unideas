@@ -34,18 +34,31 @@ class ReminderNotifier(private val context: Context) {
         createChannels()
     }
 
-    fun notify(normal: List<Item>, urgent: List<Item>) {
+    /**
+     * [silent] mutes sound/vibration/heads-up for this call's reposts (still shows/updates the
+     * notification — Android has no "silently update while hidden" option) — used for
+     * completion-triggered refreshes, which didn't discover anything new, as opposed to a real
+     * periodic check.
+     *
+     * The "skip if the item set didn't change" optimization only applies when [silent] — that's
+     * the case the original re-alert bug was about (a completion refresh finding nothing new).
+     * A non-silent call (a real periodic check, or the Settings debug "run check now" button)
+     * always reposts, even with an unchanged item set — otherwise the debug tool would silently
+     * no-op whenever nothing changed since the last check, defeating its purpose of forcing a
+     * real, visible check on demand.
+     */
+    fun notify(normal: List<Item>, urgent: List<Item>, silent: Boolean) {
         val normalIds = normal.map { it.id }.toSet()
-        if (normalIds != lastNormalIds) {
-            updateTier(NORMAL_NOTIFICATION_ID, NORMAL_CHANNEL_ID, normal, ongoing = false) {
+        if (!silent || normalIds != lastNormalIds) {
+            updateTier(NORMAL_NOTIFICATION_ID, NORMAL_CHANNEL_ID, normal, ongoing = false, silent = silent) {
                 context.getString(R.string.reminder_notification_normal_title)
             }
             lastNormalIds = normalIds
         }
 
         val urgentIds = urgent.map { it.id }.toSet()
-        if (urgentIds != lastUrgentIds) {
-            updateTier(URGENT_NOTIFICATION_ID, URGENT_CHANNEL_ID, urgent, ongoing = true) {
+        if (!silent || urgentIds != lastUrgentIds) {
+            updateTier(URGENT_NOTIFICATION_ID, URGENT_CHANNEL_ID, urgent, ongoing = true, silent = silent) {
                 context.getString(R.string.reminder_notification_urgent_title)
             }
             lastUrgentIds = urgentIds
@@ -73,6 +86,7 @@ class ReminderNotifier(private val context: Context) {
         channelId: String,
         items: List<Item>,
         ongoing: Boolean,
+        silent: Boolean,
         title: () -> String,
     ) {
         if (items.isEmpty()) {
@@ -85,10 +99,17 @@ class ReminderNotifier(private val context: Context) {
             items.size,
             items.size
         )
-        postNotification(notificationId, channelId, title(), body, ongoing)
+        postNotification(notificationId, channelId, title(), body, ongoing, silent)
     }
 
-    private fun postNotification(notificationId: Int, channelId: String, title: String, body: String, ongoing: Boolean) {
+    private fun postNotification(
+        notificationId: Int,
+        channelId: String,
+        title: String,
+        body: String,
+        ongoing: Boolean,
+        silent: Boolean = false,
+    ) {
         if (!hasPostNotificationsPermission()) return
 
         val notification = NotificationCompat.Builder(context, channelId)
@@ -97,6 +118,7 @@ class ReminderNotifier(private val context: Context) {
             .setContentText(body)
             .setOngoing(ongoing)
             .setOnlyAlertOnce(true)
+            .setSilent(silent)
             .setContentIntent(contentIntent(notificationId))
             .setAutoCancel(!ongoing)
             .build()

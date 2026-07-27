@@ -13,6 +13,8 @@
     <string name="settings_debug_clear_success">Database cleared</string>
     <string name="settings_debug_screen_version">Screen version</string>
     <string name="settings_debug_design_system">Design system</string>
+    <string name="settings_debug_run_reminder_check">Run reminder check now</string>
+    <string name="settings_debug_run_reminder_check_success">Reminder check triggered</string>
     <string name="seed_scope_sheet_title">What should we seed?</string>
     <string name="seed_scope_confirm">Seed</string>
     <string name="seed_scope_empty">Empty</string>

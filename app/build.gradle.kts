@@ -170,8 +170,10 @@ dependencies {
     kover(project(":feature:items"))
     kover(project(":feature:home"))
     kover(project(":core:backup"))
+    kover(project(":core:notifications"))
 
     implementation(project(":core:backup"))
+    implementation(project(":core:notifications"))
     implementation(project(":core:common"))
     implementation(project(":uds"))
     implementation(project(":domain"))
@@ -199,6 +201,7 @@ dependencies {
 
     // DI (Koin)
     implementation(libs.koin.android)
+    implementation(libs.koin.workmanager)
 
     // Logging
     implementation(libs.timber)

@@ -1,6 +1,7 @@
 package com.seucaio.unideas.di
 
 import com.seucaio.unideas.core.backup.di.backupDataModule
+import com.seucaio.unideas.core.notifications.di.notificationsModule
 import com.seucaio.unideas.data.di.dataModule
 import com.seucaio.unideas.domain.di.domainModule
 import com.seucaio.unideas.feature.home.di.homeModule
@@ -15,6 +16,7 @@ val appModule = module {
         dataModule,
         domainModule,
         backupDataModule,
+        notificationsModule,
         sectionsModule,
         tagsModule,
         settingsModule,

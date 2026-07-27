@@ -130,18 +130,6 @@ class ItemMapperTest {
         assertEquals(dateTime, dateTime.toEpochMilli().toLocalDateTime())
     }
 
-    @Test
-    fun `LocalTime toSecondOfDayInt and toLocalTime round-trip`() {
-        val time = LocalTime.of(23, 59)
-
-        assertEquals(time, time.toSecondOfDayInt().toLocalTime())
-    }
-
-    @Test
-    fun `LocalTime toSecondOfDayInt is timezone-independent`() {
-        assertEquals(0, LocalTime.MIDNIGHT.toSecondOfDayInt())
-    }
-
     private companion object {
         const val SAO_PAULO = "America/Sao_Paulo"
     }

@@ -2,6 +2,8 @@ package com.seucaio.unideas.data.mapper
 
 import com.seucaio.unideas.core.common.extensions.toEpochMilli
 import com.seucaio.unideas.core.common.extensions.toLocalDate
+import com.seucaio.unideas.core.common.extensions.toLocalTime
+import com.seucaio.unideas.core.common.extensions.toSecondOfDayInt
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.TagEntity
 import com.seucaio.unideas.data.local.relation.ItemWithTags
@@ -10,7 +12,6 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemDetail
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -27,12 +28,6 @@ internal fun Long.toLocalDateTime(): LocalDateTime =
  */
 internal fun LocalDateTime.toEpochMilli(): Long =
     atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-/** Converts seconds-of-day (as persisted in the database) to a [LocalTime]. */
-internal fun Int.toLocalTime(): LocalTime = LocalTime.ofSecondOfDay(this.toLong())
-
-/** Converts a [LocalTime] to seconds-of-day (for writing to the database). */
-internal fun LocalTime.toSecondOfDayInt(): Int = toSecondOfDay()
 
 private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     id = entity.id,

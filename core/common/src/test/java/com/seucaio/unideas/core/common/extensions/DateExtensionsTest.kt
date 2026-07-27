@@ -6,6 +6,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.TimeZone
@@ -88,6 +89,18 @@ class DateExtensionsTest {
         val dateTime = LocalDateTime.of(2026, 12, 31, 23, 59, 58)
 
         assertEquals("31/12/2026", dateTime.toFormattedDateString())
+    }
+
+    @Test
+    fun `toSecondOfDayInt and toLocalTime round-trip preserves the time`() {
+        val time = LocalTime.of(23, 59)
+
+        assertEquals(time, time.toSecondOfDayInt().toLocalTime())
+    }
+
+    @Test
+    fun `toSecondOfDayInt is timezone-independent`() {
+        assertEquals(0, LocalTime.MIDNIGHT.toSecondOfDayInt())
     }
 
     private companion object {

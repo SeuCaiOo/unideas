@@ -3,6 +3,7 @@ package com.seucaio.unideas.core.common.extensions
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -47,3 +48,9 @@ fun LocalDate.toFormattedDateString(): String = format(dateFormatter)
 
 /** Formats the date portion of this [LocalDateTime] as `dd/MM/yyyy`. */
 fun LocalDateTime.toFormattedDateString(): String = toLocalDate().toFormattedDateString()
+
+/** Converts seconds-of-day (as persisted in the database) to a [LocalTime]. */
+fun Int.toLocalTime(): LocalTime = LocalTime.ofSecondOfDay(this.toLong())
+
+/** Converts a [LocalTime] to seconds-of-day (for writing to the database). */
+fun LocalTime.toSecondOfDayInt(): Int = toSecondOfDay()

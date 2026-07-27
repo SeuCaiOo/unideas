@@ -25,8 +25,8 @@ import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.ItemActions
-import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
+import com.seucaio.unideas.feature.items.ui.components.form.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailDialogState
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailEvent
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiAction

@@ -1,5 +1,6 @@
 package com.seucaio.unideas.domain.model
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -29,16 +30,16 @@ enum class ReminderTier {
             val dueDate = item.dueDate ?: return NOT_YET
             val effectiveDueDateTime = dueDate.atTime(item.dueTime ?: DEFAULT_DUE_TIME)
 
-            if (!effectiveDueDateTime.isAfter(nextCheck)) return URGENT
-
-            val warning = item.reminderWarning
-            if (warning is ReminderWarning.DaysBefore) {
-                val warningStart = dueDate.minusDays(warning.days.toLong())
-                val today = currentCheck.toLocalDate()
-                if (!today.isBefore(warningStart) && !today.isAfter(dueDate)) return NORMAL
+            return when {
+                !effectiveDueDateTime.isAfter(nextCheck) -> URGENT
+                isWithinWarningWindow(item.reminderWarning, dueDate, currentCheck.toLocalDate()) -> NORMAL
+                else -> NOT_YET
             }
-
-            return NOT_YET
         }
+
+        private fun isWithinWarningWindow(warning: ReminderWarning, dueDate: LocalDate, today: LocalDate): Boolean =
+            warning is ReminderWarning.DaysBefore &&
+                !today.isBefore(dueDate.minusDays(warning.days.toLong())) &&
+                !today.isAfter(dueDate)
     }
 }

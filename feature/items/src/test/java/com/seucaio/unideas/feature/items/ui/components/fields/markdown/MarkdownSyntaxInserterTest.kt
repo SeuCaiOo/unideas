@@ -23,7 +23,7 @@ class MarkdownSyntaxInserterTest {
 
         val result = applyMarkdownFormat(value, MarkdownFormat.ITALIC)
 
-        assertEquals("hello** world", result.text)
+        assertEquals("hello__ world", result.text)
         assertEquals(TextRange(6), result.selection)
     }
 
@@ -49,7 +49,7 @@ class MarkdownSyntaxInserterTest {
 
     @Test
     fun `when italic applied to text already surrounded by markers should unwrap it`() {
-        val value = TextFieldValue(text = "*hello* world", selection = TextRange(1, 6))
+        val value = TextFieldValue(text = "_hello_ world", selection = TextRange(1, 6))
 
         val result = applyMarkdownFormat(value, MarkdownFormat.ITALIC)
 

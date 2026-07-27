@@ -63,7 +63,7 @@ class Migration3to4Test {
     }
 
     @Test
-    fun `migration adds nullable dueTime and reminderWarning defaulting to NONE`() {
+    fun migrationAddsNullableDueTimeAndReminderWarningDefaultingToNone() {
         val db = helper.writableDatabase
         db.execSQL(
             "INSERT INTO items (id, type, title, recurrence, createdAt) VALUES (1, 'TASK', 'Existing', 'NONE', 0)",
@@ -79,7 +79,7 @@ class Migration3to4Test {
     }
 
     @Test
-    fun `migrated table accepts writes to the new columns`() {
+    fun migratedTableAcceptsWritesToTheNewColumns() {
         val db = helper.writableDatabase
         MIGRATION_3_4.migrate(db)
 

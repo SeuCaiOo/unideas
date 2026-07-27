@@ -36,6 +36,22 @@ class ReminderNotifier(private val context: Context) {
         }
     }
 
+    /** Posts a one-off notification on the given tier's channel, ignoring real item data — debug tooling (settings). */
+    fun notifyTest(urgent: Boolean) {
+        val notificationId = if (urgent) TEST_URGENT_NOTIFICATION_ID else TEST_NORMAL_NOTIFICATION_ID
+        val channelId = if (urgent) URGENT_CHANNEL_ID else NORMAL_CHANNEL_ID
+        val title = context.getString(
+            if (urgent) R.string.reminder_notification_urgent_title else R.string.reminder_notification_normal_title
+        )
+        postNotification(
+            notificationId = notificationId,
+            channelId = channelId,
+            title = title,
+            body = context.getString(R.string.reminder_notification_test_body),
+            ongoing = urgent,
+        )
+    }
+
     private fun updateTier(
         notificationId: Int,
         channelId: String,
@@ -47,16 +63,21 @@ class ReminderNotifier(private val context: Context) {
             notificationManager.cancel(notificationId)
             return
         }
-        if (!hasPostNotificationsPermission()) return
 
         val body = context.resources.getQuantityString(
             R.plurals.reminder_notification_body,
             items.size,
             items.size
         )
+        postNotification(notificationId, channelId, title(), body, ongoing)
+    }
+
+    private fun postNotification(notificationId: Int, channelId: String, title: String, body: String, ongoing: Boolean) {
+        if (!hasPostNotificationsPermission()) return
+
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
-            .setContentTitle(title())
+            .setContentTitle(title)
             .setContentText(body)
             .setOngoing(ongoing)
             .setOnlyAlertOnce(true)
@@ -99,7 +120,11 @@ class ReminderNotifier(private val context: Context) {
             URGENT_CHANNEL_ID,
             context.getString(R.string.reminder_channel_urgent_name),
             NotificationManager.IMPORTANCE_HIGH,
-        ).apply { description = context.getString(R.string.reminder_channel_urgent_description) }
+        ).apply {
+            description = context.getString(R.string.reminder_channel_urgent_description)
+            enableVibration(true)
+            vibrationPattern = URGENT_VIBRATION_PATTERN
+        }
 
         notificationManager.createNotificationChannels(listOf(normal, urgent))
     }
@@ -109,5 +134,13 @@ class ReminderNotifier(private val context: Context) {
         const val URGENT_CHANNEL_ID = "reminder_urgent"
         private const val NORMAL_NOTIFICATION_ID = 1001
         private const val URGENT_NOTIFICATION_ID = 1002
+        private const val TEST_NORMAL_NOTIFICATION_ID = 1003
+        private const val TEST_URGENT_NOTIFICATION_ID = 1004
+
+        /**
+         * Distinct triple-buzz pattern (ms: wait, buzz, pause, buzz, pause, buzz) — the normal
+         * channel keeps the system's default vibration instead.
+         */
+        private val URGENT_VIBRATION_PATTERN = longArrayOf(0, 300, 200, 300, 200, 300)
     }
 }

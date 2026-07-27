@@ -11,4 +11,5 @@
         <item quantity="one">%d item</item>
         <item quantity="other">%d itens</item>
     </plurals>
+    <string name="reminder_notification_test_body">Notificação de teste</string>
 </resources>

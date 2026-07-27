@@ -15,6 +15,14 @@
     <string name="settings_debug_design_system">Design system</string>
     <string name="settings_debug_run_reminder_check">Run reminder check now</string>
     <string name="settings_debug_run_reminder_check_success">Reminder check triggered</string>
+    <string name="settings_debug_test_notification">Test notification</string>
+    <string name="settings_debug_test_notification_success">Test notification sent</string>
+    <string name="test_notification_sheet_title">Which notification?</string>
+    <string name="test_notification_normal">Normal</string>
+    <string name="test_notification_normal_description">Dismissible, default sound/vibration</string>
+    <string name="test_notification_urgent">Urgent</string>
+    <string name="test_notification_urgent_description">Non-dismissible, distinct vibration pattern</string>
+    <string name="test_notification_confirm">Send</string>
     <string name="seed_scope_sheet_title">What should we seed?</string>
     <string name="seed_scope_confirm">Seed</string>
     <string name="seed_scope_empty">Empty</string>

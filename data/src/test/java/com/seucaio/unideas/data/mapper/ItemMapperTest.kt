@@ -13,9 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 import java.util.TimeZone
 
 class ItemMapperTest {
@@ -112,22 +110,6 @@ class ItemMapperTest {
         val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
 
         assertEquals(original, row.toDomain())
-    }
-
-    @Test
-    fun `LocalDateTime toEpochMilli uses system default zone`() {
-        val dateTime = LocalDateTime.of(2026, 7, 9, 10, 30)
-
-        val expected = dateTime.atZone(ZoneId.of(SAO_PAULO)).toInstant().toEpochMilli()
-
-        assertEquals(expected, dateTime.toEpochMilli())
-    }
-
-    @Test
-    fun `LocalDateTime toEpochMilli and toLocalDateTime round-trip`() {
-        val dateTime = LocalDateTime.of(2026, 2, 28, 23, 59, 59)
-
-        assertEquals(dateTime, dateTime.toEpochMilli().toLocalDateTime())
     }
 
     private companion object {

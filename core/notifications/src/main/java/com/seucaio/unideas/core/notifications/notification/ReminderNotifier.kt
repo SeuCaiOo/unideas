@@ -23,16 +23,32 @@ class ReminderNotifier(private val context: Context) {
 
     private val notificationManager = NotificationManagerCompat.from(context)
 
+    // Skips reposting a tier whose item set didn't change since the last call — refreshNow() runs
+    // on every item completion, and reposting an unchanged dismissible notification re-alerts it
+    // (setOnlyAlertOnce only suppresses the alert while the notification is still on screen, which
+    // isn't the case once the user has swiped it away). null means "never posted yet".
+    private var lastNormalIds: Set<Long>? = null
+    private var lastUrgentIds: Set<Long>? = null
+
     init {
         createChannels()
     }
 
     fun notify(normal: List<Item>, urgent: List<Item>) {
-        updateTier(NORMAL_NOTIFICATION_ID, NORMAL_CHANNEL_ID, normal, ongoing = false) {
-            context.getString(R.string.reminder_notification_normal_title)
+        val normalIds = normal.map { it.id }.toSet()
+        if (normalIds != lastNormalIds) {
+            updateTier(NORMAL_NOTIFICATION_ID, NORMAL_CHANNEL_ID, normal, ongoing = false) {
+                context.getString(R.string.reminder_notification_normal_title)
+            }
+            lastNormalIds = normalIds
         }
-        updateTier(URGENT_NOTIFICATION_ID, URGENT_CHANNEL_ID, urgent, ongoing = true) {
-            context.getString(R.string.reminder_notification_urgent_title)
+
+        val urgentIds = urgent.map { it.id }.toSet()
+        if (urgentIds != lastUrgentIds) {
+            updateTier(URGENT_NOTIFICATION_ID, URGENT_CHANNEL_ID, urgent, ongoing = true) {
+                context.getString(R.string.reminder_notification_urgent_title)
+            }
+            lastUrgentIds = urgentIds
         }
     }
 

@@ -1,6 +1,9 @@
 package com.seucaio.unideas.ds.gallery
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,11 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -29,7 +34,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -69,202 +76,289 @@ import com.seucaio.unideas.ds.theme.UdsTheme
  * design system in a different project. Open in Android Studio's Split/Design view, or
  * run it directly (see [ComponentGalleryPreview]).
  *
- * File path next to each label is where to find that component under uds/src/.
+ * Each category collapses independently via [CollapsibleGroupHeader] - starts collapsed so a
+ * long component list stays navigable instead of one continuous scroll.
  */
 @Composable
-fun ComponentGallery() {
+fun ComponentGallery(modifier: Modifier = Modifier) {
     Column(
-        Modifier
+        modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        CategoryTitle("buttons/")
-        Labeled("AppIconButton") {
-            AppIconButton(icon = Icons.Outlined.Settings, contentDescription = "Settings", onClick = {})
-        }
-        Labeled("AppFab") {
-            AppFab(icon = Icons.Outlined.Add, contentDescription = "Add", onClick = {})
-        }
-        Labeled("MiniFabAction") {
-            MiniFabAction(icon = Icons.Outlined.TaskAlt, label = "New task", onClick = {})
-        }
-        Labeled("SegmentedControl") {
-            var selected by remember { mutableIntStateOf(0) }
-            SegmentedControl(options = listOf("Task", "Note"), selectedIndex = selected, onSelect = { selected = it })
-        }
-
-        CategoryTitle("chips/")
-        Labeled("SelectableChip") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SelectableChip(label = "urgent", selected = true, onClick = {})
-                SelectableChip(label = "market", selected = false, onClick = {})
-            }
-        }
-        Labeled("RemovableChip") {
-            RemovableChip(label = "android", onRemove = {}, removeContentDescription = "Remove")
-        }
-        Labeled("TextBadge") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextBadge(
-                    text = "TASK",
-                    background = MaterialTheme.colorScheme.primaryContainer,
-                    content = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                TextBadge(
-                    text = "DONE",
-                    background = MaterialTheme.colorScheme.background,
-                    content = MaterialTheme.colorScheme.onSurface
+        Category("typography/") {
+            Labeled("headlineLarge (item title, detail screen)") {
+                Text(
+                    "Renew car insurance",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-        }
-        Labeled("DueBadge") {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                DueBadge(label = "3 days overdue", color = MaterialTheme.colorScheme.error)
-                DueBadge(label = "due today", color = LocalUdsExtendedColors.current.warning)
+            Labeled("headlineMedium (list item title)") {
+                Text(
+                    "Pay electricity bill",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("headlineSmall (tab label)") {
+                Text(
+                    "Tasks",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("titleLarge (screen title)") {
+                Text(
+                    "Item detail",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("titleMedium (chip label)") {
+                Text(
+                    "urgent",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("titleSmall (metadata / subtitle)") {
+                Text(
+                    "Home · 6 items",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("bodyLarge (description body)") {
+                Text(
+                    "Don't forget to bring the documents.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Labeled("bodyMedium (due badge)") {
+                Text(
+                    "3 days overdue",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            Labeled("bodySmall (type badge)") {
+                Text("TASK", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+            }
+            Labeled("labelLarge (button label)") {
+                Text("SAVE", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+            }
+            Labeled("labelMedium (field label)") {
+                Text("TITLE", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
-        CategoryTitle("inputs/")
-        Labeled("AppTextField") {
-            var text by remember { mutableStateOf("") }
-            AppTextField(value = text, onValueChange = { text = it }, placeholder = "e.g. Pay electricity bill")
-        }
-        Labeled("FormField (label + slot)") {
-            FormField(label = "Title") { Text("any content goes here", color = MaterialTheme.colorScheme.onSurface) }
-        }
-        Labeled("DropdownField") {
-            var selected by remember { mutableStateOf("") }
-            DropdownField(
-                options = listOf("Personal", "Work"),
-                selected = selected,
-                emptyOptionLabel = "No section",
-                onSelect = { selected = it }
-            )
-        }
-        Labeled("FilterDropdownPill") {
-            var selected by remember { mutableStateOf("") }
-            FilterDropdownPill(
-                options = listOf("Personal", "Work"),
-                selected = selected,
-                allOptionLabel = "All sections",
-                onSelect = { selected = it }
-            )
-        }
-        Labeled("DateFieldButton") {
-            DateFieldButton(valueLabel = "Jul 14, 2026", onClick = {}, onClear = {}, clearContentDescription = "Clear")
-        }
-        Labeled("AddEntryRow") {
-            var text by remember { mutableStateOf("") }
-            AddEntryRow(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = "New section...",
-                addContentDescription = "Add",
-                onSubmit = {}
-            )
+        Category("buttons/") {
+            Labeled("AppIconButton") {
+                AppIconButton(icon = Icons.Outlined.Settings, contentDescription = "Settings", onClick = {})
+            }
+            Labeled("AppFab") {
+                AppFab(icon = Icons.Outlined.Add, contentDescription = "Add", onClick = {})
+            }
+            Labeled("MiniFabAction") {
+                MiniFabAction(icon = Icons.Outlined.TaskAlt, label = "New task", onClick = {})
+            }
+            Labeled("SegmentedControl") {
+                var selected by remember { mutableIntStateOf(0) }
+                SegmentedControl(
+                    options = listOf("Task", "Note"),
+                    selectedIndex = selected,
+                    onSelect = { selected = it }
+                )
+            }
         }
 
-        CategoryTitle("lists/")
-        Labeled("ListItemRow (+ ListItemUi)") {
-            ListItemRow(
-                ui = ListItemUi(
-                    id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
-                    checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm"
-                ),
-                onClick = {},
-                onToggleCheck = {}
-            )
+        Category("chips/") {
+            Labeled("SelectableChip") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SelectableChip(label = "urgent", selected = true, onClick = {})
+                    SelectableChip(label = "market", selected = false, onClick = {})
+                }
+            }
+            Labeled("RemovableChip") {
+                RemovableChip(label = "android", onRemove = {}, removeContentDescription = "Remove")
+            }
+            Labeled("TextBadge") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextBadge(
+                        text = "TASK",
+                        background = MaterialTheme.colorScheme.primaryContainer,
+                        content = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    TextBadge(
+                        text = "DONE",
+                        background = MaterialTheme.colorScheme.background,
+                        content = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+            Labeled("DueBadge") {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    DueBadge(label = "3 days overdue", color = MaterialTheme.colorScheme.error)
+                    DueBadge(label = "due today", color = LocalUdsExtendedColors.current.warning)
+                }
+            }
         }
-        Labeled("ManageListRow") {
-            ManageListRow(icon = Icons.Outlined.Folder, title = "Personal", subtitle = "5 items") {
-                AppIconButton(
-                    icon = Icons.Outlined.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error,
-                    buttonSize = 40.dp,
-                    iconSize = 20.dp,
+
+        Category("inputs/") {
+            Labeled("AppTextField") {
+                var text by remember { mutableStateOf("") }
+                AppTextField(value = text, onValueChange = { text = it }, placeholder = "e.g. Pay electricity bill")
+            }
+            Labeled("FormField (label + slot)") {
+                FormField(
+                    label = "Title"
+                ) { Text("any content goes here", color = MaterialTheme.colorScheme.onSurface) }
+            }
+            Labeled("DropdownField") {
+                var selected by remember { mutableStateOf("") }
+                DropdownField(
+                    options = listOf("Personal", "Work"),
+                    selected = selected,
+                    emptyOptionLabel = "No section",
+                    onSelect = { selected = it }
+                )
+            }
+            Labeled("FilterDropdownPill") {
+                var selected by remember { mutableStateOf("") }
+                FilterDropdownPill(
+                    options = listOf("Personal", "Work"),
+                    selected = selected,
+                    allOptionLabel = "All sections",
+                    onSelect = { selected = it }
+                )
+            }
+            Labeled("DateFieldButton") {
+                DateFieldButton(
+                    valueLabel = "Jul 14, 2026",
+                    onClick = {},
+                    onClear = {},
+                    clearContentDescription = "Clear"
+                )
+            }
+            Labeled("AddEntryRow") {
+                var text by remember { mutableStateOf("") }
+                AddEntryRow(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = "New section...",
+                    addContentDescription = "Add",
+                    onSubmit = {}
+                )
+            }
+        }
+
+        Category("lists/") {
+            Labeled("ListItemRow (+ ListItemUi)") {
+                ListItemRow(
+                    ui = ListItemUi(
+                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
+                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm"
+                    ),
+                    onClick = {},
+                    onToggleCheck = {}
+                )
+            }
+            Labeled("ManageListRow") {
+                ManageListRow(icon = Icons.Outlined.Folder, title = "Personal", subtitle = "5 items") {
+                    AppIconButton(
+                        icon = Icons.Outlined.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error,
+                        buttonSize = 40.dp,
+                        iconSize = 20.dp,
+                        onClick = {}
+                    )
+                }
+            }
+            Labeled("MetaRow") {
+                Column {
+                    MetaRow(
+                        label = "Section",
+                        value = "Home"
+                    )
+                    MetaRow(
+                        label = "Due date",
+                        value = "6 days overdue",
+                        valueColor = MaterialTheme.colorScheme.error,
+                        isLast = true
+                    )
+                }
+            }
+            Labeled("MetaChipsRow") {
+                MetaChipsRow(label = "Tags", chips = listOf("urgent", "bills"))
+            }
+            Labeled("ActionRow") {
+                ActionRow(
+                    icon = Icons.Outlined.Backup,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    label = "Back up now",
                     onClick = {}
                 )
             }
-        }
-        Labeled("MetaRow") {
-            Column {
-                MetaRow(
-                    label = "Section",
-                    value = "Home"
-                )
-                MetaRow(
-                    label = "Due date",
-                    value = "6 days overdue",
-                    valueColor = MaterialTheme.colorScheme.error,
-                    isLast = true
-                )
+            Labeled("NavRow") {
+                NavRow(icon = Icons.Outlined.Label, label = "Tags", onClick = {})
             }
-        }
-        Labeled("MetaChipsRow") {
-            MetaChipsRow(label = "Tags", chips = listOf("urgent", "bills"))
-        }
-        Labeled("ActionRow") {
-            ActionRow(
-                icon = Icons.Outlined.Backup,
-                iconTint = MaterialTheme.colorScheme.primary,
-                label = "Back up now",
-                onClick = {}
-            )
-        }
-        Labeled("NavRow") {
-            NavRow(icon = Icons.Outlined.Label, label = "Tags", onClick = {})
-        }
-        Labeled("GroupHeader") {
-            GroupHeader("Account")
-        }
-
-        CategoryTitle("navigation/")
-        Labeled("TabItem") {
-            Row(Modifier.fillMaxWidth()) {
-                TabItem(label = "Tasks", selected = true, onClick = {}, modifier = Modifier.weight(1f))
-                TabItem(label = "Notes", selected = false, onClick = {}, modifier = Modifier.weight(1f))
+            Labeled("GroupHeader") {
+                GroupHeader("Account")
             }
         }
 
-        CategoryTitle("panels/")
-        Labeled("PriorityPanel (+ PriorityRowUi)") {
-            PriorityPanel(
-                title = "Priorities",
-                icon = Icons.Outlined.Flag,
-                rows = listOf(
-                    PriorityRowUi(
-                        id = 1L,
-                        title = "Pay electricity bill",
-                        badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error
+        Category("navigation/") {
+            Labeled("TabItem") {
+                Row(Modifier.fillMaxWidth()) {
+                    TabItem(label = "Tasks", selected = true, onClick = {}, modifier = Modifier.weight(1f))
+                    TabItem(label = "Notes", selected = false, onClick = {}, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+
+        Category("panels/") {
+            Labeled("PriorityPanel (+ PriorityRowUi)") {
+                PriorityPanel(
+                    title = "Priorities",
+                    icon = Icons.Outlined.Flag,
+                    rows = listOf(
+                        PriorityRowUi(
+                            id = 1L,
+                            title = "Pay electricity bill",
+                            badgeLabel = "6 days overdue",
+                            badgeColor = MaterialTheme.colorScheme.error
+                        ),
+                        PriorityRowUi(
+                            id = 2L,
+                            title = "Morning stretch",
+                            badgeLabel = "due today",
+                            badgeColor = LocalUdsExtendedColors.current.warning
+                        )
                     ),
-                    PriorityRowUi(
-                        id = 2L,
-                        title = "Morning stretch",
-                        badgeLabel = "due today",
-                        badgeColor = LocalUdsExtendedColors.current.warning
-                    )
-                ),
-                footerLabel = "view all (6)",
-                onFooterClick = {},
-                onRowClick = {}
-            )
+                    footerLabel = "view all (6)",
+                    onFooterClick = {},
+                    onRowClick = {}
+                )
+            }
         }
 
-        CategoryTitle("feedback/")
-        Labeled("AppSnackbarHost (static preview of the Snackbar shape)") {
-            val hostState = remember { SnackbarHostState() }
-            AppSnackbarHost(hostState = hostState, modifier = Modifier.fillMaxWidth())
-            Text(
-                "(shows nothing until a snackbar is triggered - see any screen for a live example)",
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 11.sp
-            )
+        Category("feedback/") {
+            Labeled("AppSnackbarHost (static preview of the Snackbar shape)") {
+                val hostState = remember { SnackbarHostState() }
+                AppSnackbarHost(hostState = hostState, modifier = Modifier.fillMaxWidth())
+                Text(
+                    "(shows nothing until a snackbar is triggered - see any screen for a live example)",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 11.sp
+                )
+            }
         }
 
         Spacer(Modifier.height(40.dp))
@@ -272,24 +366,47 @@ fun ComponentGallery() {
 }
 
 @Composable
-private fun CategoryTitle(text: String) {
-    Text(
-        text,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Bold,
-        fontSize = 15.sp,
-        modifier = Modifier.padding(top = 20.dp, bottom = 6.dp)
-    )
+private fun Category(title: String, content: @Composable () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f, label = "chevronRotation")
+
+    Column {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(top = 20.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                title,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.rotate(rotation),
+            )
+        }
+        AnimatedVisibility(visible = expanded) {
+            Column { content() }
+        }
+    }
 }
 
 @Composable
 private fun Labeled(name: String, content: @Composable () -> Unit) {
-    Column(Modifier.padding(bottom = 14.dp)) {
+    Column(Modifier.padding(bottom = 20.dp)) {
         Text(
-            name,
-            color = MaterialTheme.colorScheme.onSurface,
+            name.uppercase(),
+            color = LocalUdsExtendedColors.current.textTertiary,
             fontWeight = FontWeight.Medium,
-            fontSize = 12.5.sp,
+            fontSize = 11.sp,
+            letterSpacing = 0.6.sp,
             modifier = Modifier.padding(bottom = 6.dp)
         )
         content()

@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -37,7 +36,7 @@ fun SelectableChip(
     }
     Text(
         text = label,
-        style = AppType.ChipLabel,
+        style = MaterialTheme.typography.titleMedium,
         color = content,
         modifier = modifier
             .clip(shape)

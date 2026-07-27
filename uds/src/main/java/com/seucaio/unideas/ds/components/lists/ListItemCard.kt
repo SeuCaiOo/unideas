@@ -29,7 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.chips.DueBadge
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -87,7 +86,7 @@ fun ListItemCard(
             }
             Text(
                 ui.title,
-                style = AppType.ListItemTitle,
+                style = MaterialTheme.typography.headlineMedium,
                 color = if (ui.checked) {
                     LocalUdsExtendedColors.current.textTertiary
                 } else {
@@ -101,7 +100,11 @@ fun ListItemCard(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             if (!ui.meta.isNullOrEmpty()) {
-                Text(ui.meta, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary)
+                Text(
+                    ui.meta,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = LocalUdsExtendedColors.current.textTertiary
+                )
             }
             if (ui.showRepeatIcon) {
                 Icon(

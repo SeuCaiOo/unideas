@@ -154,9 +154,10 @@ class ReminderNotifier(private val context: Context) {
         private const val TEST_URGENT_NOTIFICATION_ID = 1004
 
         /**
-         * Distinct triple-buzz pattern (ms: wait, buzz, pause, buzz, pause, buzz) — the normal
-         * channel keeps the system's default vibration instead.
+         * Long-short-long pattern (ms: wait, long, pause, short, pause, short, pause, long) designed to be distinct
+         * from standard system alerts. The normal channel uses the default vibration instead.
          */
-        private val URGENT_VIBRATION_PATTERN = longArrayOf(0, 300, 200, 300, 200, 300)
+        private val URGENT_VIBRATION_PATTERN =
+            longArrayOf(0, 1000, 200, 500, 800, 400, 200, 700)
     }
 }

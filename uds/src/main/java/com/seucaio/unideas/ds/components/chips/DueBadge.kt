@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
@@ -27,7 +26,7 @@ fun DueBadge(label: String, color: Color, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Box(Modifier.size(8.dp).clip(CircleShape).background(color))
-        Text(label, style = AppType.DueBadge, color = color)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = color)
     }
 }
 

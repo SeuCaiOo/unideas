@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -40,7 +39,12 @@ fun MetaRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(label, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary, fontSize = 13.sp)
+            Text(
+                label,
+                style = MaterialTheme.typography.titleSmall,
+                color = LocalUdsExtendedColors.current.textTertiary,
+                fontSize = 13.sp
+            )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (icon != null) {
                     Icon(

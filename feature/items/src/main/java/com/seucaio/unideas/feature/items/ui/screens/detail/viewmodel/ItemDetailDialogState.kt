@@ -5,4 +5,6 @@ sealed interface ItemDetailDialogState {
     data object None : ItemDetailDialogState
 
     data object DeleteConfirm : ItemDetailDialogState
+
+    data object ReopenConfirm : ItemDetailDialogState
 }

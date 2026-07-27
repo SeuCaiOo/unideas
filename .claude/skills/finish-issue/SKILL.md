@@ -9,8 +9,8 @@ description: Validates DoD against what was implemented and updates issue checkb
 
 DoD validation is a **pre-merge gate**, not post-merge bookkeeping — it must happen before a PR becomes mergeable, not after. Two entry points, same skill either way:
 
-1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which opens the PR as **Draft** (always — see `open-pr` step 6, no exception for DoD status).
-2. **A Draft PR is already open** (opened early for CI feedback while still coding, or just because every PR opens Draft now) → run this once you believe the work is complete.
+1. **Implementation just finished, no PR yet** → run this first. If it passes, hand off to `/open-pr`, which asks the user Draft-vs-ready+auto-merge at creation time (step 6) — DoD status never decides that on its own.
+2. **A Draft PR is already open** (user chose Draft at creation time, or it was opened early for CI feedback while still coding) → run this once you believe the work is complete.
 
 **This skill validates whether the work is done. It never decides whether the PR gets promoted to ready or gets auto-merge armed — that is the user's call, always, asked explicitly, with zero exceptions.** DoD passing is Claude's self-check that the checklist matches the diff; it is not the user having looked at the code. Confirmed the hard way: PR #38 (issue #24) got auto-merge armed the instant it opened, leaving no review window at all — the user then made explicit that Draft vs. ready is their decision alone, not something DoD status can authorize.
 
@@ -26,7 +26,9 @@ gh pr view <pr-number> --json number,title,url,headRefName,isDraft   # only if a
 
 ### 2. Reconcile DoD against the real diff
 
-Compare the issue's Checklist/DoD section against `git log dev..HEAD` / `git diff dev..HEAD`. Every item lands in one of three buckets:
+Start from the local plan file (`.claude/plans/<type>-#<number>-*.md`) — its `## Checklist`/`## Verification` boxes should already be checked as items were completed during implementation (per `CLAUDE.md`'s Implementation workflow step 6), so it's the fast path to what's done instead of re-deriving everything from the diff. Treat it as a starting hypothesis, not ground truth: confirm each checked box still holds against `git log dev..HEAD` / `git diff dev..HEAD` before relying on it, since the plan file can drift or be stale. The plan's `## Verification` section deliberately omits the issue DoD's "PR aberto/mergeado" line (that's GitHub-only state — see step 3 below), so that one always needs a live check regardless of what the plan file says.
+
+Compare the issue's Checklist/DoD section against that reconciled state. Every item lands in one of three buckets:
 
 - **Done as written** → will be checked `[x]` in step 3.
 - **Not done** → STOP (see below), don't open/promote the PR yet.
@@ -54,6 +56,8 @@ gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
 
+The DoD's "PR aberto, revisado e mergeado em `dev`" line stays unchecked here regardless of how green everything else is — it's only true once the PR has actually merged, which this step, by definition, runs before.
+
 ### 4. Report — and ask, don't act, on promotion
 
 ```
@@ -67,7 +71,7 @@ If a PR already exists (Draft, per `open-pr` step 6), ask the user now: "DoD val
 gh pr ready <pr-number>
 gh pr merge <pr-number> --auto --merge
 ```
-If no PR exists yet, hand off to `/open-pr` — it opens the PR as Draft and asks this same question itself (step 7), syncing the artifact at that point too.
+If no PR exists yet, hand off to `/open-pr` — it asks Draft-vs-ready itself at creation time (step 6), syncing the artifact right away if the answer is ready+auto-merge.
 
 **Note:** the unideas board has `Backlog` / `Todo` / `In Progress` / `Done` / `Released` (no `In Review`) — the card stays in "In Progress" here, even with DoD green and the PR promoted. The sweep to "Done" (closing the issue, moving the card, syncing the parent epic) happens later, once the PR has actually merged into `dev`, on the next `/start-feature` run — that's a fact-check against reality (did it merge?), not a self-assessment, so it's kept separate from this skill. `Released` is a further, later step tied to an actual shipped version.
 

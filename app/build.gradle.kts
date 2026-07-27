@@ -203,6 +203,9 @@ dependencies {
     // Logging
     implementation(libs.timber)
 
+    // Material Components (XML Themes)
+    implementation(libs.google.material)
+
     // Firebase
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.crashlytics)

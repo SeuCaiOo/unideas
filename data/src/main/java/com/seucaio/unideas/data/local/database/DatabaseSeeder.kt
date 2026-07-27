@@ -59,6 +59,7 @@ class DatabaseSeeder(
         )
         insertItem(SeedItem(ItemType.TASK, "Ler um livro"))
         insertItem(SeedItem(ItemType.NOTE, "Ideia de projeto", description = "App de anotações com sincronização"))
+        insertItem(SeedItem(ItemType.TASK, "Salve", description = MARKDOWN_EXAMPLE_DESCRIPTION))
     }
 
     private suspend fun seedFull() {
@@ -198,5 +199,19 @@ class DatabaseSeeder(
         const val RECURRING_DAYS = 2L
         const val COMPLETED_DAYS_AGO = 1L
         const val NOTE_DUE_DAYS = 10L
+
+        /** Exercises every Markdown syntax the toolbar inserts (`MarkdownSyntaxInserter`), for manual visual checks. */
+        val MARKDOWN_EXAMPLE_DESCRIPTION = """
+            Texto normal, **negrito**, _italico_ e ~~riscado~~.
+
+            - Item da lista
+            - Outro item
+
+            1. Primeiro item numerado
+            2. Segundo item numerado
+
+            - [ ] Tarefa pendente
+            - [x] Tarefa concluida
+        """.trimIndent()
     }
 }

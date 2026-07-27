@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reminder_channel_normal_name">Lembretes</string>
+    <string name="reminder_channel_normal_description">Aviso dispensável para itens que entraram na janela de aviso configurada</string>
+    <string name="reminder_channel_urgent_name">Vencendo hoje</string>
+    <string name="reminder_channel_urgent_description">Alerta não dispensável para itens vencendo agora</string>
+
+    <string name="reminder_notification_normal_title">Itens para ficar de olho</string>
+    <string name="reminder_notification_urgent_title">Vencendo agora</string>
+    <plurals name="reminder_notification_body">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d itens</item>
+    </plurals>
+</resources>

@@ -3,7 +3,9 @@ package com.seucaio.unideas.core.notifications.notification
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -47,16 +49,39 @@ class ReminderNotifier(private val context: Context) {
         }
         if (!hasPostNotificationsPermission()) return
 
-        val body = context.resources.getQuantityString(R.plurals.reminder_notification_body, items.size, items.size)
+        val body = context.resources.getQuantityString(
+            R.plurals.reminder_notification_body,
+            items.size,
+            items.size
+        )
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title())
             .setContentText(body)
             .setOngoing(ongoing)
             .setOnlyAlertOnce(true)
+            .setContentIntent(contentIntent(notificationId))
+            .setAutoCancel(!ongoing)
             .build()
 
         notificationManager.notify(notificationId, notification)
+    }
+
+    /**
+     * Launches the app's own launcher activity by package name rather than referencing it by
+     * class — this module stays self-contained (no dependency on `:app`), same as
+     * [com.seucaio.unideas.core.notifications.di.NotificationsModule]'s pattern.
+     */
+    private fun contentIntent(notificationId: Int): PendingIntent? {
+        val launchIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+        launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        return PendingIntent.getActivity(
+            context,
+            notificationId,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     private fun hasPostNotificationsPermission(): Boolean =

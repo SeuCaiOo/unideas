@@ -9,6 +9,17 @@
     <string name="item_form_type_note">Anotação</string>
     <string name="item_form_title_label">Título</string>
     <string name="item_form_description_label">Descrição</string>
+    <string name="item_form_markdown_bold">Negrito</string>
+    <string name="item_form_markdown_italic">Itálico</string>
+    <string name="item_form_markdown_strikethrough">Riscado</string>
+    <string name="item_form_markdown_bullet_list">Lista com marcadores</string>
+    <string name="item_form_markdown_numbered_list">Lista numerada</string>
+    <string name="item_form_markdown_checklist">Checklist</string>
+    <string name="item_form_markdown_preview_toggle">Alternar pré-visualização de Markdown</string>
+    <string name="item_form_markdown_selection_copy">Copiar</string>
+    <string name="item_form_markdown_selection_cut">Recortar</string>
+    <string name="item_form_markdown_selection_paste">Colar</string>
+    <string name="item_form_markdown_selection_select_all">Selecionar tudo</string>
     <string name="item_form_section_label">Seção</string>
     <string name="item_form_section_none">Sem seção</string>
     <string name="item_form_tags_label">Tags</string>

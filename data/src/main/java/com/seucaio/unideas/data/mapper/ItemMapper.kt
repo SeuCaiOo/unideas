@@ -10,6 +10,7 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemDetail
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -27,6 +28,12 @@ internal fun Long.toLocalDateTime(): LocalDateTime =
 internal fun LocalDateTime.toEpochMilli(): Long =
     atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
+/** Converts seconds-of-day (as persisted in the database) to a [LocalTime]. */
+internal fun Int.toLocalTime(): LocalTime = LocalTime.ofSecondOfDay(this.toLong())
+
+/** Converts a [LocalTime] to seconds-of-day (for writing to the database). */
+internal fun LocalTime.toSecondOfDayInt(): Int = toSecondOfDay()
+
 private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     id = entity.id,
     type = entity.type,
@@ -34,7 +41,9 @@ private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     description = entity.description,
     sectionId = entity.sectionId,
     dueDate = entity.dueDate?.toLocalDate(),
+    dueTime = entity.dueTime?.toLocalTime(),
     recurrence = entity.recurrence,
+    reminderWarning = entity.reminderWarning,
     completedAt = entity.completedAt?.toLocalDateTime(),
     createdAt = entity.createdAt.toLocalDateTime(),
     tags = tags.map { it.toDomain() },
@@ -54,7 +63,9 @@ internal fun Item.toEntity(): ItemEntity = ItemEntity(
     description = description,
     sectionId = sectionId,
     dueDate = dueDate?.toEpochMilli(),
+    dueTime = dueTime?.toSecondOfDayInt(),
     recurrence = recurrence,
+    reminderWarning = reminderWarning,
     completedAt = completedAt?.toEpochMilli(),
     createdAt = createdAt.toEpochMilli(),
 )

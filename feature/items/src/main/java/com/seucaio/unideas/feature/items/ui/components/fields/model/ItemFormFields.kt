@@ -2,10 +2,12 @@ package com.seucaio.unideas.feature.items.ui.components.fields.model
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 interface ItemFormFieldsState {
     val type: ItemType
@@ -14,11 +16,14 @@ interface ItemFormFieldsState {
     val sectionId: Long?
     val selectedTagIds: Set<Long>
     val dueDate: LocalDate?
+    val dueTime: LocalTime?
     val recurrence: Recurrence
+    val reminderWarning: ReminderWarning
     val availableSections: List<Section>
     val availableTags: List<Tag>
     val isTitleValid: Boolean
     val canPickRecurrence: Boolean
+    val canPickReminder: Boolean
     val typeIsTask: Boolean
     val isCompleted: Boolean get() = false
     val completedAt: LocalDateTime? get() = null
@@ -32,7 +37,9 @@ data class ItemFormFieldsEvents(
     val onSectionChanged: (Long?) -> Unit,
     val onTagToggled: (Long) -> Unit,
     val onDueDateChanged: (LocalDate?) -> Unit,
+    val onDueTimeChanged: (LocalTime?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,
+    val onReminderWarningChanged: (ReminderWarning) -> Unit,
     val onSaveClicked: () -> Unit,
     val onCompleteClicked: () -> Unit = {},
 )

@@ -89,7 +89,9 @@ private fun ItemDetailScreenContent(
             onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
             onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
             onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
+            onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
+            onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
             onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
             onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )

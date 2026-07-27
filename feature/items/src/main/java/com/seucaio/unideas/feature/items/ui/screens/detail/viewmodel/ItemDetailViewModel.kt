@@ -6,6 +6,7 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
@@ -71,7 +72,9 @@ class ItemDetailViewModel(
                 sectionId = item.sectionId,
                 selectedTagIds = item.tags.map { tag -> tag.id }.toSet(),
                 dueDate = item.dueDate,
+                dueTime = item.dueTime,
                 recurrence = item.recurrence,
+                reminderWarning = item.reminderWarning,
                 isCompleted = item.isCompleted,
                 completedAt = item.completedAt,
                 loadFailed = false,
@@ -90,10 +93,15 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,
+                    dueTime = if (event.dueDate == null) null else it.dueTime,
                     recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
+                    reminderWarning = if (event.dueDate == null) ReminderWarning.None else it.reminderWarning,
                 )
             }
+            is ItemDetailEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
             is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is ItemDetailEvent.OnReminderWarningChanged ->
+                _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
             is ItemDetailEvent.OnSaveClicked -> handleSave()
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
@@ -129,7 +137,9 @@ class ItemDetailViewModel(
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
                     dueDate = state.dueDate,
+                    dueTime = state.dueTime,
                     recurrence = state.recurrence,
+                    reminderWarning = state.reminderWarning,
                     createdAt = LocalDateTime.now(),
                     tags = selectedTags,
                 ),
@@ -143,7 +153,9 @@ class ItemDetailViewModel(
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
                     dueDate = state.dueDate,
+                    dueTime = state.dueTime,
                     recurrence = state.recurrence,
+                    reminderWarning = state.reminderWarning,
                     tags = selectedTags,
                 ),
             )

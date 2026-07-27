@@ -20,7 +20,9 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
 import com.seucaio.unideas.feature.items.ui.components.fields.DueDateField
+import com.seucaio.unideas.feature.items.ui.components.fields.DueTimeField
 import com.seucaio.unideas.feature.items.ui.components.fields.RecurrenceField
+import com.seucaio.unideas.feature.items.ui.components.fields.ReminderWarningField
 import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
 import com.seucaio.unideas.feature.items.ui.components.fields.TagsField
 import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFields
@@ -91,19 +93,7 @@ fun ItemFormBody(
         }
 
         if (state.typeIsTask) {
-            DueDateField(
-                dueDate = state.dueDate,
-                onDueDateChanged = events.onDueDateChanged,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-
-            if (state.canPickRecurrence) {
-                RecurrenceField(
-                    recurrence = state.recurrence,
-                    onRecurrenceChanged = events.onRecurrenceChanged,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
+            TaskDueFields(state, events)
         }
 
         if (state.typeIsTask && state.isEditing) {
@@ -127,6 +117,40 @@ fun ItemFormBody(
     }
 }
 
+/** Due date/time, recurrence and reminder warning — only shown for tasks with a due date set. */
+@Composable
+private fun TaskDueFields(state: ItemFormFieldsState, events: ItemFormFieldsEvents) {
+    DueDateField(
+        dueDate = state.dueDate,
+        onDueDateChanged = events.onDueDateChanged,
+        modifier = Modifier.padding(top = 16.dp)
+    )
+
+    if (state.canPickReminder) {
+        DueTimeField(
+            dueTime = state.dueTime,
+            onDueTimeChanged = events.onDueTimeChanged,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+
+    if (state.canPickRecurrence) {
+        RecurrenceField(
+            recurrence = state.recurrence,
+            onRecurrenceChanged = events.onRecurrenceChanged,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+
+    if (state.canPickReminder) {
+        ReminderWarningField(
+            reminderWarning = state.reminderWarning,
+            onReminderWarningChanged = events.onReminderWarningChanged,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun ItemFormBodyPreview(
@@ -143,7 +167,9 @@ private fun ItemFormBodyPreview(
                     onSectionChanged = {},
                     onTagToggled = {},
                     onDueDateChanged = {},
+                    onDueTimeChanged = {},
                     onRecurrenceChanged = {},
+                    onReminderWarningChanged = {},
                     onSaveClicked = {},
                 ),
             )

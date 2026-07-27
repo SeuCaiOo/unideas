@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -23,7 +22,11 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 fun GroupHeader(text: String, modifier: Modifier = Modifier, emphasized: Boolean = false) {
     Text(
         text.uppercase(),
-        style = if (emphasized) AppType.FieldLabel.copy(fontSize = EMPHASIZED_FONT_SIZE) else AppType.FieldLabel,
+        style = if (emphasized) {
+            MaterialTheme.typography.labelMedium.copy(fontSize = EMPHASIZED_FONT_SIZE)
+        } else {
+            MaterialTheme.typography.labelMedium
+        },
         color = if (emphasized) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary,
         modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp)
     )

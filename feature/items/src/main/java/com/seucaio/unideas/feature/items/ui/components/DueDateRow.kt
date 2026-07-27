@@ -24,7 +24,6 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.UrgencyLevel
 import com.seucaio.unideas.ds.components.chips.DueBadge
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -41,7 +40,7 @@ fun DueDateRow(item: Item, isLast: Boolean, modifier: Modifier = Modifier) {
         ) {
             Text(
                 stringResource(R.string.item_detail_date_label),
-                style = AppType.Metadata,
+                style = MaterialTheme.typography.titleSmall,
                 color = LocalUdsExtendedColors.current.textTertiary,
                 fontSize = 13.sp,
             )

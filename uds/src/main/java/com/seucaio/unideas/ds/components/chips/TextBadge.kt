@@ -12,14 +12,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
 fun TextBadge(text: String, background: Color, content: Color, modifier: Modifier = Modifier) {
     Text(
         text,
-        style = AppType.TypeBadge,
+        style = MaterialTheme.typography.bodySmall,
         color = content,
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))

@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -19,7 +18,7 @@ fun FormField(label: String, modifier: Modifier = Modifier, content: @Composable
     Column(modifier) {
         Text(
             label.uppercase(),
-            style = AppType.FieldLabel,
+            style = MaterialTheme.typography.labelMedium,
             color = LocalUdsExtendedColors.current.textTertiary,
             modifier = Modifier.padding(bottom = 7.dp)
         )

@@ -1,61 +1,93 @@
 package com.seucaio.unideas.ds.theme
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // Roboto is Android's default system sans-serif; no bundled font files needed.
 private val Roboto = FontFamily.SansSerif
 
-/** Hand-picked text styles mirroring the design tokens exactly. */
-object AppType {
-    val AppTitle = TextStyle(
-        fontFamily = Roboto,
-        fontSize = 23.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.2.sp
-    )
-    val ScreenTitle = TextStyle(fontFamily = Roboto, fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
-    val ItemTitleDetail = TextStyle(
+val AppTypography = Typography(
+    headlineLarge = TextStyle(
         fontFamily = Roboto,
         fontSize = 24.sp,
         fontWeight = FontWeight.SemiBold,
         lineHeight = 30.sp
-    )
-    val ListItemTitle = TextStyle(fontFamily = Roboto, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-    val Body = TextStyle(fontFamily = Roboto, fontSize = 15.sp, fontWeight = FontWeight.Normal, lineHeight = 24.sp)
-    val FieldLabel = TextStyle(
-        fontFamily = Roboto,
-        fontSize = 11.5.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 0.9.sp
-    )
-    val Metadata = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Normal)
-    val MetadataMedium = TextStyle(fontFamily = Roboto, fontSize = 12.5.sp, fontWeight = FontWeight.Medium)
-    val DueBadge = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-    val TabLabel = TextStyle(
+    ),
+    headlineMedium = TextStyle(fontFamily = Roboto, fontSize = 15.sp, fontWeight = FontWeight.Medium),
+    headlineSmall = TextStyle(
         fontFamily = Roboto,
         fontSize = 14.5.sp,
         fontWeight = FontWeight.SemiBold,
         textAlign = TextAlign.Center
-    )
-    val ButtonLabel = TextStyle(fontFamily = Roboto, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-    val ButtonLabelLarge = TextStyle(fontFamily = Roboto, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-    val ChipLabel = TextStyle(fontFamily = Roboto, fontSize = 12.5.sp, fontWeight = FontWeight.Medium)
-    val TypeBadge = TextStyle(
+    ),
+    titleLarge = TextStyle(fontFamily = Roboto, fontSize = 19.sp, fontWeight = FontWeight.Medium),
+    titleMedium = TextStyle(fontFamily = Roboto, fontSize = 12.5.sp, fontWeight = FontWeight.Medium),
+    titleSmall = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+    bodyLarge = TextStyle(
+        fontFamily = Roboto,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 24.sp
+    ),
+    bodyMedium = TextStyle(fontFamily = Roboto, fontSize = 12.sp, fontWeight = FontWeight.Normal),
+    bodySmall = TextStyle(
         fontFamily = Roboto,
         fontSize = 11.5.sp,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Normal,
         letterSpacing = 0.8.sp
+    ),
+    labelLarge = TextStyle(fontFamily = Roboto, fontSize = 14.sp, fontWeight = FontWeight.Medium),
+    labelMedium = TextStyle(
+        fontFamily = Roboto,
+        fontSize = 11.5.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 0.9.sp
     )
+)
+
+@PreviewLightDark
+@Composable
+private fun AppTypographyPreview() {
+    UdsTheme {
+        Column(
+            Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            TypeSample("headlineLarge", MaterialTheme.typography.headlineLarge, "Renew car insurance")
+            TypeSample("headlineMedium", MaterialTheme.typography.headlineMedium, "Pay electricity bill")
+            TypeSample("headlineSmall", MaterialTheme.typography.headlineSmall, "Tasks")
+            TypeSample("titleLarge", MaterialTheme.typography.titleLarge, "Item detail")
+            TypeSample("titleMedium", MaterialTheme.typography.titleMedium, "urgent")
+            TypeSample("titleSmall", MaterialTheme.typography.titleSmall, "Home \u00b7 6 items")
+            TypeSample("bodyLarge", MaterialTheme.typography.bodyLarge, "Don't forget to bring the documents.")
+            TypeSample("bodyMedium", MaterialTheme.typography.bodyMedium, "3 days overdue")
+            TypeSample("bodySmall", MaterialTheme.typography.bodySmall, "TASK")
+            TypeSample("labelLarge", MaterialTheme.typography.labelLarge, "SAVE")
+            TypeSample("labelMedium", MaterialTheme.typography.labelMedium, "TITLE")
+        }
+    }
 }
 
-val AppTypography = Typography(
-    headlineLarge = AppType.ItemTitleDetail,
-    bodyLarge = AppType.Body,
-    titleLarge = AppType.ScreenTitle,
-    labelLarge = AppType.ButtonLabel
-)
+@Composable
+private fun TypeSample(slotName: String, style: TextStyle, sampleText: String) {
+    Column {
+        Text(slotName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        Text(sampleText, style = style, color = MaterialTheme.colorScheme.onSurface)
+    }
+}

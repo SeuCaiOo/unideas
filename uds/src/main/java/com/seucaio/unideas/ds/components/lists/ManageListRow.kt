@@ -24,7 +24,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.components.buttons.AppIconButton
-import com.seucaio.unideas.ds.theme.AppType
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -49,7 +48,11 @@ fun ManageListRow(
         )
         Column(Modifier.weight(1f)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, style = AppType.Metadata, color = LocalUdsExtendedColors.current.textTertiary)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.titleSmall,
+                color = LocalUdsExtendedColors.current.textTertiary
+            )
         }
         trailing()
     }

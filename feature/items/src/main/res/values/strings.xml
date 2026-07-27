@@ -31,6 +31,14 @@
     <string name="item_form_recurrence_daily">Daily</string>
     <string name="item_form_recurrence_weekly">Weekly</string>
     <string name="item_form_recurrence_monthly">Monthly</string>
+    <string name="item_form_time_label">Due time</string>
+    <string name="item_form_time_clear">Clear time</string>
+    <string name="item_form_reminder_label">Remind me</string>
+    <string name="item_form_reminder_none">No reminder</string>
+    <string name="item_form_reminder_1_day">1 day before</string>
+    <string name="item_form_reminder_2_days">2 days before</string>
+    <string name="item_form_reminder_3_days">3 days before</string>
+    <string name="item_form_reminder_7_days">7 days before</string>
     <string name="item_detail_load_error">Couldn\'t load the item</string>
     <string name="item_detail_section_label">Section</string>
     <string name="item_detail_tags_label">Tags</string>

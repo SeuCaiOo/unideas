@@ -3,10 +3,13 @@ package com.seucaio.unideas.domain.usecase.item
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.repository.ItemRepository
+import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.stub.ItemStub
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -15,8 +18,13 @@ import org.junit.Test
 class CompleteItemUseCaseTest {
 
     private val repository: ItemRepository = mockk()
-    private val useCase = CompleteItemUseCase(repository)
+    private val reminderRefreshTrigger: ReminderRefreshTrigger = mockk()
+    private val useCase = CompleteItemUseCase(repository, reminderRefreshTrigger)
     private val completedAt = ItemStub.TODAY.atTime(12, 0)
+
+    init {
+        every { reminderRefreshTrigger.refreshNow() } returns Unit
+    }
 
     @Test
     fun `invoke completes a non-recurring task without creating a new instance`() = runTest {
@@ -27,6 +35,7 @@ class CompleteItemUseCaseTest {
 
         assertEquals(CompletionResult.Completed, result.getOrNull())
         coVerify(exactly = 0) { repository.insertItem(any()) }
+        verify(exactly = 1) { reminderRefreshTrigger.refreshNow() }
     }
 
     @Test
@@ -67,6 +76,7 @@ class CompleteItemUseCaseTest {
         assertTrue(result.isFailure)
         coVerify(exactly = 0) { repository.updateItem(any()) }
         coVerify(exactly = 0) { repository.insertItem(any()) }
+        verify(exactly = 0) { reminderRefreshTrigger.refreshNow() }
     }
 
     @Test
@@ -77,5 +87,6 @@ class CompleteItemUseCaseTest {
         val result = useCase(item, completedAt)
 
         assertTrue(result.isFailure)
+        verify(exactly = 0) { reminderRefreshTrigger.refreshNow() }
     }
 }

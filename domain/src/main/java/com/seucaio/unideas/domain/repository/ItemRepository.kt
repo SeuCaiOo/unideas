@@ -39,6 +39,13 @@ interface ItemRepository {
      */
     fun getPriorityItems(dueOnOrBefore: LocalDate): Flow<List<Item>>
 
+    /**
+     * Observes every non-completed item with a due date, regardless of how far out — unlike
+     * [getPriorityItems], not bounded by the "due soon" window. Used by the reminder check
+     * worker (#115), since a configured warning can be further out than that window.
+     */
+    fun getItemsWithDueDate(): Flow<List<Item>>
+
     /** Observes whether the item table has any row at all, regardless of type/section/tags. */
     fun hasAnyItem(): Flow<Boolean>
 

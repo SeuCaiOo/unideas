@@ -4,6 +4,7 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.repository.ItemRepository
+import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.usecase.UseCase
 import com.seucaio.unideas.domain.util.resultCatching
 import java.time.LocalDateTime
@@ -14,13 +15,16 @@ import java.time.LocalDateTime
  * item's **original** due date (calendar cadence, independent of when it was actually completed);
  * undoing completion never touches recurrence, it only clears [Item.completedAt].
  */
-class CompleteItemUseCase(private val repository: ItemRepository) : UseCase {
+class CompleteItemUseCase(
+    private val repository: ItemRepository,
+    private val reminderRefreshTrigger: ReminderRefreshTrigger,
+) : UseCase {
 
     suspend operator fun invoke(item: Item, completedAt: LocalDateTime): Result<CompletionResult> =
         resultCatching {
             require(item.type == ItemType.TASK) { "Only tasks can be completed" }
 
-            if (item.isCompleted) {
+            val result = if (item.isCompleted) {
                 repository.updateItem(item.copy(completedAt = null))
                 CompletionResult.Uncompleted
             } else {
@@ -36,5 +40,7 @@ class CompleteItemUseCase(private val repository: ItemRepository) : UseCase {
                     CompletionResult.CompletedAndRenewed(newId)
                 }
             }
+            reminderRefreshTrigger.refreshNow()
+            result
         }
 }

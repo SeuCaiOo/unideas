@@ -69,6 +69,15 @@ interface ItemDao {
     )
     fun getPriorityItems(dueOnOrBefore: Long): Flow<List<ItemWithTags>>
 
+    /**
+     * Observes every non-completed item with a due date, regardless of how far out — unlike
+     * [getPriorityItems], not bounded by the "due soon" window. Used by the reminder check
+     * worker (#115), since a configured warning can be further out than that window.
+     */
+    @Transaction
+    @Query("SELECT * FROM items WHERE dueDate IS NOT NULL AND completedAt IS NULL")
+    fun getItemsWithDueDate(): Flow<List<ItemWithTags>>
+
     /** Cheap existence check — no items in the entire table, regardless of type/section/tags. */
     @Query("SELECT EXISTS(SELECT 1 FROM items)")
     fun hasAnyItem(): Flow<Boolean>

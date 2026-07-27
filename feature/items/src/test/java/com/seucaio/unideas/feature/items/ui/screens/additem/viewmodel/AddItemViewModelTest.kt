@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
@@ -24,6 +25,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddItemViewModelTest {
@@ -85,20 +87,28 @@ class AddItemViewModelTest {
     }
 
     @Test
-    fun `when OnDueDateChanged clears the date should reset recurrence to None`() = runTest {
+    fun `when OnDueDateChanged clears the date should reset recurrence, dueTime and reminderWarning`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
             awaitItem()
             vm.onEvent(AddItemEvent.OnDueDateChanged(ItemStub.TODAY))
             vm.onEvent(AddItemEvent.OnRecurrenceChanged(Recurrence.Weekly))
+            vm.onEvent(AddItemEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
+            vm.onEvent(AddItemEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
             awaitItem()
-            val withRecurrence = awaitItem()
-            assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
+            awaitItem()
+            awaitItem()
+            val configured = awaitItem()
+            assertEquals(Recurrence.Weekly, configured.recurrence)
+            assertEquals(LocalTime.of(14, 0), configured.dueTime)
+            assertEquals(ReminderWarning.DaysBefore(2), configured.reminderWarning)
 
             vm.onEvent(AddItemEvent.OnDueDateChanged(null))
             val cleared = awaitItem()
             assertEquals(Recurrence.None, cleared.recurrence)
+            assertEquals(null, cleared.dueTime)
+            assertEquals(ReminderWarning.None, cleared.reminderWarning)
         }
     }
 
@@ -118,6 +128,31 @@ class AddItemViewModelTest {
 
         coVerify(exactly = 1) {
             createItem(match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) })
+        }
+    }
+
+    @Test
+    fun `when OnSaveClicked should include dueTime and reminderWarning in the created item`() = runTest {
+        coEvery { createItem(any()) } returns Result.success(10L)
+        val vm = viewModel()
+
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(AddItemEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(AddItemEvent.OnDueDateChanged(ItemStub.TODAY))
+        vm.onEvent(AddItemEvent.OnDueTimeChanged(LocalTime.of(9, 30)))
+        vm.onEvent(AddItemEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(3)))
+
+        vm.uiAction.test {
+            vm.onEvent(AddItemEvent.OnSaveClicked)
+            assertEquals(AddItemUiAction.NavigateBack, awaitItem())
+        }
+
+        coVerify(exactly = 1) {
+            createItem(
+                match {
+                    it.dueTime == LocalTime.of(9, 30) && it.reminderWarning == ReminderWarning.DaysBefore(3)
+                },
+            )
         }
     }
 

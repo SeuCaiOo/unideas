@@ -103,6 +103,19 @@ class ItemRepositoryImplTest {
     }
 
     @Test
+    fun `getItemsWithDueDate delegates to the dao and maps rows`() = runTest {
+        val item = ItemStub.task()
+        every { itemDao.getItemsWithDueDate() } returns flowOf(
+            listOf(ItemWithTags(item = item.toEntity(), tags = emptyList())),
+        )
+
+        val result = repository.getItemsWithDueDate().first()
+
+        assertEquals(listOf(item), result)
+        verify(exactly = 1) { itemDao.getItemsWithDueDate() }
+    }
+
+    @Test
     fun `hasAnyItem delegates to the dao`() = runTest {
         every { itemDao.hasAnyItem() } returns flowOf(true)
 

@@ -9,8 +9,10 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -19,9 +21,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -32,6 +36,8 @@ import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
+import com.seucaio.unideas.core.notifications.notification.ReminderNotifier
+import com.seucaio.unideas.core.notifications.worker.ReminderScheduler
 import com.seucaio.unideas.ds.components.legacy.AppVersionFooter
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.components.lists.ListSection
@@ -43,6 +49,7 @@ import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsViewModel
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import com.seucaio.unideas.core.backup.R as BackupR
 
@@ -62,12 +69,15 @@ fun SettingsScreen(
     val backupUiState by backupViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val updatedOnNavigateToSections by rememberUpdatedState(onNavigateToSections)
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
     val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
     var showBackupSheet by remember { mutableStateOf(false) }
     var showDesignSystemGallery by remember { mutableStateOf(false) }
+    var showTestNotificationSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -107,6 +117,13 @@ fun SettingsScreen(
         onEvent = viewModel::onEvent,
         onBackupClick = { showBackupSheet = true },
         onDesignSystemGalleryClick = { showDesignSystemGallery = true },
+        onRunReminderCheckClicked = {
+            ReminderScheduler.refreshNow(context)
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar(resources.getString(R.string.settings_debug_run_reminder_check_success))
+            }
+        },
+        onTestNotificationClicked = { showTestNotificationSheet = true },
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
     )
@@ -116,6 +133,21 @@ fun SettingsScreen(
             snackbarHostState = snackbarHostState,
             onDismiss = { showBackupSheet = false },
             viewModel = backupViewModel,
+        )
+    }
+
+    if (showTestNotificationSheet) {
+        TestNotificationBottomSheet(
+            onSend = { urgent ->
+                ReminderNotifier(context).notifyTest(urgent)
+                showTestNotificationSheet = false
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        resources.getString(R.string.settings_debug_test_notification_success)
+                    )
+                }
+            },
+            onDismiss = { showTestNotificationSheet = false },
         )
     }
 }
@@ -130,6 +162,8 @@ private fun SettingsContent(
     onEvent: (SettingsEvent) -> Unit,
     onBackupClick: () -> Unit,
     onDesignSystemGalleryClick: () -> Unit,
+    onRunReminderCheckClicked: () -> Unit,
+    onTestNotificationClicked: () -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -154,6 +188,8 @@ private fun SettingsContent(
                     backupUiState = backupUiState,
                     onBackupClick = onBackupClick,
                     onDesignSystemGalleryClick = onDesignSystemGalleryClick,
+                    onRunReminderCheckClicked = onRunReminderCheckClicked,
+                    onTestNotificationClicked = onTestNotificationClicked,
                     showDebugSection = showDebugSection,
                     modifier = Modifier.padding(padding),
                 )
@@ -176,6 +212,8 @@ private fun SettingsBody(
     backupUiState: BackupUiState,
     onBackupClick: () -> Unit,
     onDesignSystemGalleryClick: () -> Unit,
+    onRunReminderCheckClicked: () -> Unit,
+    onTestNotificationClicked: () -> Unit,
     showDebugSection: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -224,6 +262,16 @@ private fun SettingsBody(
                     label = stringResource(R.string.settings_debug_design_system),
                     onClick = onDesignSystemGalleryClick,
                 )
+                NavRow(
+                    icon = Icons.Outlined.Sync,
+                    label = stringResource(R.string.settings_debug_run_reminder_check),
+                    onClick = onRunReminderCheckClicked,
+                )
+                NavRow(
+                    icon = Icons.Outlined.Notifications,
+                    label = stringResource(R.string.settings_debug_test_notification),
+                    onClick = onTestNotificationClicked,
+                )
                 ScreenVersionRow()
             }
         }
@@ -257,6 +305,8 @@ private fun SettingsScreenPreview(
             onEvent = {},
             onBackupClick = {},
             onDesignSystemGalleryClick = {},
+            onRunReminderCheckClicked = {},
+            onTestNotificationClicked = {},
             onNavigateBack = null,
             snackbarHostState = remember { SnackbarHostState() },
         )

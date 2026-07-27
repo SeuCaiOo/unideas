@@ -31,6 +31,15 @@
     <string name="item_form_recurrence_daily">Diariamente</string>
     <string name="item_form_recurrence_weekly">Semanalmente</string>
     <string name="item_form_recurrence_monthly">Mensalmente</string>
+    <string name="item_form_time_label">Horário de vencimento</string>
+    <string name="item_form_time_clear">Limpar horário</string>
+    <string name="item_form_reminder_label">Avisar</string>
+    <string name="item_form_reminder_none">Sem aviso</string>
+    <string name="item_form_reminder_1_day">1 dia antes</string>
+    <string name="item_form_reminder_2_days">2 dias antes</string>
+    <string name="item_form_reminder_3_days">3 dias antes</string>
+    <string name="item_form_reminder_7_days">7 dias antes</string>
+    <string name="item_form_more_options">Mais opções</string>
     <string name="item_detail_load_error">Não foi possível carregar o item</string>
     <string name="item_detail_section_label">Seção</string>
     <string name="item_detail_tags_label">Tags</string>

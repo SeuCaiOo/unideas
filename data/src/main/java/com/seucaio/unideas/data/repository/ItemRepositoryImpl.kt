@@ -34,6 +34,10 @@ class ItemRepositoryImpl(
         itemDao.getPriorityItems(dueOnOrBefore.toEpochMilli())
             .map { rows -> rows.map { it.toDomain() } }
 
+    override fun getItemsWithDueDate(): Flow<List<Item>> =
+        itemDao.getItemsWithDueDate()
+            .map { rows -> rows.map { it.toDomain() } }
+
     override fun hasAnyItem(): Flow<Boolean> = itemDao.hasAnyItem()
 
     override suspend fun insertItem(item: Item): Long =

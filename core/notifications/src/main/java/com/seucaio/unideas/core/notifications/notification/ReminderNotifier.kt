@@ -78,12 +78,25 @@ class ReminderNotifier(private val context: Context) {
         ) { context.getString(R.string.reminder_notification_urgent_title) }
     }
 
-    /** Posts a one-off notification on the given tier's channel, ignoring real item data — debug tooling (settings). */
+    /**
+     * Posts a one-off notification on the given tier's channel, ignoring real item data — debug
+     * tooling (settings). Mirrors every styling flag [updateTier]'s summary post uses (icon,
+     * accent color, title prefix) so this stays a faithful validation tool instead of a
+     * simplified path that silently drifts from what real notifications look like.
+     */
     fun notifyTest(urgent: Boolean) {
-        val notificationId = if (urgent) TEST_URGENT_NOTIFICATION_ID else TEST_NORMAL_NOTIFICATION_ID
+        val notificationId = if (urgent) {
+            TEST_URGENT_NOTIFICATION_ID
+        } else {
+            TEST_NORMAL_NOTIFICATION_ID
+        }
         val channelId = if (urgent) URGENT_CHANNEL_ID else NORMAL_CHANNEL_ID
         val title = context.getString(
-            if (urgent) R.string.reminder_notification_urgent_title else R.string.reminder_notification_normal_title
+            if (urgent) {
+                R.string.reminder_notification_urgent_title
+            } else {
+                R.string.reminder_notification_normal_title
+            }
         )
         val prefixedTitle = if (urgent) "$URGENT_TITLE_EMOJI $title" else title
         postNotification(
@@ -92,7 +105,11 @@ class ReminderNotifier(private val context: Context) {
             title = prefixedTitle,
             body = context.getString(R.string.reminder_notification_test_body),
             ongoing = urgent,
-            accentColor = if (urgent) ContextCompat.getColor(context, R.color.reminder_urgent_accent) else null,
+            accentColor = if (urgent) {
+                ContextCompat.getColor(context, R.color.reminder_urgent_accent)
+            } else {
+                null
+            },
         )
     }
 
@@ -165,7 +182,10 @@ class ReminderNotifier(private val context: Context) {
 
     /** Strips common inline Markdown markers and collapses whitespace — a plain-text preview, not a full renderer. */
     private fun notificationPreview(description: String): String {
-        val plain = description.replace(MARKDOWN_MARKER_REGEX, "").replace(WHITESPACE_REGEX, " ").trim()
+        val plain = description
+            .replace(MARKDOWN_MARKER_REGEX, "")
+            .replace(WHITESPACE_REGEX, " ")
+            .trim()
         return if (plain.length > PREVIEW_MAX_LENGTH) {
             plain.take(PREVIEW_MAX_LENGTH).trimEnd() + "…"
         } else {
@@ -214,7 +234,8 @@ class ReminderNotifier(private val context: Context) {
      */
     private fun contentIntent(notificationId: Int, itemId: Long?): PendingIntent? {
         val intent = if (itemId != null) {
-            Intent(Intent.ACTION_VIEW, "unideas://item/$itemId".toUri()).setPackage(context.packageName)
+            Intent(Intent.ACTION_VIEW, "unideas://item/$itemId".toUri())
+                .setPackage(context.packageName)
         } else {
             context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
         }

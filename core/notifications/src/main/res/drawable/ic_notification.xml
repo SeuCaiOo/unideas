@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Status-bar notification icon — white silhouette (Android strips color from small icons
      anyway), same mark as the app's adaptive icon foreground (app/src/main/res/drawable/ic_launcher_foreground.xml),
-     but without that file's scale/translate group — that padding is calibrated for the adaptive
-     icon's 108dp safe zone, not a 24dp notification icon, and left the mark tiny with a huge
-     border when reused as-is. Viewport here is cropped tight to the raw path bounds instead. -->
+     cropped tight to the raw path bounds (see git history for the padding problem that fixed) and,
+     unlike that first fix, using a SQUARE viewport (78x78, content centered via translateX) —
+     the status bar treats the icon slot as square and stretches non-square vectors to fit it,
+     which visibly distorted the mark on a second test device. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="16dp"
+    android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="52"
+    android:viewportWidth="78"
     android:viewportHeight="78">
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M26,2c-14,0 -24,10 -24,23c0,9 4.5,14.5 9,19c3,3 4.5,5.5 4.5,9h21c0,-3.5 1.5,-6 4.5,-9c4.5,-4.5 9,-10 9,-19c0,-13 -10,-23 -24,-23zM14,26L21,33L38,14L42,18L22,40L10,29Z"
-      android:fillType="evenOdd"/>
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M17,58L35,58A3,3 0,0 1,35 64L17,64A3,3 0,0 1,17 58Z"/>
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M20,68L32,68A3,3 0,0 1,32 74L20,74A3,3 0,0 1,20 68Z"/>
+  <group android:translateX="13">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,2c-14,0 -24,10 -24,23c0,9 4.5,14.5 9,19c3,3 4.5,5.5 4.5,9h21c0,-3.5 1.5,-6 4.5,-9c4.5,-4.5 9,-10 9,-19c0,-13 -10,-23 -24,-23zM14,26L21,33L38,14L42,18L22,40L10,29Z"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,58L35,58A3,3 0,0 1,35 64L17,64A3,3 0,0 1,17 58Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,68L32,68A3,3 0,0 1,32 74L20,74A3,3 0,0 1,20 68Z"/>
+  </group>
 </vector>

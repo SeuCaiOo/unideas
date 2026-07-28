@@ -1,5 +1,6 @@
 package com.seucaio.unideas.domain.usecase.item
 
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
 import io.mockk.coEvery
@@ -21,7 +22,9 @@ class ItemFormUseCaseTest {
     private val editItem: EditItemUseCase = mockk()
     private val deleteItem: DeleteItemUseCase = mockk()
     private val completeItem: CompleteItemUseCase = mockk()
-    private val useCase = ItemFormUseCase(getItem, createItem, editItem, deleteItem, completeItem)
+    private val getItemCompletionHistory: GetItemCompletionHistoryUseCase = mockk()
+    private val useCase =
+        ItemFormUseCase(getItem, createItem, editItem, deleteItem, completeItem, getItemCompletionHistory)
 
     @Test
     fun `get delegates to GetItemUseCase`() = runTest {
@@ -76,5 +79,18 @@ class ItemFormUseCaseTest {
 
         assertEquals(Result.success(CompletionResult.Completed), result)
         coVerify(exactly = 1) { completeItem(item, completedAt) }
+    }
+
+    @Test
+    fun `getHistory delegates to GetItemCompletionHistoryUseCase`() = runTest {
+        val history = listOf(
+            ItemCompletionHistory(itemId = 1L, scheduledDate = ItemStub.TODAY, completedAt = null),
+        )
+        every { getItemCompletionHistory(1L) } returns flowOf(history)
+
+        val result = useCase.getHistory(1L).first()
+
+        assertEquals(history, result)
+        verify(exactly = 1) { getItemCompletionHistory(1L) }
     }
 }

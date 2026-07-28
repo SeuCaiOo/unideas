@@ -10,17 +10,20 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.seucaio.unideas.core.notifications.R
 import com.seucaio.unideas.domain.model.Item
 
 /**
  * Two channels, one notification per item plus a group summary per tier: [NORMAL_CHANNEL_ID]
- * (dismissible) and [URGENT_CHANNEL_ID] (`setOngoing(true)` — no foreground service needed for
- * that to stick; the Android 13 swipe-away change only applies to foreground-service
- * notifications). An item that leaves a tier (completed, moved tier, or deleted) has just its own
- * notification cancelled — the rest of the tier, and its summary, are untouched as long as at
- * least one item remains. An empty tier cancels its summary too.
+ * (dismissible) and [URGENT_CHANNEL_ID] (`setOngoing(true)`, tinted with [R.color.reminder_urgent_accent]
+ * for visual weight). `setOngoing` alone no longer prevents swipe-dismiss without a foreground
+ * service — Android 14 lets users dismiss any ongoing notification that isn't backed by one — so
+ * the urgent tier is still swipeable there; there's no non-dismissible option without taking on a
+ * foreground service (rejected in the original #95 design). An item that leaves a tier (completed,
+ * moved tier, or deleted) has just its own notification cancelled — the rest of the tier, and its
+ * summary, are untouched as long as at least one item remains. An empty tier cancels its summary too.
  */
 class ReminderNotifier(private val context: Context) {
 
@@ -69,6 +72,7 @@ class ReminderNotifier(private val context: Context) {
             channelId = URGENT_CHANNEL_ID,
             ongoing = true,
             silent = silent,
+            accentColor = ContextCompat.getColor(context, R.color.reminder_urgent_accent),
             lastIds = { lastUrgentIds },
             setLastIds = { lastUrgentIds = it },
         ) { context.getString(R.string.reminder_notification_urgent_title) }
@@ -81,12 +85,14 @@ class ReminderNotifier(private val context: Context) {
         val title = context.getString(
             if (urgent) R.string.reminder_notification_urgent_title else R.string.reminder_notification_normal_title
         )
+        val prefixedTitle = if (urgent) "$URGENT_TITLE_EMOJI $title" else title
         postNotification(
             notificationId = notificationId,
             channelId = channelId,
-            title = title,
+            title = prefixedTitle,
             body = context.getString(R.string.reminder_notification_test_body),
             ongoing = urgent,
+            accentColor = if (urgent) ContextCompat.getColor(context, R.color.reminder_urgent_accent) else null,
         )
     }
 
@@ -98,6 +104,7 @@ class ReminderNotifier(private val context: Context) {
         silent: Boolean,
         lastIds: () -> Set<Long>?,
         setLastIds: (Set<Long>) -> Unit,
+        accentColor: Int? = null,
         summaryTitle: () -> String,
     ) {
         val ids = items.map { it.id }.toSet()
@@ -115,6 +122,10 @@ class ReminderNotifier(private val context: Context) {
             return
         }
 
+        // A tinted tier (only urgent, today) also gets an emoji title prefix — the tint alone is
+        // subtle in a notification shade full of other apps' icons.
+        val titlePrefix = if (accentColor != null) "$URGENT_TITLE_EMOJI " else ""
+
         if (!silent || ids != lastIds()) {
             val body = context.resources.getQuantityString(
                 R.plurals.reminder_notification_body,
@@ -124,12 +135,13 @@ class ReminderNotifier(private val context: Context) {
             postNotification(
                 notificationId = notificationId,
                 channelId = channelId,
-                title = summaryTitle(),
+                title = titlePrefix + summaryTitle(),
                 body = body,
                 ongoing = ongoing,
                 silent = silent,
                 groupKey = channelId,
                 groupSummary = true,
+                accentColor = accentColor,
             )
         }
 
@@ -137,13 +149,14 @@ class ReminderNotifier(private val context: Context) {
             postNotification(
                 notificationId = ITEM_NOTIFICATION_ID_OFFSET + item.id.toInt(),
                 channelId = channelId,
-                title = item.title,
+                title = titlePrefix + item.title,
                 body = item.description?.let(::notificationPreview).orEmpty(),
                 ongoing = ongoing,
                 silent = silent,
                 groupKey = channelId,
                 groupSummary = false,
                 itemId = item.id,
+                accentColor = accentColor,
             )
         }
 
@@ -170,11 +183,12 @@ class ReminderNotifier(private val context: Context) {
         groupKey: String? = null,
         groupSummary: Boolean = false,
         itemId: Long? = null,
+        accentColor: Int? = null,
     ) {
         if (!hasPostNotificationsPermission()) return
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setOngoing(ongoing)
@@ -184,6 +198,7 @@ class ReminderNotifier(private val context: Context) {
             .setAutoCancel(!ongoing)
             .setGroup(groupKey)
             .setGroupSummary(groupSummary)
+            .apply { accentColor?.let(::setColor) }
             .build()
 
         notificationManager.notify(notificationId, notification)
@@ -249,6 +264,7 @@ class ReminderNotifier(private val context: Context) {
         // item.id is enough, no separate ranges needed per tier.
         private const val ITEM_NOTIFICATION_ID_OFFSET = 10_000
         private const val PREVIEW_MAX_LENGTH = 120
+        private const val URGENT_TITLE_EMOJI = "⚠️"
         private val MARKDOWN_MARKER_REGEX = Regex("[*_~`#]")
         private val WHITESPACE_REGEX = Regex("\\s+")
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the app's due-date urgency red (uds DangerLight, uds/theme/Color.kt) — notifications
+         aren't Compose, so this is a plain color resource kept in sync manually, not sourced from the theme. -->
+    <color name="reminder_urgent_accent">#BA1A1A</color>
+</resources>

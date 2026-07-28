@@ -1,12 +1,15 @@
 package com.seucaio.unideas
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -23,6 +26,12 @@ import com.seucaio.unideas.feature.tags.navigation.TagsRoute
 import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 class MainActivity : ComponentActivity() {
+
+    // Held outside setContent so onNewIntent (app already running, e.g. tapped from a reminder
+    // notification while some other screen is open) can hand the new deep link to the same
+    // NavController instead of only working on a cold start.
+    private var navController: NavHostController? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -30,6 +39,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             UdsTheme {
                 val navController = rememberNavController()
+                this.navController = navController
+                LaunchedEffect(Unit) { navController.handleDeepLink(intent) }
                 NavHost(
                     navController = navController,
                     startDestination = HomeRoute.Panel,
@@ -71,5 +82,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        navController?.handleDeepLink(intent)
     }
 }

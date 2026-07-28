@@ -251,7 +251,8 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() = runTest {
         val item = ItemStub.task(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
         coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
@@ -279,7 +280,8 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnCompleteConfirmClicked should reopen the task and dismiss the dialog`() = runTest {
         val item = ItemStub.completedTask(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val reopened = item.copy(completedAt = null)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
         coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
@@ -305,5 +307,35 @@ class ItemDetailViewModelTest {
         assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
         assertEquals(true, vm.uiState.value.isCompleted)
         coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when completing a recurring task should reflect the advanced dueDate and stay not completed`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        val renewed = item.copy(dueDate = ItemStub.TODAY.plusWeeks(1))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(renewed))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns
+            Result.success(CompletionResult.CompletedAndRenewed(1L))
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        assertEquals(false, vm.uiState.value.isCompleted)
+        assertEquals(ItemStub.TODAY.plusWeeks(1), vm.uiState.value.dueDate)
+    }
+
+    @Test
+    fun `when OnHistoryClicked should open the history sheet and load the series history`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        every { itemFormUseCase.getHistory(1L) } returns flowOf(emptyList())
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnHistoryClicked)
+
+        assertEquals(ItemDetailDialogState.History, vm.dialogState.value)
+        coVerify(exactly = 1) { itemFormUseCase.getHistory(1L) }
     }
 }

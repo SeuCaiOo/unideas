@@ -20,7 +20,7 @@ a different app with a different domain model.
 |---|---|
 | `Color.kt` | Semantic color tokens (`Background`, `Surface1/2/3`, `TextPrimary/Secondary/Tertiary`, `Accent`, `Danger`, `Warning`, etc.) — dark theme only by design |
 | `Dimens.kt` | `Radii` (corner radii per component), `Spacing`, touch-target constants |
-| `Type.kt` | `AppType` text style catalog + `AppTypography` (Material3 `Typography`) |
+| `Type.kt` | `AppTypography` (Material3 `Typography`) — every slot inlined directly, no intermediate custom text-style object; call sites read `MaterialTheme.typography.<slot>` |
 | `Theme.kt` | `UdsTheme { content }` — wraps `MaterialTheme` with the tokens above |
 
 Every screen that uses this design system must be wrapped in `UdsTheme { ... }`.
@@ -31,7 +31,7 @@ Organized by role, not by the screen that originally used them:
 
 - `buttons/` — `AppIconButton`, `AppFab`, `MiniFabAction`, `SegmentedControl`
 - `chips/` — `SelectableChip`, `SelectableChipRow` (+ `SelectableChipUi`), `RemovableChip`, `TextBadge`, `DueBadge`
-- `inputs/` — `AppTextField`, `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`, `InlineEditRow`
+- `inputs/` — `AppTextField`, `BorderlessTextField` (`String` and `TextFieldValue` overloads — the latter for callers that need cursor position, e.g. inserting Markdown syntax at the caret), `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`, `InlineEditRow`
 - `lists/` — `ListItemRow` (+ `ListItemUi`), `ManageListRow`, `MetaRow`, `MetaChipsRow`, `ActionRow`, `NavRow`, `GroupHeader`, `ListSection`, `TitleSubtitle`
 - `navigation/` — `TabItem`, `AppTabRow`
 - `panels/` — `PriorityPanel` (+ `PriorityRowUi`)

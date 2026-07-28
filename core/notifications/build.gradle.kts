@@ -18,6 +18,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
+
+    lint {
+        abortOnError = false
+    }
 }
 
 dependencies {

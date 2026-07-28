@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import com.seucaio.unideas.core.notifications.R
 import com.seucaio.unideas.domain.model.Item
 
@@ -142,6 +143,7 @@ class ReminderNotifier(private val context: Context) {
                 silent = silent,
                 groupKey = channelId,
                 groupSummary = false,
+                itemId = item.id,
             )
         }
 
@@ -167,6 +169,7 @@ class ReminderNotifier(private val context: Context) {
         silent: Boolean = false,
         groupKey: String? = null,
         groupSummary: Boolean = false,
+        itemId: Long? = null,
     ) {
         if (!hasPostNotificationsPermission()) return
 
@@ -177,7 +180,7 @@ class ReminderNotifier(private val context: Context) {
             .setOngoing(ongoing)
             .setOnlyAlertOnce(true)
             .setSilent(silent)
-            .setContentIntent(contentIntent(notificationId))
+            .setContentIntent(contentIntent(notificationId, itemId))
             .setAutoCancel(!ongoing)
             .setGroup(groupKey)
             .setGroupSummary(groupSummary)
@@ -187,18 +190,24 @@ class ReminderNotifier(private val context: Context) {
     }
 
     /**
-     * Launches the app's own launcher activity by package name rather than referencing it by
-     * class — this module stays self-contained (no dependency on `:app`), same as
-     * [com.seucaio.unideas.core.notifications.di.NotificationsModule]'s pattern.
+     * [itemId] non-null (an individual item's own notification) deep-links straight to that item
+     * (`unideas://item/{id}`, matching the `navDeepLink` on `ItemsRoute.Detail`) via an explicit
+     * `ACTION_VIEW` + `setPackage` — explicit so it resolves directly to this app without an
+     * intent chooser, same self-contained spirit as not referencing `MainActivity` by class. A
+     * summary notification (no single item to open) falls back to just launching the app, via the
+     * launcher intent resolved by package name.
      */
-    private fun contentIntent(notificationId: Int): PendingIntent? {
-        val launchIntent =
+    private fun contentIntent(notificationId: Int, itemId: Long?): PendingIntent? {
+        val intent = if (itemId != null) {
+            Intent(Intent.ACTION_VIEW, "unideas://item/$itemId".toUri()).setPackage(context.packageName)
+        } else {
             context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
-        launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         return PendingIntent.getActivity(
             context,
             notificationId,
-            launchIntent,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }

@@ -14,19 +14,22 @@ import com.seucaio.unideas.core.notifications.R
 import com.seucaio.unideas.domain.model.Item
 
 /**
- * Two channels, one aggregated notification per tier (never per item): [NORMAL_CHANNEL_ID]
+ * Two channels, one notification per item plus a group summary per tier: [NORMAL_CHANNEL_ID]
  * (dismissible) and [URGENT_CHANNEL_ID] (`setOngoing(true)` — no foreground service needed for
  * that to stick; the Android 13 swipe-away change only applies to foreground-service
- * notifications). An empty tier cancels its notification instead of showing an empty one.
+ * notifications). An item that leaves a tier (completed, moved tier, or deleted) has just its own
+ * notification cancelled — the rest of the tier, and its summary, are untouched as long as at
+ * least one item remains. An empty tier cancels its summary too.
  */
 class ReminderNotifier(private val context: Context) {
 
     private val notificationManager = NotificationManagerCompat.from(context)
 
-    // Skips reposting a tier whose item set didn't change since the last call — refreshNow() runs
-    // on every item completion, and reposting an unchanged dismissible notification re-alerts it
-    // (setOnlyAlertOnce only suppresses the alert while the notification is still on screen, which
-    // isn't the case once the user has swiped it away). null means "never posted yet".
+    // Skips reposting a tier's summary whose item set didn't change since the last call —
+    // refreshNow() runs on every item completion, and reposting an unchanged dismissible
+    // notification re-alerts it (setOnlyAlertOnce only suppresses the alert while the notification
+    // is still on screen, which isn't the case once the user has swiped it away). null means
+    // "never posted yet".
     private var lastNormalIds: Set<Long>? = null
     private var lastUrgentIds: Set<Long>? = null
 
@@ -40,29 +43,34 @@ class ReminderNotifier(private val context: Context) {
      * completion-triggered refreshes, which didn't discover anything new, as opposed to a real
      * periodic check.
      *
-     * The "skip if the item set didn't change" optimization only applies when [silent] — that's
-     * the case the original re-alert bug was about (a completion refresh finding nothing new).
-     * A non-silent call (a real periodic check, or the Settings debug "run check now" button)
-     * always reposts, even with an unchanged item set — otherwise the debug tool would silently
-     * no-op whenever nothing changed since the last check, defeating its purpose of forcing a
-     * real, visible check on demand.
+     * The summary's "skip if the item set didn't change" optimization only applies when [silent]
+     * — that's the case the original re-alert bug was about (a completion refresh finding nothing
+     * new). A non-silent call (a real periodic check, or the Settings debug "run check now"
+     * button) always reposts the summary, even with an unchanged item set — otherwise the debug
+     * tool would silently no-op whenever nothing changed since the last check. Individual item
+     * notifications always repost (no per-item diffing) — `silent` alone already prevents any
+     * alert, so skipping would only save a redundant `notify()` call, not user-visible noise.
      */
     fun notify(normal: List<Item>, urgent: List<Item>, silent: Boolean) {
-        val normalIds = normal.map { it.id }.toSet()
-        if (!silent || normalIds != lastNormalIds) {
-            updateTier(NORMAL_NOTIFICATION_ID, NORMAL_CHANNEL_ID, normal, ongoing = false, silent = silent) {
-                context.getString(R.string.reminder_notification_normal_title)
-            }
-            lastNormalIds = normalIds
-        }
+        updateTier(
+            items = normal,
+            notificationId = NORMAL_NOTIFICATION_ID,
+            channelId = NORMAL_CHANNEL_ID,
+            ongoing = false,
+            silent = silent,
+            lastIds = { lastNormalIds },
+            setLastIds = { lastNormalIds = it },
+        ) { context.getString(R.string.reminder_notification_normal_title) }
 
-        val urgentIds = urgent.map { it.id }.toSet()
-        if (!silent || urgentIds != lastUrgentIds) {
-            updateTier(URGENT_NOTIFICATION_ID, URGENT_CHANNEL_ID, urgent, ongoing = true, silent = silent) {
-                context.getString(R.string.reminder_notification_urgent_title)
-            }
-            lastUrgentIds = urgentIds
-        }
+        updateTier(
+            items = urgent,
+            notificationId = URGENT_NOTIFICATION_ID,
+            channelId = URGENT_CHANNEL_ID,
+            ongoing = true,
+            silent = silent,
+            lastIds = { lastUrgentIds },
+            setLastIds = { lastUrgentIds = it },
+        ) { context.getString(R.string.reminder_notification_urgent_title) }
     }
 
     /** Posts a one-off notification on the given tier's channel, ignoring real item data — debug tooling (settings). */
@@ -82,24 +90,72 @@ class ReminderNotifier(private val context: Context) {
     }
 
     private fun updateTier(
+        items: List<Item>,
         notificationId: Int,
         channelId: String,
-        items: List<Item>,
         ongoing: Boolean,
         silent: Boolean,
-        title: () -> String,
+        lastIds: () -> Set<Long>?,
+        setLastIds: (Set<Long>) -> Unit,
+        summaryTitle: () -> String,
     ) {
+        val ids = items.map { it.id }.toSet()
+
+        // Items that were in this tier last call but aren't anymore (completed, moved tier, or
+        // deleted) — cancel just their own notification, leaving the ones still pending alone.
+        val departedIds = (lastIds() ?: emptySet()) - ids
+        for (departedId in departedIds) {
+            notificationManager.cancel(ITEM_NOTIFICATION_ID_OFFSET + departedId.toInt())
+        }
+
         if (items.isEmpty()) {
             notificationManager.cancel(notificationId)
+            setLastIds(ids)
             return
         }
 
-        val body = context.resources.getQuantityString(
-            R.plurals.reminder_notification_body,
-            items.size,
-            items.size
-        )
-        postNotification(notificationId, channelId, title(), body, ongoing, silent)
+        if (!silent || ids != lastIds()) {
+            val body = context.resources.getQuantityString(
+                R.plurals.reminder_notification_body,
+                items.size,
+                items.size
+            )
+            postNotification(
+                notificationId = notificationId,
+                channelId = channelId,
+                title = summaryTitle(),
+                body = body,
+                ongoing = ongoing,
+                silent = silent,
+                groupKey = channelId,
+                groupSummary = true,
+            )
+        }
+
+        for (item in items) {
+            postNotification(
+                notificationId = ITEM_NOTIFICATION_ID_OFFSET + item.id.toInt(),
+                channelId = channelId,
+                title = item.title,
+                body = item.description?.let(::notificationPreview).orEmpty(),
+                ongoing = ongoing,
+                silent = silent,
+                groupKey = channelId,
+                groupSummary = false,
+            )
+        }
+
+        setLastIds(ids)
+    }
+
+    /** Strips common inline Markdown markers and collapses whitespace — a plain-text preview, not a full renderer. */
+    private fun notificationPreview(description: String): String {
+        val plain = description.replace(MARKDOWN_MARKER_REGEX, "").replace(WHITESPACE_REGEX, " ").trim()
+        return if (plain.length > PREVIEW_MAX_LENGTH) {
+            plain.take(PREVIEW_MAX_LENGTH).trimEnd() + "…"
+        } else {
+            plain
+        }
     }
 
     private fun postNotification(
@@ -109,6 +165,8 @@ class ReminderNotifier(private val context: Context) {
         body: String,
         ongoing: Boolean,
         silent: Boolean = false,
+        groupKey: String? = null,
+        groupSummary: Boolean = false,
     ) {
         if (!hasPostNotificationsPermission()) return
 
@@ -121,6 +179,8 @@ class ReminderNotifier(private val context: Context) {
             .setSilent(silent)
             .setContentIntent(contentIntent(notificationId))
             .setAutoCancel(!ongoing)
+            .setGroup(groupKey)
+            .setGroupSummary(groupSummary)
             .build()
 
         notificationManager.notify(notificationId, notification)
@@ -174,6 +234,14 @@ class ReminderNotifier(private val context: Context) {
         private const val URGENT_NOTIFICATION_ID = 1002
         private const val TEST_NORMAL_NOTIFICATION_ID = 1003
         private const val TEST_URGENT_NOTIFICATION_ID = 1004
+
+        // Offset for individual item notification IDs, kept clear of the summary/test IDs above —
+        // an item can only be in one tier at a time (see ReminderTier.of), so a single offset per
+        // item.id is enough, no separate ranges needed per tier.
+        private const val ITEM_NOTIFICATION_ID_OFFSET = 10_000
+        private const val PREVIEW_MAX_LENGTH = 120
+        private val MARKDOWN_MARKER_REGEX = Regex("[*_~`#]")
+        private val WHITESPACE_REGEX = Regex("\\s+")
 
         /**
          * Long-short-long pattern (ms: wait, long, pause, short, pause, short, pause, long) designed to be distinct

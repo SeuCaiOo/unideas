@@ -2,7 +2,6 @@ package com.seucaio.unideas.core.common.extensions
 
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -44,6 +43,3 @@ fun LocalDate.toEpochMilliUtc(): Long =
 
 /** Formats this [LocalDate] as `dd/MM/yyyy`. */
 fun LocalDate.toFormattedDateString(): String = format(dateFormatter)
-
-/** Formats the date portion of this [LocalDateTime] as `dd/MM/yyyy`. */
-fun LocalDateTime.toFormattedDateString(): String = toLocalDate().toFormattedDateString()

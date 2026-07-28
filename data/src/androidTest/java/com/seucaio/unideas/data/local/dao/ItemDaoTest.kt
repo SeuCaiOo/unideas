@@ -142,6 +142,18 @@ class ItemDaoTest {
     }
 
     @Test
+    fun getItemsWithDueDateReturnsEveryPendingItemWithADueDateRegardlessOfHowFarOut() = runTest {
+        dao.insert(task(title = "vencida", dueDate = 1_000L))
+        dao.insert(task(title = "distante", dueDate = 999_999_999L))
+        dao.insert(task(title = "concluída", dueDate = 1_000L, completedAt = 2_000L))
+        dao.insert(task(title = "sem prazo"))
+
+        val items = dao.getItemsWithDueDate().first()
+
+        assertEquals(setOf("vencida", "distante"), items.map { it.item.title }.toSet())
+    }
+
+    @Test
     fun hasAnyItemIsFalseWhenTheTableIsEmptyAndTrueAfterAnInsert() = runTest {
         assertEquals(false, dao.hasAnyItem().first())
 
@@ -208,7 +220,7 @@ class ItemDaoTest {
     /** Seeds the `sections` table — `ItemEntity.sectionId` FKs to it. */
     private fun seedSection(id: Long, name: String) {
         database.openHelper.writableDatabase.execSQL(
-            "INSERT INTO sections (id, name) VALUES (?, ?)",
+            "INSERT INTO sections (id, name, isPinned) VALUES (?, ?, 0)",
             arrayOf(id, name),
         )
     }

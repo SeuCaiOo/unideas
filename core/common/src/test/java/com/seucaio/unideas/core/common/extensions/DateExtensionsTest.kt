@@ -5,7 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.TimeZone
@@ -81,13 +80,6 @@ class DateExtensionsTest {
     fun `toFormattedDateString formats LocalDate as dd-MM-yyyy pattern`() {
         assertEquals("09/07/2026", LocalDate.of(2026, 7, 9).toFormattedDateString())
         assertEquals("01/01/2001", LocalDate.of(2001, 1, 1).toFormattedDateString())
-    }
-
-    @Test
-    fun `toFormattedDateString formats LocalDateTime date portion`() {
-        val dateTime = LocalDateTime.of(2026, 12, 31, 23, 59, 58)
-
-        assertEquals("31/12/2026", dateTime.toFormattedDateString())
     }
 
     private companion object {

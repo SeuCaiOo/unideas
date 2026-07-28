@@ -1,5 +1,6 @@
 package com.seucaio.unideas.data.local.database
 
+import com.seucaio.unideas.core.common.extensions.toEpochMilli
 import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.data.local.dao.ItemDao
 import com.seucaio.unideas.data.local.dao.SectionDao
@@ -12,8 +13,6 @@ import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.SeedScope
 import java.time.LocalDate
 import java.time.LocalDateTime
-import com.seucaio.unideas.core.common.extensions.toEpochMilli as dateToEpochMilli
-import com.seucaio.unideas.data.mapper.toEpochMilli as dateTimeToEpochMilli
 
 /**
  * Debug-only sample data, inserted directly via DAOs (not the domain use cases) — faster for
@@ -60,6 +59,7 @@ class DatabaseSeeder(
         )
         insertItem(SeedItem(ItemType.TASK, "Ler um livro"))
         insertItem(SeedItem(ItemType.NOTE, "Ideia de projeto", description = "App de anotações com sincronização"))
+        insertItem(SeedItem(ItemType.TASK, "Salve", description = MARKDOWN_EXAMPLE_DESCRIPTION))
     }
 
     private suspend fun seedFull() {
@@ -170,10 +170,10 @@ class DatabaseSeeder(
             title = spec.title,
             description = spec.description,
             sectionId = spec.sectionId,
-            dueDate = spec.dueDate?.dateToEpochMilli(),
+            dueDate = spec.dueDate?.toEpochMilli(),
             recurrence = spec.recurrence,
-            completedAt = spec.completedAt?.dateTimeToEpochMilli(),
-            createdAt = LocalDateTime.now().dateTimeToEpochMilli(),
+            completedAt = spec.completedAt?.toEpochMilli(),
+            createdAt = LocalDateTime.now().toEpochMilli(),
         )
         itemDao.insertItemWithTags(entity, spec.tagIds)
     }
@@ -199,5 +199,19 @@ class DatabaseSeeder(
         const val RECURRING_DAYS = 2L
         const val COMPLETED_DAYS_AGO = 1L
         const val NOTE_DUE_DAYS = 10L
+
+        /** Exercises every Markdown syntax the toolbar inserts (`MarkdownSyntaxInserter`), for manual visual checks. */
+        val MARKDOWN_EXAMPLE_DESCRIPTION = """
+            Texto normal, **negrito**, _italico_ e ~~riscado~~.
+
+            - Item da lista
+            - Outro item
+
+            1. Primeiro item numerado
+            2. Segundo item numerado
+
+            - [ ] Tarefa pendente
+            - [x] Tarefa concluida
+        """.trimIndent()
     }
 }

@@ -13,6 +13,16 @@
     <string name="settings_debug_clear_success">Banco de dados limpo</string>
     <string name="settings_debug_screen_version">Versão da tela</string>
     <string name="settings_debug_design_system">Design system</string>
+    <string name="settings_debug_run_reminder_check">Rodar verificação de lembretes agora</string>
+    <string name="settings_debug_run_reminder_check_success">Verificação de lembretes disparada</string>
+    <string name="settings_debug_test_notification">Testar notificação</string>
+    <string name="settings_debug_test_notification_success">Notificação de teste enviada</string>
+    <string name="test_notification_sheet_title">Qual notificação?</string>
+    <string name="test_notification_normal">Normal</string>
+    <string name="test_notification_normal_description">Dispensável, som/vibração padrão</string>
+    <string name="test_notification_urgent">Urgente</string>
+    <string name="test_notification_urgent_description">Não dispensável, padrão de vibração próprio</string>
+    <string name="test_notification_confirm">Enviar</string>
     <string name="seed_scope_sheet_title">O que devemos popular?</string>
     <string name="seed_scope_confirm">Popular</string>
     <string name="seed_scope_empty">Vazio</string>

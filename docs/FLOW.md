@@ -91,6 +91,7 @@ ItemFormScreen  (ItemsRoute.Form(itemId))
 - `itemId == null` → modo criar; `itemId != null` → modo editar (carrega o item).
 - Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento.
 - Sem data → recorrência indisponível/oculta.
+- Com data → também habilita **Horário de vencimento** (opcional) e **Aviso** (nenhum / N dias antes) — usados pelo `:core:notifications` pra decidir quando notificar (#95/#114).
 
 ---
 
@@ -161,6 +162,26 @@ SettingsScreen  (SettingsRoute.Settings)
         → Seções → SectionsListScreen
         → Tags   → TagsListScreen
 ```
+
+---
+
+## Notificações de lembrete (#95)
+
+**Entrada:** fora do `NavHost` normal — chega via notificação do sistema, gerada pelo `PeriodicWorkRequest` 4x/dia (00h/06h/12h/18h) do `:core:notifications`.
+
+```
+Notificação de item individual (título = item, descrição resumida)
+  → toca → deep link `unideas://item/{id}` (ACTION_VIEW, setPackage) → ItemsRoute.Detail(id)
+       → app fechado: MainActivity.onCreate + handleDeepLink alimenta o NavController
+       → app em background/aberto: MainActivity.onNewIntent
+
+Notificação de resumo (agrupa os itens de uma tier, setGroupSummary)
+  → toca → abre o app (launcher intent), sem navegar pra um item específico
+```
+
+**Tiers** (calculados pelo `ReminderTier`, puro em `:domain`): radar (já coberto pelo Painel de Prioridades da Home, sem notificação de sistema) → normal (canal dispensável, dispara dentro da janela de aviso configurada no item) → urgente (canal não-dispensável, `ongoing`, dispara pra todo item vencendo no dia). Concluir um item cancela só a notificação daquele item; o resumo do grupo permanece enquanto sobrar pelo menos 1 item na tier.
+
+**Debug (Settings → Depuração):** "Rodar verificação de lembretes agora" (força uma varredura fora do ciclo periódico) e "Testar notificação" (posta uma notificação avulsa, normal ou urgente, sem depender de itens reais).
 
 ---
 

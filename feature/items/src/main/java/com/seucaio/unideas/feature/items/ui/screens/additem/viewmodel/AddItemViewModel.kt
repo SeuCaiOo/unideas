@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.feature.items.R
@@ -52,10 +53,15 @@ class AddItemViewModel(
             is AddItemEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,
+                    dueTime = if (event.dueDate == null) null else it.dueTime,
                     recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
+                    reminderWarning = if (event.dueDate == null) ReminderWarning.None else it.reminderWarning,
                 )
             }
+            is AddItemEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
             is AddItemEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is AddItemEvent.OnReminderWarningChanged ->
+                _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
             is AddItemEvent.OnSaveClicked -> handleSave()
         }
     }
@@ -71,7 +77,9 @@ class AddItemViewModel(
                 description = state.description.ifBlank { null },
                 sectionId = state.sectionId,
                 dueDate = state.dueDate,
+                dueTime = state.dueTime,
                 recurrence = state.recurrence,
+                reminderWarning = state.reminderWarning,
                 createdAt = LocalDateTime.now(),
                 tags = selectedTags,
             ),

@@ -29,6 +29,9 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
 :uds                 — design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Substituiu :core:ui por completo (#82) — todo trabalho novo de UI compartilhada vai aqui; expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose. `uds/components/legacy/` guarda componentes portados ao pé da letra do antigo :core:ui (alguns com exceção documentada à regra "sem R.*" do módulo, por serem transitórios)
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
+:core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia, ReminderNotifier
+                        (2 canais: normal dispensável / urgente ongoing), notificação por item + resumo
+                        de grupo por tier, deep link pro item ao tocar
 :feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
 :feature:items       — Criar/Editar Item + Detalhe do Item
 :feature:sections    — Gerenciar Seções
@@ -45,6 +48,8 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
 :domain, :core:common, :uds, :data  ←  :core:backup
 :feature:settings  →  :core:backup
+:domain, :core:common  ←  :core:notifications
+:feature:settings  →  :core:notifications  (botões de debug "Testar notificação"/"Rodar verificação agora")
 tudo  ←  :app  (faz o wiring de DI e navegação)
 ```
 
@@ -67,6 +72,8 @@ domain/
 │   ├── ItemType.kt          — enum TASK | NOTE
 │   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
+│   ├── ReminderTier.kt      — cálculo puro do nível de urgência de notificação (radar/normal/urgente), #95/#96
+│   ├── ReminderWarning.kt   — sealed: None | DaysBefore(days: Int), config de aviso do item, #114
 │   ├── Section.kt
 │   ├── Tag.kt
 │   ├── SeedScope.kt         — enum EMPTY | BASIC | FULL — cenário de dado de exemplo, debug-only (#19)
@@ -78,7 +85,8 @@ domain/
 │   ├── ItemRepository.kt
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
-│   └── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
+│   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
+│   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
 └── usecase/
     ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
@@ -203,7 +211,9 @@ title: String            obrigatório (não vazio)
 description: String?      opcional, multilinha
 sectionId: Long?          FK → sections.id (SET NULL on delete — mas exclusão é bloqueada antes, ver regra)
 dueDate: Long?            epoch millis, opcional
+dueTime: Int?             segundos do dia, opcional (só válido se dueDate != null; conversão no mapper, não em Converters)
 recurrence: String        NONE | DAILY | WEEKLY | MONTHLY (default NONE; só válido se dueDate != null)
+reminderWarning: String   NONE | DAYS_BEFORE:N (default NONE; só válido se dueDate != null)
 completedAt: Long?        epoch millis; != null = concluída (só faz sentido pra TASK)
 createdAt: Long           epoch millis, preenchido na criação
 ```
@@ -241,12 +251,14 @@ data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repos
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
+core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl
+                                      (single, bind ReminderRefreshTrigger), ReminderCheckWorker (workerOf, Koin-WorkManager) — #95/#115
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
                                  (items/sections/tags/settings/home já existem)
 
-:app/di/AppModule.kt — includes(dataModule, domainModule, backupDataModule, sectionsModule, tagsModule, settingsModule,
-                        itemsModule, homeModule); backupDataModule entrou em #30, ainda sem tela consumindo (E2/#16);
-                        startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
+:app/di/AppModule.kt — includes(dataModule, domainModule, backupDataModule, notificationsModule, sectionsModule,
+                        tagsModule, settingsModule, itemsModule, homeModule); backupDataModule entrou em #30, ainda sem
+                        tela consumindo (E2/#16); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |
@@ -295,8 +307,10 @@ Não precisa client "Web" nem nada hardcoded no app — o código usa só `.requ
 | Camada | Tipo | Motivo |
 |---|---|---|
 | Entity (Room) | `Long` (epoch millis) | nativo, sem converter, ordenável |
-| Domain model | `LocalDate` / `LocalDateTime` | type-safe, legível na lógica |
+| Domain model | `LocalDate` / `LocalDateTime` / `LocalTime` | type-safe, legível na lógica |
 | Mapper | extensions em `:core:common` | `Long.toLocalDate()` / `LocalDate.toEpochMilli()` |
+| Entity (Room), hora-do-dia | `Int` (segundos do dia) | `Item.dueTime` (#114) — sem timezone envolvida, epoch millis seria overkill |
+| Mapper, hora-do-dia | extensions em `:core:common` | `Int.toLocalTime()` / `LocalTime.toSecondOfDayInt()` |
 | UI (picker) | `Long.toLocalDateUtc()` | Material3 DatePicker retorna **UTC midnight** — converter diferente do banco |
 
 `coreLibraryDesugaring` habilitado nos módulos que usam `java.time`.

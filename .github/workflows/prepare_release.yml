@@ -86,3 +86,29 @@ jobs:
       version: ${{ needs.bump-version.outputs.new_version }}
       release_notes: ${{ inputs.release_notes }}
     secrets: inherit
+
+  mergeback-to-dev:
+    needs: bump-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Open mergeback PR (main → dev)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          NEW_VERSION="${{ needs.bump-version.outputs.new_version }}"
+          PR_URL=$(gh pr create \
+            --base dev \
+            --head main \
+            --title "chore: mergeback main to dev (version bump to $NEW_VERSION)" \
+            --body "Sincroniza \`dev\` com o commit de bump de versão que o \`prepare_release.yml\` fez direto em \`main\` (\`chore: bump version to $NEW_VERSION\`), mesmo padrão das PRs #90, #112 e #123.")
+          echo "Opened $PR_URL"
+          gh pr merge "$PR_URL" --merge --auto

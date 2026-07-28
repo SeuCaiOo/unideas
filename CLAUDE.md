@@ -4,7 +4,7 @@ Guidance for Claude Code in this repository. Kept lean on purpose — this file 
 
 ## Project
 
-Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:backup`, `:uds`, `:feature:{home,items,sections,tags,settings}`.
+Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:backup`, `:core:notifications`, `:uds`, `:feature:{home,items,sections,tags,settings}`.
 
 - minSdk 24 · targetSdk/compileSdk 37 · Kotlin 2.2.10 · AGP 9.2.1 · Compose BOM 2026.02.01 · JVM 11
 - Pre-MVP (`0.0.x` alpha). Dependency versions centralized in `gradle/libs.versions.toml` (`libs.*`) — add new deps there, not hardcoded.
@@ -39,6 +39,7 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 - `:core:common` — shared utilities (no Compose).
 - `:uds` — design system ported from another project (package `com.seucaio.unideas.ds`, #87), domain-agnostic (no `:domain`/`:core:common` dependency), Compose exposed via `api`. Replaced `:core:ui` entirely (#82 redesign epic) — all shared UI work goes here now. `uds/components/legacy/` holds components ported verbatim from the old `:core:ui` (some carry a documented exception to the module's "no `R.*` references" portability rule, since `legacy/` is transitional and will eventually be folded into the rest of `:uds` or removed) — see the module's README.
 - `:core:backup` — Google Drive backup/restore, self-contained (scoped `GoogleSignIn` + Drive API, not Firebase Auth).
+- `:core:notifications` (#95) — reminder notifications: `PeriodicWorkRequest` 4x/day (`ReminderCheckWorker`/`ReminderScheduler`), per-item notifications grouped by urgency tier (`ReminderNotifier`, 2 channels: dismissible normal / non-dismissible urgent), deep link to `ItemsRoute.Detail` on tap (`unideas://item/{id}`, handled in `:app`'s `MainActivity`).
 - `:feature:*` — one per screen area; depend on `:domain` + `:uds` only, **never `:data`** (implementations Koin-injected from `:app`).
 
 ## Code quality

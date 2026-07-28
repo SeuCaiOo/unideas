@@ -3,9 +3,11 @@ package com.seucaio.unideas.domain.stub
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Shared [Item] samples for tests across modules.
@@ -24,7 +26,9 @@ object ItemStub {
         description: String? = null,
         sectionId: Long? = null,
         dueDate: LocalDate? = TODAY.plusDays(2),
+        dueTime: LocalTime? = null,
         recurrence: Recurrence = Recurrence.None,
+        reminderWarning: ReminderWarning = ReminderWarning.None,
         completedAt: LocalDateTime? = null,
         createdAt: LocalDateTime = CREATED_AT,
         tags: List<Tag> = emptyList(),
@@ -35,7 +39,9 @@ object ItemStub {
         description = description,
         sectionId = sectionId,
         dueDate = dueDate,
+        dueTime = dueTime,
         recurrence = recurrence,
+        reminderWarning = reminderWarning,
         completedAt = completedAt,
         createdAt = createdAt,
         tags = tags,

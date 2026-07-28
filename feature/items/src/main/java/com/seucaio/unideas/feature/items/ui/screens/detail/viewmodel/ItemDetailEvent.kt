@@ -2,7 +2,9 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import java.time.LocalDate
+import java.time.LocalTime
 
 sealed interface ItemDetailEvent {
 
@@ -18,7 +20,11 @@ sealed interface ItemDetailEvent {
 
     data class OnDueDateChanged(val dueDate: LocalDate?) : ItemDetailEvent
 
+    data class OnDueTimeChanged(val dueTime: LocalTime?) : ItemDetailEvent
+
     data class OnRecurrenceChanged(val recurrence: Recurrence) : ItemDetailEvent
+
+    data class OnReminderWarningChanged(val reminderWarning: ReminderWarning) : ItemDetailEvent
 
     data object OnSaveClicked : ItemDetailEvent
 

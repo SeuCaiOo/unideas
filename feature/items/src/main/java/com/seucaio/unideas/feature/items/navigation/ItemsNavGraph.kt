@@ -4,6 +4,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
+import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.ui.screens.additem.AddItemSheet
@@ -24,7 +25,9 @@ fun NavGraphBuilder.itemsNavGraph(
             onNavigateBack = onNavigateBack
         )
     }
-    composable<ItemsRoute.Detail> { backStackEntry ->
+    composable<ItemsRoute.Detail>(
+        deepLinks = listOf(navDeepLink<ItemsRoute.Detail>(basePath = "unideas://item")),
+    ) { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Detail>()
         ItemDetailScreen(
             itemId = route.itemId,

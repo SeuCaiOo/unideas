@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
@@ -28,6 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemDetailViewModelTest {
@@ -68,7 +70,12 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when editing should load the item fields via ItemFormUseCase's get`() = runTest {
-        val item = ItemStub.task(id = 1L, tags = listOf(TagStub.tag(id = 1L)))
+        val item = ItemStub.task(
+            id = 1L,
+            tags = listOf(TagStub.tag(id = 1L)),
+            dueTime = LocalTime.of(9, 0),
+            reminderWarning = ReminderWarning.DaysBefore(1),
+        )
         every { itemFormUseCase.get(1L) } returns flowOf(item)
         val vm = viewModel(itemId = 1L)
 
@@ -79,6 +86,8 @@ class ItemDetailViewModelTest {
             assertEquals(item.sectionId, state.sectionId)
             assertEquals(setOf(1L), state.selectedTagIds)
             assertEquals(item.dueDate, state.dueDate)
+            assertEquals(item.dueTime, state.dueTime)
+            assertEquals(item.reminderWarning, state.reminderWarning)
         }
     }
 
@@ -148,20 +157,28 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnDueDateChanged clears the date should reset recurrence to None`() = runTest {
+    fun `when OnDueDateChanged clears the date should reset recurrence, dueTime and reminderWarning`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
             awaitItem()
             vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
             vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
+            vm.onEvent(ItemDetailEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
+            vm.onEvent(ItemDetailEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
             awaitItem()
-            val withRecurrence = awaitItem()
-            assertEquals(Recurrence.Weekly, withRecurrence.recurrence)
+            awaitItem()
+            awaitItem()
+            val configured = awaitItem()
+            assertEquals(Recurrence.Weekly, configured.recurrence)
+            assertEquals(LocalTime.of(14, 0), configured.dueTime)
+            assertEquals(ReminderWarning.DaysBefore(2), configured.reminderWarning)
 
             vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
             val cleared = awaitItem()
             assertEquals(Recurrence.None, cleared.recurrence)
+            assertEquals(null, cleared.dueTime)
+            assertEquals(ReminderWarning.None, cleared.reminderWarning)
         }
     }
 

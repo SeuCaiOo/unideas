@@ -18,8 +18,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
-import com.seucaio.unideas.feature.items.ui.components.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
+import com.seucaio.unideas.feature.items.ui.components.form.ItemFormBody
 import com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemEvent
 import com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemUiAction
 import com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemUiState
@@ -78,7 +78,9 @@ private fun AddItemSheetContent(
             onSectionChanged = { onEvent(AddItemEvent.OnSectionChanged(it)) },
             onTagToggled = { onEvent(AddItemEvent.OnTagToggled(it)) },
             onDueDateChanged = { onEvent(AddItemEvent.OnDueDateChanged(it)) },
+            onDueTimeChanged = { onEvent(AddItemEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(AddItemEvent.OnRecurrenceChanged(it)) },
+            onReminderWarningChanged = { onEvent(AddItemEvent.OnReminderWarningChanged(it)) },
             onSaveClicked = { onEvent(AddItemEvent.OnSaveClicked) },
         )
     }

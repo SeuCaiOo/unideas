@@ -163,6 +163,15 @@ Complete os itens acima na issue antes de iniciar.
 
 **Only proceed if ALL DoR items are checked.**
 
+**Also check GitHub's native "blocked by" dependency — don't rely on the DoR checkbox text alone.** A DoR item like "Pré-requisitos concluídos (depende de #X)" is prose someone checked by hand; it can go stale or simply be wrong, independent of whatever formal blocking relationship actually exists on GitHub (Issues → "blocked by"/"blocking", a real dependency graph, separate from sub-issues/parent). Query it directly:
+
+```bash
+gh api repos/SeuCaiOo/unideas/issues/<issue-number> --jq '.issue_dependencies_summary'
+# { "blocked_by": 0, "total_blocked_by": 1, "blocking": 1, "total_blocking": 1 }
+```
+
+`blocked_by` is the count of **currently open** issues blocking this one (`total_blocked_by` includes closed ones too, so it stays >0 even after the block clears — check `blocked_by`, not `total_blocked_by`). If `blocked_by > 0`, list which issues via `gh api repos/SeuCaiOo/unideas/issues/<issue-number>/dependencies/blocked_by --jq '.[] | {number, state, title}'` and **STOP**, same as an unchecked DoR box — report the still-open blockers and don't create the branch until they close. Confirmed the hard way (#115): the DoR checkbox said "done," but `blocked_by` for #115 against #114 was still active on GitHub at the moment `start-feature` ran for #115, because #114 hadn't been closed yet (only merged into the epic branch) — a real gap between "the checkbox says yes" and "GitHub's own dependency graph says yes." No harm that time (the work itself genuinely was ready), but the check should run every time, not just when it happens to get noticed.
+
 ### 3. Create branch — via `createLinkedBranch`, not plain `git checkout -b`
 
 Branch naming pattern: `<type>/#<number>/<slug>`
@@ -330,3 +339,4 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Closing a parent epic on `subIssuesSummary` alone, without checking its own body checklist | The parent has its own DoD (a checklist in its body, even if not labeled "DoD") — reconcile and check it off before closing, same as `finish-issue` does for leaf issues |
 | Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
 | Creating the branch with plain `git checkout -b` for an issue-tied feature | Always use `createLinkedBranch` (step 3) instead — plain branch creation + a later `Closes #N` in the PR body does NOT reliably link the issue's Development section for `dev`-targeting PRs (confirmed empirically, #22/#35) |
+| Trusting the DoR "pré-requisitos concluídos" checkbox alone, without checking GitHub's native `blocked_by` dependency | Step 2 checks both — the checkbox is prose someone ticked by hand and can be stale; `issue_dependencies_summary.blocked_by` is GitHub's real dependency graph. Query it every time, not just when something feels off (confirmed the hard way, #115) |

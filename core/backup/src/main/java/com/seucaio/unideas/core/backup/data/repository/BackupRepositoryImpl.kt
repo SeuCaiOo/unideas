@@ -2,19 +2,16 @@ package com.seucaio.unideas.core.backup.data.repository
 
 import android.content.Context
 import com.google.api.client.http.FileContent
-import com.google.api.client.util.DateTime
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.repository.BackupRepository
+import com.seucaio.unideas.core.common.extensions.toLocalDateTime
 import com.seucaio.unideas.data.local.database.UnideasDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 class BackupRepositoryImpl(
     private val database: UnideasDatabase,
@@ -44,7 +41,7 @@ class BackupRepositoryImpl(
 
             BackupInfo(
                 fileId = uploaded.id,
-                createdAt = uploaded.createdTime.toLocalDateTime(),
+                createdAt = uploaded.createdTime.value.toLocalDateTime(),
                 sizeBytes = uploaded.getSize() ?: dbFile.length(),
             )
         }
@@ -62,7 +59,7 @@ class BackupRepositoryImpl(
             result.files?.map { file ->
                 BackupInfo(
                     fileId = file.id,
-                    createdAt = file.createdTime.toLocalDateTime(),
+                    createdAt = file.createdTime.value.toLocalDateTime(),
                     sizeBytes = file.getSize() ?: 0L,
                 )
             } ?: emptyList()
@@ -94,9 +91,6 @@ class BackupRepositoryImpl(
                 Timber.i("Backup: Restore completed successfully")
             }
         }
-
-    private fun DateTime.toLocalDateTime(): LocalDateTime =
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault())
 
     companion object {
         private const val APP_DATA_FOLDER = "appDataFolder"

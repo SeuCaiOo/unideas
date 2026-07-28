@@ -158,6 +158,7 @@ Ver [`ARCHITECTURE.md`](ARCHITECTURE.md#di--estrutura-koin). Resumo:
 - Banco: `Long` epoch millis em timezone local via `LocalDate.toEpochMilli()`.
 - Mapper (banco → domínio): `Long.toLocalDate()` (system default) — correto pra dados persistidos.
 - **Material3 DatePicker retorna UTC midnight** → converter com `Long.toLocalDateUtc()` (em `:core:common`), diferente do mapper de banco.
+- Hora-do-dia sem data associada (ex. `Item.dueTime`, #114): `Int` segundos-do-dia no banco (sem timezone envolvida, não precisa de epoch millis) via `LocalTime.toSecondOfDayInt()`/`Int.toLocalTime()` (`:core:common`) — mesmo padrão de extensão de `LocalDate`, não um `Converters` (não é enum/sealed).
 
 ---
 

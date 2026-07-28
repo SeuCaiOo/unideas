@@ -17,11 +17,28 @@ description: Use when starting development of a GitHub issue — first moves any
 
 ### -1. Base branch and review docs
 
-**In unideas, the base is always `dev`** — feature branches are never cut from `main` here (unlike some of the user's other projects, e.g. GymLog, which use a different flow). Don't ask for confirmation on this; just check out and pull `dev`:
+**Check for an active epic branch first — `dev` is the default, not an unconditional rule.** unideas has a documented exception (`CLAUDE.md`, "Long-lived epic branches"): a large multi-issue epic runs on its own long-lived branch cut from `dev` (e.g. `feature/82-redesign-ui-ux`, `feature/95-notification-and-alarm-system`), and every sub-issue of that epic targets the epic branch as base, not `dev`. Before assuming `dev`, query the issue's parent:
 
 ```bash
-git checkout dev
-git pull origin dev
+gh api graphql -f query="
+{
+  repository(owner: \"SeuCaiOo\", name: \"unideas\") {
+    issue(number: <issue-number>) {
+      parent { number title }
+    }
+  }
+}"
+```
+
+If `parent` is non-null, check whether that parent epic has an active long-lived branch (look for `feature/<parent-number>-*` among `git branch -a`, or check the Improvements artifact entry for the parent — it documents the branch name when one exists, e.g. "#95 — ... Roda numa branch de longa duração própria (`feature/95-notification-and-alarm-system`...)"). If one exists, **that branch is the base for this issue**, not `dev` — check it out and pull it instead of `dev` in the commands below. If `parent` is null, or the parent has no dedicated branch, `dev` is the base as usual.
+
+**If the issue is clearly a follow-up to recent epic work but has no `parent` set yet** (e.g. it was created ad-hoc via `new-issue`, not spun off an epic through GitHub's native sub-issue UI) — stop and ask the user whether it should be linked as a sub-issue (`addSubIssue` mutation) before picking a base branch. Confirmed the hard way (#120): it was a direct follow-up to #115 (itself a sub-issue of the #95 epic branch), but wasn't linked as a sub-issue of #95 at creation time — `start-feature` defaulted to `dev` as a result, which would have produced a PR with a diverged/wrong base and an empty diff against the epic branch's actual state. The user caught it and had it linked retroactively; asking up front avoids depending on that catch happening again.
+
+Once the base branch is confirmed (`dev` or the epic branch), check out and pull it:
+
+```bash
+git checkout <base-branch>
+git pull origin <base-branch>
 ```
 
 Once the base branch is confirmed, check if it has commits that aren't yet reflected in the docs:
@@ -310,7 +327,8 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Mistake | Fix |
 |---|---|
 | Starting with unchecked DoR | Always validate all DoR items first |
-| Asking to confirm the base branch every time | Don't — it's always `dev` in unideas (step -1), no need to ask |
+| Asking to confirm the base branch every time | Don't — check the issue's `parent` for an active epic branch (step -1); if none, it's `dev`, no need to ask |
+| Defaulting to `dev` without checking the issue's `parent` for an epic branch | Always run the `parent` query in step -1 first — a sub-issue of a long-lived epic (#82, #95, ...) bases off that branch, not `dev` (confirmed the hard way, #120) |
 | Plan not saved | Always write to `.claude/plans/` |
 | Slug with uppercase or special chars | Normalize: lowercase, hyphens only |
 | Planning without reading CLAUDE.md/AGENTS.md | Always run step 4 — never infer package structure from memory |

@@ -19,6 +19,10 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     lint {
         abortOnError = false
     }

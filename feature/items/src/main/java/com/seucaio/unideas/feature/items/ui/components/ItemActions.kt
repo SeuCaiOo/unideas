@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +22,7 @@ fun ItemActions(
     onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClicked: (() -> Unit)? = null,
+    onHistoryClicked: (() -> Unit)? = null,
 ) {
     Row(modifier) {
         IconButton(onClick = onShareClicked) {
@@ -29,6 +31,11 @@ fun ItemActions(
         if (onEditClicked != null) {
             IconButton(onClick = onEditClicked) {
                 Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.item_detail_edit))
+            }
+        }
+        if (onHistoryClicked != null) {
+            IconButton(onClick = onHistoryClicked) {
+                Icon(Icons.Default.History, contentDescription = stringResource(R.string.item_detail_history))
             }
         }
         IconButton(onClick = onDeleteClicked) {

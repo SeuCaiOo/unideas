@@ -55,6 +55,12 @@
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="item_detail_reopen_title">Reopen task?</string>
     <string name="item_detail_reopen_message">This will mark the task as pending again and clear its completion date.</string>
+    <string name="item_detail_history">History</string>
+    <string name="item_detail_history_title">Occurrence history</string>
+    <string name="item_detail_history_empty">No occurrences recorded yet</string>
+    <string name="item_detail_history_status_on_time">On time</string>
+    <string name="item_detail_history_status_late">Late</string>
+    <string name="item_detail_history_status_missed">Missed</string>
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>

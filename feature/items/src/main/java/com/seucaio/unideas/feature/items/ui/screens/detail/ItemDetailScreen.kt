@@ -17,7 +17,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -44,6 +46,7 @@ fun ItemDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val historyState by viewModel.historyState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -65,6 +68,7 @@ fun ItemDetailScreen(
     ItemDetailScreenContent(
         uiState = uiState,
         dialogState = dialogState,
+        historyState = historyState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -76,6 +80,7 @@ fun ItemDetailScreen(
 private fun ItemDetailScreenContent(
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
+    historyState: List<ItemCompletionHistory>,
     onEvent: (ItemDetailEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
@@ -104,7 +109,12 @@ private fun ItemDetailScreenContent(
                 actions = {
                     ItemActions(
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) }
+                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
+                        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
+                            { onEvent(ItemDetailEvent.OnHistoryClicked) }
+                        } else {
+                            null
+                        },
                     )
                 },
             )
@@ -143,6 +153,13 @@ private fun ItemDetailScreenContent(
             onConfirm = { onEvent(ItemDetailEvent.OnCompleteConfirmClicked) },
         )
     }
+
+    if (dialogState is ItemDetailDialogState.History) {
+        ItemHistoryBottomSheet(
+            history = historyState,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+        )
+    }
 }
 
 @PreviewLightDark
@@ -154,6 +171,7 @@ private fun ItemDetailScreenPreview(
         ItemDetailScreenContent(
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
+            historyState = emptyList(),
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

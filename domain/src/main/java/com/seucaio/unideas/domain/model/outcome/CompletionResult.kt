@@ -9,8 +9,8 @@ sealed interface CompletionResult {
     /** The item was marked completed; not recurring, no new instance. */
     data object Completed : CompletionResult
 
-    /** The item was completed and a new instance was created with id [newItemId]. */
-    data class CompletedAndRenewed(val newItemId: Long) : CompletionResult
+    /** A recurring item ([itemId]) was completed and its `dueDate` advanced to the next occurrence. */
+    data class CompletedAndRenewed(val itemId: Long) : CompletionResult
 
     /** An already-completed item was marked incomplete again (checkbox toggled off). */
     data object Uncompleted : CompletionResult

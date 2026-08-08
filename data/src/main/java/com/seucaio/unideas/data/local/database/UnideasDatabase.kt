@@ -6,11 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.seucaio.unideas.data.local.converter.Converters
+import com.seucaio.unideas.data.local.dao.ItemCompletionHistoryDao
 import com.seucaio.unideas.data.local.dao.ItemDao
 import com.seucaio.unideas.data.local.dao.SectionDao
 import com.seucaio.unideas.data.local.dao.TagDao
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_2_3
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_3_4
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_4_5
+import com.seucaio.unideas.data.local.entity.ItemCompletionHistoryEntity
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
 import com.seucaio.unideas.data.local.entity.SectionEntity
@@ -37,8 +40,9 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         SectionEntity::class,
         TagEntity::class,
         ItemTagCrossRef::class,
+        ItemCompletionHistoryEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -49,6 +53,8 @@ abstract class UnideasDatabase : RoomDatabase() {
     abstract fun sectionDao(): SectionDao
 
     abstract fun tagDao(): TagDao
+
+    abstract fun itemCompletionHistoryDao(): ItemCompletionHistoryDao
 
     companion object {
         const val DATABASE_NAME = "unideas.db"
@@ -83,7 +89,7 @@ abstract class UnideasDatabase : RoomDatabase() {
                 UnideasDatabase::class.java,
                 DATABASE_NAME,
             )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

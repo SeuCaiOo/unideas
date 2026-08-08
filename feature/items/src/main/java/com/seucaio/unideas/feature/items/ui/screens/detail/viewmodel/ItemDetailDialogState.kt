@@ -7,4 +7,6 @@ sealed interface ItemDetailDialogState {
     data object DeleteConfirm : ItemDetailDialogState
 
     data object ReopenConfirm : ItemDetailDialogState
+
+    data object History : ItemDetailDialogState
 }

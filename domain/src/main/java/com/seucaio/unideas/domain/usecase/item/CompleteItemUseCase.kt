@@ -1,8 +1,10 @@
 package com.seucaio.unideas.domain.usecase.item
 
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
+import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.usecase.UseCase
@@ -10,13 +12,19 @@ import com.seucaio.unideas.domain.util.resultCatching
 import java.time.LocalDateTime
 
 /**
- * Toggles a task's completion (checkbox behavior — click again to undo). Completing a recurring
- * task spawns a new instance whose due date is the recurrence's next date from the completed
- * item's **original** due date (calendar cadence, independent of when it was actually completed);
- * undoing completion never touches recurrence, it only clears [Item.completedAt].
+ * Toggles a task's completion (checkbox behavior — click again to undo).
+ *
+ * A recurring task is a **single row whose `dueDate` advances** instead of spawning a new item:
+ * completing it records an [ItemCompletionHistory] entry for the occurrence and moves `dueDate` to
+ * the recurrence's next date from the item's **original** due date (calendar cadence, independent
+ * of when it was actually completed). [Item.completedAt] never gets set for a recurring task, so
+ * there is no undo for it — completing is definitive; correcting a past occurrence happens via the
+ * history, not the checkbox. A non-recurring task keeps the plain toggle, [Item.completedAt] set or
+ * cleared.
  */
 class CompleteItemUseCase(
     private val repository: ItemRepository,
+    private val historyRepository: ItemCompletionHistoryRepository,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
 ) : UseCase {
 
@@ -24,20 +32,29 @@ class CompleteItemUseCase(
         resultCatching {
             require(item.type == ItemType.TASK) { "Only tasks can be completed" }
 
-            val result = if (item.isCompleted) {
-                repository.updateItem(item.copy(completedAt = null))
-                CompletionResult.Uncompleted
-            } else {
-                repository.updateItem(item.copy(completedAt = completedAt))
+            val result = when {
+                item.isCompleted -> {
+                    repository.updateItem(item.copy(completedAt = null))
+                    CompletionResult.Uncompleted
+                }
 
-                val nextDueDate = item.dueDate?.let(item.recurrence::nextDueDate)
-                if (nextDueDate == null) {
-                    CompletionResult.Completed
-                } else {
-                    val newId = repository.insertItem(
-                        item.copy(id = 0L, dueDate = nextDueDate, completedAt = null, createdAt = completedAt),
+                item.isRecurring && item.dueDate != null -> {
+                    val scheduledDate = item.dueDate
+                    historyRepository.insert(
+                        ItemCompletionHistory(
+                            itemId = item.id,
+                            scheduledDate = scheduledDate,
+                            completedAt = completedAt
+                        ),
                     )
-                    CompletionResult.CompletedAndRenewed(newId)
+                    val nextDueDate = requireNotNull(item.recurrence.nextDueDate(scheduledDate))
+                    repository.updateItem(item.copy(dueDate = nextDueDate))
+                    CompletionResult.CompletedAndRenewed(item.id)
+                }
+
+                else -> {
+                    repository.updateItem(item.copy(completedAt = completedAt))
+                    CompletionResult.Completed
                 }
             }
             reminderRefreshTrigger.refreshNow()

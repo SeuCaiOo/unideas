@@ -56,6 +56,7 @@ import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.ds.components.inputs.SelectionBottomSheet
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.lists.ActionRow
 import com.seucaio.unideas.ds.components.lists.GroupHeader
@@ -245,6 +246,29 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
                         "Revealed content",
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+            }
+            Labeled("SelectionBottomSheet") {
+                var selected by remember { mutableStateOf("Weekly") }
+                var showSheet by remember { mutableStateOf(false) }
+                DateFieldButton(
+                    valueLabel = selected,
+                    onClick = { showSheet = true },
+                    onClear = {},
+                    clearContentDescription = "Clear"
+                )
+                if (showSheet) {
+                    SelectionBottomSheet(
+                        title = "Repeat",
+                        options = listOf("Daily", "Weekly", "Monthly"),
+                        selectedOption = selected,
+                        optionLabel = { it },
+                        onOptionSelected = {
+                            selected = it
+                            showSheet = false
+                        },
+                        onDismiss = { showSheet = false },
                     )
                 }
             }

@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import com.seucaio.unideas.core.common.extensions.orToday
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -35,7 +36,7 @@ data class ItemDetailUiState(
     override val typeIsTask: Boolean get() = type == ItemType.TASK
 
     fun toggleReminder(enabled: Boolean): ItemDetailUiState = if (enabled) {
-        copy(hasReminder = true, dueDate = dueDate ?: LocalDate.now())
+        copy(hasReminder = true, dueDate = dueDate.orToday())
     } else {
         copy(hasReminder = false)
     }
@@ -46,6 +47,6 @@ data class ItemDetailUiState(
      */
     fun changeRecurrence(recurrence: Recurrence): ItemDetailUiState = copy(
         recurrence = recurrence,
-        dueDate = if (recurrence == Recurrence.None) dueDate else (dueDate ?: LocalDate.now()),
+        dueDate = if (recurrence == Recurrence.None) dueDate else dueDate.orToday(),
     )
 }

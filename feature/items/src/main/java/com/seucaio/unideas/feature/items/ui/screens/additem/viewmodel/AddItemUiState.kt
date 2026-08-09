@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel
 
+import com.seucaio.unideas.core.common.extensions.orToday
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -41,7 +42,7 @@ data class AddItemUiState(
     )
 
     fun toggleReminder(enabled: Boolean): AddItemUiState = if (enabled) {
-        copy(hasReminder = true, dueDate = dueDate ?: LocalDate.now())
+        copy(hasReminder = true, dueDate = dueDate.orToday())
     } else {
         copy(hasReminder = false)
     }
@@ -52,6 +53,6 @@ data class AddItemUiState(
      */
     fun changeRecurrence(recurrence: Recurrence): AddItemUiState = copy(
         recurrence = recurrence,
-        dueDate = if (recurrence == Recurrence.None) dueDate else (dueDate ?: LocalDate.now()),
+        dueDate = if (recurrence == Recurrence.None) dueDate else dueDate.orToday(),
     )
 }

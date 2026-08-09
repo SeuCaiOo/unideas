@@ -55,6 +55,7 @@ private val noopEvents = ItemFormFieldsEvents(
     onDescriptionChanged = {},
     onSectionChanged = {},
     onTagToggled = {},
+    onReminderToggled = {},
     onDueDateChanged = {},
     onDueTimeChanged = {},
     onRecurrenceChanged = {},
@@ -62,7 +63,7 @@ private val noopEvents = ItemFormFieldsEvents(
     onSaveClicked = {},
 )
 
-/** Task with a due date set: every field (section, tags, date, time, recurrence, reminder). */
+/** Task with the reminder switch on: every field (section, tags, date, time, recurrence, reminder). */
 @PreviewLightDark
 @Composable
 private fun ItemFormOptionsSectionTaskFullPreview() {
@@ -71,6 +72,7 @@ private fun ItemFormOptionsSectionTaskFullPreview() {
             ItemFormOptionsSection(
                 state = ItemDetailUiState(
                     type = ItemType.TASK,
+                    hasReminder = true,
                     dueDate = LocalDate.of(2026, 8, 1),
                 ),
                 events = noopEvents,
@@ -80,7 +82,7 @@ private fun ItemFormOptionsSectionTaskFullPreview() {
     }
 }
 
-/** Task with no due date yet: only section/tags/date field — time/recurrence/reminder need a date first. */
+/** Task with the reminder switch off: only section/tags — no date/time/recurrence/reminder fields. */
 @PreviewLightDark
 @Composable
 private fun ItemFormOptionsSectionTaskMinimalPreview() {

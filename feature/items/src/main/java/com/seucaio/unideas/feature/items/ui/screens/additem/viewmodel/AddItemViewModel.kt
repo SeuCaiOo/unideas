@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,31 +39,13 @@ class AddItemViewModel(
 
     private suspend fun loadFormData() {
         runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _uiState.update {
-                it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)
-            }
+            _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
         }
     }
 
     fun onEvent(event: AddItemEvent) {
         when (event) {
-            is AddItemEvent.OnTypeChanged -> _uiState.update { it.changeType(event.type) }
-            is AddItemEvent.OnTitleChanged -> _uiState.update { it.changeTitle(event.title) }
-            is AddItemEvent.OnDescriptionChanged -> _uiState.update { it.changeDescription(event.description) }
-            is AddItemEvent.OnSectionChanged -> _uiState.update { it.setSection(event.sectionId) }
-            is AddItemEvent.OnTagToggled -> _uiState.update { it.setTag(event.tagId) }
-            is AddItemEvent.OnDueDateChanged -> _uiState.update {
-                it.copy(
-                    dueDate = event.dueDate,
-                    dueTime = if (event.dueDate == null) null else it.dueTime,
-                    recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
-                    reminderWarning = if (event.dueDate == null) ReminderWarning.None else it.reminderWarning,
-                )
-            }
-            is AddItemEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
-            is AddItemEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
-            is AddItemEvent.OnReminderWarningChanged ->
-                _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
+            is AddItemEvent.FieldEvent -> _uiState.update { it.reduce(event) }
             is AddItemEvent.OnSaveClicked -> handleSave()
         }
     }
@@ -76,10 +60,10 @@ class AddItemViewModel(
                 title = state.title,
                 description = state.description.ifBlank { null },
                 sectionId = state.sectionId,
-                dueDate = state.dueDate,
-                dueTime = state.dueTime,
-                recurrence = state.recurrence,
-                reminderWarning = state.reminderWarning,
+                dueDate = state.persistableDueDate,
+                dueTime = state.persistableDueTime,
+                recurrence = state.persistableRecurrence,
+                reminderWarning = state.persistableReminderWarning,
                 createdAt = LocalDateTime.now(),
                 tags = selectedTags,
             ),

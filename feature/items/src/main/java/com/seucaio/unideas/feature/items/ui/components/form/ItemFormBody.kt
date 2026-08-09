@@ -73,6 +73,7 @@ private fun ItemFormBodyPreview(
                     onDescriptionChanged = {},
                     onSectionChanged = {},
                     onTagToggled = {},
+                    onReminderToggled = {},
                     onDueDateChanged = {},
                     onDueTimeChanged = {},
                     onRecurrenceChanged = {},

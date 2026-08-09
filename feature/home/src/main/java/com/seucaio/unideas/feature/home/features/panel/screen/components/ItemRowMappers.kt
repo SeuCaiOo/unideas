@@ -15,7 +15,7 @@ import com.seucaio.unideas.ds.components.lists.ListItemUi
 internal fun Item.toListItemUi(checkContentDescription: String): ListItemUi = ListItemUi(
     id = id,
     title = title,
-    meta = null,
+    meta = if (isRecurring) recurrence.summaryLabel(dueDate) else null,
     showCheckbox = type == ItemType.TASK,
     checked = isCompleted,
     showRepeatIcon = dueDate != null && isRecurring,

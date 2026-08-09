@@ -6,11 +6,13 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -53,9 +55,7 @@ class ItemDetailViewModel(
 
     private suspend fun loadFormData() {
         runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _uiState.update {
-                it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)
-            }
+            _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
         }
         if (itemId != null) loadItem(itemId)
     }
@@ -64,49 +64,16 @@ class ItemDetailViewModel(
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
             sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error))
-            _uiState.update { it.copy(isLoading = false, loadFailed = true) }
+            _uiState.update { it.markLoadFailed() }
             return
         }
         originalItem = item
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                type = item.type,
-                title = item.title,
-                description = item.description.orEmpty(),
-                sectionId = item.sectionId,
-                selectedTagIds = item.tags.map { tag -> tag.id }.toSet(),
-                dueDate = item.dueDate,
-                dueTime = item.dueTime,
-                recurrence = item.recurrence,
-                reminderWarning = item.reminderWarning,
-                isCompleted = item.isCompleted,
-                completedAt = item.completedAt,
-                loadFailed = false,
-            )
-        }
+        _uiState.update { it.applyLoadedItem(item) }
     }
 
     fun onEvent(event: ItemDetailEvent) {
         when (event) {
-            is ItemDetailEvent.OnTypeChanged -> _uiState.update { it.copy(type = event.type) }
-            is ItemDetailEvent.OnTitleChanged -> _uiState.update { it.copy(title = event.title) }
-            is ItemDetailEvent.OnDescriptionChanged ->
-                _uiState.update { it.copy(description = event.description) }
-            is ItemDetailEvent.OnSectionChanged -> _uiState.update { it.copy(sectionId = event.sectionId) }
-            is ItemDetailEvent.OnTagToggled -> _uiState.update { it.toggleTag(event.tagId) }
-            is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
-                it.copy(
-                    dueDate = event.dueDate,
-                    dueTime = if (event.dueDate == null) null else it.dueTime,
-                    recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
-                    reminderWarning = if (event.dueDate == null) ReminderWarning.None else it.reminderWarning,
-                )
-            }
-            is ItemDetailEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
-            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
-            is ItemDetailEvent.OnReminderWarningChanged ->
-                _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
+            is ItemDetailEvent.FieldEvent -> _uiState.update { it.reduce(event) }
             is ItemDetailEvent.OnSaveClicked -> handleSave()
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
@@ -127,12 +94,9 @@ class ItemDetailViewModel(
 
     private fun retryLoad() {
         val id = itemId ?: return
-        _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+        _uiState.update { it.startLoading() }
         viewModelScope.launch { loadItem(id) }
     }
-
-    private fun ItemDetailUiState.toggleTag(tagId: Long): ItemDetailUiState =
-        copy(selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId)
 
     private fun handleSave() = viewModelScope.launch {
         val state = _uiState.value
@@ -145,10 +109,10 @@ class ItemDetailViewModel(
                     title = state.title,
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
+                    dueDate = state.persistableDueDate,
+                    dueTime = state.persistableDueTime,
+                    recurrence = state.persistableRecurrence,
+                    reminderWarning = state.persistableReminderWarning,
                     createdAt = LocalDateTime.now(),
                     tags = selectedTags,
                 ),
@@ -161,10 +125,10 @@ class ItemDetailViewModel(
                     title = state.title,
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
+                    dueDate = state.persistableDueDate,
+                    dueTime = state.persistableDueTime,
+                    recurrence = state.persistableRecurrence,
+                    reminderWarning = state.persistableReminderWarning,
                     tags = selectedTags,
                 ),
             )
@@ -205,13 +169,7 @@ class ItemDetailViewModel(
             .onSuccess {
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
-                _uiState.update {
-                    it.copy(
-                        isCompleted = updated.isCompleted,
-                        completedAt = updated.completedAt,
-                        dueDate = updated.dueDate,
-                    )
-                }
+                _uiState.update { it.applyCompletion(updated) }
             }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }

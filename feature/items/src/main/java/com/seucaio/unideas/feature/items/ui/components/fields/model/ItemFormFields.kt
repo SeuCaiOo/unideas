@@ -22,13 +22,25 @@ interface ItemFormFieldsState {
     val availableSections: List<Section>
     val availableTags: List<Tag>
     val isTitleValid: Boolean
-    val canPickRecurrence: Boolean
-    val canPickReminder: Boolean
+    val hasReminder: Boolean
     val typeIsTask: Boolean
     val isCompleted: Boolean get() = false
     val completedAt: LocalDateTime? get() = null
     val isEditing: Boolean get() = false
 }
+
+/** [dueDate] with no reminder scheduled — persisted state never carries a stale, hidden date. */
+val ItemFormFieldsState.persistableDueDate: LocalDate? get() = if (hasReminder) dueDate else null
+
+/** [dueTime] with no reminder scheduled — persisted state never carries a stale, hidden time. */
+val ItemFormFieldsState.persistableDueTime: LocalTime? get() = if (hasReminder) dueTime else null
+
+/** [recurrence] with no reminder scheduled — persisted state never carries a stale recurrence rule. */
+val ItemFormFieldsState.persistableRecurrence: Recurrence get() = if (hasReminder) recurrence else Recurrence.None
+
+/** [reminderWarning] with no reminder scheduled — persisted state never carries a stale warning. */
+val ItemFormFieldsState.persistableReminderWarning: ReminderWarning
+    get() = if (hasReminder) reminderWarning else ReminderWarning.None
 
 data class ItemFormFieldsEvents(
     val onTypeChanged: (ItemType) -> Unit,
@@ -36,6 +48,7 @@ data class ItemFormFieldsEvents(
     val onDescriptionChanged: (String) -> Unit,
     val onSectionChanged: (Long?) -> Unit,
     val onTagToggled: (Long) -> Unit,
+    val onReminderToggled: (Boolean) -> Unit,
     val onDueDateChanged: (LocalDate?) -> Unit,
     val onDueTimeChanged: (LocalTime?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,

@@ -58,6 +58,7 @@ private fun ItemFormCommonOptionsPreview(
                     onDescriptionChanged = {},
                     onSectionChanged = {},
                     onTagToggled = {},
+                    onReminderToggled = {},
                     onDueDateChanged = {},
                     onDueTimeChanged = {},
                     onRecurrenceChanged = {},

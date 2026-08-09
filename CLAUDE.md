@@ -65,6 +65,8 @@ Confirmed the hard way (2026-07-21): building/testing/marking-done a UI change b
 
 **Right before opening a PR, actually read the issue's DoD/checklist and check it against the diff.** Not a skim, not a rubber stamp — walk each checklist item and confirm it's genuinely backed by what's in the diff before checking it off in the `open-pr`/`finish-issue` DoD-reconciliation step.
 
+**On "continua"/"onde paramos"** (or any bare resume request): opening a plan file is the trigger for the resume protocol in `.claude/rules/resume-work.md` (branch → checklist → PR → epic, asking before acting at each step) — don't jump into coding on a plan whose checklist hasn't been confirmed as the next step.
+
 ## Commits & branches
 
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/), **English**, `type: short description` (`feat`, `fix`, `build`, `chore`, `ci`, `docs`). Enforced by the `commit-msg` hook.
@@ -76,7 +78,7 @@ Confirmed the hard way (2026-07-21): building/testing/marking-done a UI change b
 
 ## Conventions & rules
 
-Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) live in **`docs/CONVENTIONS.md`**. The per-layer non-negotiables auto-load via **`.claude/rules/`**, scoped to `domain/**`, `data/**`, `feature/**` (+ `core/backup`) — so they only enter context when you touch that layer.
+Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) live in **`docs/CONVENTIONS.md`**. The per-layer non-negotiables auto-load via **`.claude/rules/`**, scoped to `domain/**`, `data/**`, `feature/**` (+ `core/backup`) — so they only enter context when you touch that layer. `resume-work.md` uses the same mechanism scoped to `.claude/plans/**` — it loads the resume-work protocol the moment a plan file is opened.
 
 ## More docs
 

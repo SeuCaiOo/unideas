@@ -56,6 +56,7 @@ import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.ds.components.inputs.GridSelectionBottomSheet
 import com.seucaio.unideas.ds.components.inputs.SelectionBottomSheet
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.lists.ActionRow
@@ -269,6 +270,29 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
                             showSheet = false
                         },
                         onDismiss = { showSheet = false },
+                    )
+                }
+            }
+            Labeled("GridSelectionBottomSheet") {
+                var selectedDay by remember { mutableIntStateOf(15) }
+                var showDaySheet by remember { mutableStateOf(false) }
+                DateFieldButton(
+                    valueLabel = selectedDay.toString(),
+                    onClick = { showDaySheet = true },
+                    onClear = {},
+                    clearContentDescription = "Clear"
+                )
+                if (showDaySheet) {
+                    GridSelectionBottomSheet(
+                        title = "Which day of the month?",
+                        options = (1..31).toList(),
+                        selectedOption = selectedDay,
+                        optionLabel = { it.toString() },
+                        onOptionSelected = {
+                            selectedDay = it
+                            showDaySheet = false
+                        },
+                        onDismiss = { showDaySheet = false },
                     )
                 }
             }

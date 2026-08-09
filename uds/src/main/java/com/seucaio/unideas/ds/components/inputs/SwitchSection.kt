@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.UdsTheme
 
-/** A switch that reveals [content] while checked and hides it while unchecked; the whole row toggles it. */
 @Composable
 fun SwitchSection(
     label: String,

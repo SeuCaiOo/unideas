@@ -1,39 +1,40 @@
 package com.seucaio.unideas.ds.components.inputs
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.theme.TouchTargetSmall
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> SelectionBottomSheet(
+fun <T> GridSelectionBottomSheet(
     title: String,
     options: List<T>,
     selectedOption: T?,
     optionLabel: @Composable (T) -> String,
     onOptionSelected: (T) -> Unit,
     onDismiss: () -> Unit,
+    columns: Int = 7,
     description: String? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -42,19 +43,20 @@ fun <T> SelectionBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
-        SelectionSheetContent(
+        GridSelectionSheetContent(
             title = title,
             description = description,
             options = options,
             selectedOption = selectedOption,
             optionLabel = optionLabel,
             onOptionSelected = onOptionSelected,
+            columns = columns,
         )
     }
 }
 
 @Composable
-fun <T> SelectionSheetContent(
+fun <T> GridSelectionSheetContent(
     title: String,
     description: String?,
     options: List<T>,
@@ -62,6 +64,7 @@ fun <T> SelectionSheetContent(
     optionLabel: @Composable (T) -> String,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
+    columns: Int = 7,
 ) {
     Column(
         modifier = modifier
@@ -85,56 +88,58 @@ fun <T> SelectionSheetContent(
             )
         }
 
-        Column(modifier = Modifier.selectableGroup()) {
-            options.forEachIndexed { index, option ->
-                SelectionOptionRow(
-                    label = optionLabel(option),
-                    selected = option == selectedOption,
-                    onSelect = { onOptionSelected(option) },
-                )
-                if (index < options.lastIndex) HorizontalDivider()
+        options.chunked(columns).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { option ->
+                    GridCell(
+                        label = optionLabel(option),
+                        selected = option == selectedOption,
+                        onClick = { onOptionSelected(option) },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SelectionOptionRow(
+private fun GridCell(
     label: String,
     selected: Boolean,
-    onSelect: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    val backgroundColor =
+        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .selectable(selected = selected, onClick = onSelect, role = Role.RadioButton)
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .size(TouchTargetSmall.dp)
+            .clip(CircleShape)
+            .background(backgroundColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        RadioButton(selected = selected, onClick = null)
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        val textColor =
+            if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
+        )
     }
-}
-
-private class SelectionSheetDescriptionPreviewProvider : PreviewParameterProvider<String?> {
-    override val values: Sequence<String?> = sequenceOf(null, "Choose how often this task should come back.")
 }
 
 @PreviewLightDark
 @Composable
-private fun SelectionSheetContentPreview(
-    @PreviewParameter(SelectionSheetDescriptionPreviewProvider::class) description: String?,
-) {
+private fun GridSelectionSheetContentPreview() {
     UdsTheme {
         Surface {
-            SelectionSheetContent(
-                title = "Repeat",
-                description = description,
-                options = listOf("Daily", "Weekly", "Monthly"),
-                selectedOption = "Weekly",
-                optionLabel = { it },
+            GridSelectionSheetContent(
+                title = "Which day of the month?",
+                description = null,
+                options = (1..31).toList(),
+                selectedOption = 15,
+                optionLabel = { it.toString() },
                 onOptionSelected = {},
             )
         }

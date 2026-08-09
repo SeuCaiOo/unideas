@@ -56,6 +56,7 @@ import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.lists.ActionRow
 import com.seucaio.unideas.ds.components.lists.GroupHeader
 import com.seucaio.unideas.ds.components.lists.ListItemRow
@@ -236,6 +237,16 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
                     allOptionLabel = "All sections",
                     onSelect = { selected = it }
                 )
+            }
+            Labeled("SwitchSection") {
+                var checked by remember { mutableStateOf(true) }
+                SwitchSection(label = "Reminder", checked = checked, onCheckedChange = { checked = it }) {
+                    Text(
+                        "Revealed content",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
             }
             Labeled("DateFieldButton") {
                 DateFieldButton(

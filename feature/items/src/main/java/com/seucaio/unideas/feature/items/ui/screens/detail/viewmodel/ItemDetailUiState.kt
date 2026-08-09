@@ -34,7 +34,11 @@ data class ItemDetailUiState(
 
     override val typeIsTask: Boolean get() = type == ItemType.TASK
 
-    fun toggleReminder(enabled: Boolean): ItemDetailUiState = copy(hasReminder = enabled)
+    fun toggleReminder(enabled: Boolean): ItemDetailUiState = if (enabled) {
+        copy(hasReminder = true, dueDate = dueDate ?: LocalDate.now())
+    } else {
+        copy(hasReminder = false)
+    }
 
     /**
      * [Recurrence.None] leaves [dueDate] to be picked manually; any other recurrence auto-fills it

@@ -17,17 +17,22 @@ import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun RecurrenceField(
     recurrence: Recurrence,
+    dueDate: LocalDate?,
     onRecurrenceChanged: (Recurrence) -> Unit,
+    onDueDateChanged: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sheetStep: RecurrenceSheetStep by remember { mutableStateOf(RecurrenceSheetStep.None) }
 
     DateFieldButton(
-        valueLabel = recurrence.label(),
+        valueLabel = recurrence.label(dueDate),
         defaultValue = stringResource(R.string.item_form_recurrence_none),
         onClick = { sheetStep = RecurrenceSheetStep.List },
         onClear = { onRecurrenceChanged(Recurrence.None) },
@@ -40,11 +45,14 @@ fun RecurrenceField(
         RecurrenceSheetStep.List -> RecurrenceBottomSheet(
             recurrence = recurrence,
             onRecurrenceSelected = {
-                sheetStep = if (it is Recurrence.EveryNDays) {
-                    RecurrenceSheetStep.EveryNDaysStepper(it.days)
-                } else {
-                    onRecurrenceChanged(it)
-                    RecurrenceSheetStep.None
+                sheetStep = when {
+                    it is Recurrence.EveryNDays -> RecurrenceSheetStep.EveryNDaysStepper(it.days)
+                    it == Recurrence.Weekly ->
+                        RecurrenceSheetStep.WeekdayPicker((dueDate ?: LocalDate.now()).dayOfWeek)
+                    else -> {
+                        onRecurrenceChanged(it)
+                        RecurrenceSheetStep.None
+                    }
                 }
             },
             onDismiss = { sheetStep = RecurrenceSheetStep.None },
@@ -57,6 +65,15 @@ fun RecurrenceField(
             },
             onDismiss = { sheetStep = RecurrenceSheetStep.None },
         )
+        is RecurrenceSheetStep.WeekdayPicker -> WeekdayBottomSheet(
+            selectedDay = step.day,
+            onDaySelected = {
+                onRecurrenceChanged(Recurrence.Weekly)
+                onDueDateChanged(LocalDate.now().with(TemporalAdjusters.nextOrSame(it)))
+                sheetStep = RecurrenceSheetStep.None
+            },
+            onDismiss = { sheetStep = RecurrenceSheetStep.None },
+        )
     }
 }
 
@@ -64,42 +81,50 @@ private sealed interface RecurrenceSheetStep {
     data object None : RecurrenceSheetStep
     data object List : RecurrenceSheetStep
     data class EveryNDaysStepper(val days: Int) : RecurrenceSheetStep
+    data class WeekdayPicker(val day: DayOfWeek) : RecurrenceSheetStep
 }
 
 @Composable
-internal fun Recurrence.label(): String? = when (this) {
+internal fun Recurrence.label(dueDate: LocalDate? = null): String? = when (this) {
     Recurrence.None -> null
     Recurrence.Daily -> stringResource(R.string.item_form_recurrence_daily)
-    Recurrence.Weekly -> stringResource(R.string.item_form_recurrence_weekly)
-    Recurrence.Monthly -> stringResource(R.string.item_form_recurrence_monthly)
+    Recurrence.Weekly -> if (dueDate != null) {
+        stringResource(R.string.item_form_recurrence_weekly_with_day, dueDate.dayOfWeek.label())
+    } else {
+        stringResource(R.string.item_form_recurrence_weekly)
+    }
+    Recurrence.Monthly -> if (dueDate != null) {
+        stringResource(R.string.item_form_recurrence_monthly_with_day, dueDate.dayOfMonth)
+    } else {
+        stringResource(R.string.item_form_recurrence_monthly)
+    }
     is Recurrence.EveryNDays -> stringResource(R.string.item_form_recurrence_every_n_days, days)
 }
 
-private sealed interface RecurrenceFieldPreviewScenario {
-    data object EmptyField : RecurrenceFieldPreviewScenario
-    data object FilledField : RecurrenceFieldPreviewScenario
-}
+private val PREVIEW_DUE_DATE = LocalDate.of(2026, 8, 20)
 
-private class RecurrenceFieldPreviewProvider : PreviewParameterProvider<RecurrenceFieldPreviewScenario> {
+private class RecurrenceFieldPreviewProvider : PreviewParameterProvider<Recurrence> {
     override val values = sequenceOf(
-        RecurrenceFieldPreviewScenario.EmptyField,
-        RecurrenceFieldPreviewScenario.FilledField,
+        Recurrence.None,
+        Recurrence.Daily,
+        Recurrence.Weekly,
+        Recurrence.Monthly,
+        Recurrence.EveryNDays(3),
     )
 }
 
 @PreviewLightDark
 @Composable
 private fun RecurrenceFieldPreview(
-    @PreviewParameter(RecurrenceFieldPreviewProvider::class) scenario: RecurrenceFieldPreviewScenario,
+    @PreviewParameter(RecurrenceFieldPreviewProvider::class) recurrence: Recurrence,
 ) {
     UdsTheme {
         Surface {
             RecurrenceField(
-                recurrence = when (scenario) {
-                    RecurrenceFieldPreviewScenario.EmptyField -> Recurrence.None
-                    RecurrenceFieldPreviewScenario.FilledField -> Recurrence.Weekly
-                },
+                recurrence = recurrence,
+                dueDate = PREVIEW_DUE_DATE,
                 onRecurrenceChanged = {},
+                onDueDateChanged = {},
                 modifier = Modifier.padding(16.dp),
             )
         }

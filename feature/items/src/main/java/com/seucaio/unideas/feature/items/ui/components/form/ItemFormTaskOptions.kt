@@ -37,7 +37,9 @@ fun ItemFormTaskOptions(
         ) {
             RecurrenceField(
                 recurrence = state.recurrence,
+                dueDate = state.dueDate,
                 onRecurrenceChanged = events.onRecurrenceChanged,
+                onDueDateChanged = events.onDueDateChanged,
                 modifier = Modifier.padding(top = 16.dp),
             )
 

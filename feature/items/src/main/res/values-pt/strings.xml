@@ -23,6 +23,7 @@
     <string name="item_form_section_label">Seção</string>
     <string name="item_form_section_none">Sem seção</string>
     <string name="item_form_tags_label">Tags</string>
+    <string name="item_form_has_reminder_label">Lembrete</string>
     <string name="item_form_date_label">Data de vencimento</string>
     <string name="item_form_date_none">Sem data</string>
     <string name="item_form_date_clear">Limpar data</string>

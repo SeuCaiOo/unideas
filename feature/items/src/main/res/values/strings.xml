@@ -23,6 +23,7 @@
     <string name="item_form_section_label">Section</string>
     <string name="item_form_section_none">No section</string>
     <string name="item_form_tags_label">Tags</string>
+    <string name="item_form_has_reminder_label">Reminder</string>
     <string name="item_form_date_label">Due date</string>
     <string name="item_form_date_none">No date</string>
     <string name="item_form_date_clear">Clear date</string>

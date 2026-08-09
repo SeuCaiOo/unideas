@@ -9,6 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -34,21 +35,23 @@ fun ItemFormTaskOptions(
             checked = state.hasReminder,
             onCheckedChange = events.onReminderToggled,
         ) {
-            DueDateField(
-                dueDate = state.dueDate,
-                onDueDateChanged = events.onDueDateChanged,
+            RecurrenceField(
+                recurrence = state.recurrence,
+                onRecurrenceChanged = events.onRecurrenceChanged,
                 modifier = Modifier.padding(top = 16.dp),
             )
+
+            if (state.recurrence == Recurrence.None) {
+                DueDateField(
+                    dueDate = state.dueDate,
+                    onDueDateChanged = events.onDueDateChanged,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
 
             DueTimeField(
                 dueTime = state.dueTime,
                 onDueTimeChanged = events.onDueTimeChanged,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-
-            RecurrenceField(
-                recurrence = state.recurrence,
-                onRecurrenceChanged = events.onRecurrenceChanged,
                 modifier = Modifier.padding(top = 16.dp),
             )
 

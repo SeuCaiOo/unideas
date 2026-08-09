@@ -29,6 +29,19 @@ interface ItemFormFieldsState {
     val isEditing: Boolean get() = false
 }
 
+/** [dueDate] with no reminder scheduled — persisted state never carries a stale, hidden date. */
+val ItemFormFieldsState.persistableDueDate: LocalDate? get() = if (hasReminder) dueDate else null
+
+/** [dueTime] with no reminder scheduled — persisted state never carries a stale, hidden time. */
+val ItemFormFieldsState.persistableDueTime: LocalTime? get() = if (hasReminder) dueTime else null
+
+/** [recurrence] with no reminder scheduled — persisted state never carries a stale recurrence rule. */
+val ItemFormFieldsState.persistableRecurrence: Recurrence get() = if (hasReminder) recurrence else Recurrence.None
+
+/** [reminderWarning] with no reminder scheduled — persisted state never carries a stale warning. */
+val ItemFormFieldsState.persistableReminderWarning: ReminderWarning
+    get() = if (hasReminder) reminderWarning else ReminderWarning.None
+
 data class ItemFormFieldsEvents(
     val onTypeChanged: (ItemType) -> Unit,
     val onTitleChanged: (String) -> Unit,

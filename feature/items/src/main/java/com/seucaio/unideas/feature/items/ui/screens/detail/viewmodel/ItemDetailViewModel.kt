@@ -11,6 +11,10 @@ import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -106,7 +110,7 @@ class ItemDetailViewModel(
                 )
             }
             is ItemDetailEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
-            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.changeRecurrence(event.recurrence) }
             is ItemDetailEvent.OnReminderWarningChanged ->
                 _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
             is ItemDetailEvent.OnSaveClicked -> handleSave()
@@ -147,10 +151,10 @@ class ItemDetailViewModel(
                     title = state.title,
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
+                    dueDate = state.persistableDueDate,
+                    dueTime = state.persistableDueTime,
+                    recurrence = state.persistableRecurrence,
+                    reminderWarning = state.persistableReminderWarning,
                     createdAt = LocalDateTime.now(),
                     tags = selectedTags,
                 ),
@@ -163,10 +167,10 @@ class ItemDetailViewModel(
                     title = state.title,
                     description = state.description.ifBlank { null },
                     sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
+                    dueDate = state.persistableDueDate,
+                    dueTime = state.persistableDueTime,
+                    recurrence = state.persistableRecurrence,
+                    reminderWarning = state.persistableReminderWarning,
                     tags = selectedTags,
                 ),
             )

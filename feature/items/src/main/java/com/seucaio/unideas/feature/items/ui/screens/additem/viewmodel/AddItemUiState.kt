@@ -41,4 +41,13 @@ data class AddItemUiState(
     )
 
     fun toggleReminder(enabled: Boolean): AddItemUiState = copy(hasReminder = enabled)
+
+    /**
+     * [Recurrence.None] leaves [dueDate] to be picked manually; any other recurrence auto-fills it
+     * (today if empty, kept as-is otherwise) since a recurring item is never edited to a specific date.
+     */
+    fun changeRecurrence(recurrence: Recurrence): AddItemUiState = copy(
+        recurrence = recurrence,
+        dueDate = if (recurrence == Recurrence.None) dueDate else (dueDate ?: LocalDate.now()),
+    )
 }

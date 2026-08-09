@@ -9,6 +9,10 @@ import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +64,7 @@ class AddItemViewModel(
                 )
             }
             is AddItemEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
-            is AddItemEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
+            is AddItemEvent.OnRecurrenceChanged -> _uiState.update { it.changeRecurrence(event.recurrence) }
             is AddItemEvent.OnReminderWarningChanged ->
                 _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
             is AddItemEvent.OnSaveClicked -> handleSave()
@@ -77,10 +81,10 @@ class AddItemViewModel(
                 title = state.title,
                 description = state.description.ifBlank { null },
                 sectionId = state.sectionId,
-                dueDate = state.dueDate,
-                dueTime = state.dueTime,
-                recurrence = state.recurrence,
-                reminderWarning = state.reminderWarning,
+                dueDate = state.persistableDueDate,
+                dueTime = state.persistableDueTime,
+                recurrence = state.persistableRecurrence,
+                reminderWarning = state.persistableReminderWarning,
                 createdAt = LocalDateTime.now(),
                 tags = selectedTags,
             ),

@@ -138,6 +138,7 @@ class AddItemViewModelTest {
 
         vm.uiState.test { awaitItem() }
         vm.onEvent(AddItemEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(AddItemEvent.OnReminderToggled(true))
         vm.onEvent(AddItemEvent.OnDueDateChanged(ItemStub.TODAY))
         vm.onEvent(AddItemEvent.OnDueTimeChanged(LocalTime.of(9, 30)))
         vm.onEvent(AddItemEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(3)))

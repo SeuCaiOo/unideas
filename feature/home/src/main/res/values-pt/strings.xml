@@ -19,6 +19,12 @@
     <string name="home_view_mode_switch_to_grid">Mudar para visualização em grade</string>
     <string name="home_view_mode_switch_to_list">Mudar para visualização em lista</string>
     <string name="home_item_recurring_content_description">Item recorrente</string>
+    <string name="home_recurrence_daily">Diariamente</string>
+    <string name="home_recurrence_weekly">Semanalmente</string>
+    <string name="home_recurrence_weekly_with_day">Semanalmente, %1$s</string>
+    <string name="home_recurrence_monthly">Mensalmente</string>
+    <string name="home_recurrence_monthly_with_day">Mensalmente, dia %1$d</string>
+    <string name="home_recurrence_every_n_days">A cada %1$d dias</string>
     <string name="all_priorities_title">Todas as prioridades</string>
     <string name="all_priorities_empty">Nada vencido ou a vencer.</string>
     <string name="all_priorities_load_error">Não foi possível carregar suas prioridades</string>

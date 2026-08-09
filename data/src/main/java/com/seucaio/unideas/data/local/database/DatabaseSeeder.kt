@@ -119,6 +119,22 @@ class DatabaseSeeder(
                 tagIds = listOf(tags.personalId),
             ),
         )
+        seedFullRecurringTasks(today, sections)
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Renovar assinatura",
+                description = "Plano anual do streaming",
+                dueDate = today.minusDays(COMPLETED_DAYS_AGO),
+                tagIds = listOf(tags.urgentId),
+                completedAt = LocalDateTime.now(),
+            ),
+        )
+        insertItem(SeedItem(ItemType.TASK, "Ler um livro"))
+    }
+
+    // One example per Recurrence type — visual coverage for #130's per-type label formatting.
+    private suspend fun seedFullRecurringTasks(today: LocalDate, sections: FullSections) {
         insertItem(
             SeedItem(
                 ItemType.TASK,
@@ -132,14 +148,30 @@ class DatabaseSeeder(
         insertItem(
             SeedItem(
                 ItemType.TASK,
-                "Renovar assinatura",
-                description = "Plano anual do streaming",
-                dueDate = today.minusDays(COMPLETED_DAYS_AGO),
-                tagIds = listOf(tags.urgentId),
-                completedAt = LocalDateTime.now(),
+                "Pagar aluguel",
+                description = "Boleto do apartamento",
+                dueDate = today.withDayOfMonth(minOf(RENT_DAY_OF_MONTH, today.lengthOfMonth())),
+                sectionId = sections.homeId,
+                recurrence = Recurrence.Monthly,
             ),
         )
-        insertItem(SeedItem(ItemType.TASK, "Ler um livro"))
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Trocar filtro de água",
+                description = "Filtro do purificador da cozinha",
+                dueDate = today.plusDays(EVERY_N_DAYS_EXAMPLE),
+                recurrence = Recurrence.EveryNDays(EVERY_N_DAYS_EXAMPLE.toInt()),
+            ),
+        )
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Tomar remédio",
+                dueDate = today,
+                recurrence = Recurrence.Daily,
+            ),
+        )
     }
 
     private suspend fun seedFullNotes(today: LocalDate, sections: FullSections, tags: FullTags) {
@@ -199,6 +231,8 @@ class DatabaseSeeder(
         const val RECURRING_DAYS = 2L
         const val COMPLETED_DAYS_AGO = 1L
         const val NOTE_DUE_DAYS = 10L
+        const val RENT_DAY_OF_MONTH = 5
+        const val EVERY_N_DAYS_EXAMPLE = 15L
 
         /** Exercises every Markdown syntax the toolbar inserts (`MarkdownSyntaxInserter`), for manual visual checks. */
         val MARKDOWN_EXAMPLE_DESCRIPTION = """

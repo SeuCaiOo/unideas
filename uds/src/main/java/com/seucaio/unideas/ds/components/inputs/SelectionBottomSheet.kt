@@ -54,8 +54,9 @@ fun <T> SelectionBottomSheet(
     }
 }
 
+/** The sheet's content alone, with no `ModalBottomSheet`/`Popup` wrapper — what a preview should call. */
 @Composable
-private fun <T> SelectionSheetContent(
+fun <T> SelectionSheetContent(
     title: String,
     description: String?,
     options: List<T>,

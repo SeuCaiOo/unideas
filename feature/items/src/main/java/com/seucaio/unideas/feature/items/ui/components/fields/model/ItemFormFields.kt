@@ -22,8 +22,7 @@ interface ItemFormFieldsState {
     val availableSections: List<Section>
     val availableTags: List<Tag>
     val isTitleValid: Boolean
-    val canPickRecurrence: Boolean
-    val canPickReminder: Boolean
+    val hasReminder: Boolean
     val typeIsTask: Boolean
     val isCompleted: Boolean get() = false
     val completedAt: LocalDateTime? get() = null
@@ -36,6 +35,7 @@ data class ItemFormFieldsEvents(
     val onDescriptionChanged: (String) -> Unit,
     val onSectionChanged: (Long?) -> Unit,
     val onTagToggled: (Long) -> Unit,
+    val onReminderToggled: (Boolean) -> Unit,
     val onDueDateChanged: (LocalDate?) -> Unit,
     val onDueTimeChanged: (LocalTime?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,

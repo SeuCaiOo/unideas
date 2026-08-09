@@ -54,6 +54,7 @@ private val noopEvents = ItemFormFieldsEvents(
     onDescriptionChanged = {},
     onSectionChanged = {},
     onTagToggled = {},
+    onReminderToggled = {},
     onDueDateChanged = {},
     onDueTimeChanged = {},
     onRecurrenceChanged = {},

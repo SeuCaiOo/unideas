@@ -32,6 +32,7 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
             description = "Electricity and water",
             sectionId = 1L,
             selectedTagIds = setOf(1L),
+            hasReminder = true,
             dueDate = LocalDate.of(2026, 7, 1),
             availableSections = sections,
             availableTags = tags,

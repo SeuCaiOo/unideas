@@ -50,6 +50,7 @@ class AddItemViewModel(
             is AddItemEvent.OnDescriptionChanged -> _uiState.update { it.changeDescription(event.description) }
             is AddItemEvent.OnSectionChanged -> _uiState.update { it.setSection(event.sectionId) }
             is AddItemEvent.OnTagToggled -> _uiState.update { it.setTag(event.tagId) }
+            is AddItemEvent.OnReminderToggled -> _uiState.update { it.toggleReminder(event.enabled) }
             is AddItemEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,

@@ -18,6 +18,7 @@ data class ItemDetailUiState(
     override val description: String = "",
     override val sectionId: Long? = null,
     override val selectedTagIds: Set<Long> = emptySet(),
+    override val hasReminder: Boolean = false,
     override val dueDate: LocalDate? = null,
     override val dueTime: LocalTime? = null,
     override val recurrence: Recurrence = Recurrence.None,
@@ -31,9 +32,7 @@ data class ItemDetailUiState(
 
     override val isTitleValid: Boolean get() = title.isNotBlank()
 
-    override val canPickRecurrence: Boolean get() = dueDate != null
-
-    override val canPickReminder: Boolean get() = dueDate != null
-
     override val typeIsTask: Boolean get() = type == ItemType.TASK
+
+    fun toggleReminder(enabled: Boolean): ItemDetailUiState = copy(hasReminder = enabled)
 }

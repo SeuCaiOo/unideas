@@ -18,6 +18,8 @@ sealed interface ItemDetailEvent {
 
     data class OnTagToggled(val tagId: Long) : ItemDetailEvent
 
+    data class OnReminderToggled(val enabled: Boolean) : ItemDetailEvent
+
     data class OnDueDateChanged(val dueDate: LocalDate?) : ItemDetailEvent
 
     data class OnDueTimeChanged(val dueTime: LocalTime?) : ItemDetailEvent

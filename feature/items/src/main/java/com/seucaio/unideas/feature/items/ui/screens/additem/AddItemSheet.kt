@@ -77,6 +77,7 @@ private fun AddItemSheetContent(
             onDescriptionChanged = { onEvent(AddItemEvent.OnDescriptionChanged(it)) },
             onSectionChanged = { onEvent(AddItemEvent.OnSectionChanged(it)) },
             onTagToggled = { onEvent(AddItemEvent.OnTagToggled(it)) },
+            onReminderToggled = { onEvent(AddItemEvent.OnReminderToggled(it)) },
             onDueDateChanged = { onEvent(AddItemEvent.OnDueDateChanged(it)) },
             onDueTimeChanged = { onEvent(AddItemEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(AddItemEvent.OnRecurrenceChanged(it)) },

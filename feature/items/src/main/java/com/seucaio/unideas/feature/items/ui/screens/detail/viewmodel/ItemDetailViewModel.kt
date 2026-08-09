@@ -76,6 +76,7 @@ class ItemDetailViewModel(
                 description = item.description.orEmpty(),
                 sectionId = item.sectionId,
                 selectedTagIds = item.tags.map { tag -> tag.id }.toSet(),
+                hasReminder = item.dueDate != null,
                 dueDate = item.dueDate,
                 dueTime = item.dueTime,
                 recurrence = item.recurrence,
@@ -95,6 +96,7 @@ class ItemDetailViewModel(
                 _uiState.update { it.copy(description = event.description) }
             is ItemDetailEvent.OnSectionChanged -> _uiState.update { it.copy(sectionId = event.sectionId) }
             is ItemDetailEvent.OnTagToggled -> _uiState.update { it.toggleTag(event.tagId) }
+            is ItemDetailEvent.OnReminderToggled -> _uiState.update { it.toggleReminder(event.enabled) }
             is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
                 it.copy(
                     dueDate = event.dueDate,

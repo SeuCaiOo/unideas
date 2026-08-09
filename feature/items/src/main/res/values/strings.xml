@@ -40,6 +40,7 @@
     <string name="item_form_recurrence_every_n_days_decrease">Decrease</string>
     <string name="item_form_recurrence_confirm">Confirm</string>
     <string name="item_form_recurrence_weekday_title">Which day of the week?</string>
+    <string name="item_form_recurrence_day_of_month_title">Which day of the month?</string>
     <string name="item_form_recurrence_clear">Clear recurrence</string>
     <string name="item_form_time_label">Due time</string>
     <string name="item_form_time_clear">Clear time</string>

@@ -40,6 +40,7 @@
     <string name="item_form_recurrence_every_n_days_decrease">Diminuir</string>
     <string name="item_form_recurrence_confirm">Confirmar</string>
     <string name="item_form_recurrence_weekday_title">Qual dia da semana?</string>
+    <string name="item_form_recurrence_day_of_month_title">Qual dia do mês?</string>
     <string name="item_form_recurrence_clear">Limpar recorrência</string>
     <string name="item_form_time_label">Horário de vencimento</string>
     <string name="item_form_time_clear">Limpar horário</string>

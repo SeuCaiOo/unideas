@@ -21,10 +21,10 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 
 /**
- * Fixed presets rather than free-form days — keeps the picker a simple dropdown, same pattern as
- * [RecurrenceField]. Requests `POST_NOTIFICATIONS` (Android 13+) the first time this field is
- * shown, since that's the first point the user is actually configuring a reminder (#115) — no
- * internal precedent to follow, this is the project's first runtime permission request.
+ * Fixed presets rather than free-form days — keeps the picker a simple dropdown. Requests
+ * `POST_NOTIFICATIONS` (Android 13+) the first time this field is shown, since that's the first
+ * point the user is actually configuring a reminder (#115) — no internal precedent to follow,
+ * this is the project's first runtime permission request.
  */
 @Composable
 fun ReminderWarningField(

@@ -33,6 +33,10 @@
     <string name="item_form_recurrence_weekly">Semanalmente</string>
     <string name="item_form_recurrence_monthly">Mensalmente</string>
     <string name="item_form_recurrence_every_n_days">A cada %1$d dias</string>
+    <string name="item_form_recurrence_every_n_days_title">A cada quantos dias?</string>
+    <string name="item_form_recurrence_every_n_days_increase">Aumentar</string>
+    <string name="item_form_recurrence_every_n_days_decrease">Diminuir</string>
+    <string name="item_form_recurrence_confirm">Confirmar</string>
     <string name="item_form_recurrence_clear">Limpar recorrência</string>
     <string name="item_form_time_label">Horário de vencimento</string>
     <string name="item_form_time_clear">Limpar horário</string>

@@ -15,10 +15,10 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.DueDateField
 import com.seucaio.unideas.feature.items.ui.components.fields.DueTimeField
-import com.seucaio.unideas.feature.items.ui.components.fields.RecurrenceField
 import com.seucaio.unideas.feature.items.ui.components.fields.ReminderWarningField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
+import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.RecurrenceField
 import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
 

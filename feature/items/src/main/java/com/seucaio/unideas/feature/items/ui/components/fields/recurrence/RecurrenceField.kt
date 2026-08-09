@@ -13,13 +13,15 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.core.common.extensions.nextOrSame
+import com.seucaio.unideas.core.common.extensions.nextOrSameDayOfMonth
+import com.seucaio.unideas.core.common.extensions.orToday
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
 
 @Composable
 fun RecurrenceField(
@@ -48,7 +50,9 @@ fun RecurrenceField(
                 sheetStep = when {
                     it is Recurrence.EveryNDays -> RecurrenceSheetStep.EveryNDaysStepper(it.days)
                     it == Recurrence.Weekly ->
-                        RecurrenceSheetStep.WeekdayPicker((dueDate ?: LocalDate.now()).dayOfWeek)
+                        RecurrenceSheetStep.WeekdayPicker(dueDate.orToday().dayOfWeek)
+                    it == Recurrence.Monthly ->
+                        RecurrenceSheetStep.DayOfMonthPicker(dueDate.orToday().dayOfMonth)
                     else -> {
                         onRecurrenceChanged(it)
                         RecurrenceSheetStep.None
@@ -69,7 +73,16 @@ fun RecurrenceField(
             selectedDay = step.day,
             onDaySelected = {
                 onRecurrenceChanged(Recurrence.Weekly)
-                onDueDateChanged(LocalDate.now().with(TemporalAdjusters.nextOrSame(it)))
+                onDueDateChanged(LocalDate.now().nextOrSame(it))
+                sheetStep = RecurrenceSheetStep.None
+            },
+            onDismiss = { sheetStep = RecurrenceSheetStep.None },
+        )
+        is RecurrenceSheetStep.DayOfMonthPicker -> DayOfMonthBottomSheet(
+            selectedDay = step.day,
+            onDaySelected = {
+                onRecurrenceChanged(Recurrence.Monthly)
+                onDueDateChanged(LocalDate.now().nextOrSameDayOfMonth(it))
                 sheetStep = RecurrenceSheetStep.None
             },
             onDismiss = { sheetStep = RecurrenceSheetStep.None },
@@ -82,6 +95,7 @@ private sealed interface RecurrenceSheetStep {
     data object List : RecurrenceSheetStep
     data class EveryNDaysStepper(val days: Int) : RecurrenceSheetStep
     data class WeekdayPicker(val day: DayOfWeek) : RecurrenceSheetStep
+    data class DayOfMonthPicker(val day: Int) : RecurrenceSheetStep
 }
 
 @Composable

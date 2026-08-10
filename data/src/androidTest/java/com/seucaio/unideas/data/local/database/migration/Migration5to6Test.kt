@@ -122,6 +122,30 @@ class Migration5to6Test {
     }
 
     @Test
+    fun migrationDeduplicatesExistingRowsKeepingTheHighestId() {
+        val db = helper.writableDatabase
+        db.execSQL(
+            "INSERT INTO items (id, type, title, recurrence, reminderWarning, createdAt) " +
+                "VALUES (1, 'TASK', 'Recorrente', 'WEEKLY', 'NONE', 0)",
+        )
+        db.execSQL(
+            "INSERT INTO item_completion_history (id, itemId, scheduledDate, completedAt) VALUES (1, 1, 1000, 1500)",
+        )
+        db.execSQL(
+            "INSERT INTO item_completion_history (id, itemId, scheduledDate, completedAt) VALUES (2, 1, 1000, 1600)",
+        )
+
+        MIGRATION_5_6.migrate(db)
+
+        db.query("SELECT id, completedAt FROM item_completion_history").use { cursor ->
+            assertEquals(true, cursor.moveToFirst())
+            assertEquals(2, cursor.getInt(cursor.getColumnIndexOrThrow("id")))
+            assertEquals(1600, cursor.getInt(cursor.getColumnIndexOrThrow("completedAt")))
+            assertEquals(false, cursor.moveToNext())
+        }
+    }
+
+    @Test
     fun migrationDropsTheOldPlainItemIdIndex() {
         val db = helper.writableDatabase
 

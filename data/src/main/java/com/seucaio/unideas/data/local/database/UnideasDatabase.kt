@@ -13,6 +13,7 @@ import com.seucaio.unideas.data.local.dao.TagDao
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_2_3
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_3_4
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_4_5
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_5_6
 import com.seucaio.unideas.data.local.entity.ItemCompletionHistoryEntity
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
@@ -42,7 +43,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         ItemTagCrossRef::class,
         ItemCompletionHistoryEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -89,7 +90,7 @@ abstract class UnideasDatabase : RoomDatabase() {
                 UnideasDatabase::class.java,
                 DATABASE_NAME,
             )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
     }
 }

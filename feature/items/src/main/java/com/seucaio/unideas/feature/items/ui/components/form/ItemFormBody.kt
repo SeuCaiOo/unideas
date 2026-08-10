@@ -31,8 +31,7 @@ fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modif
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(horizontal = 16.dp),
+            .imePadding(),
     ) {
         TitleDescriptionFields(
             title = state.title,
@@ -43,19 +42,21 @@ fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modif
             titleError = state.titleError,
         )
 
-        TypeSelectorField(
-            type = state.type,
-            onTypeChanged = events.onTypeChanged,
-            modifier = Modifier.padding(top = 16.dp),
-        )
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            TypeSelectorField(
+                type = state.type,
+                onTypeChanged = events.onTypeChanged,
+                modifier = Modifier.padding(top = 16.dp),
+            )
 
-        ItemFormOptionsSection(
-            state = state,
-            events = events,
-            modifier = Modifier.padding(top = 16.dp)
-        )
+            ItemFormOptionsSection(
+                state = state,
+                events = events,
+                modifier = Modifier.padding(top = 16.dp)
+            )
 
-        ItemFormFooter(state = state, events = events)
+            ItemFormFooter(state = state, events = events)
+        }
     }
 }
 

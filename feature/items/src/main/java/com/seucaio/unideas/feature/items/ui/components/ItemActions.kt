@@ -19,10 +19,10 @@ import com.seucaio.unideas.feature.items.R
 @Composable
 fun ItemActions(
     onShareClicked: () -> Unit,
-    onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClicked: (() -> Unit)? = null,
     onHistoryClicked: (() -> Unit)? = null,
+    onDeleteClicked: (() -> Unit)? = null,
 ) {
     Row(modifier) {
         IconButton(onClick = onShareClicked) {
@@ -38,8 +38,13 @@ fun ItemActions(
                 Icon(Icons.Default.History, contentDescription = stringResource(R.string.item_detail_history))
             }
         }
-        IconButton(onClick = onDeleteClicked) {
-            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.item_detail_delete))
+        if (onDeleteClicked != null) {
+            IconButton(onClick = onDeleteClicked) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.item_detail_delete)
+                )
+            }
         }
     }
 }
@@ -51,8 +56,8 @@ private fun ItemActionsPreview() {
         Surface {
             ItemActions(
                 onShareClicked = {},
-                onDeleteClicked = {},
                 onEditClicked = {},
+                onDeleteClicked = {},
             )
         }
     }

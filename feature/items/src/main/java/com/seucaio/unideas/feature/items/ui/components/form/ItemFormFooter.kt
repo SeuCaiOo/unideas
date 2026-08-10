@@ -22,7 +22,8 @@ import java.time.LocalDateTime
 
 /**
  * The form's two closing actions: "Mark as completed" — only for a task already being edited —
- * and "Save", always present. Never both absent, never more than these two.
+ * and "Save" — only while creating, since editing an existing item auto-saves every field already
+ * (see [com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel]).
  */
 @Composable
 fun ItemFormFooter(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modifier: Modifier = Modifier) {
@@ -36,14 +37,16 @@ fun ItemFormFooter(state: ItemFormFieldsState, events: ItemFormFieldsEvents, mod
             )
         }
 
-        Button(
-            onClick = events.onSaveClicked,
-            enabled = state.isTitleValid,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp),
-        ) {
-            Text(stringResource(R.string.item_form_save))
+        if (!state.isEditing) {
+            Button(
+                onClick = events.onSaveClicked,
+                enabled = state.isTitleValid,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+            ) {
+                Text(stringResource(R.string.item_form_save))
+            }
         }
     }
 }
@@ -62,7 +65,7 @@ private val noopEvents = ItemFormFieldsEvents(
     onSaveClicked = {},
 )
 
-/** Editing an existing task: both "Mark as completed" and "Save". */
+/** Editing an existing task: only "Mark as completed" — no "Save", already auto-saved. */
 @PreviewLightDark
 @Composable
 private fun ItemFormFooterTaskEditingPreview() {
@@ -80,7 +83,7 @@ private fun ItemFormFooterTaskEditingPreview() {
     }
 }
 
-/** A completed task keeps showing the completion toggle (now checked) alongside Save. */
+/** A completed task keeps showing the completion toggle (now checked), still no "Save". */
 @PreviewLightDark
 @Composable
 private fun ItemFormFooterTaskCompletedPreview() {

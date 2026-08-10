@@ -126,9 +126,13 @@ private fun ItemDetailScreenContent(
                 actions = {
                     ItemActions(
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
                         onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
                             { onEvent(ItemDetailEvent.OnHistoryClicked) }
+                        } else {
+                            null
+                        },
+                        onDeleteClicked = if (uiState.isEditing) {
+                            { onEvent(ItemDetailEvent.OnDeleteClicked) }
                         } else {
                             null
                         },

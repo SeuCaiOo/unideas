@@ -31,7 +31,7 @@ Organized by role, not by the screen that originally used them:
 
 - `buttons/` — `AppIconButton`, `AppFab`, `MiniFabAction`, `SegmentedControl`
 - `chips/` — `SelectableChip`, `SelectableChipRow` (+ `SelectableChipUi`), `RemovableChip`, `TextBadge`, `DueBadge`
-- `inputs/` — `AppTextField`, `BorderlessTextField` (`String` and `TextFieldValue` overloads — the latter for callers that need cursor position, e.g. inserting Markdown syntax at the caret), `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`, `InlineEditRow`
+- `inputs/` — `AppTextField`, `BorderlessTextField` (`String` and `TextFieldValue` overloads — the latter for callers that need cursor position, e.g. inserting Markdown syntax at the caret), `FormField`, `DropdownField`, `FilterDropdownPill`, `DateFieldButton`, `AddEntryRow`, `InlineEditRow`, `SelectionBottomSheet` (+ `SelectionSheetContent`, single-column radio-style list), `GridSelectionBottomSheet` (grid layout, e.g. day-of-month picker), `SwitchSection` (labeled switch that reveals `content` when checked)
 - `lists/` — `ListItemRow` (+ `ListItemUi`), `ManageListRow`, `MetaRow`, `MetaChipsRow`, `ActionRow`, `NavRow`, `GroupHeader`, `ListSection`, `TitleSubtitle`
 - `navigation/` — `TabItem`, `AppTabRow`
 - `panels/` — `PriorityPanel` (+ `PriorityRowUi`)

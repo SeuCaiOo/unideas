@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
@@ -186,15 +187,20 @@ class ItemDetailViewModel(
         }
     }
 
+    /** Only [CompletionResult.Completed] gets a snackbar — reopening (via [ItemDetailDialogState.ReopenConfirm])
+     * is a correction, not an action worth celebrating. */
     private fun handleComplete() = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         val now = LocalDateTime.now()
         itemFormUseCase.complete(item, now)
-            .onSuccess {
+            .onSuccess { result ->
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
                 _uiState.update { it.applyCompletion(updated) }
+                if (result == CompletionResult.Completed) {
+                    sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
+                }
             }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }

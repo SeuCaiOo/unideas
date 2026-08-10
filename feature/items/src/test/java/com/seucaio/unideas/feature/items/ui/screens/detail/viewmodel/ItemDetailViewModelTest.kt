@@ -374,6 +374,24 @@ class ItemDetailViewModelTest {
     }
 
     @Test
+    fun `when OnCompleteClicked completes a task should emit the completed snackbar`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+            assertEquals(
+                ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
     fun `when OnCompleteConfirmClicked should reopen the task and dismiss the dialog`() = runTest {
         val item = ItemStub.completedTask(id = 1L)
         val reopened = item.copy(completedAt = null)
@@ -388,6 +406,22 @@ class ItemDetailViewModelTest {
         assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
         assertEquals(false, vm.uiState.value.isCompleted)
         coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when OnCompleteConfirmClicked reopens a task should not emit the completed snackbar`() = runTest {
+        val item = ItemStub.completedTask(id = 1L)
+        val reopened = item.copy(completedAt = null)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnCompleteConfirmClicked)
+            expectNoEvents()
+        }
     }
 
     @Test

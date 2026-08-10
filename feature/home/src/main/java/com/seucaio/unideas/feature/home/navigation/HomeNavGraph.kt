@@ -32,7 +32,7 @@ fun NavGraphBuilder.homeNavGraph(
     }
     composable<HomeRoute.Browse> {
         BrowseScreen(
-            onNavigateBack = onNavigateBack,
+            onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToAddItem = onNavigateToAddItem,
         )

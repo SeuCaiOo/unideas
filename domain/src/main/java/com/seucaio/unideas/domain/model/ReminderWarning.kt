@@ -1,10 +1,12 @@
 package com.seucaio.unideas.domain.model
 
+import java.io.Serializable
+
 /**
  * Configures whether an [Item] gets a "normal" tier reminder notification before its due date.
  * Only meaningful when the item has a [Item.dueDate]. See [ReminderTier.of].
  */
-sealed interface ReminderWarning {
+sealed interface ReminderWarning : Serializable {
 
     data object None : ReminderWarning
 

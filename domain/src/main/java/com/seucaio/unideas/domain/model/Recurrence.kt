@@ -1,5 +1,6 @@
 package com.seucaio.unideas.domain.model
 
+import java.io.Serializable
 import java.time.LocalDate
 
 /**
@@ -8,7 +9,7 @@ import java.time.LocalDate
  * A recurring task "renasce ao concluir": completing it spawns a new instance
  * whose due date is [nextDueDate] of the completed one.
  */
-sealed interface Recurrence {
+sealed interface Recurrence : Serializable {
 
     /**
      * Next due date after [from] for this recurrence, or `null` for [None].

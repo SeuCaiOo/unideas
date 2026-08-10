@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -40,10 +41,12 @@ class ItemDetailViewModelTest {
     @MockK
     private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
 
+    private val testDispatcher = UnconfinedTestDispatcher()
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
         coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
     }
 
@@ -146,6 +149,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnTitleChanged should update uiState title`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val vm = viewModel()
 
         vm.uiState.test {
@@ -185,6 +189,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnSaveClicked in create mode should call ItemFormUseCase's create and navigate back`() = runTest {
         coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
@@ -200,6 +205,97 @@ class ItemDetailViewModelTest {
             itemFormUseCase.create(
                 match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) },
             )
+        }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires with a valid title should auto-save without OnSaveClicked`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+
+        coVerify(exactly = 1) {
+            itemFormUseCase.create(match { it.title == "Nova tarefa" })
+        }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires with a blank title should not save`() = runTest {
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when the ViewModel is cleared with a pending debounce should flush it synchronously`() {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val store = ViewModelStore()
+        val vm = viewModel(itemId = null)
+        store.put("key", vm)
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        store.clear()
+
+        coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
+    }
+
+    @Test
+    fun `when the ViewModel is cleared with no pending debounce should not save again`() {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val store = ViewModelStore()
+        store.put("key", viewModel(itemId = 1L))
+
+        store.clear()
+
+        coVerify(exactly = 0) { itemFormUseCase.edit(any()) }
+    }
+
+    @Test
+    fun `when OnTitleChanged fires should not save before the debounce window elapses`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        testDispatcher.scheduler.advanceTimeBy(200)
+
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when OnTitleChanged and OnDescriptionChanged fire in sequence should debounce into a single save`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Descrição"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            itemFormUseCase.create(match { it.title == "Nova tarefa" && it.description == "Descrição" })
+        }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires in edit mode should auto-save via edit`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnSectionChanged(SectionStub.sections().first().id))
+
+        coVerify(exactly = 1) {
+            itemFormUseCase.edit(match { it.id == 1L && it.sectionId == SectionStub.sections().first().id })
         }
     }
 
@@ -278,6 +374,24 @@ class ItemDetailViewModelTest {
     }
 
     @Test
+    fun `when OnCompleteClicked completes a task should emit the completed snackbar`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+            assertEquals(
+                ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
     fun `when OnCompleteConfirmClicked should reopen the task and dismiss the dialog`() = runTest {
         val item = ItemStub.completedTask(id = 1L)
         val reopened = item.copy(completedAt = null)
@@ -292,6 +406,22 @@ class ItemDetailViewModelTest {
         assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
         assertEquals(false, vm.uiState.value.isCompleted)
         coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
+    }
+
+    @Test
+    fun `when OnCompleteConfirmClicked reopens a task should not emit the completed snackbar`() = runTest {
+        val item = ItemStub.completedTask(id = 1L)
+        val reopened = item.copy(completedAt = null)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnCompleteConfirmClicked)
+            expectNoEvents()
+        }
     }
 
     @Test
@@ -310,20 +440,38 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when completing a recurring task should reflect the advanced dueDate and stay not completed`() = runTest {
+    fun `when completing a recurring task should mark it completed without advancing dueDate`() = runTest {
         val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
-        val renewed = item.copy(dueDate = ItemStub.TODAY.plusWeeks(1))
-        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(renewed))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns
-            Result.success(CompletionResult.CompletedAndRenewed(1L))
+        val completed = item.copy(lastCompletedScheduledDate = ItemStub.TODAY)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
 
         vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        assertEquals(false, vm.uiState.value.isCompleted)
-        assertEquals(ItemStub.TODAY.plusWeeks(1), vm.uiState.value.dueDate)
+        assertEquals(true, vm.uiState.value.isCompleted)
+        assertEquals(ItemStub.TODAY, vm.uiState.value.dueDate)
     }
+
+    @Test
+    fun `when OnCompleteClicked on a completed recurring occurrence should open the reopen confirmation dialog`() =
+        runTest {
+            val item = ItemStub.task(
+                id = 1L,
+                recurrence = Recurrence.Weekly,
+                dueDate = ItemStub.TODAY,
+                lastCompletedScheduledDate = ItemStub.TODAY,
+            )
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+
+            assertEquals(ItemDetailDialogState.ReopenConfirm, vm.dialogState.value)
+            coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
+        }
 
     @Test
     fun `when OnHistoryClicked should open the history sheet and load the series history`() = runTest {

@@ -72,6 +72,7 @@
     <string name="item_detail_history_status_on_time">On time</string>
     <string name="item_detail_history_status_late">Late</string>
     <string name="item_detail_history_status_missed">Missed</string>
+    <string name="item_detail_completed_snackbar">Task completed</string>
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>

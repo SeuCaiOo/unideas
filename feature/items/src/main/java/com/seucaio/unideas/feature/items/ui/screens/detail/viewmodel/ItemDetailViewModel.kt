@@ -2,19 +2,16 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 
 class ItemDetailViewModel(
@@ -32,8 +30,15 @@ class ItemDetailViewModel(
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
+    private companion object {
+        const val TEXT_DEBOUNCE_MS = 500L
+    }
+
     private var originalItem: Item? = null
+    private var currentItemId: Long? = itemId
     private var historyJob: Job? = null
+    private var debounceJob: Job? = null
+    private var hasPendingTextSave = false
 
     private val _uiState = MutableStateFlow(
         ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
@@ -50,14 +55,12 @@ class ItemDetailViewModel(
     val historyState: StateFlow<List<ItemCompletionHistory>> = _historyState.asStateFlow()
 
     init {
-        viewModelScope.launch { loadFormData() }
-    }
-
-    private suspend fun loadFormData() {
-        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
+        viewModelScope.launch {
+            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
+                _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
+            }
+            if (itemId != null) loadItem(itemId)
         }
-        if (itemId != null) loadItem(itemId)
     }
 
     private suspend fun loadItem(id: Long) {
@@ -73,8 +76,8 @@ class ItemDetailViewModel(
 
     fun onEvent(event: ItemDetailEvent) {
         when (event) {
-            is ItemDetailEvent.FieldEvent -> _uiState.update { it.reduce(event) }
-            is ItemDetailEvent.OnSaveClicked -> handleSave()
+            is ItemDetailEvent.FieldEvent -> handleFieldEvent(event)
+            is ItemDetailEvent.OnSaveClicked -> handleSaveClicked()
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
             is ItemDetailEvent.OnDialogDismissed -> {
@@ -98,43 +101,66 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    private fun handleSave() = viewModelScope.launch {
-        val state = _uiState.value
-        val selectedTags = state.availableTags.filter { it.id in state.selectedTagIds }
+    /** Title/description debounce ~500ms per keystroke — everything else saves immediately.
+     * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
+     * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
+    private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
+        _uiState.update { it.reduce(event) }
+        when (event) {
+            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = true
+                debounceJob = viewModelScope.launch {
+                    delay(TEXT_DEBOUNCE_MS)
+                    hasPendingTextSave = false
+                    if (_uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
+                }
+            }
 
-        val result: Result<Unit> = if (itemId == null) {
-            itemFormUseCase.create(
-                Item(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.persistableDueDate,
-                    dueTime = state.persistableDueTime,
-                    recurrence = state.persistableRecurrence,
-                    reminderWarning = state.persistableReminderWarning,
-                    createdAt = LocalDateTime.now(),
-                    tags = selectedTags,
-                ),
-            ).map { }
-        } else {
-            val original = originalItem ?: return@launch
-            itemFormUseCase.edit(
-                original.copy(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.persistableDueDate,
-                    dueTime = state.persistableDueTime,
-                    recurrence = state.persistableRecurrence,
-                    reminderWarning = state.persistableReminderWarning,
-                    tags = selectedTags,
-                ),
-            )
+            else -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = false
+                if (_uiState.value.isTitleValid) {
+                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
+                }
+            }
         }
+    }
 
-        result.onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    /** Safety save: a pending text debounce shouldn't be lost just because the user left the
+     * screen before it fired. [viewModelScope] is already cancelled by the time this runs, so the
+     * flush can't ride on it — a short, local Room write is an acceptable synchronous cost here. */
+    override fun onCleared() {
+        if (hasPendingTextSave && _uiState.value.isTitleValid) {
+            runBlocking { persist() }
+        }
+        super.onCleared()
+    }
+
+    private fun handleSaveClicked() = viewModelScope.launch {
+        if (!_uiState.value.isTitleValid) {
+            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
+            return@launch
+        }
+        persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    }
+
+    private suspend fun persist(): Result<Unit> {
+        val id = currentItemId
+
+        return if (id == null) {
+            val newItem = _uiState.value.toItem(original = null)
+            itemFormUseCase.create(newItem)
+                .onSuccess { newId ->
+                    currentItemId = newId
+                    originalItem = newItem.copy(id = newId)
+                }
+                .map { }
+        } else {
+            val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
+            val updated = _uiState.value.toItem(original)
+            itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
+        }
     }
 
     private suspend fun handleFailure(error: Throwable) {
@@ -161,15 +187,20 @@ class ItemDetailViewModel(
         }
     }
 
+    /** Only [CompletionResult.Completed] gets a snackbar — reopening (via [ItemDetailDialogState.ReopenConfirm])
+     * is a correction, not an action worth celebrating. */
     private fun handleComplete() = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         val now = LocalDateTime.now()
         itemFormUseCase.complete(item, now)
-            .onSuccess {
+            .onSuccess { result ->
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
                 _uiState.update { it.applyCompletion(updated) }
+                if (result == CompletionResult.Completed) {
+                    sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
+                }
             }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
@@ -185,13 +216,7 @@ class ItemDetailViewModel(
 
     private fun handleShare() = viewModelScope.launch {
         val item = originalItem ?: return@launch
-        sendUiAction(ItemDetailUiAction.ShareText(buildShareText(item)))
-    }
-
-    private fun buildShareText(item: Item): String = buildString {
-        appendLine(item.title)
-        item.description?.let { appendLine(it) }
-        item.dueDate?.let { appendLine(it.toFormattedDateString()) }
+        sendUiAction(ItemDetailUiAction.ShareText(item))
     }
 
     private suspend fun sendUiAction(action: ItemDetailUiAction) = _uiAction.send(action)

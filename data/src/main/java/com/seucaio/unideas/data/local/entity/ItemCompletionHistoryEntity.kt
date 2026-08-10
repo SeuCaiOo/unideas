@@ -20,7 +20,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["itemId"])],
+    indices = [Index(value = ["itemId", "scheduledDate"], unique = true)],
 )
 data class ItemCompletionHistoryEntity(
     @PrimaryKey(autoGenerate = true)

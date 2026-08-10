@@ -9,18 +9,18 @@ import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.usecase.UseCase
 import com.seucaio.unideas.domain.util.resultCatching
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
  * Toggles a task's completion (checkbox behavior — click again to undo).
  *
- * A recurring task is a **single row whose `dueDate` advances** instead of spawning a new item:
- * completing it records an [ItemCompletionHistory] entry for the occurrence and moves `dueDate` to
- * the recurrence's next date from the item's **original** due date (calendar cadence, independent
- * of when it was actually completed). [Item.completedAt] never gets set for a recurring task, so
- * there is no undo for it — completing is definitive; correcting a past occurrence happens via the
- * history, not the checkbox. A non-recurring task keeps the plain toggle, [Item.completedAt] set or
- * cleared.
+ * A recurring task is a **single row whose `dueDate` does not move here** — completing it only
+ * records an [ItemCompletionHistory] entry for the current occurrence and sets
+ * [Item.lastCompletedScheduledDate]; a second click on the same occurrence reopens it (deletes the
+ * entry) instead of recording a new one. `dueDate` only advances once that occurrence is actually
+ * in the past, via [ProcessMissedOccurrencesUseCase] — never as a side effect of clicking here. A
+ * non-recurring task keeps the plain toggle, [Item.completedAt] set or cleared.
  */
 class CompleteItemUseCase(
     private val repository: ItemRepository,
@@ -33,23 +33,11 @@ class CompleteItemUseCase(
             require(item.type == ItemType.TASK) { "Only tasks can be completed" }
 
             val result = when {
+                item.isRecurring && item.dueDate != null -> toggleOccurrence(item, item.dueDate, completedAt)
+
                 item.isCompleted -> {
                     repository.updateItem(item.copy(completedAt = null))
                     CompletionResult.Uncompleted
-                }
-
-                item.isRecurring && item.dueDate != null -> {
-                    val scheduledDate = item.dueDate
-                    historyRepository.insert(
-                        ItemCompletionHistory(
-                            itemId = item.id,
-                            scheduledDate = scheduledDate,
-                            completedAt = completedAt
-                        ),
-                    )
-                    val nextDueDate = requireNotNull(item.recurrence.nextDueDate(scheduledDate))
-                    repository.updateItem(item.copy(dueDate = nextDueDate))
-                    CompletionResult.CompletedAndRenewed(item.id)
                 }
 
                 else -> {
@@ -59,5 +47,22 @@ class CompleteItemUseCase(
             }
             reminderRefreshTrigger.refreshNow()
             result
+        }
+
+    private suspend fun toggleOccurrence(
+        item: Item,
+        scheduledDate: LocalDate,
+        completedAt: LocalDateTime,
+    ): CompletionResult =
+        if (item.isCompleted) {
+            historyRepository.deleteOccurrence(item.id, scheduledDate)
+            repository.updateItem(item.copy(lastCompletedScheduledDate = null))
+            CompletionResult.Uncompleted
+        } else {
+            historyRepository.insert(
+                ItemCompletionHistory(itemId = item.id, scheduledDate = scheduledDate, completedAt = completedAt),
+            )
+            repository.updateItem(item.copy(lastCompletedScheduledDate = scheduledDate))
+            CompletionResult.Completed
         }
 }

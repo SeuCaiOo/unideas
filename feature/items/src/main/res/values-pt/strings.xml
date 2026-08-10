@@ -72,6 +72,7 @@
     <string name="item_detail_history_status_on_time">No prazo</string>
     <string name="item_detail_history_status_late">Atrasada</string>
     <string name="item_detail_history_status_missed">Não feita</string>
+    <string name="item_detail_completed_snackbar">Tarefa concluída</string>
     <string name="items_list_title">Itens</string>
     <string name="items_list_empty">Nenhum item ainda</string>
     <string name="items_list_load_error">Não foi possível carregar os itens</string>

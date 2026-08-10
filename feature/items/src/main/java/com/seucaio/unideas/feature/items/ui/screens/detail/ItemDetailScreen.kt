@@ -100,9 +100,7 @@ private fun ItemDetailScreenContent(
         onEvent(ItemDetailEvent.OnBackRequested)
     }
 
-    val topBarNavigateBack = updatedOnNavigateBack?.let {
-        { onEvent(ItemDetailEvent.OnBackRequested) }
-    }
+    val topBarNavigateBack = updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
 
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
@@ -155,6 +153,15 @@ private fun ItemDetailScreenContent(
         }
     }
 
+    ItemDetailDialogs(dialogState, historyState, onEvent)
+}
+
+@Composable
+private fun ItemDetailDialogs(
+    dialogState: ItemDetailDialogState,
+    historyState: List<ItemCompletionHistory>,
+    onEvent: (ItemDetailEvent) -> Unit,
+) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
         DeleteConfirmationDialog(
             titleRes = R.string.item_detail_delete_title,

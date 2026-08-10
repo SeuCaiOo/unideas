@@ -86,7 +86,6 @@ private fun ItemFormTaskOptionsPreview(
                     onDueTimeChanged = {},
                     onRecurrenceChanged = {},
                     onReminderWarningChanged = {},
-                    onSaveClicked = {},
                 ),
             )
         }

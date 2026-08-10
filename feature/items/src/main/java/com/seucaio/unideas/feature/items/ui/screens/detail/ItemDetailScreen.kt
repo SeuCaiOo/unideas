@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -94,6 +95,13 @@ private fun ItemDetailScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+
+    BackHandler {
+        onEvent(ItemDetailEvent.OnBackRequested)
+    }
+
+    val topBarNavigateBack = updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
+
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
             onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
@@ -106,7 +114,6 @@ private fun ItemDetailScreenContent(
             onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
             onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
-            onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
             onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )
     }
@@ -114,13 +121,17 @@ private fun ItemDetailScreenContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                onNavigateBack = updatedOnNavigateBack,
+                onNavigateBack = topBarNavigateBack,
                 actions = {
                     ItemActions(
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) },
                         onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
                             { onEvent(ItemDetailEvent.OnHistoryClicked) }
+                        } else {
+                            null
+                        },
+                        onDeleteClicked = if (uiState.isEditing) {
+                            { onEvent(ItemDetailEvent.OnDeleteClicked) }
                         } else {
                             null
                         },
@@ -145,6 +156,15 @@ private fun ItemDetailScreenContent(
         }
     }
 
+    ItemDetailDialogs(dialogState, historyState, onEvent)
+}
+
+@Composable
+private fun ItemDetailDialogs(
+    dialogState: ItemDetailDialogState,
+    historyState: List<ItemCompletionHistory>,
+    onEvent: (ItemDetailEvent) -> Unit,
+) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
         DeleteConfirmationDialog(
             titleRes = R.string.item_detail_delete_title,
@@ -167,6 +187,15 @@ private fun ItemDetailScreenContent(
         ItemHistoryBottomSheet(
             history = historyState,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+        )
+    }
+
+    if (dialogState is ItemDetailDialogState.DiscardConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = dialogState.titleRes,
+            messageRes = dialogState.messageRes,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnDiscardConfirmed) },
         )
     }
 }

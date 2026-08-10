@@ -12,6 +12,7 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableD
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
+import java.io.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -34,11 +35,16 @@ data class ItemDetailUiState(
     override val isCompleted: Boolean = false,
     override val completedAt: LocalDateTime? = null,
     val loadFailed: Boolean = false,
-) : ItemFormFieldsState {
+    override val titleError: Boolean = false,
+) : ItemFormFieldsState, Serializable {
 
     override val isTitleValid: Boolean get() = title.isNotBlank()
 
     override val typeIsTask: Boolean get() = type == ItemType.TASK
+
+    val isPristine: Boolean
+        get() = title.isBlank() && description.isBlank() && sectionId == null &&
+            selectedTagIds.isEmpty() && dueDate == null
 
     fun toggleReminder(enabled: Boolean): ItemDetailUiState = if (enabled) {
         copy(hasReminder = true, dueDate = dueDate.orToday())
@@ -87,18 +93,19 @@ data class ItemDetailUiState(
 
     /** Applies the current fields onto [original] — `null` (first save while creating) starts from a
      * blank [Item] instead. */
-    fun toItem(original: Item?): Item = (original ?: Item(type = type, title = title, createdAt = LocalDateTime.now()))
-        .copy(
-            type = type,
-            title = title,
-            description = description.ifBlank { null },
-            sectionId = sectionId,
-            dueDate = persistableDueDate,
-            dueTime = persistableDueTime,
-            recurrence = persistableRecurrence,
-            reminderWarning = persistableReminderWarning,
-            tags = availableTags.filter { it.id in selectedTagIds },
-        )
+    fun toItem(original: Item?): Item =
+        (original ?: Item(type = type, title = title, createdAt = LocalDateTime.now()))
+            .copy(
+                type = type,
+                title = title,
+                description = description.ifBlank { null },
+                sectionId = sectionId,
+                dueDate = persistableDueDate,
+                dueTime = persistableDueTime,
+                recurrence = persistableRecurrence,
+                reminderWarning = persistableReminderWarning,
+                tags = availableTags.filter { it.id in selectedTagIds },
+            )
 
     /** Clearing [dueDate] also clears [dueTime]/[recurrence]/[reminderWarning] — none of them mean
      * anything without a date. */
@@ -111,7 +118,7 @@ data class ItemDetailUiState(
 
     fun reduce(event: ItemDetailEvent.FieldEvent): ItemDetailUiState = when (event) {
         is ItemDetailEvent.OnTypeChanged -> copy(type = event.type)
-        is ItemDetailEvent.OnTitleChanged -> copy(title = event.title)
+        is ItemDetailEvent.OnTitleChanged -> copy(title = event.title, titleError = false)
         is ItemDetailEvent.OnDescriptionChanged -> copy(description = event.description)
         is ItemDetailEvent.OnSectionChanged -> copy(sectionId = event.sectionId)
         is ItemDetailEvent.OnTagToggled -> toggleTag(event.tagId)

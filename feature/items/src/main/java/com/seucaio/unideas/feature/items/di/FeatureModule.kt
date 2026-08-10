@@ -1,6 +1,5 @@
 package com.seucaio.unideas.feature.items.di
 
-import com.seucaio.unideas.feature.items.ui.screens.additem.viewmodel.AddItemViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListViewModel
 import org.koin.core.module.dsl.viewModel
@@ -15,15 +14,7 @@ val itemsModule = module {
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
             getSectionsAndTags = get(),
-            initialType = params.get(),
-        )
-    }
-    // initialType is a nav argument (the sheet's create-type, e.g. TASK vs NOTE) — passed via
-    // parametersOf(initialType) at the call site.
-    viewModel { params ->
-        AddItemViewModel(
-            createItem = get(),
-            getSectionsAndTags = get(),
+            savedStateHandle = get(),
             initialType = params.get(),
         )
     }

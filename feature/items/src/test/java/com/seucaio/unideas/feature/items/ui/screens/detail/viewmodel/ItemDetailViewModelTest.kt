@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
@@ -55,8 +56,16 @@ class ItemDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long? = null) =
-        ItemDetailViewModel(itemId, itemFormUseCase, getSectionsAndTags)
+    private fun viewModel(
+        itemId: Long? = null,
+        savedStateHandle: SavedStateHandle = SavedStateHandle()
+    ) =
+        ItemDetailViewModel(
+            itemId = itemId,
+            itemFormUseCase = itemFormUseCase,
+            getSectionsAndTags = getSectionsAndTags,
+            savedStateHandle = savedStateHandle
+        )
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
@@ -187,29 +196,7 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnSaveClicked in create mode should call ItemFormUseCase's create and navigate back`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
-        val vm = viewModel(itemId = null)
-
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
-        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
-
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
-        }
-
-        coVerify(exactly = 1) {
-            itemFormUseCase.create(
-                match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) },
-            )
-        }
-    }
-
-    @Test
-    fun `when a structured FieldEvent fires with a valid title should auto-save without OnSaveClicked`() = runTest {
+    fun `when a structured FieldEvent fires with a valid title should auto-save immediately`() = runTest {
         coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val vm = viewModel(itemId = null)
         vm.uiState.test { awaitItem() }
@@ -300,35 +287,23 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnSaveClicked in edit mode should call ItemFormUseCase's edit and navigate back`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
-        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
-        val vm = viewModel(itemId = 1L)
+    fun `when OnBackRequested with a valid title in edit mode should flush the pending save and navigate back`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
 
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Título editado"))
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Título editado"))
 
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnBackRequested)
+                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            }
+
+            coVerify(exactly = 1) { itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" }) }
         }
-
-        coVerify(exactly = 1) { itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" }) }
-    }
-
-    @Test
-    fun `when OnSaveClicked with blank title should emit a title-required snackbar`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalArgumentException("Title is required"))
-        val vm = viewModel(itemId = null)
-
-        vm.uiState.test { awaitItem() }
-
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
-            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required), awaitItem())
-        }
-    }
 
     @Test
     fun `when the use case fails unexpectedly should emit ShowError with the exception message`() = runTest {
@@ -339,7 +314,7 @@ class ItemDetailViewModelTest {
         vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
 
         vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnSaveClicked)
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
             assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
         }
     }
@@ -485,5 +460,153 @@ class ItemDetailViewModelTest {
 
         assertEquals(ItemDetailDialogState.History, vm.dialogState.value)
         coVerify(exactly = 1) { itemFormUseCase.getHistory(1L) }
+    }
+
+    @Test
+    fun `when OnBackRequested with an empty draft should navigate back without saving`() = runTest {
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+        }
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when OnBackRequested with a valid title should flush the pending save and navigate back`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+        }
+        coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
+    }
+
+    @Test
+    fun `when OnBackRequested is blocked by a blank title the first attempt should only mark titleError`() =
+        runTest {
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
+
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            assertEquals(true, vm.uiState.value.titleError)
+            assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+        }
+
+    @Test
+    fun `when OnTitleChanged after a blocked back attempt should clear titleError`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        assertEquals(false, vm.uiState.value.titleError)
+    }
+
+    @Test
+    fun `when OnBackRequested is blocked twice in creation mode should open the new-item discard dialog`() =
+        runTest {
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            val dialogState = vm.dialogState.value as ItemDetailDialogState.DiscardConfirm
+            assertEquals(R.string.item_detail_discard_new_title, dialogState.titleRes)
+            assertEquals(R.string.item_detail_discard_new_message, dialogState.messageRes)
+        }
+
+    @Test
+    fun `when OnBackRequested is blocked twice in edit mode should open the edit-mode discard dialog`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+        val dialogState = vm.dialogState.value as ItemDetailDialogState.DiscardConfirm
+        assertEquals(R.string.item_detail_discard_edit_title, dialogState.titleRes)
+        assertEquals(R.string.item_detail_discard_edit_message, dialogState.messageRes)
+    }
+
+    @Test
+    fun `when OnDiscardConfirmed in creation mode with nothing auto-saved should just navigate back`() = runTest {
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+        }
+        coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
+    }
+
+    @Test
+    fun `when OnDiscardConfirmed in creation mode after an earlier auto-save should delete the orphaned item`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            coEvery { itemFormUseCase.delete(10L) } returns Result.success(Unit)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+            vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
+                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            }
+            coVerify(exactly = 1) { itemFormUseCase.delete(10L) }
+        }
+
+    @Test
+    fun `when OnDiscardConfirmed in edit mode should never delete the item`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+        vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
+            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+        }
+        coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
+    }
+
+    @Test
+    fun `when the ViewModel is recreated with the same SavedStateHandle should restore the draft`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val savedStateHandle = SavedStateHandle()
+        val firstVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
+        firstVm.uiState.test { awaitItem() }
+        firstVm.onEvent(ItemDetailEvent.OnTitleChanged("Rascunho"))
+
+        val secondVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
+
+        assertEquals("Rascunho", secondVm.uiState.value.title)
     }
 }

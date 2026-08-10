@@ -3,7 +3,6 @@
     <string name="item_form_load_error">Couldn\'t load the item</string>
     <string name="item_title_required">Title is required</string>
     <string name="item_form_title_view">Item</string>
-    <string name="item_form_save">Save</string>
     <string name="item_form_v2_edit">Edit</string>
     <string name="item_form_type_task">Task</string>
     <string name="item_form_type_note">Note</string>
@@ -73,6 +72,10 @@
     <string name="item_detail_history_status_late">Late</string>
     <string name="item_detail_history_status_missed">Missed</string>
     <string name="item_detail_completed_snackbar">Task completed</string>
+    <string name="item_detail_discard_edit_title">Title can\'t be empty</string>
+    <string name="item_detail_discard_edit_message">Everything else is already saved. Leaving will keep the title as it was.</string>
+    <string name="item_detail_discard_new_title">Leave without a title?</string>
+    <string name="item_detail_discard_new_message">Add a title to save this item, or leave to discard it.</string>
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>

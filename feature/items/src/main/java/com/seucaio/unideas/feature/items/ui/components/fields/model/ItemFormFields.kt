@@ -27,6 +27,7 @@ interface ItemFormFieldsState {
     val isCompleted: Boolean get() = false
     val completedAt: LocalDateTime? get() = null
     val isEditing: Boolean get() = false
+    val titleError: Boolean get() = false
 }
 
 /** [dueDate] with no reminder scheduled — persisted state never carries a stale, hidden date. */
@@ -53,6 +54,5 @@ data class ItemFormFieldsEvents(
     val onDueTimeChanged: (LocalTime?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,
     val onReminderWarningChanged: (ReminderWarning) -> Unit,
-    val onSaveClicked: () -> Unit,
     val onCompleteClicked: () -> Unit = {},
 )

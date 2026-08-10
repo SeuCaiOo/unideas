@@ -10,6 +10,7 @@ import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 
 class ItemDetailViewModel(
@@ -27,9 +29,15 @@ class ItemDetailViewModel(
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
+    private companion object {
+        const val TEXT_DEBOUNCE_MS = 500L
+    }
+
     private var originalItem: Item? = null
     private var currentItemId: Long? = itemId
     private var historyJob: Job? = null
+    private var debounceJob: Job? = null
+    private var hasPendingTextSave = false
 
     private val _uiState = MutableStateFlow(
         ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
@@ -92,14 +100,40 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
+    /** Title/description debounce ~500ms per keystroke — everything else saves immediately.
+     * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
+     * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         _uiState.update { it.reduce(event) }
-        val shouldAutoSave = event !is ItemDetailEvent.OnTitleChanged &&
-            event !is ItemDetailEvent.OnDescriptionChanged &&
-            _uiState.value.isTitleValid
-        if (shouldAutoSave) {
-            viewModelScope.launch { persist().onFailure { handleFailure(it) } }
+        when (event) {
+            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = true
+                debounceJob = viewModelScope.launch {
+                    delay(TEXT_DEBOUNCE_MS)
+                    hasPendingTextSave = false
+                    if (_uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
+                }
+            }
+
+            else -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = false
+                if (_uiState.value.isTitleValid) {
+                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
+                }
+            }
         }
+    }
+
+    /** Safety save: a pending text debounce shouldn't be lost just because the user left the
+     * screen before it fired. [viewModelScope] is already cancelled by the time this runs, so the
+     * flush can't ride on it — a short, local Room write is an acceptable synchronous cost here. */
+    override fun onCleared() {
+        if (hasPendingTextSave && _uiState.value.isTitleValid) {
+            runBlocking { persist() }
+        }
+        super.onCleared()
     }
 
     private fun handleSaveClicked() = viewModelScope.launch {

@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -40,10 +41,12 @@ class ItemDetailViewModelTest {
     @MockK
     private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
 
+    private val testDispatcher = UnconfinedTestDispatcher()
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
         coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
     }
 
@@ -146,6 +149,7 @@ class ItemDetailViewModelTest {
 
     @Test
     fun `when OnTitleChanged should update uiState title`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val vm = viewModel()
 
         vm.uiState.test {
@@ -229,14 +233,55 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnTitleChanged or OnDescriptionChanged fire alone should not auto-save`() = runTest {
+    fun `when the ViewModel is cleared with a pending debounce should flush it synchronously`() {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val store = ViewModelStore()
+        val vm = viewModel(itemId = null)
+        store.put("key", vm)
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        store.clear()
+
+        coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
+    }
+
+    @Test
+    fun `when the ViewModel is cleared with no pending debounce should not save again`() {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val store = ViewModelStore()
+        store.put("key", viewModel(itemId = 1L))
+
+        store.clear()
+
+        coVerify(exactly = 0) { itemFormUseCase.edit(any()) }
+    }
+
+    @Test
+    fun `when OnTitleChanged fires should not save before the debounce window elapses`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        testDispatcher.scheduler.advanceTimeBy(200)
+
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when OnTitleChanged and OnDescriptionChanged fire in sequence should debounce into a single save`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val vm = viewModel(itemId = null)
         vm.uiState.test { awaitItem() }
 
         vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
         vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Descrição"))
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+        coVerify(exactly = 1) {
+            itemFormUseCase.create(match { it.title == "Nova tarefa" && it.description == "Descrição" })
+        }
     }
 
     @Test

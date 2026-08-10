@@ -15,4 +15,7 @@ interface ItemCompletionHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(entity: ItemCompletionHistoryEntity): Long
+
+    @Query("DELETE FROM item_completion_history WHERE itemId = :itemId AND scheduledDate = :scheduledDate")
+    suspend fun deleteOccurrence(itemId: Long, scheduledDate: Long)
 }

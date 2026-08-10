@@ -24,6 +24,7 @@ private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     reminderWarning = entity.reminderWarning,
     completedAt = entity.completedAt?.toLocalDateTime(),
     createdAt = entity.createdAt.toLocalDateTime(),
+    lastCompletedScheduledDate = entity.lastCompletedScheduledDate?.toLocalDate(),
     tags = tags.map { it.toDomain() },
 )
 
@@ -46,4 +47,5 @@ internal fun Item.toEntity(): ItemEntity = ItemEntity(
     reminderWarning = reminderWarning,
     completedAt = completedAt?.toEpochMilli(),
     createdAt = createdAt.toEpochMilli(),
+    lastCompletedScheduledDate = lastCompletedScheduledDate?.toEpochMilli(),
 )

@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(ItemsRoute.Detail(itemId))
                         },
                         onNavigateToAddItem = { type ->
-                            navController.navigate(ItemsRoute.AddItem(type))
+                            navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
                         },
                         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(ItemsRoute.Detail(itemId))
                         },
                         onNavigateToAddItem = { type ->
-                            navController.navigate(ItemsRoute.AddItem(type))
+                            navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
                         },
                     )
                 }

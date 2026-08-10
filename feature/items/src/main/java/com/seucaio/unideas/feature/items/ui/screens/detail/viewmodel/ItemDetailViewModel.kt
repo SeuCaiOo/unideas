@@ -34,7 +34,7 @@ class ItemDetailViewModel(
 
     private companion object {
         const val TEXT_DEBOUNCE_MS = 500L
-        const val DRAFT_KEY = "itemDetailDraft"
+        const val UI_STATE_KEY = "itemDetailUiState"
     }
 
     private var originalItem: Item? = null
@@ -43,17 +43,31 @@ class ItemDetailViewModel(
     private var debounceJob: Job? = null
     private var hasPendingTextSave = false
 
-    private val _uiState = MutableStateFlow(
+    /** Creation (`itemId == null`) is backed directly by [SavedStateHandle], so a process death
+     * mid-draft survives with no separate DTO/conversion step. Editing an existing item always
+     * reloads fresh from the database on (re)creation (see [loadItem]), so persisting it here would
+     * just get overwritten a moment later — a plain in-memory flow is enough for that case. */
+    private val editUiState = MutableStateFlow(
         ItemDetailUiState(
             isEditing = itemId != null,
             isLoading = itemId != null,
             type = initialType
-        ).let { base ->
-            (if (itemId == null) savedStateHandle.get<ItemDetailDraft>(DRAFT_KEY) else null)
-                .let { draft -> if (draft != null) base.applyDraft(draft) else base }
-        },
+        )
     )
-    val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
+
+    val uiState: StateFlow<ItemDetailUiState> = if (itemId == null) {
+        savedStateHandle.getStateFlow(UI_STATE_KEY, ItemDetailUiState(type = initialType))
+    } else {
+        editUiState.asStateFlow()
+    }
+
+    private fun updateUiState(transform: (ItemDetailUiState) -> ItemDetailUiState) {
+        if (itemId == null) {
+            savedStateHandle[UI_STATE_KEY] = transform(uiState.value)
+        } else {
+            editUiState.update(transform)
+        }
+    }
 
     private val _uiAction = Channel<ItemDetailUiAction>(Channel.BUFFERED)
     val uiAction: Flow<ItemDetailUiAction> = _uiAction.receiveAsFlow()
@@ -67,7 +81,7 @@ class ItemDetailViewModel(
     init {
         viewModelScope.launch {
             runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-                _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
+                updateUiState { it.setReferenceData(referenceData.sections, referenceData.tags) }
             }
             if (itemId != null) loadItem(itemId)
         }
@@ -77,11 +91,11 @@ class ItemDetailViewModel(
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
             sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error))
-            _uiState.update { it.markLoadFailed() }
+            updateUiState { it.markLoadFailed() }
             return
         }
         originalItem = item
-        _uiState.update { it.applyLoadedItem(item) }
+        updateUiState { it.applyLoadedItem(item) }
     }
 
     fun onEvent(event: ItemDetailEvent) {
@@ -107,7 +121,7 @@ class ItemDetailViewModel(
 
     private fun retryLoad() {
         val id = itemId ?: return
-        _uiState.update { it.startLoading() }
+        updateUiState { it.startLoading() }
         viewModelScope.launch { loadItem(id) }
     }
 
@@ -115,8 +129,7 @@ class ItemDetailViewModel(
      * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
      * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
-        _uiState.update { it.reduce(event) }
-        saveDraft()
+        updateUiState { it.reduce(event) }
         when (event) {
             is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
                 debounceJob?.cancel()
@@ -124,14 +137,14 @@ class ItemDetailViewModel(
                 debounceJob = viewModelScope.launch {
                     delay(TEXT_DEBOUNCE_MS)
                     hasPendingTextSave = false
-                    if (_uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
+                    if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
                 }
             }
 
             else -> {
                 debounceJob?.cancel()
                 hasPendingTextSave = false
-                if (_uiState.value.isTitleValid) {
+                if (uiState.value.isTitleValid) {
                     viewModelScope.launch { persist().onFailure { handleFailure(it) } }
                 }
             }
@@ -142,39 +155,34 @@ class ItemDetailViewModel(
      * screen before it fired. [viewModelScope] is already cancelled by the time this runs, so the
      * flush can't ride on it — a short, local Room write is an acceptable synchronous cost here. */
     override fun onCleared() {
-        if (hasPendingTextSave && _uiState.value.isTitleValid) {
+        if (hasPendingTextSave && uiState.value.isTitleValid) {
             runBlocking { persist() }
         }
         super.onCleared()
     }
 
     private fun handleSaveClicked() = viewModelScope.launch {
-        if (!_uiState.value.isTitleValid) {
+        if (!uiState.value.isTitleValid) {
             sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
             return@launch
         }
         persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
     }
 
-    private fun saveDraft() {
-        if (currentItemId == null) savedStateHandle[DRAFT_KEY] = _uiState.value.toDraft()
-    }
-
     private suspend fun persist(): Result<Unit> {
         val id = currentItemId
 
         return if (id == null) {
-            val newItem = _uiState.value.toItem(original = null)
+            val newItem = uiState.value.toItem(original = null)
             itemFormUseCase.create(newItem)
                 .onSuccess { newId ->
                     currentItemId = newId
                     originalItem = newItem.copy(id = newId)
-                    savedStateHandle.remove<ItemDetailDraft>(DRAFT_KEY)
                 }
                 .map { }
         } else {
             val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
-            val updated = _uiState.value.toItem(original)
+            val updated = uiState.value.toItem(original)
             itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
         }
     }
@@ -196,7 +204,7 @@ class ItemDetailViewModel(
     }
 
     private fun handleCompleteClicked() {
-        if (_uiState.value.isCompleted) {
+        if (uiState.value.isCompleted) {
             _dialogState.update { ItemDetailDialogState.ReopenConfirm }
         } else {
             handleComplete()
@@ -213,7 +221,7 @@ class ItemDetailViewModel(
             .onSuccess { result ->
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
-                _uiState.update { it.applyCompletion(updated) }
+                updateUiState { it.applyCompletion(updated) }
                 if (result == CompletionResult.Completed) {
                     sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
                 }

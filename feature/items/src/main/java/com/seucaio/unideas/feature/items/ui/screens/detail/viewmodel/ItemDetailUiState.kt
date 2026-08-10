@@ -35,7 +35,7 @@ data class ItemDetailUiState(
     override val isCompleted: Boolean = false,
     override val completedAt: LocalDateTime? = null,
     val loadFailed: Boolean = false,
-) : ItemFormFieldsState {
+) : ItemFormFieldsState, Serializable {
 
     override val isTitleValid: Boolean get() = title.isNotBlank()
 
@@ -123,48 +123,4 @@ data class ItemDetailUiState(
         is ItemDetailEvent.OnRecurrenceChanged -> changeRecurrence(event.recurrence)
         is ItemDetailEvent.OnReminderWarningChanged -> copy(reminderWarning = event.reminderWarning)
     }
-
-    fun toDraft(): ItemDetailDraft = ItemDetailDraft(
-        type = type,
-        title = title,
-        description = description,
-        sectionId = sectionId,
-        selectedTagIds = selectedTagIds,
-        hasReminder = hasReminder,
-        dueDate = dueDate,
-        dueTime = dueTime,
-        recurrence = recurrence,
-        reminderWarning = reminderWarning,
-    )
-
-    fun applyDraft(draft: ItemDetailDraft): ItemDetailUiState = copy(
-        type = draft.type,
-        title = draft.title,
-        description = draft.description,
-        sectionId = draft.sectionId,
-        selectedTagIds = draft.selectedTagIds,
-        hasReminder = draft.hasReminder,
-        dueDate = draft.dueDate,
-        dueTime = draft.dueTime,
-        recurrence = draft.recurrence,
-        reminderWarning = draft.reminderWarning,
-    )
 }
-
-/** Persisted to [androidx.lifecycle.SavedStateHandle] for the creation flow (`itemId == null`) so a
- * process death mid-draft doesn't lose it — only the form-relevant subset of [ItemDetailUiState],
- * not screen state like [ItemDetailUiState.availableSections] (reloaded on init) or completion fields
- * (never set before the item exists).
- */
-data class ItemDetailDraft(
-    val type: ItemType,
-    val title: String,
-    val description: String,
-    val sectionId: Long?,
-    val selectedTagIds: Set<Long>,
-    val hasReminder: Boolean,
-    val dueDate: LocalDate?,
-    val dueTime: LocalTime?,
-    val recurrence: Recurrence,
-    val reminderWarning: ReminderWarning,
-) : Serializable

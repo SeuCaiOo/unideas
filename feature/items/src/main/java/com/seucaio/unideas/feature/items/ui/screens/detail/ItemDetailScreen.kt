@@ -114,7 +114,6 @@ private fun ItemDetailScreenContent(
             onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
             onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
-            onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
             onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )
     }

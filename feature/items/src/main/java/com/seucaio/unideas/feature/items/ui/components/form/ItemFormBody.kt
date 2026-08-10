@@ -79,7 +79,6 @@ private fun ItemFormBodyPreview(
                     onDueTimeChanged = {},
                     onRecurrenceChanged = {},
                     onReminderWarningChanged = {},
-                    onSaveClicked = {},
                 ),
             )
         }

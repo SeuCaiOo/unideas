@@ -60,7 +60,6 @@ private val noopEvents = ItemFormFieldsEvents(
     onDueTimeChanged = {},
     onRecurrenceChanged = {},
     onReminderWarningChanged = {},
-    onSaveClicked = {},
 )
 
 /** Task with the reminder switch on: every field (section, tags, date, time, recurrence, reminder). */

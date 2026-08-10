@@ -3,7 +3,6 @@
     <string name="item_form_load_error">Couldn\'t load the item</string>
     <string name="item_title_required">Title is required</string>
     <string name="item_form_title_view">Item</string>
-    <string name="item_form_save">Save</string>
     <string name="item_form_v2_edit">Edit</string>
     <string name="item_form_type_task">Task</string>
     <string name="item_form_type_note">Note</string>

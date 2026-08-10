@@ -31,8 +31,6 @@ sealed interface ItemDetailEvent {
 
     data class OnReminderWarningChanged(val reminderWarning: ReminderWarning) : FieldEvent
 
-    data object OnSaveClicked : ItemDetailEvent
-
     data object OnShareClicked : ItemDetailEvent
 
     data object OnDeleteClicked : ItemDetailEvent

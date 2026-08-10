@@ -63,7 +63,6 @@ private fun ItemFormCommonOptionsPreview(
                     onDueTimeChanged = {},
                     onRecurrenceChanged = {},
                     onReminderWarningChanged = {},
-                    onSaveClicked = {},
                 ),
             )
         }

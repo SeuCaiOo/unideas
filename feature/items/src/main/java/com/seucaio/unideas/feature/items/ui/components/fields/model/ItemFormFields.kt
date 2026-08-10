@@ -54,6 +54,5 @@ data class ItemFormFieldsEvents(
     val onDueTimeChanged: (LocalTime?) -> Unit,
     val onRecurrenceChanged: (Recurrence) -> Unit,
     val onReminderWarningChanged: (ReminderWarning) -> Unit,
-    val onSaveClicked: () -> Unit,
     val onCompleteClicked: () -> Unit = {},
 )

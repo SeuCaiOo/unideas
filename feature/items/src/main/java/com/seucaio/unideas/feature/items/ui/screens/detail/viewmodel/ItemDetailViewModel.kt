@@ -97,7 +97,6 @@ class ItemDetailViewModel(
     fun onEvent(event: ItemDetailEvent) {
         when (event) {
             is ItemDetailEvent.FieldEvent -> handleFieldEvent(event)
-            is ItemDetailEvent.OnSaveClicked -> handleSaveClicked()
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
             is ItemDetailEvent.OnDialogDismissed -> {
@@ -157,14 +156,6 @@ class ItemDetailViewModel(
             runBlocking { persist() }
         }
         super.onCleared()
-    }
-
-    private fun handleSaveClicked() = viewModelScope.launch {
-        if (!uiState.value.isTitleValid) {
-            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
-            return@launch
-        }
-        persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
     }
 
     private fun handleBackRequested() = viewModelScope.launch {

@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -94,6 +95,15 @@ private fun ItemDetailScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+
+    BackHandler {
+        onEvent(ItemDetailEvent.OnBackRequested)
+    }
+
+    val topBarNavigateBack = updatedOnNavigateBack?.let {
+        { onEvent(ItemDetailEvent.OnBackRequested) }
+    }
+
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
             onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
@@ -114,7 +124,7 @@ private fun ItemDetailScreenContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                onNavigateBack = updatedOnNavigateBack,
+                onNavigateBack = topBarNavigateBack,
                 actions = {
                     ItemActions(
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
@@ -167,6 +177,15 @@ private fun ItemDetailScreenContent(
         ItemHistoryBottomSheet(
             history = historyState,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+        )
+    }
+
+    if (dialogState is ItemDetailDialogState.DiscardConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = dialogState.titleRes,
+            messageRes = dialogState.messageRes,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnDiscardConfirmed) },
         )
     }
 }

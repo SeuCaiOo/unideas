@@ -35,11 +35,16 @@ data class ItemDetailUiState(
     override val isCompleted: Boolean = false,
     override val completedAt: LocalDateTime? = null,
     val loadFailed: Boolean = false,
+    override val titleError: Boolean = false,
 ) : ItemFormFieldsState, Serializable {
 
     override val isTitleValid: Boolean get() = title.isNotBlank()
 
     override val typeIsTask: Boolean get() = type == ItemType.TASK
+
+    val isPristine: Boolean
+        get() = title.isBlank() && description.isBlank() && sectionId == null &&
+            selectedTagIds.isEmpty() && dueDate == null
 
     fun toggleReminder(enabled: Boolean): ItemDetailUiState = if (enabled) {
         copy(hasReminder = true, dueDate = dueDate.orToday())
@@ -113,7 +118,7 @@ data class ItemDetailUiState(
 
     fun reduce(event: ItemDetailEvent.FieldEvent): ItemDetailUiState = when (event) {
         is ItemDetailEvent.OnTypeChanged -> copy(type = event.type)
-        is ItemDetailEvent.OnTitleChanged -> copy(title = event.title)
+        is ItemDetailEvent.OnTitleChanged -> copy(title = event.title, titleError = false)
         is ItemDetailEvent.OnDescriptionChanged -> copy(description = event.description)
         is ItemDetailEvent.OnSectionChanged -> copy(sectionId = event.sectionId)
         is ItemDetailEvent.OnTagToggled -> toggleTag(event.tagId)

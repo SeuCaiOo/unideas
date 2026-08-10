@@ -49,4 +49,8 @@ sealed interface ItemDetailEvent {
 
     /** Retry loading the item after [ItemDetailUiState.loadFailed] — edit mode only. */
     data object OnRetryClicked : ItemDetailEvent
+
+    data object OnBackRequested : ItemDetailEvent
+
+    data object OnDiscardConfirmed : ItemDetailEvent
 }

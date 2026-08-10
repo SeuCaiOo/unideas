@@ -43,10 +43,6 @@ class ItemDetailViewModel(
     private var debounceJob: Job? = null
     private var hasPendingTextSave = false
 
-    /** Creation (`itemId == null`) is backed directly by [SavedStateHandle], so a process death
-     * mid-draft survives with no separate DTO/conversion step. Editing an existing item always
-     * reloads fresh from the database on (re)creation (see [loadItem]), so persisting it here would
-     * just get overwritten a moment later — a plain in-memory flow is enough for that case. */
     private val editUiState = MutableStateFlow(
         ItemDetailUiState(
             isEditing = itemId != null,
@@ -116,6 +112,8 @@ class ItemDetailViewModel(
             }
             is ItemDetailEvent.OnHistoryClicked -> handleHistoryClicked()
             is ItemDetailEvent.OnRetryClicked -> retryLoad()
+            is ItemDetailEvent.OnBackRequested -> handleBackRequested()
+            is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
         }
     }
 
@@ -167,6 +165,46 @@ class ItemDetailViewModel(
             return@launch
         }
         persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    }
+
+    private fun handleBackRequested() = viewModelScope.launch {
+        val state = uiState.value
+        when {
+            state.isPristine -> sendUiAction(ItemDetailUiAction.NavigateBack)
+            state.isTitleValid -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = false
+                persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+            }
+
+            state.titleError -> _dialogState.update { discardConfirmDialogState() }
+
+            else -> updateUiState { it.copy(titleError = true) }
+        }
+    }
+
+    private fun discardConfirmDialogState(): ItemDetailDialogState.DiscardConfirm = if (itemId != null) {
+        ItemDetailDialogState.DiscardConfirm(
+            titleRes = R.string.item_detail_discard_edit_title,
+            messageRes = R.string.item_detail_discard_edit_message,
+        )
+    } else {
+        ItemDetailDialogState.DiscardConfirm(
+            titleRes = R.string.item_detail_discard_new_title,
+            messageRes = R.string.item_detail_discard_new_message,
+        )
+    }
+
+    private fun handleDiscardConfirmed() = viewModelScope.launch {
+        _dialogState.update { ItemDetailDialogState.None }
+        val id = currentItemId
+        if (itemId == null && id != null) {
+            itemFormUseCase.delete(id)
+                .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
+                .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
+        } else {
+            sendUiAction(ItemDetailUiAction.NavigateBack)
+        }
     }
 
     private suspend fun persist(): Result<Unit> {

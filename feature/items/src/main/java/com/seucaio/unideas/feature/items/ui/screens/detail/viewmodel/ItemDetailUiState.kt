@@ -12,6 +12,7 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableD
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
 import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
+import java.io.Serializable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -87,18 +88,19 @@ data class ItemDetailUiState(
 
     /** Applies the current fields onto [original] — `null` (first save while creating) starts from a
      * blank [Item] instead. */
-    fun toItem(original: Item?): Item = (original ?: Item(type = type, title = title, createdAt = LocalDateTime.now()))
-        .copy(
-            type = type,
-            title = title,
-            description = description.ifBlank { null },
-            sectionId = sectionId,
-            dueDate = persistableDueDate,
-            dueTime = persistableDueTime,
-            recurrence = persistableRecurrence,
-            reminderWarning = persistableReminderWarning,
-            tags = availableTags.filter { it.id in selectedTagIds },
-        )
+    fun toItem(original: Item?): Item =
+        (original ?: Item(type = type, title = title, createdAt = LocalDateTime.now()))
+            .copy(
+                type = type,
+                title = title,
+                description = description.ifBlank { null },
+                sectionId = sectionId,
+                dueDate = persistableDueDate,
+                dueTime = persistableDueTime,
+                recurrence = persistableRecurrence,
+                reminderWarning = persistableReminderWarning,
+                tags = availableTags.filter { it.id in selectedTagIds },
+            )
 
     /** Clearing [dueDate] also clears [dueTime]/[recurrence]/[reminderWarning] — none of them mean
      * anything without a date. */
@@ -121,4 +123,48 @@ data class ItemDetailUiState(
         is ItemDetailEvent.OnRecurrenceChanged -> changeRecurrence(event.recurrence)
         is ItemDetailEvent.OnReminderWarningChanged -> copy(reminderWarning = event.reminderWarning)
     }
+
+    fun toDraft(): ItemDetailDraft = ItemDetailDraft(
+        type = type,
+        title = title,
+        description = description,
+        sectionId = sectionId,
+        selectedTagIds = selectedTagIds,
+        hasReminder = hasReminder,
+        dueDate = dueDate,
+        dueTime = dueTime,
+        recurrence = recurrence,
+        reminderWarning = reminderWarning,
+    )
+
+    fun applyDraft(draft: ItemDetailDraft): ItemDetailUiState = copy(
+        type = draft.type,
+        title = draft.title,
+        description = draft.description,
+        sectionId = draft.sectionId,
+        selectedTagIds = draft.selectedTagIds,
+        hasReminder = draft.hasReminder,
+        dueDate = draft.dueDate,
+        dueTime = draft.dueTime,
+        recurrence = draft.recurrence,
+        reminderWarning = draft.reminderWarning,
+    )
 }
+
+/** Persisted to [androidx.lifecycle.SavedStateHandle] for the creation flow (`itemId == null`) so a
+ * process death mid-draft doesn't lose it — only the form-relevant subset of [ItemDetailUiState],
+ * not screen state like [ItemDetailUiState.availableSections] (reloaded on init) or completion fields
+ * (never set before the item exists).
+ */
+data class ItemDetailDraft(
+    val type: ItemType,
+    val title: String,
+    val description: String,
+    val sectionId: Long?,
+    val selectedTagIds: Set<Long>,
+    val hasReminder: Boolean,
+    val dueDate: LocalDate?,
+    val dueTime: LocalTime?,
+    val recurrence: Recurrence,
+    val reminderWarning: ReminderWarning,
+) : Serializable

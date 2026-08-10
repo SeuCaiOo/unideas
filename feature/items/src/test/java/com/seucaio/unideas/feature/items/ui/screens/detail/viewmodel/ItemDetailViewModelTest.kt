@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
@@ -55,8 +56,16 @@ class ItemDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long? = null) =
-        ItemDetailViewModel(itemId, itemFormUseCase, getSectionsAndTags)
+    private fun viewModel(
+        itemId: Long? = null,
+        savedStateHandle: SavedStateHandle = SavedStateHandle()
+    ) =
+        ItemDetailViewModel(
+            itemId = itemId,
+            itemFormUseCase = itemFormUseCase,
+            getSectionsAndTags = getSectionsAndTags,
+            savedStateHandle = savedStateHandle
+        )
 
     @Test
     fun `when creating a new item should show blank fields with available sections and tags`() = runTest {

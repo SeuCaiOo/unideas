@@ -14,6 +14,7 @@ val itemsModule = module {
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
             getSectionsAndTags = get(),
+            savedStateHandle = get(),
             initialType = params.get(),
         )
     }

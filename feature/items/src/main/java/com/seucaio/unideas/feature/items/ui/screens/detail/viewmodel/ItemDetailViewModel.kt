@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
@@ -27,11 +28,13 @@ class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
     private companion object {
         const val TEXT_DEBOUNCE_MS = 500L
+        const val DRAFT_KEY = "itemDetailDraft"
     }
 
     private var originalItem: Item? = null
@@ -41,7 +44,14 @@ class ItemDetailViewModel(
     private var hasPendingTextSave = false
 
     private val _uiState = MutableStateFlow(
-        ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
+        ItemDetailUiState(
+            isEditing = itemId != null,
+            isLoading = itemId != null,
+            type = initialType
+        ).let { base ->
+            (if (itemId == null) savedStateHandle.get<ItemDetailDraft>(DRAFT_KEY) else null)
+                .let { draft -> if (draft != null) base.applyDraft(draft) else base }
+        },
     )
     val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
 
@@ -106,6 +116,7 @@ class ItemDetailViewModel(
      * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         _uiState.update { it.reduce(event) }
+        saveDraft()
         when (event) {
             is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
                 debounceJob?.cancel()
@@ -145,6 +156,10 @@ class ItemDetailViewModel(
         persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
     }
 
+    private fun saveDraft() {
+        if (currentItemId == null) savedStateHandle[DRAFT_KEY] = _uiState.value.toDraft()
+    }
+
     private suspend fun persist(): Result<Unit> {
         val id = currentItemId
 
@@ -154,6 +169,7 @@ class ItemDetailViewModel(
                 .onSuccess { newId ->
                     currentItemId = newId
                     originalItem = newItem.copy(id = newId)
+                    savedStateHandle.remove<ItemDetailDraft>(DRAFT_KEY)
                 }
                 .map { }
         } else {

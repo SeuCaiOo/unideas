@@ -42,25 +42,42 @@ class CompleteItemUseCaseTest {
     }
 
     @Test
-    fun `invoke completes a recurring task by recording history and advancing dueDate on the same row`() = runTest {
-        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
-        val historyRecord =
-            ItemCompletionHistory(itemId = item.id, scheduledDate = ItemStub.TODAY, completedAt = completedAt)
-        val advanced = item.copy(dueDate = ItemStub.TODAY.plusWeeks(1))
-        coEvery { historyRepository.insert(historyRecord) } returns 1L
-        coEvery { repository.updateItem(advanced) } returns Unit
+    fun `invoke completes a recurring task by recording history for the current occurrence without moving dueDate`() =
+        runTest {
+            val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+            val historyRecord =
+                ItemCompletionHistory(itemId = item.id, scheduledDate = ItemStub.TODAY, completedAt = completedAt)
+            val completed = item.copy(lastCompletedScheduledDate = ItemStub.TODAY)
+            coEvery { historyRepository.insert(historyRecord) } returns 1L
+            coEvery { repository.updateItem(completed) } returns Unit
+
+            val result = useCase(item, completedAt)
+
+            assertEquals(CompletionResult.Completed, result.getOrNull())
+            coVerify(exactly = 1) { historyRepository.insert(historyRecord) }
+            coVerify(exactly = 1) { repository.updateItem(completed) }
+        }
+
+    @Test
+    fun `invoke reopens a recurring task's already-completed occurrence instead of recording it again`() = runTest {
+        val item = ItemStub.task(
+            recurrence = Recurrence.Weekly,
+            dueDate = ItemStub.TODAY,
+            lastCompletedScheduledDate = ItemStub.TODAY,
+        )
+        coEvery { historyRepository.deleteOccurrence(item.id, ItemStub.TODAY) } returns Unit
+        coEvery { repository.updateItem(item.copy(lastCompletedScheduledDate = null)) } returns Unit
 
         val result = useCase(item, completedAt)
 
-        assertEquals(CompletionResult.CompletedAndRenewed(item.id), result.getOrNull())
-        coVerify(exactly = 1) { historyRepository.insert(historyRecord) }
-        coVerify(exactly = 1) { repository.updateItem(advanced) }
-        coVerify(exactly = 0) { repository.insertItem(any()) }
+        assertEquals(CompletionResult.Uncompleted, result.getOrNull())
+        coVerify(exactly = 1) { historyRepository.deleteOccurrence(item.id, ItemStub.TODAY) }
+        coVerify(exactly = 0) { historyRepository.insert(any()) }
     }
 
     @Test
     fun `invoke uncompletes an already-completed task without touching recurrence`() = runTest {
-        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY, completedAt = completedAt)
+        val item = ItemStub.task(recurrence = Recurrence.None, completedAt = completedAt)
         coEvery { repository.updateItem(item.copy(completedAt = null)) } returns Unit
 
         val result = useCase(item, completedAt)

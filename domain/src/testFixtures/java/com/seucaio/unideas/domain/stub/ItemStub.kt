@@ -31,6 +31,7 @@ object ItemStub {
         reminderWarning: ReminderWarning = ReminderWarning.None,
         completedAt: LocalDateTime? = null,
         createdAt: LocalDateTime = CREATED_AT,
+        lastCompletedScheduledDate: LocalDate? = null,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -44,6 +45,7 @@ object ItemStub {
         reminderWarning = reminderWarning,
         completedAt = completedAt,
         createdAt = createdAt,
+        lastCompletedScheduledDate = lastCompletedScheduledDate,
         tags = tags,
     )
 

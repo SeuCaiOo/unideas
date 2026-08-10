@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,6 +46,7 @@ internal fun TitleDescriptionFields(
     onDescriptionChanged: (String) -> Unit,
     isEditing: Boolean,
     modifier: Modifier = Modifier,
+    titleError: Boolean = false,
 ) {
     val titleFocusRequester = remember { FocusRequester() }
     val descriptionFocusRequester = remember { FocusRequester() }
@@ -72,6 +74,7 @@ internal fun TitleDescriptionFields(
             onPreviewModeToggled = { isPreviewMode = !isPreviewMode },
             titleFocusRequester = titleFocusRequester,
             onImeAction = { descriptionFocusRequester.requestFocus() },
+            titleError = titleError,
         )
 
         DescriptionField(
@@ -94,6 +97,7 @@ private fun TitleField(
     onPreviewModeToggled: () -> Unit,
     titleFocusRequester: FocusRequester,
     onImeAction: () -> Unit,
+    titleError: Boolean,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         BorderlessTextField(
@@ -106,6 +110,12 @@ private fun TitleField(
                 .focusRequester(titleFocusRequester),
             imeAction = ImeAction.Next,
             onImeAction = onImeAction,
+            isError = titleError,
+            supportingText = if (titleError) {
+                { Text(stringResource(R.string.item_title_required)) }
+            } else {
+                null
+            },
         )
         MarkdownPreviewToggle(isPreviewMode = isPreviewMode, onClick = onPreviewModeToggled)
     }

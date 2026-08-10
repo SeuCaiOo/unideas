@@ -40,6 +40,7 @@ fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modif
             onTitleChanged = events.onTitleChanged,
             onDescriptionChanged = events.onDescriptionChanged,
             isEditing = state.isEditing,
+            titleError = state.titleError,
         )
 
         TypeSelectorField(

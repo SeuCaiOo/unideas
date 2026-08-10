@@ -2,17 +2,12 @@ package com.seucaio.unideas.feature.home.features.panel.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Notes
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -25,17 +20,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.ds.components.buttons.AppFab
-import com.seucaio.unideas.ds.components.buttons.MiniFabAction
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -44,6 +35,7 @@ import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
+import com.seucaio.unideas.feature.home.features.panel.screen.components.AddItemFab
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
@@ -114,7 +106,7 @@ private fun HomeContent(
         },
         floatingActionButton = {
             ConditionalFab(visible = uiState is HomeUiState.Success) {
-                HomeAddFab(
+                AddItemFab(
                     expanded = addMenuExpanded,
                     onToggle = { addMenuExpanded = !addMenuExpanded },
                     onAddTask = {
@@ -135,36 +127,6 @@ private fun HomeContent(
             itemsState = itemsState,
             padding = padding,
             onEvent = onEvent,
-        )
-    }
-}
-
-@Composable
-private fun HomeAddFab(
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    onAddTask: () -> Unit,
-    onAddNote: () -> Unit,
-) {
-    Column(horizontalAlignment = Alignment.End) {
-        if (expanded) {
-            MiniFabAction(
-                icon = Icons.AutoMirrored.Outlined.Notes,
-                label = stringResource(R.string.home_add_note),
-                onClick = onAddNote,
-            )
-            Spacer(Modifier.height(8.dp))
-            MiniFabAction(
-                icon = Icons.Outlined.TaskAlt,
-                label = stringResource(R.string.home_add_task),
-                onClick = onAddTask
-            )
-            Spacer(Modifier.height(12.dp))
-        }
-        AppFab(
-            icon = Icons.Outlined.Add,
-            contentDescription = stringResource(R.string.home_add_action),
-            onClick = onToggle
         )
     }
 }

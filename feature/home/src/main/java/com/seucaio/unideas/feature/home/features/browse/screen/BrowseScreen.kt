@@ -11,14 +11,17 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.components.legacy.ConditionalFab
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -33,6 +36,7 @@ import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiAction
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiState
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseViewModel
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.FilterState
+import com.seucaio.unideas.feature.home.features.panel.screen.components.AddItemFab
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -79,10 +83,27 @@ private fun BrowseContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    var addMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             UnideasTopBar(title = stringResource(R.string.browse_title), onNavigateBack = updatedOnNavigateBack)
+        },
+        floatingActionButton = {
+            ConditionalFab(visible = uiState is BrowseUiState.Success) {
+                AddItemFab(
+                    expanded = addMenuExpanded,
+                    onToggle = { addMenuExpanded = !addMenuExpanded },
+                    onAddTask = {
+                        addMenuExpanded = false
+                        onEvent(BrowseEvent.OnAddClicked(ItemType.TASK))
+                    },
+                    onAddNote = {
+                        addMenuExpanded = false
+                        onEvent(BrowseEvent.OnAddClicked(ItemType.NOTE))
+                    },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->

@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
@@ -47,14 +46,12 @@ class ItemDetailViewModel(
     val historyState: StateFlow<List<ItemCompletionHistory>> = _historyState.asStateFlow()
 
     init {
-        viewModelScope.launch { loadFormData() }
-    }
-
-    private suspend fun loadFormData() {
-        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
+        viewModelScope.launch {
+            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
+                _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
+            }
+            if (itemId != null) loadItem(itemId)
         }
-        if (itemId != null) loadItem(itemId)
     }
 
     private suspend fun loadItem(id: Long) {
@@ -95,21 +92,14 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    /** Every structured [ItemDetailEvent.FieldEvent] saves immediately — title/description are the
-     * only exception, debounced separately. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         _uiState.update { it.reduce(event) }
-        when (event) {
-            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> Unit
-            else -> autoSave()
+        val shouldAutoSave = event !is ItemDetailEvent.OnTitleChanged &&
+            event !is ItemDetailEvent.OnDescriptionChanged &&
+            _uiState.value.isTitleValid
+        if (shouldAutoSave) {
+            viewModelScope.launch { persist().onFailure { handleFailure(it) } }
         }
-    }
-
-    /** Silent: a blank title just skips the save (no error shown) instead of interrupting the
-     * user mid-edit — [handleSaveClicked] is the only path that surfaces that validation. */
-    private fun autoSave() {
-        if (!_uiState.value.isTitleValid) return
-        viewModelScope.launch { persist().onFailure { handleFailure(it) } }
     }
 
     private fun handleSaveClicked() = viewModelScope.launch {
@@ -186,13 +176,7 @@ class ItemDetailViewModel(
 
     private fun handleShare() = viewModelScope.launch {
         val item = originalItem ?: return@launch
-        sendUiAction(ItemDetailUiAction.ShareText(buildShareText(item)))
-    }
-
-    private fun buildShareText(item: Item): String = buildString {
-        appendLine(item.title)
-        item.description?.let { appendLine(it) }
-        item.dueDate?.let { appendLine(it.toFormattedDateString()) }
+        sendUiAction(ItemDetailUiAction.ShareText(item))
     }
 
     private suspend fun sendUiAction(action: ItemDetailUiAction) = _uiAction.send(action)

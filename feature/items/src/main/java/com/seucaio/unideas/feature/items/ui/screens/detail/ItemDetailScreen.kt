@@ -17,6 +17,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
+import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -36,6 +38,12 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailU
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+
+private fun Item.toShareText(): String = buildString {
+    appendLine(title)
+    description?.let { appendLine(it) }
+    dueDate?.let { appendLine(it.toFormattedDateString()) }
+}
 
 @Composable
 fun ItemDetailScreen(
@@ -60,7 +68,7 @@ fun ItemDetailScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemDetailUiAction.ShareText -> context.shareText(action.text)
+                is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
             }
         }
     }

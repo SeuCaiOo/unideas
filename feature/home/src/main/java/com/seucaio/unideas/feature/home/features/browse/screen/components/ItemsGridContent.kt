@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -29,10 +29,10 @@ import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
+import com.seucaio.unideas.feature.home.features.browse.screen.BrowsePreviewProvider
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseEvent
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseItemsState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.ItemSectionGroup
 
 /** Column count for [ItemsGridContent]'s grid. */
 private const val ITEMS_GRID_COLUMNS = 2
@@ -44,16 +44,16 @@ private data class GridGroupRenderContext(
     val checkContentDescription: String,
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
-    val onEvent: (HomeEvent) -> Unit,
+    val onEvent: (BrowseEvent) -> Unit,
 )
 
 /**
  * Home's tab-items **grid** — [ItemsViewMode.GRID] sibling of [ItemsListContent], same grouping/
  * collapse behavior, [ListItemCard] cells instead of a plain row (that doesn't fit a half-width
  * cell — its title has nowhere to go, confirmed on-device). Called from [ItemsContent]; assumes
- * [ItemsState.tabItems] is non-empty, [ItemsContent] already handles the empty state.
+ * [BrowseItemsState.tabItems] is non-empty, [ItemsContent] already handles the empty state.
  *
- * When [sectionFilter] is `null`, renders [ItemsState.groupedTabItems] the same way as
+ * When [sectionFilter] is `null`, renders [BrowseItemsState.groupedTabItems] the same way as
  * [ItemsListContent] — pinned Sections' groups first, under an emphasized "Pinned" [GroupHeader]
  * divider (indented further, so they read as nested under it), then the rest with no divider at
  * all, each spanning both columns. Collapse state is local UI-only state (not in the ViewModel —
@@ -63,9 +63,9 @@ private data class GridGroupRenderContext(
  */
 @Composable
 internal fun ItemsGridContent(
-    itemsState: ItemsState,
+    itemsState: BrowseItemsState,
     sectionFilter: Long?,
-    onEvent: (HomeEvent) -> Unit,
+    onEvent: (BrowseEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
@@ -125,7 +125,7 @@ private fun LazyGridScope.sectionGroup(
                 isPinned = group.isPinned,
                 onTogglePin = group.sectionId?.let { sectionId ->
                     {
-                        context.onEvent(HomeEvent.OnSectionPinToggled(sectionId, !group.isPinned))
+                        context.onEvent(BrowseEvent.OnSectionPinToggled(sectionId, !group.isPinned))
                     }
                 },
                 indentStart = indentStart,
@@ -136,8 +136,8 @@ private fun LazyGridScope.sectionGroup(
         items(group.items, key = { it.id }) { item ->
             ListItemCard(
                 ui = item.toListItemUi(context.checkContentDescription),
-                onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
-                onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onClick = { context.onEvent(BrowseEvent.OnItemClicked(item.id)) },
+                onToggleCheck = { context.onEvent(BrowseEvent.OnCompleteClicked(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(8.dp),
             )
@@ -145,8 +145,8 @@ private fun LazyGridScope.sectionGroup(
     }
 }
 
-internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsState> {
-    override val values = HomePreviewProvider().values
+internal class ItemsGridPreviewProvider : PreviewParameterProvider<BrowseItemsState> {
+    override val values = BrowsePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
 }
@@ -154,7 +154,7 @@ internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsState> {
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: ItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: BrowseItemsState,
 ) {
     UdsTheme {
         Surface {
@@ -166,7 +166,7 @@ private fun ItemsGridContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentWithFooterPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: ItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: BrowseItemsState,
 ) {
     UdsTheme {
         Surface {

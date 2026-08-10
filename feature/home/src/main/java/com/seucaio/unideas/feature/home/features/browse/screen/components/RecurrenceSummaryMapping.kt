@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration

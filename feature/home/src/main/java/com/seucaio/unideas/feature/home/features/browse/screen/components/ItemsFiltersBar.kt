@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -14,19 +14,12 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.buttons.ViewModeToggleButton
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.ItemsViewMode
 
 /**
- * [Filters] plus the list/grid [ViewModeToggleButton], side by side — shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` (same pairing as
- * [Filters]/[ItemsContent]/[TasksNotesTabRow] already are), so a UI element used by both
- * screens has exactly one call site instead of being duplicated inline in each
- * (`docs/CONVENTIONS.md` § Screen (Compose)). [viewMode] lives in
- * [com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState] — both screens
- * share [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel], same as
- * `activeTab`/`sectionFilter`/`tagFilters` — this composable only computes the flip and reports
- * it via [onViewModeChange].
+ * [Filters] plus the list/grid [ViewModeToggleButton], side by side. [viewMode] lives in
+ * [com.seucaio.unideas.feature.home.features.browse.viewmodel.FilterState] — this composable
+ * only computes the flip and reports it via [onViewModeChange].
  */
 @Composable
 internal fun ItemsFiltersBar(

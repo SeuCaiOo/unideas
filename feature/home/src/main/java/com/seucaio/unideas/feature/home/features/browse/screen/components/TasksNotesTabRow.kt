@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -12,11 +12,7 @@ import com.seucaio.unideas.feature.home.R
 
 /**
  * Thin [ItemType]<->index bridge over `:uds`'s domain-agnostic `AppTabRow` (real Material3
- * `SecondaryTabRow`/`Tab` under the hood, styled with `:uds` tokens). Shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen` — both switch the same
- * [ItemType] tab over the same
- * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel] state.
+ * `SecondaryTabRow`/`Tab` under the hood, styled with `:uds` tokens).
  */
 @Composable
 fun TasksNotesTabRow(activeTab: ItemType, onTabSelect: (ItemType) -> Unit, modifier: Modifier = Modifier) {

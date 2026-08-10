@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,13 +12,13 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewFixture
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsViewMode
+import com.seucaio.unideas.feature.home.features.browse.screen.BrowsePreviewFixture
+import com.seucaio.unideas.feature.home.features.browse.screen.BrowsePreviewProvider
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseEvent
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseItemsState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.FilterState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.ItemSectionGroup
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.ItemsViewMode
 
 /**
  * Sentinel standing in for [ItemSectionGroup.sectionId] `null` (unsectioned bucket) in the local
@@ -34,21 +34,19 @@ internal const val NO_SECTION_KEY = -1L
 internal val PINNED_INDENT = 12.dp
 
 /**
- * Home's tab-items content: the one empty-state check both view modes need, then dispatch by
+ * Browse's tab-items content: the one empty-state check both view modes need, then dispatch by
  * [FilterState.viewMode] to [ItemsListContent] or [ItemsGridContent] — each owns its own
  * layout/grouping rendering (including per-item spacing — the caller doesn't pass padding down),
- * this only decides which one runs. Shared between
- * [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`. [footer], if present,
- * renders after the last item/group in either mode — a plain `@Composable`, each child adapts it
- * to its own `LazyColumn`/`LazyVerticalGrid` internally.
+ * this only decides which one runs. [footer], if present, renders after the last item/group in
+ * either mode — a plain `@Composable`, each child adapts it to its own
+ * `LazyColumn`/`LazyVerticalGrid` internally.
  */
 @Composable
 internal fun ItemsContent(
-    itemsState: ItemsState,
+    itemsState: BrowseItemsState,
     filterState: FilterState,
     hasAnyItem: Boolean,
-    onEvent: (HomeEvent) -> Unit,
+    onEvent: (BrowseEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
@@ -80,16 +78,16 @@ internal fun ItemsContent(
 /**
  * Unfiltered — unlike [ItemsListPreviewProvider]/[ItemsGridPreviewProvider], includes the empty
  * states too: [ItemsContent] is the only one of the three that still renders them (it routes an
- * empty [ItemsState.tabItems] away from both children before they ever see it).
+ * empty [BrowseItemsState.tabItems] away from both children before they ever see it).
  */
-internal class ItemsContentPreviewProvider : PreviewParameterProvider<HomePreviewFixture> {
-    override val values = HomePreviewProvider().values
+internal class ItemsContentPreviewProvider : PreviewParameterProvider<BrowsePreviewFixture> {
+    override val values = BrowsePreviewProvider().values
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsContentListPreview(
-    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: HomePreviewFixture,
+    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: BrowsePreviewFixture,
 ) {
     UdsTheme {
         Surface {
@@ -106,7 +104,7 @@ private fun ItemsContentListPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsContentGridPreview(
-    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: HomePreviewFixture,
+    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: BrowsePreviewFixture,
 ) {
     UdsTheme {
         Surface {

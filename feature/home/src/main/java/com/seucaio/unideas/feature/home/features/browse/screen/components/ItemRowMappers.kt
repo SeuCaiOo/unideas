@@ -1,15 +1,15 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.runtime.Composable
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.lists.ListItemUi
+import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
+import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
 
 /**
  * Maps [Item] to `:uds`'s domain-agnostic [ListItemUi], so screens can call `:uds`'s
- * `ListItemRow` directly instead of going through a feature-local wrapper composable. Shared
- * between [com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen] and
- * `com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen`.
+ * `ListItemRow` directly instead of going through a feature-local wrapper composable.
  */
 @Composable
 internal fun Item.toListItemUi(checkContentDescription: String): ListItemUi = ListItemUi(

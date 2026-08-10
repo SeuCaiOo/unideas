@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Flag
@@ -22,18 +21,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -47,24 +40,18 @@ import com.seucaio.unideas.ds.components.legacy.ConditionalFab
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsContent
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsFiltersBar
-import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeColor
 import com.seucaio.unideas.feature.home.features.panel.screen.components.dueBadgeLabel
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
+import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeItemsState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
 import org.koin.androidx.compose.koinViewModel
-import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -72,11 +59,9 @@ fun HomeScreen(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToBrowse: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
@@ -98,10 +83,8 @@ fun HomeScreen(
 
     HomeContent(
         uiState = uiState,
-        filterState = filterState,
         itemsState = itemsState,
         onEvent = viewModel::onEvent,
-        onNavigateToBrowse = onNavigateToBrowse,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -109,14 +92,11 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
-    filterState: FilterState,
-    itemsState: ItemsState,
+    itemsState: HomeItemsState,
     onEvent: (HomeEvent) -> Unit,
-    onNavigateToBrowse: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     var addMenuExpanded by remember { mutableStateOf(false) }
-    val updatedOnNavigateToBrowse by rememberUpdatedState(onNavigateToBrowse)
 
     Scaffold(
         topBar = {
@@ -152,11 +132,9 @@ private fun HomeContent(
     ) { padding ->
         HomeBody(
             uiState = uiState,
-            filterState = filterState,
             itemsState = itemsState,
             padding = padding,
             onEvent = onEvent,
-            onNavigateToBrowse = updatedOnNavigateToBrowse,
         )
     }
 }
@@ -194,11 +172,9 @@ private fun HomeAddFab(
 @Composable
 private fun HomeBody(
     uiState: HomeUiState,
-    filterState: FilterState,
-    itemsState: ItemsState,
+    itemsState: HomeItemsState,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
-    onNavigateToBrowse: () -> Unit,
 ) {
     when (uiState) {
         is HomeUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
@@ -211,39 +187,20 @@ private fun HomeBody(
 
         is HomeUiState.Success ->
             HomeSuccessBody(
-                hasAnyItem = uiState.hasAnyItem,
-                filterState = filterState,
                 itemsState = itemsState,
                 modifier = Modifier.padding(padding),
                 onEvent = onEvent,
-                onNavigateToBrowse = onNavigateToBrowse,
             )
     }
 }
 
 @Composable
 private fun HomeSuccessBody(
-    hasAnyItem: Boolean,
-    filterState: FilterState,
-    itemsState: ItemsState,
+    itemsState: HomeItemsState,
     onEvent: (HomeEvent) -> Unit,
-    onNavigateToBrowse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var panelOffsetPx by remember { mutableFloatStateOf(0f) }
-    var panelHeightPx by remember { mutableFloatStateOf(0f) }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val previous = panelOffsetPx
-                panelOffsetPx = (panelOffsetPx + available.y).coerceIn(-panelHeightPx, 0f)
-                return Offset(0f, panelOffsetPx - previous)
-            }
-        }
-    }
-
-    Column(modifier = modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
+    Column(modifier = modifier.fillMaxSize()) {
         PriorityPanel(
             title = stringResource(R.string.home_panel_title),
             icon = Icons.Outlined.Flag,
@@ -252,60 +209,8 @@ private fun HomeSuccessBody(
             onFooterClick = { onEvent(HomeEvent.OnSeeAllClicked) },
             onRowClick = { id -> onEvent(HomeEvent.OnItemClicked(id)) },
             emptyText = stringResource(R.string.home_panel_empty),
-            modifier = Modifier
-                .fillMaxWidth()
-                .collapsible(
-                    offsetPx = { panelOffsetPx },
-                    onNaturalHeightChanged = { panelHeightPx = it },
-                ),
+            modifier = Modifier.fillMaxWidth(),
         )
-
-        TasksNotesTabRow(
-            activeTab = filterState.activeTab,
-            onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
-        )
-
-        ItemsFiltersBar(
-            sections = filterState.availableSections,
-            tags = filterState.availableTags,
-            sectionFilter = filterState.sectionFilter,
-            tagFilters = filterState.tagFilters,
-            onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
-            onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
-            viewMode = filterState.viewMode,
-            onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
-        )
-        ItemsContent(
-            itemsState = itemsState,
-            filterState = filterState,
-            hasAnyItem = hasAnyItem,
-            onEvent = onEvent,
-        ) {
-            NavRow(
-                icon = Icons.AutoMirrored.Outlined.List,
-                label = stringResource(R.string.browse_action),
-                onClick = onNavigateToBrowse,
-            )
-        }
-    }
-}
-
-/**
- * Measures [PriorityPanel] at its natural height (ignoring the incoming min height), reports
- * [onNaturalHeightChanged] every pass, then lays out a height of `naturalHeight + offsetPx()`
- * (never negative) and shifts it up by the same amount — shrinks the space the panel claims in
- * [HomeSuccessBody]'s [Column] as [offsetPx] goes negative (driven by the nested scroll
- * connection above), rather than just visually sliding content underneath it.
- */
-private fun Modifier.collapsible(
-    offsetPx: () -> Float,
-    onNaturalHeightChanged: (Float) -> Unit,
-): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints.copy(minHeight = 0))
-    onNaturalHeightChanged(placeable.height.toFloat())
-    val height = (placeable.height + offsetPx()).roundToInt().coerceAtLeast(0)
-    layout(placeable.width, height) {
-        placeable.placeRelative(0, offsetPx().roundToInt())
     }
 }
 
@@ -325,10 +230,8 @@ private fun HomeScreenPreview(
     UdsTheme {
         HomeContent(
             uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
-            filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             onEvent = {},
-            onNavigateToBrowse = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

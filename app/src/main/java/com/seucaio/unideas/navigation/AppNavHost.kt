@@ -49,7 +49,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 },
                 onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
                 onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
-                onNavigateToBrowse = { navController.navigate(HomeRoute.Browse) },
             )
             settingsNavGraph(
                 config = SettingsScreenConfig(

@@ -13,7 +13,6 @@ fun NavGraphBuilder.homeNavGraph(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToBrowse: () -> Unit,
 ) {
     composable<HomeRoute.Panel> {
         HomeScreen(
@@ -21,7 +20,6 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToAddItem = onNavigateToAddItem,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToSettings = onNavigateToSettings,
-            onNavigateToBrowse = onNavigateToBrowse,
         )
     }
     composable<HomeRoute.AllPriorities> {

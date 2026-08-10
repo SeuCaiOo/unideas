@@ -185,6 +185,7 @@ class ItemDetailViewModelTest {
     @Test
     fun `when OnSaveClicked in create mode should call ItemFormUseCase's create and navigate back`() = runTest {
         coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
         val vm = viewModel(itemId = null)
 
         vm.uiState.test { awaitItem() }
@@ -200,6 +201,56 @@ class ItemDetailViewModelTest {
             itemFormUseCase.create(
                 match { it.title == "Nova tarefa" && it.tags == listOf(TagStub.tags().first()) },
             )
+        }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires with a valid title should auto-save without OnSaveClicked`() = runTest {
+        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+
+        coVerify(exactly = 1) {
+            itemFormUseCase.create(match { it.title == "Nova tarefa" })
+        }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires with a blank title should not save`() = runTest {
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when OnTitleChanged or OnDescriptionChanged fire alone should not auto-save`() = runTest {
+        val vm = viewModel(itemId = null)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Descrição"))
+
+        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
+    }
+
+    @Test
+    fun `when a structured FieldEvent fires in edit mode should auto-save via edit`() = runTest {
+        val item = ItemStub.task(id = 1L)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnSectionChanged(SectionStub.sections().first().id))
+
+        coVerify(exactly = 1) {
+            itemFormUseCase.edit(match { it.id == 1L && it.sectionId == SectionStub.sections().first().id })
         }
     }
 

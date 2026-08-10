@@ -8,6 +8,10 @@ import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -80,6 +84,21 @@ data class ItemDetailUiState(
 
     fun applyCompletion(item: Item): ItemDetailUiState =
         copy(isCompleted = item.isCompleted, completedAt = item.completedAt, dueDate = item.dueDate)
+
+    /** Applies the current fields onto [original] — `null` (first save while creating) starts from a
+     * blank [Item] instead. */
+    fun toItem(original: Item?): Item = (original ?: Item(type = type, title = title, createdAt = LocalDateTime.now()))
+        .copy(
+            type = type,
+            title = title,
+            description = description.ifBlank { null },
+            sectionId = sectionId,
+            dueDate = persistableDueDate,
+            dueTime = persistableDueTime,
+            recurrence = persistableRecurrence,
+            reminderWarning = persistableReminderWarning,
+            tags = availableTags.filter { it.id in selectedTagIds },
+        )
 
     /** Clearing [dueDate] also clears [dueTime]/[recurrence]/[reminderWarning] — none of them mean
      * anything without a date. */

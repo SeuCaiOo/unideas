@@ -9,10 +9,6 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
-import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableReminderWarning
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +29,7 @@ class ItemDetailViewModel(
 ) : ViewModel() {
 
     private var originalItem: Item? = null
+    private var currentItemId: Long? = itemId
     private var historyJob: Job? = null
 
     private val _uiState = MutableStateFlow(
@@ -73,8 +70,8 @@ class ItemDetailViewModel(
 
     fun onEvent(event: ItemDetailEvent) {
         when (event) {
-            is ItemDetailEvent.FieldEvent -> _uiState.update { it.reduce(event) }
-            is ItemDetailEvent.OnSaveClicked -> handleSave()
+            is ItemDetailEvent.FieldEvent -> handleFieldEvent(event)
+            is ItemDetailEvent.OnSaveClicked -> handleSaveClicked()
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
             is ItemDetailEvent.OnDialogDismissed -> {
@@ -98,43 +95,47 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    private fun handleSave() = viewModelScope.launch {
-        val state = _uiState.value
-        val selectedTags = state.availableTags.filter { it.id in state.selectedTagIds }
-
-        val result: Result<Unit> = if (itemId == null) {
-            itemFormUseCase.create(
-                Item(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.persistableDueDate,
-                    dueTime = state.persistableDueTime,
-                    recurrence = state.persistableRecurrence,
-                    reminderWarning = state.persistableReminderWarning,
-                    createdAt = LocalDateTime.now(),
-                    tags = selectedTags,
-                ),
-            ).map { }
-        } else {
-            val original = originalItem ?: return@launch
-            itemFormUseCase.edit(
-                original.copy(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.persistableDueDate,
-                    dueTime = state.persistableDueTime,
-                    recurrence = state.persistableRecurrence,
-                    reminderWarning = state.persistableReminderWarning,
-                    tags = selectedTags,
-                ),
-            )
+    /** Every structured [ItemDetailEvent.FieldEvent] saves immediately — title/description are the
+     * only exception, debounced separately. */
+    private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
+        _uiState.update { it.reduce(event) }
+        when (event) {
+            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> Unit
+            else -> autoSave()
         }
+    }
 
-        result.onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    /** Silent: a blank title just skips the save (no error shown) instead of interrupting the
+     * user mid-edit — [handleSaveClicked] is the only path that surfaces that validation. */
+    private fun autoSave() {
+        if (!_uiState.value.isTitleValid) return
+        viewModelScope.launch { persist().onFailure { handleFailure(it) } }
+    }
+
+    private fun handleSaveClicked() = viewModelScope.launch {
+        if (!_uiState.value.isTitleValid) {
+            sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_title_required))
+            return@launch
+        }
+        persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    }
+
+    private suspend fun persist(): Result<Unit> {
+        val id = currentItemId
+
+        return if (id == null) {
+            val newItem = _uiState.value.toItem(original = null)
+            itemFormUseCase.create(newItem)
+                .onSuccess { newId ->
+                    currentItemId = newId
+                    originalItem = newItem.copy(id = newId)
+                }
+                .map { }
+        } else {
+            val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
+            val updated = _uiState.value.toItem(original)
+            itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
+        }
     }
 
     private suspend fun handleFailure(error: Throwable) {

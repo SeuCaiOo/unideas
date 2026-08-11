@@ -12,50 +12,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.ds.theme.UdsTheme
-import com.seucaio.unideas.feature.home.navigation.HomeRoute
 
 @Composable
 internal fun AppScaffold(
-    topLevelRoute: HomeRoute?,
-    onNavigateToHome: () -> Unit,
-    onNavigateToAllItems: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    Scaffold(
-        modifier = modifier,
-        bottomBar = {
-            if (topLevelRoute != null) {
-                AppBottomNavigationBar(
-                    selectedRoute = topLevelRoute,
-                    onNavigateToHome = onNavigateToHome,
-                    onNavigateToAllItems = onNavigateToAllItems,
-                )
-            }
-        },
-    ) { padding ->
+    Scaffold(modifier = modifier) { padding ->
         content(padding)
     }
 }
 
-private class AppScaffoldPreviewProvider : PreviewParameterProvider<HomeRoute?> {
-    override val values = sequenceOf(HomeRoute.Panel, HomeRoute.Browse, null)
-}
-
 @PreviewLightDark
 @Composable
-private fun AppScaffoldPreview(
-    @PreviewParameter(AppScaffoldPreviewProvider::class) topLevelRoute: HomeRoute?,
-) {
+private fun AppScaffoldPreview() {
     UdsTheme {
-        AppScaffold(
-            topLevelRoute = topLevelRoute,
-            onNavigateToHome = {},
-            onNavigateToAllItems = {},
-        ) { padding ->
+        AppScaffold { padding ->
             Surface(
                 modifier = Modifier
                     .fillMaxSize()

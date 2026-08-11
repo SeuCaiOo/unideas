@@ -127,13 +127,13 @@ private fun PriorityBottomSheetContent(
         is PriorityUiState.Success ->
             Column(modifier = modifier.fillMaxWidth()) {
                 PriorityPanel(
-                    title = stringResource(R.string.home_panel_title),
+                    title = stringResource(R.string.priority_panel_title),
                     icon = Icons.Outlined.Flag,
                     rows = itemsState.priorityItems.map { it.toPriorityRowUi() },
-                    footerLabel = if (itemsState.showSeeAllButton) stringResource(R.string.home_see_all) else null,
+                    footerLabel = if (itemsState.showSeeAllButton) stringResource(R.string.priority_see_all) else null,
                     onFooterClick = { onEvent(PriorityEvent.OnSeeAllClicked) },
                     onRowClick = { id -> onEvent(PriorityEvent.OnItemClicked(id)) },
-                    emptyText = stringResource(R.string.home_panel_empty),
+                    emptyText = stringResource(R.string.priority_panel_empty),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

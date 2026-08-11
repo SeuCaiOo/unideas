@@ -33,6 +33,7 @@ import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
+import com.seucaio.unideas.feature.home.features.home.screen.components.AddItemFab
 import com.seucaio.unideas.feature.home.features.home.screen.components.ItemsContent
 import com.seucaio.unideas.feature.home.features.home.screen.components.ItemsFiltersBar
 import com.seucaio.unideas.feature.home.features.home.screen.components.TasksNotesTabRow
@@ -42,7 +43,6 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeViewModel
-import com.seucaio.unideas.feature.home.features.home.screen.components.AddItemFab
 import com.seucaio.unideas.feature.home.features.priority.screen.PriorityBottomSheet
 import org.koin.androidx.compose.koinViewModel
 
@@ -130,13 +130,13 @@ private fun HomeContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                title = stringResource(R.string.browse_title),
+                title = stringResource(R.string.home_title),
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
                     IconButton(onClick = { showPriorityBottomSheet = true }) {
                         Icon(
                             Icons.Outlined.Flag,
-                            contentDescription = stringResource(R.string.home_panel_title),
+                            contentDescription = stringResource(R.string.priority_panel_title),
                         )
                     }
                     IconButton(onClick = onNavigateToSettings) {

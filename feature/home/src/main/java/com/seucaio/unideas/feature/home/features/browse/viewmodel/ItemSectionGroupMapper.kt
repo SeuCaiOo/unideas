@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.viewmodel
+package com.seucaio.unideas.feature.home.features.browse.viewmodel
 
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.Section

@@ -11,30 +11,32 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.components.legacy.ConditionalFab
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewFixture
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsContent
-import com.seucaio.unideas.feature.home.features.panel.screen.components.ItemsFiltersBar
-import com.seucaio.unideas.feature.home.features.panel.screen.components.TasksNotesTabRow
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.FilterState
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiAction
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeUiState
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
+import com.seucaio.unideas.feature.home.features.browse.screen.components.ItemsContent
+import com.seucaio.unideas.feature.home.features.browse.screen.components.ItemsFiltersBar
+import com.seucaio.unideas.feature.home.features.browse.screen.components.TasksNotesTabRow
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseEvent
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseItemsState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiAction
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseViewModel
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.FilterState
+import com.seucaio.unideas.feature.home.features.panel.screen.components.AddItemFab
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -42,7 +44,7 @@ fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
+    viewModel: BrowseViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
@@ -54,11 +56,9 @@ fun BrowseScreen(
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is HomeUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
-                is HomeUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
-                is HomeUiAction.NavigateToAllPriorities -> Unit
-                is HomeUiAction.NavigateToSettings -> Unit
-                is HomeUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is BrowseUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
+                is BrowseUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
+                is BrowseUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }
         }
     }
@@ -75,18 +75,35 @@ fun BrowseScreen(
 
 @Composable
 private fun BrowseContent(
-    uiState: HomeUiState,
+    uiState: BrowseUiState,
     filterState: FilterState,
-    itemsState: ItemsState,
-    onEvent: (HomeEvent) -> Unit,
+    itemsState: BrowseItemsState,
+    onEvent: (BrowseEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    var addMenuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             UnideasTopBar(title = stringResource(R.string.browse_title), onNavigateBack = updatedOnNavigateBack)
+        },
+        floatingActionButton = {
+            ConditionalFab(visible = uiState is BrowseUiState.Success) {
+                AddItemFab(
+                    expanded = addMenuExpanded,
+                    onToggle = { addMenuExpanded = !addMenuExpanded },
+                    onAddTask = {
+                        addMenuExpanded = false
+                        onEvent(BrowseEvent.OnAddClicked(ItemType.TASK))
+                    },
+                    onAddNote = {
+                        addMenuExpanded = false
+                        onEvent(BrowseEvent.OnAddClicked(ItemType.NOTE))
+                    },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
@@ -102,21 +119,21 @@ private fun BrowseContent(
 
 @Composable
 private fun BrowseBody(
-    uiState: HomeUiState,
+    uiState: BrowseUiState,
     filterState: FilterState,
-    itemsState: ItemsState,
+    itemsState: BrowseItemsState,
     padding: PaddingValues,
-    onEvent: (HomeEvent) -> Unit,
+    onEvent: (BrowseEvent) -> Unit,
 ) {
     when (uiState) {
-        is HomeUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
-        is HomeUiState.Error ->
+        is BrowseUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
+        is BrowseUiState.Error ->
             UnideasErrorContent(
                 messageRes = uiState.messageRes,
-                onRetry = { onEvent(HomeEvent.OnRetryClicked) },
+                onRetry = { onEvent(BrowseEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
-        is HomeUiState.Success ->
+        is BrowseUiState.Success ->
             BrowseSuccessBody(
                 hasAnyItem = uiState.hasAnyItem,
                 filterState = filterState,
@@ -131,14 +148,14 @@ private fun BrowseBody(
 private fun BrowseSuccessBody(
     hasAnyItem: Boolean,
     filterState: FilterState,
-    itemsState: ItemsState,
-    onEvent: (HomeEvent) -> Unit,
+    itemsState: BrowseItemsState,
+    onEvent: (BrowseEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         TasksNotesTabRow(
             activeTab = filterState.activeTab,
-            onTabSelect = { onEvent(HomeEvent.OnTabChanged(it)) },
+            onTabSelect = { onEvent(BrowseEvent.OnTabChanged(it)) },
         )
         HorizontalDivider()
         ItemsFiltersBar(
@@ -146,10 +163,10 @@ private fun BrowseSuccessBody(
             tags = filterState.availableTags,
             sectionFilter = filterState.sectionFilter,
             tagFilters = filterState.tagFilters,
-            onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
-            onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
+            onSectionFilterChange = { onEvent(BrowseEvent.OnSectionFilterChanged(it)) },
+            onTagFilterToggle = { onEvent(BrowseEvent.OnTagFilterToggled(it)) },
             viewMode = filterState.viewMode,
-            onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
+            onViewModeChange = { onEvent(BrowseEvent.OnViewModeChanged(it)) },
         )
         ItemsContent(
             itemsState = itemsState,
@@ -163,11 +180,11 @@ private fun BrowseSuccessBody(
 @PreviewLightDark
 @Composable
 private fun BrowseScreenPreview(
-    @PreviewParameter(HomePreviewProvider::class) fixture: HomePreviewFixture,
+    @PreviewParameter(BrowsePreviewProvider::class) fixture: BrowsePreviewFixture,
 ) {
     UdsTheme {
         BrowseContent(
-            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            uiState = BrowseUiState.Success(hasAnyItem = fixture.hasAnyItem),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             onEvent = {},

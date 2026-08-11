@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.panel.screen.components
+package com.seucaio.unideas.feature.home.features.browse.screen.components
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,19 +31,19 @@ import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.panel.screen.HomePreviewProvider
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeEvent
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemSectionGroup
-import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
+import com.seucaio.unideas.feature.home.features.browse.screen.BrowsePreviewProvider
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseEvent
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseItemsState
+import com.seucaio.unideas.feature.home.features.browse.viewmodel.ItemSectionGroup
 
 /**
  * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
- * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent]. Called from
- * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [ItemsState.tabItems] is
+ * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [BrowseEvent]. Called from
+ * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [BrowseItemsState.tabItems] is
  * non-empty, [ItemsContent] already handles the empty state. [ItemsGridContent] is the
  * [ItemsViewMode.GRID] sibling.
  *
- * When [sectionFilter] is `null`, renders [ItemsState.groupedTabItems] instead — pinned Sections'
+ * When [sectionFilter] is `null`, renders [BrowseItemsState.groupedTabItems] instead — pinned Sections'
  * groups first, under an emphasized "Pinned" [GroupHeader] divider (indented further than usual,
  * so they read as nested under it, not a sibling section at the same level), then the rest with no
  * divider at all — an "Others" label added no real information and, styled like a section header,
@@ -56,10 +56,10 @@ import com.seucaio.unideas.feature.home.features.panel.viewmodel.ItemsState
  */
 @Composable
 internal fun ItemsListContent(
-    itemsState: ItemsState,
+    itemsState: BrowseItemsState,
     sectionFilter: Long?,
     hasAnyItem: Boolean,
-    onEvent: (HomeEvent) -> Unit,
+    onEvent: (BrowseEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
@@ -90,8 +90,8 @@ internal fun ItemsListContent(
             itemContent = { item ->
                 ListItemRow(
                     ui = item.toListItemUi(checkContentDescription),
-                    onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
-                    onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                    onClick = { onEvent(BrowseEvent.OnItemClicked(item.id)) },
+                    onToggleCheck = { onEvent(BrowseEvent.OnCompleteClicked(item.id)) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             },
@@ -107,7 +107,7 @@ private data class GroupRenderContext(
     val checkContentDescription: String,
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
-    val onEvent: (HomeEvent) -> Unit,
+    val onEvent: (BrowseEvent) -> Unit,
 )
 
 @Composable
@@ -115,7 +115,7 @@ private fun GroupedItemsList(
     groups: List<ItemSectionGroup>,
     noSectionLabel: String,
     checkContentDescription: String,
-    onEvent: (HomeEvent) -> Unit,
+    onEvent: (BrowseEvent) -> Unit,
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
@@ -162,7 +162,7 @@ private fun LazyListScope.sectionGroup(
             isPinned = group.isPinned,
             onTogglePin = group.sectionId?.let { sectionId ->
                 {
-                    context.onEvent(HomeEvent.OnSectionPinToggled(sectionId, !group.isPinned))
+                    context.onEvent(BrowseEvent.OnSectionPinToggled(sectionId, !group.isPinned))
                 }
             },
             indentStart = indentStart,
@@ -172,8 +172,8 @@ private fun LazyListScope.sectionGroup(
         items(group.items, key = { it.id }) { item ->
             ListItemRow(
                 ui = item.toListItemUi(context.checkContentDescription),
-                onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
-                onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onClick = { context.onEvent(BrowseEvent.OnItemClicked(item.id)) },
+                onToggleCheck = { context.onEvent(BrowseEvent.OnCompleteClicked(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -181,8 +181,8 @@ private fun LazyListScope.sectionGroup(
     }
 }
 
-internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsState> {
-    override val values = HomePreviewProvider().values
+internal class ItemsListPreviewProvider : PreviewParameterProvider<BrowseItemsState> {
+    override val values = BrowsePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
 }
@@ -190,7 +190,7 @@ internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsState> {
 @PreviewLightDark
 @Composable
 private fun ItemsListContentPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: ItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: BrowseItemsState,
 ) {
     UdsTheme {
         Surface {
@@ -202,7 +202,7 @@ private fun ItemsListContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsListContentWithFooterPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: ItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: BrowseItemsState,
 ) {
     UdsTheme {
         Surface {

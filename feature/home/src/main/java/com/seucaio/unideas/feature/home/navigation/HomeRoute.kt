@@ -5,11 +5,8 @@ import kotlinx.serialization.Serializable
 sealed interface HomeRoute {
 
     @Serializable
-    data object Panel : HomeRoute
-
-    @Serializable
     data object AllPriorities : HomeRoute
 
     @Serializable
-    data object Browse : HomeRoute
+    data object Home : HomeRoute
 }

@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.seucaio.unideas.BuildConfig
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
@@ -23,17 +22,10 @@ import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
-    val currentDestination = navController.currentBackStackEntryAsState().value?.destination
-    val topLevelRoute = currentDestination.topLevelRouteOrNull()
-    AppScaffold(
-        modifier = modifier,
-        topLevelRoute = topLevelRoute,
-        onNavigateToHome = { navController.navigateToTopLevel(HomeRoute.Panel) },
-        onNavigateToAllItems = { navController.navigateToTopLevel(HomeRoute.Browse) },
-    ) { padding ->
+    AppScaffold(modifier = modifier) { padding ->
         NavHost(
             navController = navController,
-            startDestination = HomeRoute.Panel,
+            startDestination = HomeRoute.Home,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)

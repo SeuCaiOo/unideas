@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">Unideas</string>
-    <string name="bottom_nav_home">Início</string>
-    <string name="bottom_nav_all_items">Todos os itens</string>
 </resources>

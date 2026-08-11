@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_load_error">Couldn\'t load your items</string>
-    <string name="home_title">Home</string>
     <string name="home_settings_action">Settings</string>
     <string name="home_add_action">Add item</string>
     <string name="home_add_task">Task</string>
     <string name="home_add_note">Note</string>
-    <string name="home_panel_title">Priorities</string>
-    <string name="home_panel_empty">Nothing overdue or due soon.</string>
-    <string name="home_see_all">See all</string>
+    <string name="priority_panel_title">Priorities</string>
+    <string name="priority_panel_empty">Nothing overdue or due soon.</string>
+    <string name="priority_see_all">See all</string>
     <string name="home_tab_tasks">Tasks</string>
     <string name="home_tab_notes">Notes</string>
     <string name="home_tab_empty">No items here yet.</string>
@@ -28,8 +27,7 @@
     <string name="all_priorities_title">All priorities</string>
     <string name="all_priorities_empty">Nothing overdue or due soon.</string>
     <string name="all_priorities_load_error">Couldn\'t load your priorities</string>
-    <string name="browse_title">All items</string>
-    <string name="browse_action">View all items</string>
+    <string name="home_title">All items</string>
     <string name="home_due_today">Due today</string>
     <plurals name="home_due_in_days">
         <item quantity="one">Due in %d day</item>

@@ -61,28 +61,7 @@ fun ListItemCard(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
             if (ui.showCheckbox) {
-                Box(
-                    Modifier
-                        .size(20.dp)
-                        .clip(RoundedCornerShape(Radii.Checkbox))
-                        .background(if (ui.checked) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .border(
-                            if (ui.checked) 0.dp else 2.dp,
-                            LocalUdsExtendedColors.current.textTertiary,
-                            RoundedCornerShape(Radii.Checkbox),
-                        )
-                        .clickable(onClick = onToggleCheck),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (ui.checked) {
-                        Icon(
-                            Icons.Outlined.Check,
-                            contentDescription = ui.checkContentDescription,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                }
+                ListItemCardCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
             }
             Text(
                 ui.title,
@@ -98,12 +77,21 @@ fun ListItemCard(
                 modifier = Modifier.weight(1f),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (!ui.meta.isNullOrEmpty()) {
                 Text(
                     ui.meta,
                     style = MaterialTheme.typography.titleSmall,
-                    color = LocalUdsExtendedColors.current.textTertiary
+                    color = LocalUdsExtendedColors.current.textTertiary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    // Bounded so a long recurrence label can never squeeze the badge below —
+                    // fill = false lets it shrink to its own content when that's shorter.
+                    modifier = Modifier.weight(1f, fill = false),
                 )
             }
             if (ui.showRepeatIcon) {
@@ -114,10 +102,36 @@ fun ListItemCard(
                     modifier = Modifier.size(14.dp),
                 )
             }
-            Spacer(Modifier.width(0.dp).weight(1f))
             if (ui.badgeLabel != null) {
+                Spacer(Modifier.weight(1f))
                 DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
             }
+        }
+    }
+}
+
+@Composable
+private fun ListItemCardCheckbox(checked: Boolean, contentDescription: String, onToggle: () -> Unit) {
+    Box(
+        Modifier
+            .size(20.dp)
+            .clip(RoundedCornerShape(Radii.Checkbox))
+            .background(if (checked) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .border(
+                if (checked) 0.dp else 2.dp,
+                LocalUdsExtendedColors.current.textTertiary,
+                RoundedCornerShape(Radii.Checkbox),
+            )
+            .clickable(onClick = onToggle),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(14.dp),
+            )
         }
     }
 }

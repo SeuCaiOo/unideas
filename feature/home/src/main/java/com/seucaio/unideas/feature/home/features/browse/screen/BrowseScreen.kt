@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,6 +42,7 @@ import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiAction
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseUiState
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.BrowseViewModel
 import com.seucaio.unideas.feature.home.features.browse.viewmodel.FilterState
+import com.seucaio.unideas.feature.home.features.panel.screen.PriorityBottomSheet
 import com.seucaio.unideas.feature.home.features.panel.screen.components.AddItemFab
 import org.koin.androidx.compose.koinViewModel
 
@@ -48,6 +51,7 @@ fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
+    onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     viewModel: BrowseViewModel = koinViewModel(),
 ) {
@@ -57,6 +61,7 @@ fun BrowseScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
+    val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
 
     LaunchedEffect(Unit) {
@@ -75,6 +80,8 @@ fun BrowseScreen(
         itemsState = itemsState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToDetail = updatedOnNavigateToDetail,
+        onNavigateToAllPriorities = updatedOnNavigateToAllPriorities,
         onNavigateToSettings = updatedOnNavigateToSettings,
         snackbarHostState = snackbarHostState,
     )
@@ -87,11 +94,22 @@ private fun BrowseContent(
     itemsState: BrowseItemsState,
     onEvent: (BrowseEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
+    onNavigateToDetail: (Long) -> Unit,
+    onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
+    var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
+
+    if (showPriorityBottomSheet) {
+        PriorityBottomSheet(
+            onDismiss = { showPriorityBottomSheet = false },
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToAllPriorities = onNavigateToAllPriorities,
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -99,6 +117,12 @@ private fun BrowseContent(
                 title = stringResource(R.string.browse_title),
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
+                    IconButton(onClick = { showPriorityBottomSheet = true }) {
+                        Icon(
+                            Icons.Outlined.Flag,
+                            contentDescription = stringResource(R.string.home_panel_title),
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Outlined.Settings,
@@ -208,6 +232,8 @@ private fun BrowseScreenPreview(
             itemsState = fixture.itemsState,
             onEvent = {},
             onNavigateBack = {},
+            onNavigateToDetail = {},
+            onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
             snackbarHostState = remember { SnackbarHostState() },
         )

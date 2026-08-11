@@ -33,6 +33,7 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToAddItem = onNavigateToAddItem,
+            onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToSettings = onNavigateToSettings,
         )
     }

@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.home.features.home.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -133,18 +134,10 @@ private fun HomeContent(
                 title = stringResource(R.string.home_title),
                 onNavigateBack = updatedOnNavigateBack,
                 actions = {
-                    IconButton(onClick = { showPriorityBottomSheet = true }) {
-                        Icon(
-                            Icons.Outlined.Flag,
-                            contentDescription = stringResource(R.string.priority_panel_title),
-                        )
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            Icons.Outlined.Settings,
-                            contentDescription = stringResource(R.string.home_settings_action),
-                        )
-                    }
+                    HomeTopBarActions(
+                        onShowPriorities = { showPriorityBottomSheet = true },
+                        onNavigateToSettings = onNavigateToSettings,
+                    )
                 },
             )
         },
@@ -172,6 +165,22 @@ private fun HomeContent(
             itemsState = itemsState,
             padding = padding,
             onEvent = onEvent,
+        )
+    }
+}
+
+@Composable
+private fun RowScope.HomeTopBarActions(onShowPriorities: () -> Unit, onNavigateToSettings: () -> Unit) {
+    IconButton(onClick = onShowPriorities) {
+        Icon(
+            Icons.Outlined.Flag,
+            contentDescription = stringResource(R.string.priority_panel_title),
+        )
+    }
+    IconButton(onClick = onNavigateToSettings) {
+        Icon(
+            Icons.Outlined.Settings,
+            contentDescription = stringResource(R.string.home_settings_action),
         )
     }
 }

@@ -46,6 +46,15 @@ import com.seucaio.unideas.feature.home.features.panel.screen.PriorityBottomShee
 import com.seucaio.unideas.feature.home.features.panel.screen.components.AddItemFab
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * Plain in-memory flag, not saved-instance-state — must reset on every fresh process,
+ * including when the OS restores a killed process from SavedStateHandle, so it can't
+ * live in `rememberSaveable`/a Bundle.
+ */
+private object ColdStartPriorityPrompt {
+    var shown = false
+}
+
 @Composable
 fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,
@@ -102,6 +111,13 @@ private fun BrowseContent(
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!ColdStartPriorityPrompt.shown) {
+            ColdStartPriorityPrompt.shown = true
+            showPriorityBottomSheet = true
+        }
+    }
 
     if (showPriorityBottomSheet) {
         PriorityBottomSheet(

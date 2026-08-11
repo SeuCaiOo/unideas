@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -44,6 +48,7 @@ fun BrowseScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: BrowseViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -52,6 +57,7 @@ fun BrowseScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
+    val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -69,6 +75,7 @@ fun BrowseScreen(
         itemsState = itemsState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToSettings = updatedOnNavigateToSettings,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -80,6 +87,7 @@ private fun BrowseContent(
     itemsState: BrowseItemsState,
     onEvent: (BrowseEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
+    onNavigateToSettings: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -87,7 +95,18 @@ private fun BrowseContent(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(title = stringResource(R.string.browse_title), onNavigateBack = updatedOnNavigateBack)
+            UnideasTopBar(
+                title = stringResource(R.string.browse_title),
+                onNavigateBack = updatedOnNavigateBack,
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.home_settings_action),
+                        )
+                    }
+                },
+            )
         },
         floatingActionButton = {
             ConditionalFab(visible = uiState is BrowseUiState.Success) {
@@ -189,6 +208,7 @@ private fun BrowseScreenPreview(
             itemsState = fixture.itemsState,
             onEvent = {},
             onNavigateBack = {},
+            onNavigateToSettings = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

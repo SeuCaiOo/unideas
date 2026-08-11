@@ -25,7 +25,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
     AppScaffold(modifier = modifier) { padding ->
         NavHost(
             navController = navController,
-            startDestination = HomeRoute.Panel,
+            startDestination = HomeRoute.Browse,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)

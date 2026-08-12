@@ -44,4 +44,6 @@
         <item quantity="one">%d item selected</item>
         <item quantity="other">%d items selected</item>
     </plurals>
+    <string name="home_delete_selected_title">Delete items</string>
+    <string name="home_delete_selected_message">This action cannot be undone.</string>
 </resources>

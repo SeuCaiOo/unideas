@@ -44,4 +44,6 @@
         <item quantity="one">%d item selecionado</item>
         <item quantity="other">%d itens selecionados</item>
     </plurals>
+    <string name="home_delete_selected_title">Excluir itens</string>
+    <string name="home_delete_selected_message">Esta ação não pode ser desfeita.</string>
 </resources>

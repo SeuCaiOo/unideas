@@ -69,6 +69,9 @@ class HomeViewModel(
     private val _homeMode = MutableStateFlow<HomeMode>(HomeMode.Normal)
     val homeMode: StateFlow<HomeMode> = _homeMode.asStateFlow()
 
+    private val _dialogState = MutableStateFlow<HomeDialogState>(HomeDialogState.None)
+    val dialogState: StateFlow<HomeDialogState> = _dialogState.asStateFlow()
+
     //endregion
 
     //region uiState
@@ -120,7 +123,12 @@ class HomeViewModel(
             is HomeEvent.OnItemLongPressed -> toggleSelection(event.itemId)
             is HomeEvent.OnItemSelectionToggled -> toggleSelection(event.itemId)
             is HomeEvent.OnSelectionCleared -> _homeMode.value = HomeMode.Normal
-            is HomeEvent.OnDeleteSelectedClicked -> handleDeleteSelected()
+            is HomeEvent.OnDeleteSelectedClicked -> _dialogState.value = HomeDialogState.DeleteSelectedConfirm
+            is HomeEvent.OnDeleteSelectedConfirmClicked -> {
+                _dialogState.value = HomeDialogState.None
+                handleDeleteSelected()
+            }
+            is HomeEvent.OnDeleteDialogDismissed -> _dialogState.value = HomeDialogState.None
             is HomeEvent.OnSelectAllClicked -> selectAll()
         }
     }

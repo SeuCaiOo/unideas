@@ -38,6 +38,10 @@ sealed interface HomeEvent {
 
     data object OnDeleteSelectedClicked : SelectionEvent
 
+    data object OnDeleteSelectedConfirmClicked : SelectionEvent
+
+    data object OnDeleteDialogDismissed : SelectionEvent
+
     data object OnSelectAllClicked : SelectionEvent
 
     //endregion

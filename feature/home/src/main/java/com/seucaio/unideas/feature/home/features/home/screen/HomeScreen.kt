@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.buttons.AppFab
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
+import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -44,6 +45,7 @@ import com.seucaio.unideas.feature.home.features.home.screen.components.ItemsCon
 import com.seucaio.unideas.feature.home.features.home.screen.components.ItemsFiltersBar
 import com.seucaio.unideas.feature.home.features.home.screen.components.TasksNotesTabRow
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeDialogState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
@@ -75,6 +77,7 @@ fun HomeScreen(
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val homeMode by viewModel.homeMode.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
@@ -96,6 +99,7 @@ fun HomeScreen(
         filterState = filterState,
         itemsState = itemsState,
         homeMode = homeMode,
+        dialogState = dialogState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
@@ -111,6 +115,7 @@ private fun HomeContent(
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
+    dialogState: HomeDialogState,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
@@ -137,6 +142,15 @@ private fun HomeContent(
             onDismiss = { showPriorityBottomSheet = false },
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
+        )
+    }
+
+    if (dialogState is HomeDialogState.DeleteSelectedConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = R.string.home_delete_selected_title,
+            messageRes = R.string.home_delete_selected_message,
+            onDismiss = { onEvent(HomeEvent.OnDeleteDialogDismissed) },
+            onConfirm = { onEvent(HomeEvent.OnDeleteSelectedConfirmClicked) },
         )
     }
 
@@ -307,6 +321,7 @@ private fun HomeScreenPreview(
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Normal,
+            dialogState = HomeDialogState.None,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
@@ -328,6 +343,7 @@ private fun HomeScreenSelectionModePreview(
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Selection(fixture.itemsState.tabItems.take(2).map { it.id }.toSet()),
+            dialogState = HomeDialogState.None,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},

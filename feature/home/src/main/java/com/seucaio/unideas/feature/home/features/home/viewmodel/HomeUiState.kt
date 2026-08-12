@@ -40,6 +40,14 @@ sealed interface HomeMode {
     data class Selection(val selectedItemIds: Set<Long> = emptySet()) : HomeMode
 }
 
+/** [HomeViewModel.dialogState] — at most one dialog on screen at a time. */
+sealed interface HomeDialogState {
+
+    data object None : HomeDialogState
+
+    data object DeleteSelectedConfirm : HomeDialogState
+}
+
 /** [HomeViewModel.filterState] — UI-only, never fails/loads. */
 internal data class FilterState(
     val activeTab: ItemType = ItemType.TASK,

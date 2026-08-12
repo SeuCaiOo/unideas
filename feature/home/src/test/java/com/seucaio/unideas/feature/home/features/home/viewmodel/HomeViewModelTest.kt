@@ -364,26 +364,53 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `when OnDeleteSelectedClicked succeeds should delete the selected items and exit selection mode`() = runTest {
-        coEvery { homeUseCase.deleteItems(listOf(1L, 2L)) } returns Result.success(Unit)
+    fun `when OnDeleteSelectedClicked should open the delete confirmation dialog without deleting`() = runTest {
         val vm = viewModel()
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))
-        vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
 
         vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
 
-        coVerify(exactly = 1) { homeUseCase.deleteItems(listOf(1L, 2L)) }
-        assertEquals(HomeMode.Normal, vm.homeMode.value)
+        assertEquals(HomeDialogState.DeleteSelectedConfirm, vm.dialogState.value)
+        coVerify(exactly = 0) { homeUseCase.deleteItems(any()) }
     }
 
     @Test
-    fun `when OnDeleteSelectedClicked fails should emit ShowError and keep the selection`() = runTest {
+    fun `when OnDeleteDialogDismissed should close the dialog and keep the selection`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+        vm.onEvent(HomeEvent.OnDeleteDialogDismissed)
+
+        assertEquals(HomeDialogState.None, vm.dialogState.value)
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnDeleteSelectedConfirmClicked succeeds should delete the selected items, close the dialog and exit selection mode`() =
+        runTest {
+            coEvery { homeUseCase.deleteItems(listOf(1L, 2L)) } returns Result.success(Unit)
+            val vm = viewModel()
+            vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+            vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+            vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+            vm.onEvent(HomeEvent.OnDeleteSelectedConfirmClicked)
+
+            coVerify(exactly = 1) { homeUseCase.deleteItems(listOf(1L, 2L)) }
+            assertEquals(HomeDialogState.None, vm.dialogState.value)
+            assertEquals(HomeMode.Normal, vm.homeMode.value)
+        }
+
+    @Test
+    fun `when OnDeleteSelectedConfirmClicked fails should emit ShowError and keep the selection`() = runTest {
         coEvery { homeUseCase.deleteItems(listOf(1L)) } returns Result.failure(IllegalStateException("boom"))
         val vm = viewModel()
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
 
         vm.uiAction.test {
-            vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+            vm.onEvent(HomeEvent.OnDeleteSelectedConfirmClicked)
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
         assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)

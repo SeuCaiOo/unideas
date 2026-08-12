@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -23,11 +25,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.components.buttons.AppFab
 import com.seucaio.unideas.ds.components.legacy.ConditionalFab
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -68,6 +72,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
+    val selectedItemIds by viewModel.selectedItemIds.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
@@ -88,6 +93,7 @@ fun HomeScreen(
         uiState = uiState,
         filterState = filterState,
         itemsState = itemsState,
+        selectedItemIds = selectedItemIds,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
@@ -102,6 +108,7 @@ private fun HomeContent(
     uiState: HomeUiState,
     filterState: FilterState,
     itemsState: HomeItemsState,
+    selectedItemIds: Set<Long>,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
@@ -112,6 +119,7 @@ private fun HomeContent(
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val isSelectionMode = selectedItemIds.isNotEmpty()
 
     LaunchedEffect(Unit) {
         if (!ColdStartPriorityPrompt.shown) {
@@ -130,31 +138,51 @@ private fun HomeContent(
 
     Scaffold(
         topBar = {
-            UnideasTopBar(
-                title = stringResource(R.string.home_title),
-                onNavigateBack = updatedOnNavigateBack,
-                actions = {
-                    HomeTopBarActions(
-                        onShowPriorities = { showPriorityBottomSheet = true },
-                        onNavigateToSettings = onNavigateToSettings,
-                    )
-                },
-            )
+            if (isSelectionMode) {
+                UnideasTopBar(
+                    title = pluralStringResource(
+                        R.plurals.home_selection_count,
+                        selectedItemIds.size,
+                        selectedItemIds.size,
+                    ),
+                    onNavigateBack = { onEvent(HomeEvent.OnSelectionCleared) },
+                    navigationBackIcon = Icons.Default.Close,
+                )
+            } else {
+                UnideasTopBar(
+                    title = stringResource(R.string.home_title),
+                    onNavigateBack = updatedOnNavigateBack,
+                    actions = {
+                        HomeTopBarActions(
+                            onShowPriorities = { showPriorityBottomSheet = true },
+                            onNavigateToSettings = onNavigateToSettings,
+                        )
+                    },
+                )
+            }
         },
         floatingActionButton = {
             ConditionalFab(visible = uiState is HomeUiState.Success) {
-                AddItemFab(
-                    expanded = addMenuExpanded,
-                    onToggle = { addMenuExpanded = !addMenuExpanded },
-                    onAddTask = {
-                        addMenuExpanded = false
-                        onEvent(HomeEvent.OnAddClicked(ItemType.TASK))
-                    },
-                    onAddNote = {
-                        addMenuExpanded = false
-                        onEvent(HomeEvent.OnAddClicked(ItemType.NOTE))
-                    },
-                )
+                if (isSelectionMode) {
+                    AppFab(
+                        icon = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.home_selection_delete),
+                        onClick = { onEvent(HomeEvent.OnDeleteSelectedClicked) },
+                    )
+                } else {
+                    AddItemFab(
+                        expanded = addMenuExpanded,
+                        onToggle = { addMenuExpanded = !addMenuExpanded },
+                        onAddTask = {
+                            addMenuExpanded = false
+                            onEvent(HomeEvent.OnAddClicked(ItemType.TASK))
+                        },
+                        onAddNote = {
+                            addMenuExpanded = false
+                            onEvent(HomeEvent.OnAddClicked(ItemType.NOTE))
+                        },
+                    )
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -163,6 +191,7 @@ private fun HomeContent(
             uiState = uiState,
             filterState = filterState,
             itemsState = itemsState,
+            selectedItemIds = selectedItemIds,
             padding = padding,
             onEvent = onEvent,
         )
@@ -190,6 +219,7 @@ private fun HomeBody(
     uiState: HomeUiState,
     filterState: FilterState,
     itemsState: HomeItemsState,
+    selectedItemIds: Set<Long>,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
 ) {
@@ -206,6 +236,7 @@ private fun HomeBody(
                 hasAnyItem = uiState.hasAnyItem,
                 filterState = filterState,
                 itemsState = itemsState,
+                selectedItemIds = selectedItemIds,
                 modifier = Modifier.padding(padding),
                 onEvent = onEvent,
             )
@@ -217,6 +248,7 @@ private fun HomeSuccessBody(
     hasAnyItem: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
+    selectedItemIds: Set<Long>,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -241,6 +273,7 @@ private fun HomeSuccessBody(
             filterState = filterState,
             hasAnyItem = hasAnyItem,
             onEvent = onEvent,
+            selectedItemIds = selectedItemIds,
         )
     }
 }
@@ -255,6 +288,28 @@ private fun HomeScreenPreview(
             uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
+            selectedItemIds = emptySet(),
+            onEvent = {},
+            onNavigateBack = {},
+            onNavigateToDetail = {},
+            onNavigateToAllPriorities = {},
+            onNavigateToSettings = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeScreenSelectionModePreview(
+    @PreviewParameter(HomePreviewProvider::class) fixture: HomePreviewFixture,
+) {
+    UdsTheme {
+        HomeContent(
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            filterState = fixture.filterState,
+            itemsState = fixture.itemsState,
+            selectedItemIds = fixture.itemsState.tabItems.take(2).map { it.id }.toSet(),
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},

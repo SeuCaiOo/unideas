@@ -45,6 +45,7 @@ private data class GridGroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
+    val selectedItemIds: Set<Long>,
 )
 
 /**
@@ -67,6 +68,7 @@ internal fun ItemsGridContent(
     sectionFilter: Long?,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    selectedItemIds: Set<Long> = emptySet(),
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -84,6 +86,7 @@ internal fun ItemsGridContent(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
+        selectedItemIds = selectedItemIds,
     )
 
     val pinnedGroups = if (showHeaders) itemsState.groupedTabItems.filter { it.isPinned } else emptyList()
@@ -135,9 +138,11 @@ private fun LazyGridScope.sectionGroup(
     if (!context.showHeaders || expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemCard(
-                ui = item.toListItemUi(context.checkContentDescription),
+                ui = item.toListItemUi(context.checkContentDescription, context.selectedItemIds),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
+                onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(8.dp),
             )
@@ -145,20 +150,41 @@ private fun LazyGridScope.sectionGroup(
     }
 }
 
-internal class ItemsGridPreviewProvider : PreviewParameterProvider<HomeItemsState> {
-    override val values = HomePreviewProvider().values
+internal data class ItemsGridPreviewScenario(
+    val itemsState: HomeItemsState,
+    val selectedItemIds: Set<Long> = emptySet(),
+)
+
+internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsGridPreviewScenario> {
+    private val itemsStates = HomePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
+        .toList()
+
+    override val values: Sequence<ItemsGridPreviewScenario> = itemsStates
+        .map { ItemsGridPreviewScenario(it) }
+        .plus(
+            ItemsGridPreviewScenario(
+                itemsState = itemsStates.first(),
+                selectedItemIds = itemsStates.first().tabItems.take(2).map { it.id }.toSet(),
+            ),
+        )
+        .asSequence()
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) scenario: ItemsGridPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {})
+            ItemsGridContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                onEvent = {},
+                selectedItemIds = scenario.selectedItemIds,
+            )
         }
     }
 }
@@ -166,11 +192,16 @@ private fun ItemsGridContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentWithFooterPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) scenario: ItemsGridPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {}) {
+            ItemsGridContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                onEvent = {},
+                selectedItemIds = scenario.selectedItemIds,
+            ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

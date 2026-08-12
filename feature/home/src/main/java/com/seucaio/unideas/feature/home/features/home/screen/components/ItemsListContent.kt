@@ -61,6 +61,7 @@ internal fun ItemsListContent(
     hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    selectedItemIds: Set<Long> = emptySet(),
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -73,6 +74,7 @@ internal fun ItemsListContent(
             checkContentDescription = checkContentDescription,
             onEvent = onEvent,
             modifier = modifier,
+            selectedItemIds = selectedItemIds,
             footer = footer,
         )
     } else {
@@ -89,9 +91,11 @@ internal fun ItemsListContent(
             },
             itemContent = { item ->
                 ListItemRow(
-                    ui = item.toListItemUi(checkContentDescription),
+                    ui = item.toListItemUi(checkContentDescription, selectedItemIds),
                     onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
+                    onLongClick = { onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                     onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                    onToggleSelection = { onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             },
@@ -108,6 +112,7 @@ private data class GroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
+    val selectedItemIds: Set<Long>,
 )
 
 @Composable
@@ -117,6 +122,7 @@ private fun GroupedItemsList(
     checkContentDescription: String,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    selectedItemIds: Set<Long> = emptySet(),
     footer: (@Composable () -> Unit)? = null,
 ) {
     var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
@@ -131,6 +137,7 @@ private fun GroupedItemsList(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
+        selectedItemIds = selectedItemIds,
     )
 
     LazyColumn(modifier = modifier) {
@@ -171,9 +178,11 @@ private fun LazyListScope.sectionGroup(
     if (expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemRow(
-                ui = item.toListItemUi(context.checkContentDescription),
+                ui = item.toListItemUi(context.checkContentDescription, context.selectedItemIds),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
+                onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -181,20 +190,42 @@ private fun LazyListScope.sectionGroup(
     }
 }
 
-internal class ItemsListPreviewProvider : PreviewParameterProvider<HomeItemsState> {
-    override val values = HomePreviewProvider().values
+internal data class ItemsListPreviewScenario(
+    val itemsState: HomeItemsState,
+    val selectedItemIds: Set<Long> = emptySet(),
+)
+
+internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsListPreviewScenario> {
+    private val itemsStates = HomePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
+        .toList()
+
+    override val values: Sequence<ItemsListPreviewScenario> = itemsStates
+        .map { ItemsListPreviewScenario(it) }
+        .plus(
+            ItemsListPreviewScenario(
+                itemsState = itemsStates.first(),
+                selectedItemIds = itemsStates.first().tabItems.take(2).map { it.id }.toSet(),
+            ),
+        )
+        .asSequence()
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsListContentPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) scenario: ItemsListPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {})
+            ItemsListContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                hasAnyItem = true,
+                onEvent = {},
+                selectedItemIds = scenario.selectedItemIds,
+            )
         }
     }
 }
@@ -202,11 +233,17 @@ private fun ItemsListContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsListContentWithFooterPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) scenario: ItemsListPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {}) {
+            ItemsListContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                hasAnyItem = true,
+                onEvent = {},
+                selectedItemIds = scenario.selectedItemIds,
+            ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

@@ -187,9 +187,8 @@ Cobertura mínima via `koverVerify` (70%, ver `app/build.gradle.kts`). **Desde a
 
 ## Logging
 
-- **Timber** (não `android.util.Log` direto) para qualquer log que precise sobreviver além de uma sessão de debug pontual. Em debug, `Timber.DebugTree()` (`UnideasApplication`, guardado por `BuildConfig.DEBUG`). Em release, `CrashlyticsTree` (`:core:common`) — forwarda `WARN`+ como log custom do Crashlytics e chama `recordException` (sintetizando uma exceção pra `ERROR` sem `Throwable`); `VERBOSE`/`DEBUG`/`INFO` são descartados.
+- **Timber sempre — nunca `android.util.Log` direto, nem para debug temporário/pontual.** A lib já está no projeto (`libs.timber`), não tem custo pra usar mesmo num log descartável em minutos. Em debug, `Timber.DebugTree()` (`UnideasApplication`, guardado por `BuildConfig.DEBUG`). Em release, `CrashlyticsTree` (`:core:common`) — forwarda `WARN`+ como log custom do Crashlytics e chama `recordException` (sintetizando uma exceção pra `ERROR` sem `Throwable`); `VERBOSE`/`DEBUG`/`INFO` são descartados.
 - Módulos que precisam logar adicionam `implementation(libs.timber)` no próprio `build.gradle.kts` (`:app` já tem).
-- Log de debug temporário e pontual (adicionado só pra rastrear um bug específico e removido depois) pode seguir usando `Log.d` mesmo — não precisa Timber pra algo descartável em minutos.
 
 ---
 

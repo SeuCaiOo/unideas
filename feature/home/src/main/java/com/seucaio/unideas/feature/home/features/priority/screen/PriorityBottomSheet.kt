@@ -32,8 +32,8 @@ import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.home.screen.components.dueBadgeColor
-import com.seucaio.unideas.feature.home.features.home.screen.components.dueBadgeLabel
+import com.seucaio.unideas.feature.home.features.home.screen.components.items.dueBadgeColor
+import com.seucaio.unideas.feature.home.features.home.screen.components.items.dueBadgeLabel
 import com.seucaio.unideas.feature.home.features.priority.viewmodel.PriorityEvent
 import com.seucaio.unideas.feature.home.features.priority.viewmodel.PriorityItemsState
 import com.seucaio.unideas.feature.home.features.priority.viewmodel.PriorityUiAction

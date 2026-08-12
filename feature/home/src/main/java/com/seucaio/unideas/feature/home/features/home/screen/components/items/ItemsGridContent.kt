@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells

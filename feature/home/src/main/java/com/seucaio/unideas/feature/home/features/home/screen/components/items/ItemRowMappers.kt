@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.runtime.Composable
 import com.seucaio.unideas.domain.model.Item

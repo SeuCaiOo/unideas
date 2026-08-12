@@ -157,7 +157,11 @@ private fun HomeContent(
                             Icon(
                                 Icons.AutoMirrored.Filled.PlaylistAddCheck,
                                 contentDescription = stringResource(
-                                    if (allSelected) R.string.home_selection_clear else R.string.home_selection_select_all,
+                                    if (allSelected) {
+                                        R.string.home_selection_clear
+                                    } else {
+                                        R.string.home_selection_select_all
+                                    },
                                 ),
                             )
                         }

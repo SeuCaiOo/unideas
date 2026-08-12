@@ -116,7 +116,11 @@ fun ListItemCard(
                 Icon(
                     if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
                     contentDescription = null,
-                    tint = if (ui.isSelected) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary,
+                    tint = if (ui.isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        LocalUdsExtendedColors.current.textTertiary
+                    },
                     modifier = Modifier
                         .size(22.dp)
                         .clickable(onClick = { onToggleSelection?.invoke() }),

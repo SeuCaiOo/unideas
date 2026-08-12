@@ -34,6 +34,7 @@ import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
 /**
@@ -61,7 +62,7 @@ internal fun ItemsListContent(
     hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    selectedItemIds: Set<Long> = emptySet(),
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -74,7 +75,7 @@ internal fun ItemsListContent(
             checkContentDescription = checkContentDescription,
             onEvent = onEvent,
             modifier = modifier,
-            selectedItemIds = selectedItemIds,
+            homeMode = homeMode,
             footer = footer,
         )
     } else {
@@ -91,7 +92,7 @@ internal fun ItemsListContent(
             },
             itemContent = { item ->
                 ListItemRow(
-                    ui = item.toListItemUi(checkContentDescription, selectedItemIds),
+                    ui = item.toListItemUi(checkContentDescription, homeMode),
                     onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
                     onLongClick = { onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                     onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
@@ -112,7 +113,7 @@ private data class GroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
-    val selectedItemIds: Set<Long>,
+    val homeMode: HomeMode,
 )
 
 @Composable
@@ -122,7 +123,7 @@ private fun GroupedItemsList(
     checkContentDescription: String,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    selectedItemIds: Set<Long> = emptySet(),
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
@@ -137,7 +138,7 @@ private fun GroupedItemsList(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
-        selectedItemIds = selectedItemIds,
+        homeMode = homeMode,
     )
 
     LazyColumn(modifier = modifier) {
@@ -178,7 +179,7 @@ private fun LazyListScope.sectionGroup(
     if (expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemRow(
-                ui = item.toListItemUi(context.checkContentDescription, context.selectedItemIds),
+                ui = item.toListItemUi(context.checkContentDescription, context.homeMode),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
                 onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
@@ -192,7 +193,7 @@ private fun LazyListScope.sectionGroup(
 
 internal data class ItemsListPreviewScenario(
     val itemsState: HomeItemsState,
-    val selectedItemIds: Set<Long> = emptySet(),
+    val homeMode: HomeMode = HomeMode.Normal,
 )
 
 internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsListPreviewScenario> {
@@ -206,7 +207,7 @@ internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsListPrev
         .plus(
             ItemsListPreviewScenario(
                 itemsState = itemsStates.first(),
-                selectedItemIds = itemsStates.first().tabItems.take(2).map { it.id }.toSet(),
+                homeMode = HomeMode.Selection(itemsStates.first().tabItems.take(2).map { it.id }.toSet()),
             ),
         )
         .asSequence()
@@ -224,7 +225,7 @@ private fun ItemsListContentPreview(
                 sectionFilter = null,
                 hasAnyItem = true,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             )
         }
     }
@@ -242,7 +243,7 @@ private fun ItemsListContentWithFooterPreview(
                 sectionFilter = null,
                 hasAnyItem = true,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,

@@ -17,6 +17,7 @@ import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemsViewMode
 
@@ -48,7 +49,7 @@ internal fun ItemsContent(
     hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    selectedItemIds: Set<Long> = emptySet(),
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -61,7 +62,7 @@ internal fun ItemsContent(
                 sectionFilter = filterState.sectionFilter,
                 onEvent = onEvent,
                 modifier = Modifier.fillMaxSize(),
-                selectedItemIds = selectedItemIds,
+                homeMode = homeMode,
                 footer = footer,
             )
         } else {
@@ -71,7 +72,7 @@ internal fun ItemsContent(
                 hasAnyItem = hasAnyItem,
                 onEvent = onEvent,
                 modifier = Modifier.fillMaxSize(),
-                selectedItemIds = selectedItemIds,
+                homeMode = homeMode,
                 footer = footer,
             )
         }
@@ -85,7 +86,7 @@ internal fun ItemsContent(
  */
 internal data class ItemsContentPreviewScenario(
     val fixture: HomePreviewFixture,
-    val selectedItemIds: Set<Long> = emptySet(),
+    val homeMode: HomeMode = HomeMode.Normal,
 )
 
 internal class ItemsContentPreviewProvider : PreviewParameterProvider<ItemsContentPreviewScenario> {
@@ -96,8 +97,10 @@ internal class ItemsContentPreviewProvider : PreviewParameterProvider<ItemsConte
         .plus(
             ItemsContentPreviewScenario(
                 fixture = fixtures.first { it.itemsState.tabItems.isNotEmpty() },
-                selectedItemIds = fixtures.first { it.itemsState.tabItems.isNotEmpty() }
-                    .itemsState.tabItems.take(2).map { it.id }.toSet(),
+                homeMode = HomeMode.Selection(
+                    fixtures.first { it.itemsState.tabItems.isNotEmpty() }
+                        .itemsState.tabItems.take(2).map { it.id }.toSet(),
+                ),
             ),
         )
         .asSequence()
@@ -115,7 +118,7 @@ private fun ItemsContentListPreview(
                 filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.LIST),
                 hasAnyItem = scenario.fixture.hasAnyItem,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             )
         }
     }
@@ -133,7 +136,7 @@ private fun ItemsContentGridPreview(
                 filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.GRID),
                 hasAnyItem = scenario.fixture.hasAnyItem,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             )
         }
     }

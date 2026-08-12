@@ -290,8 +290,7 @@ class HomeViewModelTest {
 
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))
 
-        assertEquals(setOf(1L), vm.selectedItemIds.value)
-        assertEquals(true, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
     }
 
     @Test
@@ -301,8 +300,7 @@ class HomeViewModelTest {
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))
         vm.onEvent(HomeEvent.OnItemSelectionToggled(1L))
 
-        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
-        assertEquals(true, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Selection(emptySet()), vm.homeMode.value)
     }
 
     @Test
@@ -312,7 +310,7 @@ class HomeViewModelTest {
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))
         vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
 
-        assertEquals(setOf(1L, 2L), vm.selectedItemIds.value)
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
     }
 
     @Test
@@ -324,7 +322,7 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnItemClicked(2L))
             expectNoEvents()
         }
-        assertEquals(setOf(1L, 2L), vm.selectedItemIds.value)
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
     }
 
     @Test
@@ -334,8 +332,7 @@ class HomeViewModelTest {
 
         vm.onEvent(HomeEvent.OnSelectionCleared)
 
-        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
-        assertEquals(false, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Normal, vm.homeMode.value)
     }
 
     @Test
@@ -348,8 +345,7 @@ class HomeViewModelTest {
 
         vm.onEvent(HomeEvent.OnSelectAllClicked)
 
-        assertEquals(setOf(1L, 2L, 3L), vm.selectedItemIds.value)
-        assertEquals(true, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Selection(setOf(1L, 2L, 3L)), vm.homeMode.value)
     }
 
     @Test
@@ -364,8 +360,7 @@ class HomeViewModelTest {
 
             vm.onEvent(HomeEvent.OnSelectAllClicked)
 
-            assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
-            assertEquals(true, vm.isSelectionMode.value)
+            assertEquals(HomeMode.Selection(emptySet()), vm.homeMode.value)
         }
 
     @Test
@@ -378,8 +373,7 @@ class HomeViewModelTest {
         vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
 
         coVerify(exactly = 1) { homeUseCase.deleteItems(listOf(1L, 2L)) }
-        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
-        assertEquals(false, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Normal, vm.homeMode.value)
     }
 
     @Test
@@ -392,7 +386,6 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
-        assertEquals(setOf(1L), vm.selectedItemIds.value)
-        assertEquals(true, vm.isSelectionMode.value)
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
     }
 }

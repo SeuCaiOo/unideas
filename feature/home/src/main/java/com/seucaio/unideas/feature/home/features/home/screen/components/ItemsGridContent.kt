@@ -32,6 +32,7 @@ import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
 /** Column count for [ItemsGridContent]'s grid. */
@@ -45,7 +46,7 @@ private data class GridGroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
-    val selectedItemIds: Set<Long>,
+    val homeMode: HomeMode,
 )
 
 /**
@@ -68,7 +69,7 @@ internal fun ItemsGridContent(
     sectionFilter: Long?,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
-    selectedItemIds: Set<Long> = emptySet(),
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -86,7 +87,7 @@ internal fun ItemsGridContent(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
-        selectedItemIds = selectedItemIds,
+        homeMode = homeMode,
     )
 
     val pinnedGroups = if (showHeaders) itemsState.groupedTabItems.filter { it.isPinned } else emptyList()
@@ -138,7 +139,7 @@ private fun LazyGridScope.sectionGroup(
     if (!context.showHeaders || expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemCard(
-                ui = item.toListItemUi(context.checkContentDescription, context.selectedItemIds),
+                ui = item.toListItemUi(context.checkContentDescription, context.homeMode),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
                 onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
@@ -152,7 +153,7 @@ private fun LazyGridScope.sectionGroup(
 
 internal data class ItemsGridPreviewScenario(
     val itemsState: HomeItemsState,
-    val selectedItemIds: Set<Long> = emptySet(),
+    val homeMode: HomeMode = HomeMode.Normal,
 )
 
 internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsGridPreviewScenario> {
@@ -166,7 +167,7 @@ internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsGridPrev
         .plus(
             ItemsGridPreviewScenario(
                 itemsState = itemsStates.first(),
-                selectedItemIds = itemsStates.first().tabItems.take(2).map { it.id }.toSet(),
+                homeMode = HomeMode.Selection(itemsStates.first().tabItems.take(2).map { it.id }.toSet()),
             ),
         )
         .asSequence()
@@ -183,7 +184,7 @@ private fun ItemsGridContentPreview(
                 itemsState = scenario.itemsState,
                 sectionFilter = null,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             )
         }
     }
@@ -200,7 +201,7 @@ private fun ItemsGridContentWithFooterPreview(
                 itemsState = scenario.itemsState,
                 sectionFilter = null,
                 onEvent = {},
-                selectedItemIds = scenario.selectedItemIds,
+                homeMode = scenario.homeMode,
             ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,

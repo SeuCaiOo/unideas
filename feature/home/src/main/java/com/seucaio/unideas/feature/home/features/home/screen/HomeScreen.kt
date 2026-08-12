@@ -46,6 +46,7 @@ import com.seucaio.unideas.feature.home.features.home.screen.components.TasksNot
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeUiAction
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeUiState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeViewModel
@@ -73,8 +74,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
-    val selectedItemIds by viewModel.selectedItemIds.collectAsStateWithLifecycle()
-    val isSelectionMode by viewModel.isSelectionMode.collectAsStateWithLifecycle()
+    val homeMode by viewModel.homeMode.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
@@ -95,8 +95,7 @@ fun HomeScreen(
         uiState = uiState,
         filterState = filterState,
         itemsState = itemsState,
-        selectedItemIds = selectedItemIds,
-        isSelectionMode = isSelectionMode,
+        homeMode = homeMode,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
@@ -111,8 +110,7 @@ private fun HomeContent(
     uiState: HomeUiState,
     filterState: FilterState,
     itemsState: HomeItemsState,
-    selectedItemIds: Set<Long>,
-    isSelectionMode: Boolean,
+    homeMode: HomeMode,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
@@ -123,8 +121,9 @@ private fun HomeContent(
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val allSelected = itemsState.tabItems.isNotEmpty() &&
-        itemsState.tabItems.map { it.id }.toSet() == selectedItemIds
+    val allSelected = homeMode is HomeMode.Selection &&
+        itemsState.tabItems.isNotEmpty() &&
+        itemsState.tabItems.map { it.id }.toSet() == homeMode.selectedItemIds
 
     LaunchedEffect(Unit) {
         if (!ColdStartPriorityPrompt.shown) {
@@ -143,12 +142,12 @@ private fun HomeContent(
 
     Scaffold(
         topBar = {
-            if (isSelectionMode) {
+            if (homeMode is HomeMode.Selection) {
                 UnideasTopBar(
                     title = pluralStringResource(
                         R.plurals.home_selection_count,
-                        selectedItemIds.size,
-                        selectedItemIds.size,
+                        homeMode.selectedItemIds.size,
+                        homeMode.selectedItemIds.size,
                     ),
                     onNavigateBack = { onEvent(HomeEvent.OnSelectionCleared) },
                     navigationBackIcon = Icons.Default.Close,
@@ -182,7 +181,7 @@ private fun HomeContent(
         },
         floatingActionButton = {
             ConditionalFab(visible = uiState is HomeUiState.Success) {
-                if (isSelectionMode) {
+                if (homeMode is HomeMode.Selection) {
                     AppFab(
                         icon = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.home_selection_delete),
@@ -210,7 +209,7 @@ private fun HomeContent(
             uiState = uiState,
             filterState = filterState,
             itemsState = itemsState,
-            selectedItemIds = selectedItemIds,
+            homeMode = homeMode,
             padding = padding,
             onEvent = onEvent,
         )
@@ -238,7 +237,7 @@ private fun HomeBody(
     uiState: HomeUiState,
     filterState: FilterState,
     itemsState: HomeItemsState,
-    selectedItemIds: Set<Long>,
+    homeMode: HomeMode,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
 ) {
@@ -255,7 +254,7 @@ private fun HomeBody(
                 hasAnyItem = uiState.hasAnyItem,
                 filterState = filterState,
                 itemsState = itemsState,
-                selectedItemIds = selectedItemIds,
+                homeMode = homeMode,
                 modifier = Modifier.padding(padding),
                 onEvent = onEvent,
             )
@@ -267,7 +266,7 @@ private fun HomeSuccessBody(
     hasAnyItem: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
-    selectedItemIds: Set<Long>,
+    homeMode: HomeMode,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -292,7 +291,7 @@ private fun HomeSuccessBody(
             filterState = filterState,
             hasAnyItem = hasAnyItem,
             onEvent = onEvent,
-            selectedItemIds = selectedItemIds,
+            homeMode = homeMode,
         )
     }
 }
@@ -307,8 +306,7 @@ private fun HomeScreenPreview(
             uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
-            selectedItemIds = emptySet(),
-            isSelectionMode = false,
+            homeMode = HomeMode.Normal,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
@@ -329,8 +327,7 @@ private fun HomeScreenSelectionModePreview(
             uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
-            selectedItemIds = fixture.itemsState.tabItems.take(2).map { it.id }.toSet(),
-            isSelectionMode = true,
+            homeMode = HomeMode.Selection(fixture.itemsState.tabItems.take(2).map { it.id }.toSet()),
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},

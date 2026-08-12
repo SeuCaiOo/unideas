@@ -43,6 +43,7 @@ import com.seucaio.unideas.ds.theme.pinnedContainerColor
  * gives the title the cell's full width on its own line, `maxLines = 2` since cells are narrower
  * than a full-width row.
  */
+@Deprecated("Avoid — grid layout, don't extend or use.")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ListItemCard(

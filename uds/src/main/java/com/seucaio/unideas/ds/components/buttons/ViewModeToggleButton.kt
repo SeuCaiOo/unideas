@@ -17,6 +17,7 @@ import com.seucaio.unideas.ds.theme.UdsTheme
  * versa), same convention as a play/pause toggle. Caller owns which mode is active; this is
  * display-only, no view-mode concept lives in `:uds`.
  */
+@Deprecated("Avoid — grid layout, don't extend or use.")
 @Composable
 fun ViewModeToggleButton(
     isGrid: Boolean,

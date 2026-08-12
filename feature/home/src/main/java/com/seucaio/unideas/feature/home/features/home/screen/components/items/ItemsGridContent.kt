@@ -63,6 +63,7 @@ private data class GridGroupRenderContext(
  * present, renders as a full-width row after the last group — same content type as
  * [ItemsListContent]'s, adapted here to a spanning grid item instead of a plain list row.
  */
+@Deprecated("Avoid — grid layout, don't extend or use.")
 @Composable
 internal fun ItemsGridContent(
     itemsState: HomeItemsState,

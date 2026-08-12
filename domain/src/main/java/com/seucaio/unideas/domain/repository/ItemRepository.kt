@@ -57,4 +57,7 @@ interface ItemRepository {
 
     /** Deletes the item with [id]; tag links go with it. */
     suspend fun deleteItem(id: Long)
+
+    /** Sets [Item.isPinned] for the item with [id] — pinned items appear in the priority panel regardless of urgency. */
+    suspend fun setItemPinned(id: Long, isPinned: Boolean)
 }

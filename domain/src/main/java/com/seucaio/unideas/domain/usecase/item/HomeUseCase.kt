@@ -15,6 +15,7 @@ class HomeUseCase(
     private val hasAnyItemUseCase: HasAnyItemUseCase,
     private val setSectionPinnedUseCase: SetSectionPinnedUseCase,
     private val deleteItemUseCase: DeleteItemUseCase,
+    private val setItemPinnedUseCase: SetItemPinnedUseCase,
 ) {
 
     fun getPriorityItems(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
@@ -30,6 +31,9 @@ class HomeUseCase(
 
     suspend fun setSectionPinned(id: Long, isPinned: Boolean): Result<Unit> =
         setSectionPinnedUseCase(id, isPinned)
+
+    suspend fun setItemPinned(id: Long, isPinned: Boolean): Result<Unit> =
+        setItemPinnedUseCase(id, isPinned)
 
     suspend fun deleteItems(ids: List<Long>): Result<Unit> = runCatching {
         ids.forEach { id -> deleteItemUseCase(id).getOrThrow() }

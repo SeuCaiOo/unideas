@@ -32,6 +32,7 @@ object ItemStub {
         completedAt: LocalDateTime? = null,
         createdAt: LocalDateTime = CREATED_AT,
         lastCompletedScheduledDate: LocalDate? = null,
+        isPinned: Boolean = false,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -46,6 +47,7 @@ object ItemStub {
         completedAt = completedAt,
         createdAt = createdAt,
         lastCompletedScheduledDate = lastCompletedScheduledDate,
+        isPinned = isPinned,
         tags = tags,
     )
 

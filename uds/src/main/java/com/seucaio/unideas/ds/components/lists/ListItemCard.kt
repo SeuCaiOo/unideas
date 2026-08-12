@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +32,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -111,24 +108,8 @@ fun ListItemCard(
                     modifier = Modifier.size(14.dp),
                 )
             }
-            if (ui.isSelected != null) {
-                Spacer(Modifier.weight(1f))
-                Icon(
-                    if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-                    contentDescription = null,
-                    tint = if (ui.isSelected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        LocalUdsExtendedColors.current.textTertiary
-                    },
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clickable(onClick = { onToggleSelection?.invoke() }),
-                )
-            } else if (ui.badgeLabel != null) {
-                Spacer(Modifier.weight(1f))
-                DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
-            }
+            Spacer(Modifier.weight(1f))
+            ListItemTrailingIndicator(ui, onToggleSelection, size = 22.dp)
         }
     }
 }
@@ -167,6 +148,14 @@ private class ListItemCardPreviewProvider : PreviewParameterProvider<ListItemCar
     override val values = ListItemCardPreviewScenario.entries.asSequence()
 }
 
+@Composable
+private fun overdueBillUi(isSelected: Boolean? = null) = ListItemUi(
+    id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+    checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
+    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
+    isSelected = isSelected,
+)
+
 @PreviewLightDark
 @Composable
 private fun ListItemCardPreview(
@@ -175,26 +164,15 @@ private fun ListItemCardPreview(
     UdsTheme {
         Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp).width(170.dp)) {
             when (scenario) {
-                ListItemCardPreviewScenario.Default -> ListItemCard(
-                    ui = ListItemUi(
-                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
-                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
-                    ),
-                    onClick = {},
-                    onToggleCheck = {},
-                )
+                ListItemCardPreviewScenario.Default ->
+                    ListItemCard(ui = overdueBillUi(), onClick = {}, onToggleCheck = {})
                 ListItemCardPreviewScenario.Pinned -> ListItemCard(
-                    ui = ListItemUi(
-                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
-                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
-                    ),
+                    ui = overdueBillUi(),
                     onClick = {},
                     onToggleCheck = {},
                     containerColor = pinnedContainerColor(
                         isPinned = true,
-                        base = MaterialTheme.colorScheme.surfaceVariant
+                        base = MaterialTheme.colorScheme.surfaceVariant,
                     ),
                 )
                 ListItemCardPreviewScenario.LongTitle -> ListItemCard(
@@ -207,23 +185,13 @@ private fun ListItemCardPreview(
                     onToggleCheck = {},
                 )
                 ListItemCardPreviewScenario.SelectedInSelectionMode -> ListItemCard(
-                    ui = ListItemUi(
-                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
-                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
-                        isSelected = true,
-                    ),
+                    ui = overdueBillUi(isSelected = true),
                     onClick = {},
                     onToggleCheck = {},
                     onToggleSelection = {},
                 )
                 ListItemCardPreviewScenario.UnselectedInSelectionMode -> ListItemCard(
-                    ui = ListItemUi(
-                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
-                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
-                        isSelected = false,
-                    ),
+                    ui = overdueBillUi(isSelected = false),
                     onClick = {},
                     onToggleCheck = {},
                     onToggleSelection = {},

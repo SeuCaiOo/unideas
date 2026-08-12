@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
@@ -71,28 +72,7 @@ fun ListItemRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (ui.showCheckbox) {
-            Box(
-                Modifier
-                    .size(22.dp)
-                    .clip(RoundedCornerShape(Radii.Checkbox))
-                    .background(if (ui.checked) MaterialTheme.colorScheme.primary else Color.Transparent)
-                    .border(
-                        if (ui.checked) 0.dp else 2.dp,
-                        LocalUdsExtendedColors.current.textTertiary,
-                        RoundedCornerShape(Radii.Checkbox)
-                    )
-                    .clickable(onClick = onToggleCheck),
-                contentAlignment = Alignment.Center
-            ) {
-                if (ui.checked) {
-                    Icon(
-                        Icons.Outlined.Check,
-                        contentDescription = ui.checkContentDescription,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+            ListItemRowCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
         }
         Column(Modifier.weight(1f)) {
             Text(
@@ -129,22 +109,54 @@ fun ListItemRow(
                 }
             }
         }
-        if (ui.isSelected != null) {
-            Icon(
-                if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-                contentDescription = null,
-                tint = if (ui.isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    LocalUdsExtendedColors.current.textTertiary
-                },
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable(onClick = { onToggleSelection?.invoke() }),
+        ListItemTrailingIndicator(ui, onToggleSelection)
+    }
+}
+
+@Composable
+private fun ListItemRowCheckbox(checked: Boolean, contentDescription: String, onToggle: () -> Unit) {
+    Box(
+        Modifier
+            .size(22.dp)
+            .clip(RoundedCornerShape(Radii.Checkbox))
+            .background(if (checked) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .border(
+                if (checked) 0.dp else 2.dp,
+                LocalUdsExtendedColors.current.textTertiary,
+                RoundedCornerShape(Radii.Checkbox),
             )
-        } else if (ui.badgeLabel != null) {
-            DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
+            .clickable(onClick = onToggle),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
+            Icon(
+                Icons.Outlined.Check,
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(16.dp),
+            )
         }
+    }
+}
+
+/** Selection indicator takes over the badge's slot when [ListItemUi.isSelected] is non-null — see [ListItemUi]. */
+@Composable
+internal fun ListItemTrailingIndicator(ui: ListItemUi, onToggleSelection: (() -> Unit)?, size: Dp = 24.dp) {
+    if (ui.isSelected != null) {
+        Icon(
+            if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+            contentDescription = null,
+            tint = if (ui.isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                LocalUdsExtendedColors.current.textTertiary
+            },
+            modifier = Modifier
+                .size(size)
+                .clickable(onClick = { onToggleSelection?.invoke() }),
+        )
+    } else if (ui.badgeLabel != null) {
+        DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
     }
 }
 

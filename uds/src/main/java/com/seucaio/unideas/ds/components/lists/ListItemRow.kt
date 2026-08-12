@@ -2,8 +2,6 @@ package com.seucaio.unideas.ds.components.lists
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,9 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,26 +24,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
-
-data class ListItemUi(
-    val id: Long,
-    val title: String,
-    val meta: String?,
-    val showCheckbox: Boolean,
-    val checked: Boolean,
-    val showRepeatIcon: Boolean,
-    val badgeLabel: String?,
-    val badgeColor: Color,
-    val checkContentDescription: String,
-    val isSelected: Boolean? = null,
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -72,7 +52,7 @@ fun ListItemRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (ui.showCheckbox) {
-            ListItemRowCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
+            ListItemCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
         }
         Column(Modifier.weight(1f)) {
             Text(
@@ -110,53 +90,6 @@ fun ListItemRow(
             }
         }
         ListItemTrailingIndicator(ui, onToggleSelection)
-    }
-}
-
-@Composable
-private fun ListItemRowCheckbox(checked: Boolean, contentDescription: String, onToggle: () -> Unit) {
-    Box(
-        Modifier
-            .size(22.dp)
-            .clip(RoundedCornerShape(Radii.Checkbox))
-            .background(if (checked) MaterialTheme.colorScheme.primary else Color.Transparent)
-            .border(
-                if (checked) 0.dp else 2.dp,
-                LocalUdsExtendedColors.current.textTertiary,
-                RoundedCornerShape(Radii.Checkbox),
-            )
-            .clickable(onClick = onToggle),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (checked) {
-            Icon(
-                Icons.Outlined.Check,
-                contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-    }
-}
-
-/** Selection indicator takes over the badge's slot when [ListItemUi.isSelected] is non-null — see [ListItemUi]. */
-@Composable
-internal fun ListItemTrailingIndicator(ui: ListItemUi, onToggleSelection: (() -> Unit)?, size: Dp = 24.dp) {
-    if (ui.isSelected != null) {
-        Icon(
-            if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-            contentDescription = null,
-            tint = if (ui.isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                LocalUdsExtendedColors.current.textTertiary
-            },
-            modifier = Modifier
-                .size(size)
-                .clickable(onClick = { onToggleSelection?.invoke() }),
-        )
-    } else if (ui.badgeLabel != null) {
-        DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
     }
 }
 

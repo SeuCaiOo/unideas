@@ -2,8 +2,6 @@ package com.seucaio.unideas.ds.components.lists
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +64,7 @@ fun ListItemCard(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
             if (ui.showCheckbox) {
-                ListItemCardCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
+                ListItemCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck, size = 20.dp, iconSize = 14.dp)
             }
             Text(
                 ui.title,
@@ -110,32 +107,6 @@ fun ListItemCard(
             }
             Spacer(Modifier.weight(1f))
             ListItemTrailingIndicator(ui, onToggleSelection, size = 22.dp)
-        }
-    }
-}
-
-@Composable
-private fun ListItemCardCheckbox(checked: Boolean, contentDescription: String, onToggle: () -> Unit) {
-    Box(
-        Modifier
-            .size(20.dp)
-            .clip(RoundedCornerShape(Radii.Checkbox))
-            .background(if (checked) MaterialTheme.colorScheme.primary else Color.Transparent)
-            .border(
-                if (checked) 0.dp else 2.dp,
-                LocalUdsExtendedColors.current.textTertiary,
-                RoundedCornerShape(Radii.Checkbox),
-            )
-            .clickable(onClick = onToggle),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (checked) {
-            Icon(
-                Icons.Outlined.Check,
-                contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(14.dp),
-            )
         }
     }
 }

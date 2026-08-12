@@ -283,4 +283,116 @@ class HomeViewModelTest {
             assertEquals(HomeUiAction.NavigateToAddItem(ItemType.NOTE), awaitItem())
         }
     }
+
+    @Test
+    fun `when OnItemLongPressed should select the item and enter selection mode`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        assertEquals(setOf(1L), vm.selectedItemIds.value)
+        assertEquals(true, vm.isSelectionMode.value)
+    }
+
+    @Test
+    fun `when OnItemSelectionToggled twice for the same item should deselect it but stay in selection mode`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(1L))
+
+        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
+        assertEquals(true, vm.isSelectionMode.value)
+    }
+
+    @Test
+    fun `when OnItemSelectionToggled for a different item should add it to the selection`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+
+        assertEquals(setOf(1L, 2L), vm.selectedItemIds.value)
+    }
+
+    @Test
+    fun `when OnItemClicked while in selection mode should toggle selection instead of navigating`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnItemClicked(2L))
+            expectNoEvents()
+        }
+        assertEquals(setOf(1L, 2L), vm.selectedItemIds.value)
+    }
+
+    @Test
+    fun `when OnSelectionCleared should clear the selection and exit selection mode`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnSelectionCleared)
+
+        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
+        assertEquals(false, vm.isSelectionMode.value)
+    }
+
+    @Test
+    fun `when OnSelectAllClicked should select every currently loaded item`() = runTest {
+        val items = listOf(ItemStub.task(id = 1L), ItemStub.task(id = 2L), ItemStub.task(id = 3L))
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+        assertEquals(setOf(1L, 2L, 3L), vm.selectedItemIds.value)
+        assertEquals(true, vm.isSelectionMode.value)
+    }
+
+    @Test
+    fun `when OnSelectAllClicked while every item is already selected should deselect all but stay in selection mode`() =
+        runTest {
+            val items = listOf(ItemStub.task(id = 1L), ItemStub.task(id = 2L))
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+            val vm = viewModel()
+            vm.itemsState.test { awaitItem() }
+            vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+            vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+            vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+            assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
+            assertEquals(true, vm.isSelectionMode.value)
+        }
+
+    @Test
+    fun `when OnDeleteSelectedClicked succeeds should delete the selected items and exit selection mode`() = runTest {
+        coEvery { homeUseCase.deleteItems(listOf(1L, 2L)) } returns Result.success(Unit)
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+        coVerify(exactly = 1) { homeUseCase.deleteItems(listOf(1L, 2L)) }
+        assertEquals(emptySet<Long>(), vm.selectedItemIds.value)
+        assertEquals(false, vm.isSelectionMode.value)
+    }
+
+    @Test
+    fun `when OnDeleteSelectedClicked fails should emit ShowError and keep the selection`() = runTest {
+        coEvery { homeUseCase.deleteItems(listOf(1L)) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+            assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+        assertEquals(setOf(1L), vm.selectedItemIds.value)
+        assertEquals(true, vm.isSelectionMode.value)
+    }
 }

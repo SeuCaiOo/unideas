@@ -1,8 +1,10 @@
 package com.seucaio.unideas.ds.components.lists
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,9 +45,11 @@ data class ListItemUi(
     val showRepeatIcon: Boolean,
     val badgeLabel: String?,
     val badgeColor: Color,
-    val checkContentDescription: String
+    val checkContentDescription: String,
+    val isSelected: Boolean? = null,
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ListItemRow(
     ui: ListItemUi,
@@ -51,13 +57,15 @@ fun ListItemRow(
     onToggleCheck: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    onLongClick: (() -> Unit)? = null,
+    onToggleSelection: (() -> Unit)? = null,
 ) {
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Card))
             .background(containerColor)
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -121,7 +129,16 @@ fun ListItemRow(
                 }
             }
         }
-        if (ui.badgeLabel != null) {
+        if (ui.isSelected != null) {
+            Icon(
+                if (ui.isSelected) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                contentDescription = null,
+                tint = if (ui.isSelected) MaterialTheme.colorScheme.primary else LocalUdsExtendedColors.current.textTertiary,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable(onClick = { onToggleSelection?.invoke() }),
+            )
+        } else if (ui.badgeLabel != null) {
             DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
         }
     }
@@ -141,6 +158,39 @@ private fun ListItemRowPreview() {
                 onClick = {},
                 onToggleCheck = {}
             )
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ListItemRowSelectionModePreview() {
+    UdsTheme {
+        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+            Column {
+                ListItemRow(
+                    ui = ListItemUi(
+                        id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+                        checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
+                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
+                        isSelected = true,
+                    ),
+                    onClick = {},
+                    onToggleCheck = {},
+                    onToggleSelection = {},
+                )
+                ListItemRow(
+                    ui = ListItemUi(
+                        id = 2L, title = "Buy groceries", meta = null, showCheckbox = true,
+                        checked = true, showRepeatIcon = false, badgeLabel = null,
+                        badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
+                        isSelected = false,
+                    ),
+                    onClick = {},
+                    onToggleCheck = {},
+                    onToggleSelection = {},
+                )
+            }
         }
     }
 }

@@ -12,6 +12,8 @@ sealed interface HomeEvent {
 
     data class OnSectionPinToggled(val sectionId: Long, val isPinned: Boolean) : HomeEvent
 
+    data class OnItemPinToggled(val itemId: Long, val isPinned: Boolean) : HomeEvent
+
     data class OnTagFilterToggled(val tagId: Long) : HomeEvent
 
     data class OnViewModeChanged(val viewMode: ItemsViewMode) : HomeEvent

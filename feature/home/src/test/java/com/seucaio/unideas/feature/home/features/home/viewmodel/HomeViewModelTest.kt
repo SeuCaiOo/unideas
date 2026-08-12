@@ -159,6 +159,27 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when OnItemPinToggled succeeds should call HomeUseCase's setItemPinned`() = runTest {
+        coEvery { homeUseCase.setItemPinned(1L, true) } returns Result.success(Unit)
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemPinToggled(1L, true))
+
+        coVerify(exactly = 1) { homeUseCase.setItemPinned(1L, true) }
+    }
+
+    @Test
+    fun `when OnItemPinToggled fails should emit ShowError`() = runTest {
+        coEvery { homeUseCase.setItemPinned(1L, true) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnItemPinToggled(1L, true))
+            assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+    }
+
+    @Test
     fun `when OnCompleteClicked for a known item should call HomeUseCase's complete`() = runTest {
         val item = ItemStub.task(id = 1L)
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))

@@ -108,6 +108,7 @@ class HomeViewModel(
             is HomeEvent.OnTabChanged -> _filterState.update { it.changeTab(event.type) }
             is HomeEvent.OnSectionFilterChanged -> _filterState.update { it.sectionFilter(event.sectionId) }
             is HomeEvent.OnSectionPinToggled -> handleSectionPinToggle(event.sectionId, event.isPinned)
+            is HomeEvent.OnItemPinToggled -> handleItemPinToggle(event.itemId, event.isPinned)
             is HomeEvent.OnTagFilterToggled -> _filterState.update { it.toggleTag(event.tagId) }
             is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
             is HomeEvent.OnItemClicked -> handleItemClicked(event.itemId)
@@ -174,6 +175,11 @@ class HomeViewModel(
     private fun handleSectionPinToggle(sectionId: Long, isPinned: Boolean) = viewModelScope.launch {
         homeUseCase.setSectionPinned(sectionId, isPinned)
             .onSuccess { loadReferenceData() }
+            .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleItemPinToggle(itemId: Long, isPinned: Boolean) = viewModelScope.launch {
+        homeUseCase.setItemPinned(itemId, isPinned)
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 

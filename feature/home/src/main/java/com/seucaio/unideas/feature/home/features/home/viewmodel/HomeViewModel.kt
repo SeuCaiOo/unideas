@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -81,10 +79,9 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
-            homeUseCase.hasAnyItem()
-                .map<Boolean, HomeUiState> { HomeUiState.Success(hasAnyItem = it) }
-                .onStart { emit(HomeUiState.Loading) }
-                .catch { emit(HomeUiState.Error(R.string.home_load_error)) }
+            combine(homeUseCase.hasAnyItem(), itemsState) { hasAnyItem, items ->
+                if (items.isLoaded) HomeUiState.Success(hasAnyItem = hasAnyItem) else HomeUiState.Loading
+            }.catch { emit(HomeUiState.Error(R.string.home_load_error)) }
         }
         .stateIn(viewModelScope, WhileSubscribed(5_000), HomeUiState.Loading)
 

@@ -65,4 +65,5 @@ internal data class FilterState(
 data class HomeItemsState(
     val tabItems: List<Item> = emptyList(),
     val groupedTabItems: List<ItemSectionGroup> = emptyList(),
+    val isLoaded: Boolean = false,
 )

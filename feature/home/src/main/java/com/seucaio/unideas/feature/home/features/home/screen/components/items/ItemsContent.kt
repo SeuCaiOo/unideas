@@ -47,6 +47,8 @@ internal fun ItemsContent(
     homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
+    if (!itemsState.isLoaded) return
+
     ItemsOrEmptyContent(itemsState, hasAnyItem, modifier) {
         ItemsListContent(
             itemsState = itemsState,

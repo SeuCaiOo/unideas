@@ -56,6 +56,7 @@ class HomeViewModel(
             HomeItemsState(
                 tabItems = tabItems,
                 groupedTabItems = tabItems.groupBySection(filter.availableSections),
+                isLoaded = true,
             )
         }.stateIn(viewModelScope, WhileSubscribed(5_000), HomeItemsState())
 

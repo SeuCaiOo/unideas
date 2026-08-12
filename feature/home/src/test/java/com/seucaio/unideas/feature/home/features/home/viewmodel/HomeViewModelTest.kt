@@ -364,6 +364,58 @@ class HomeViewModelTest {
         }
 
     @Test
+    fun `when OnGroupSelectAllClicked should select every item in that section only`() = runTest {
+        val items = listOf(
+            ItemStub.task(id = 1L, sectionId = 10L),
+            ItemStub.task(id = 2L, sectionId = 10L),
+            ItemStub.task(id = 3L, sectionId = 20L),
+        )
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnGroupSelectAllClicked while every item in the section is already selected should deselect just that section`() =
+        runTest {
+            val items = listOf(
+                ItemStub.task(id = 1L, sectionId = 10L),
+                ItemStub.task(id = 2L, sectionId = 10L),
+                ItemStub.task(id = 3L, sectionId = 20L),
+            )
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+            val vm = viewModel()
+            vm.itemsState.test { awaitItem() }
+            vm.onEvent(HomeEvent.OnItemLongPressed(3L))
+            vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+            vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+            assertEquals(HomeMode.Selection(setOf(3L)), vm.homeMode.value)
+        }
+
+    @Test
+    fun `when OnGroupSelectAllClicked for the unsectioned group should select items with a null sectionId`() = runTest {
+        val items = listOf(
+            ItemStub.task(id = 1L, sectionId = null),
+            ItemStub.task(id = 2L, sectionId = 10L),
+        )
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(2L))
+
+        vm.onEvent(HomeEvent.OnGroupSelectAllClicked(null))
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
     fun `when OnDeleteSelectedClicked should open the delete confirmation dialog without deleting`() = runTest {
         val vm = viewModel()
         vm.onEvent(HomeEvent.OnItemLongPressed(1L))

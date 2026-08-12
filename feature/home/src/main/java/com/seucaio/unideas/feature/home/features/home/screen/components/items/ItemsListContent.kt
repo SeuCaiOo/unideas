@@ -162,6 +162,7 @@ private fun LazyListScope.sectionGroup(
     val expanded = key !in context.collapsedKeys
 
     item(key = "group-$key") {
+        val homeMode = context.homeMode
         CollapsibleGroupHeader(
             title = group.sectionName ?: context.noSectionLabel,
             itemCount = group.items.size,
@@ -174,6 +175,11 @@ private fun LazyListScope.sectionGroup(
                 }
             },
             indentStart = indentStart,
+            isSelected = when (homeMode) {
+                is HomeMode.Selection -> group.items.all { it.id in homeMode.selectedItemIds }
+                HomeMode.Normal -> null
+            },
+            onToggleSelection = { context.onEvent(HomeEvent.OnGroupSelectAllClicked(group.sectionId)) },
         )
     }
     if (expanded) {
@@ -207,7 +213,7 @@ internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsListPrev
         .plus(
             ItemsListPreviewScenario(
                 itemsState = itemsStates.first(),
-                homeMode = HomeMode.Selection(itemsStates.first().tabItems.take(2).map { it.id }.toSet()),
+                homeMode = HomeMode.Selection(itemsStates.first().groupedTabItems.first().items.map { it.id }.toSet(),),
             ),
         )
         .asSequence()

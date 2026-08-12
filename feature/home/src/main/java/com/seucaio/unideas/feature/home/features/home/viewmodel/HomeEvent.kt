@@ -44,5 +44,7 @@ sealed interface HomeEvent {
 
     data object OnSelectAllClicked : SelectionEvent
 
+    data class OnGroupSelectAllClicked(val sectionId: Long?) : SelectionEvent
+
     //endregion
 }

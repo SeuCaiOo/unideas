@@ -121,6 +121,7 @@ private fun LazyGridScope.sectionGroup(
 
     if (context.showHeaders) {
         item(key = "group-$key", span = { GridItemSpan(ITEMS_GRID_COLUMNS) }) {
+            val homeMode = context.homeMode
             CollapsibleGroupHeader(
                 title = group.sectionName ?: context.noSectionLabel,
                 itemCount = group.items.size,
@@ -133,6 +134,11 @@ private fun LazyGridScope.sectionGroup(
                     }
                 },
                 indentStart = indentStart,
+                isSelected = when (homeMode) {
+                    is HomeMode.Selection -> group.items.all { it.id in homeMode.selectedItemIds }
+                    HomeMode.Normal -> null
+                },
+                onToggleSelection = { context.onEvent(HomeEvent.OnGroupSelectAllClicked(group.sectionId)) },
             )
         }
     }

@@ -129,7 +129,10 @@ class HomeViewModel(
                 handleDeleteSelected()
             }
             is HomeEvent.OnDeleteDialogDismissed -> _dialogState.value = HomeDialogState.None
-            is HomeEvent.OnSelectAllClicked -> selectAll()
+            is HomeEvent.OnSelectAllClicked -> toggleSelectAll(currentItems.map { it.id }.toSet())
+            is HomeEvent.OnGroupSelectAllClicked -> toggleSelectAll(
+                currentItems.filter { it.sectionId == event.sectionId }.map { it.id }.toSet()
+            )
         }
     }
 
@@ -145,10 +148,11 @@ class HomeViewModel(
         _homeMode.value = HomeMode.Selection(if (itemId in current) current - itemId else current + itemId)
     }
 
-    private fun selectAll() {
+    private fun toggleSelectAll(ids: Set<Long>) {
         val current = (_homeMode.value as? HomeMode.Selection)?.selectedItemIds ?: return
-        val allIds = currentItems.map { it.id }.toSet()
-        _homeMode.value = HomeMode.Selection(if (current == allIds) emptySet() else allIds)
+        if (ids.isEmpty()) return
+        val allSelected = ids.all { it in current }
+        _homeMode.value = HomeMode.Selection(if (allSelected) current - ids else current + ids)
     }
 
     private fun handleDeleteSelected() = viewModelScope.launch {

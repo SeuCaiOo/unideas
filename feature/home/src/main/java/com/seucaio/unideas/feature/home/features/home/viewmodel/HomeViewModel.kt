@@ -64,6 +64,14 @@ class HomeViewModel(
 
     //endregion
 
+    //region selection mode
+
+    // Event-driven, no query behind it — selection mode is simply "selectedItemIds is not empty".
+    private val _selectedItemIds = MutableStateFlow(emptySet<Long>())
+    val selectedItemIds: StateFlow<Set<Long>> = _selectedItemIds.asStateFlow()
+
+    //endregion
+
     //region uiState
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
@@ -100,11 +108,42 @@ class HomeViewModel(
             is HomeEvent.OnSectionPinToggled -> handleSectionPinToggle(event.sectionId, event.isPinned)
             is HomeEvent.OnTagFilterToggled -> _filterState.update { it.toggleTag(event.tagId) }
             is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
-            is HomeEvent.OnItemClicked -> sendUiAction(HomeUiAction.NavigateToDetail(event.itemId))
+            is HomeEvent.OnItemClicked -> handleItemClicked(event.itemId)
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
+            is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
+    }
+
+    private fun handleSelectionEvent(event: HomeEvent.SelectionEvent) {
+        when (event) {
+            is HomeEvent.OnItemLongPressed -> toggleSelection(event.itemId)
+            is HomeEvent.OnItemSelectionToggled -> toggleSelection(event.itemId)
+            is HomeEvent.OnSelectionCleared -> _selectedItemIds.value = emptySet()
+            is HomeEvent.OnDeleteSelectedClicked -> handleDeleteSelected()
+        }
+    }
+
+    private fun handleItemClicked(itemId: Long) {
+        if (_selectedItemIds.value.isEmpty()) {
+            sendUiAction(HomeUiAction.NavigateToDetail(itemId))
+        } else {
+            toggleSelection(itemId)
+        }
+    }
+
+    private fun toggleSelection(itemId: Long) {
+        _selectedItemIds.update { current ->
+            if (itemId in current) current - itemId else current + itemId
+        }
+    }
+
+    private fun handleDeleteSelected() = viewModelScope.launch {
+        val ids = _selectedItemIds.value.toList()
+        homeUseCase.deleteItems(ids)
+            .onSuccess { _selectedItemIds.value = emptySet() }
+            .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
     private suspend fun loadReferenceData() {

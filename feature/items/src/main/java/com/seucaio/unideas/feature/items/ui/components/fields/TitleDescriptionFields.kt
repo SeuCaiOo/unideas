@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -53,11 +54,12 @@ internal fun TitleDescriptionFields(
     val titleFocusRequester = remember { FocusRequester() }
     val descriptionFocusRequester = remember { FocusRequester() }
     var descriptionField by remember { mutableStateOf(TextFieldValue(description)) }
+    var isDescriptionFocused by remember { mutableStateOf(false) }
     // Existing items open read-only (preview); a brand-new item has nothing to preview yet.
     var isPreviewMode by remember { mutableStateOf(isEditing) }
 
     LaunchedEffect(description) {
-        if (description != descriptionField.text) {
+        if (!isDescriptionFocused && description != descriptionField.text) {
             descriptionField = TextFieldValue(description)
         }
     }
@@ -85,6 +87,7 @@ internal fun TitleDescriptionFields(
                 descriptionField = it
                 onDescriptionChanged(it.text)
             },
+            onFocusChanged = { isDescriptionFocused = it },
             descriptionFocusRequester = descriptionFocusRequester,
         )
     }
@@ -122,6 +125,7 @@ private fun DescriptionField(
     onPreviewModeToggled: () -> Unit,
     descriptionField: TextFieldValue,
     onDescriptionFieldChanged: (TextFieldValue) -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
     descriptionFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
@@ -151,6 +155,7 @@ private fun DescriptionField(
                 minHeight = 32.dp,
                 modifier = Modifier
                     .focusRequester(descriptionFocusRequester)
+                    .onFocusChanged { onFocusChanged(it.isFocused) }
                     .markdownFormatContextMenuItems(onFormatClick),
                 visualTransformation = rememberMarkdownSyntaxHighlightTransformation(),
             )

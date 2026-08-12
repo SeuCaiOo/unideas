@@ -28,6 +28,9 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemsViewMode
  */
 internal const val NO_SECTION_KEY = -1L
 
+/** Render key for the synthetic "pinned items without a section" group — distinct from [NO_SECTION_KEY], since both real groups have `sectionId = null`. */
+internal const val PINNED_ITEMS_GROUP_KEY = -2L
+
 /**
  * Extra start indent for a pinned group's [CollapsibleGroupHeader], nesting it under the
  * emphasized "Pinned" [GroupHeader] above it.

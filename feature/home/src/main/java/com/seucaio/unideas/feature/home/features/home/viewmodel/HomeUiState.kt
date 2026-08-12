@@ -6,33 +6,25 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 
-/** Screen readiness only — no item data. See [FilterState]/[HomeItemsState] for that. */
 sealed interface HomeUiState {
 
     data object Loading : HomeUiState
 
     data class Success(val hasAnyItem: Boolean) : HomeUiState
 
-    data class Error(@StringRes val messageRes: Int) : HomeUiState
+    data class Error(@param:StringRes val messageRes: Int) : HomeUiState
 }
 
-/** One Section's slice of [HomeItemsState.tabItems]. `null` [sectionName] means unsectioned. */
 data class ItemSectionGroup(
     val sectionId: Long?,
     val sectionName: String?,
     val items: List<Item>,
     val isPinned: Boolean = false,
+    val isPinnedItemsGroup: Boolean = false,
 )
 
-/** Display mode for [HomeItemsState.tabItems]. */
 enum class ItemsViewMode { LIST, GRID }
 
-/**
- * [HomeViewModel.homeMode] — which of the Home screen's two interaction modes is active
- * (TopBar/FAB/list-item rendering all branch on this), not just whether a selection is
- * non-empty. [Selection] with an empty [Selection.selectedItemIds] is a valid, distinct state
- * from [Normal] — "select all" toggling back to zero must not read the same as leaving the mode.
- */
 sealed interface HomeMode {
 
     data object Normal : HomeMode
@@ -40,7 +32,6 @@ sealed interface HomeMode {
     data class Selection(val selectedItemIds: Set<Long> = emptySet()) : HomeMode
 }
 
-/** [HomeViewModel.dialogState] — at most one dialog on screen at a time. */
 sealed interface HomeDialogState {
 
     data object None : HomeDialogState
@@ -48,7 +39,6 @@ sealed interface HomeDialogState {
     data object DeleteSelectedConfirm : HomeDialogState
 }
 
-/** [HomeViewModel.filterState] — UI-only, never fails/loads. */
 internal data class FilterState(
     val activeTab: ItemType = ItemType.TASK,
     val sectionFilter: Long? = null,
@@ -72,7 +62,6 @@ internal data class FilterState(
         copy(availableSections = sections, availableTags = tags)
 }
 
-/** [HomeViewModel.itemsState] — active tab's list. No load/error of its own. */
 data class HomeItemsState(
     val tabItems: List<Item> = emptyList(),
     val groupedTabItems: List<ItemSectionGroup> = emptyList(),

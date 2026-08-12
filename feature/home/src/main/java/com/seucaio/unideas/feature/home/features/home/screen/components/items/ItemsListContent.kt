@@ -91,6 +91,7 @@ internal fun ItemsListContent(
 /** Everything a rendered [ItemSectionGroup] needs besides the group itself — shared across all groups in one list. */
 private data class GroupRenderContext(
     val noSectionLabel: String,
+    val pinnedItemsLabel: String,
     val checkContentDescription: String,
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
@@ -114,6 +115,7 @@ private fun GroupedItemsList(
     val pinnedLabel = stringResource(R.string.home_group_pinned)
     val context = GroupRenderContext(
         noSectionLabel = noSectionLabel,
+        pinnedItemsLabel = stringResource(R.string.home_group_pinned_items),
         checkContentDescription = checkContentDescription,
         collapsedKeys = collapsedKeys,
         onToggleCollapse = { key ->
@@ -140,13 +142,13 @@ private fun LazyListScope.sectionGroup(
     context: GroupRenderContext,
     indentStart: Dp = 0.dp,
 ) {
-    val key = group.sectionId ?: NO_SECTION_KEY
+    val key = if (group.isPinnedItemsGroup) PINNED_ITEMS_GROUP_KEY else group.sectionId ?: NO_SECTION_KEY
     val expanded = key !in context.collapsedKeys
 
     item(key = "group-$key") {
         val homeMode = context.homeMode
         CollapsibleGroupHeader(
-            title = group.sectionName ?: context.noSectionLabel,
+            title = if (group.isPinnedItemsGroup) context.pinnedItemsLabel else group.sectionName ?: context.noSectionLabel,
             itemCount = group.items.size,
             expanded = expanded,
             onToggle = { context.onToggleCollapse(key) },

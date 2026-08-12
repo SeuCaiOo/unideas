@@ -47,4 +47,6 @@ class ItemRepositoryImpl(
         itemDao.updateItemWithTags(item.toEntity(), item.tags.map { it.id })
 
     override suspend fun deleteItem(id: Long) = itemDao.deleteById(id)
+
+    override suspend fun setItemPinned(id: Long, isPinned: Boolean) = itemDao.setPinned(id, isPinned)
 }

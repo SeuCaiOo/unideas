@@ -54,17 +54,17 @@ interface ItemDao {
     fun getItemDetailById(id: Long): Flow<ItemWithTagsAndSection?>
 
     /**
-     * Observes non-completed items with a due date on or before
-     * [dueOnOrBefore] (epoch millis), ordered by due date.
+     * Observes non-completed items due on or before [dueOnOrBefore] (epoch millis), plus every
+     * pinned item regardless of due date — pinned items always surface in the priority panel.
+     * Ordered pinned-first, then by due date (items without a due date sort last within each group).
      */
     @Transaction
     @Query(
         """
         SELECT * FROM items
-        WHERE dueDate IS NOT NULL
-          AND dueDate <= :dueOnOrBefore
-          AND completedAt IS NULL
-        ORDER BY dueDate ASC
+        WHERE completedAt IS NULL
+          AND (isPinned = 1 OR (dueDate IS NOT NULL AND dueDate <= :dueOnOrBefore))
+        ORDER BY isPinned DESC, dueDate IS NULL, dueDate ASC
         """,
     )
     fun getPriorityItems(dueOnOrBefore: Long): Flow<List<ItemWithTags>>
@@ -90,6 +90,9 @@ interface ItemDao {
 
     @Query("DELETE FROM items WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("UPDATE items SET isPinned = :isPinned WHERE id = :id")
+    suspend fun setPinned(id: Long, isPinned: Boolean)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTagCrossRefs(refs: List<ItemTagCrossRef>)

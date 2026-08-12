@@ -283,4 +283,188 @@ class HomeViewModelTest {
             assertEquals(HomeUiAction.NavigateToAddItem(ItemType.NOTE), awaitItem())
         }
     }
+
+    @Test
+    fun `when OnItemLongPressed should select the item and enter selection mode`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnItemSelectionToggled twice for the same item should deselect it but stay in selection mode`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(1L))
+
+        assertEquals(HomeMode.Selection(emptySet()), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnItemSelectionToggled for a different item should add it to the selection`() = runTest {
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnItemClicked while in selection mode should toggle selection instead of navigating`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnItemClicked(2L))
+            expectNoEvents()
+        }
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnSelectionCleared should clear the selection and exit selection mode`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnSelectionCleared)
+
+        assertEquals(HomeMode.Normal, vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnSelectAllClicked should select every currently loaded item`() = runTest {
+        val items = listOf(ItemStub.task(id = 1L), ItemStub.task(id = 2L), ItemStub.task(id = 3L))
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L, 3L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnSelectAllClicked while every item is already selected should deselect all but stay in selection mode`() =
+        runTest {
+            val items = listOf(ItemStub.task(id = 1L), ItemStub.task(id = 2L))
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+            val vm = viewModel()
+            vm.itemsState.test { awaitItem() }
+            vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+            vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+            vm.onEvent(HomeEvent.OnSelectAllClicked)
+
+            assertEquals(HomeMode.Selection(emptySet()), vm.homeMode.value)
+        }
+
+    @Test
+    fun `when OnGroupSelectAllClicked should select every item in that section only`() = runTest {
+        val items = listOf(
+            ItemStub.task(id = 1L, sectionId = 10L),
+            ItemStub.task(id = 2L, sectionId = 10L),
+            ItemStub.task(id = 3L, sectionId = 20L),
+        )
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnGroupSelectAllClicked while every item in the section is already selected should deselect just that section`() =
+        runTest {
+            val items = listOf(
+                ItemStub.task(id = 1L, sectionId = 10L),
+                ItemStub.task(id = 2L, sectionId = 10L),
+                ItemStub.task(id = 3L, sectionId = 20L),
+            )
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+            val vm = viewModel()
+            vm.itemsState.test { awaitItem() }
+            vm.onEvent(HomeEvent.OnItemLongPressed(3L))
+            vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+            vm.onEvent(HomeEvent.OnGroupSelectAllClicked(10L))
+
+            assertEquals(HomeMode.Selection(setOf(3L)), vm.homeMode.value)
+        }
+
+    @Test
+    fun `when OnGroupSelectAllClicked for the unsectioned group should select items with a null sectionId`() = runTest {
+        val items = listOf(
+            ItemStub.task(id = 1L, sectionId = null),
+            ItemStub.task(id = 2L, sectionId = 10L),
+        )
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(items)
+        val vm = viewModel()
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnItemLongPressed(2L))
+
+        vm.onEvent(HomeEvent.OnGroupSelectAllClicked(null))
+
+        assertEquals(HomeMode.Selection(setOf(1L, 2L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnDeleteSelectedClicked should open the delete confirmation dialog without deleting`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+        assertEquals(HomeDialogState.DeleteSelectedConfirm, vm.dialogState.value)
+        coVerify(exactly = 0) { homeUseCase.deleteItems(any()) }
+    }
+
+    @Test
+    fun `when OnDeleteDialogDismissed should close the dialog and keep the selection`() = runTest {
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+        vm.onEvent(HomeEvent.OnDeleteDialogDismissed)
+
+        assertEquals(HomeDialogState.None, vm.dialogState.value)
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnDeleteSelectedConfirmClicked succeeds should delete the selected items, close the dialog and exit selection mode`() =
+        runTest {
+            coEvery { homeUseCase.deleteItems(listOf(1L, 2L)) } returns Result.success(Unit)
+            val vm = viewModel()
+            vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+            vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+            vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+            vm.onEvent(HomeEvent.OnDeleteSelectedConfirmClicked)
+
+            coVerify(exactly = 1) { homeUseCase.deleteItems(listOf(1L, 2L)) }
+            assertEquals(HomeDialogState.None, vm.dialogState.value)
+            assertEquals(HomeMode.Normal, vm.homeMode.value)
+        }
+
+    @Test
+    fun `when OnDeleteSelectedConfirmClicked fails should emit ShowError and keep the selection`() = runTest {
+        coEvery { homeUseCase.deleteItems(listOf(1L)) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnDeleteSelectedClicked)
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnDeleteSelectedConfirmClicked)
+            assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
 }

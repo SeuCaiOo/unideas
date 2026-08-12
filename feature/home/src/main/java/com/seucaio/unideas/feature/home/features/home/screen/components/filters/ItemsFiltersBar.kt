@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.filters
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding

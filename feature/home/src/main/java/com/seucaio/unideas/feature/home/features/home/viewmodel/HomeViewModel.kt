@@ -64,6 +64,16 @@ class HomeViewModel(
 
     //endregion
 
+    //region homeMode
+
+    private val _homeMode = MutableStateFlow<HomeMode>(HomeMode.Normal)
+    val homeMode: StateFlow<HomeMode> = _homeMode.asStateFlow()
+
+    private val _dialogState = MutableStateFlow<HomeDialogState>(HomeDialogState.None)
+    val dialogState: StateFlow<HomeDialogState> = _dialogState.asStateFlow()
+
+    //endregion
+
     //region uiState
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
@@ -100,11 +110,56 @@ class HomeViewModel(
             is HomeEvent.OnSectionPinToggled -> handleSectionPinToggle(event.sectionId, event.isPinned)
             is HomeEvent.OnTagFilterToggled -> _filterState.update { it.toggleTag(event.tagId) }
             is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
-            is HomeEvent.OnItemClicked -> sendUiAction(HomeUiAction.NavigateToDetail(event.itemId))
+            is HomeEvent.OnItemClicked -> handleItemClicked(event.itemId)
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
+            is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
+    }
+
+    private fun handleSelectionEvent(event: HomeEvent.SelectionEvent) {
+        when (event) {
+            is HomeEvent.OnItemLongPressed -> toggleSelection(event.itemId)
+            is HomeEvent.OnItemSelectionToggled -> toggleSelection(event.itemId)
+            is HomeEvent.OnSelectionCleared -> _homeMode.value = HomeMode.Normal
+            is HomeEvent.OnDeleteSelectedClicked -> _dialogState.value = HomeDialogState.DeleteSelectedConfirm
+            is HomeEvent.OnDeleteSelectedConfirmClicked -> {
+                _dialogState.value = HomeDialogState.None
+                handleDeleteSelected()
+            }
+            is HomeEvent.OnDeleteDialogDismissed -> _dialogState.value = HomeDialogState.None
+            is HomeEvent.OnSelectAllClicked -> toggleSelectAll(currentItems.map { it.id }.toSet())
+            is HomeEvent.OnGroupSelectAllClicked -> toggleSelectAll(
+                currentItems.filter { it.sectionId == event.sectionId }.map { it.id }.toSet()
+            )
+        }
+    }
+
+    private fun handleItemClicked(itemId: Long) {
+        when (_homeMode.value) {
+            is HomeMode.Selection -> toggleSelection(itemId)
+            HomeMode.Normal -> sendUiAction(HomeUiAction.NavigateToDetail(itemId))
+        }
+    }
+
+    private fun toggleSelection(itemId: Long) {
+        val current = (_homeMode.value as? HomeMode.Selection)?.selectedItemIds ?: emptySet()
+        _homeMode.value = HomeMode.Selection(if (itemId in current) current - itemId else current + itemId)
+    }
+
+    private fun toggleSelectAll(ids: Set<Long>) {
+        val current = (_homeMode.value as? HomeMode.Selection)?.selectedItemIds ?: return
+        if (ids.isEmpty()) return
+        val allSelected = ids.all { it in current }
+        _homeMode.value = HomeMode.Selection(if (allSelected) current - ids else current + ids)
+    }
+
+    private fun handleDeleteSelected() = viewModelScope.launch {
+        val mode = _homeMode.value as? HomeMode.Selection ?: return@launch
+        homeUseCase.deleteItems(mode.selectedItemIds.toList())
+            .onSuccess { _homeMode.value = HomeMode.Normal }
+            .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
     private suspend fun loadReferenceData() {

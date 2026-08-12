@@ -27,6 +27,27 @@ data class ItemSectionGroup(
 /** Display mode for [HomeItemsState.tabItems]. */
 enum class ItemsViewMode { LIST, GRID }
 
+/**
+ * [HomeViewModel.homeMode] — which of the Home screen's two interaction modes is active
+ * (TopBar/FAB/list-item rendering all branch on this), not just whether a selection is
+ * non-empty. [Selection] with an empty [Selection.selectedItemIds] is a valid, distinct state
+ * from [Normal] — "select all" toggling back to zero must not read the same as leaving the mode.
+ */
+sealed interface HomeMode {
+
+    data object Normal : HomeMode
+
+    data class Selection(val selectedItemIds: Set<Long> = emptySet()) : HomeMode
+}
+
+/** [HomeViewModel.dialogState] — at most one dialog on screen at a time. */
+sealed interface HomeDialogState {
+
+    data object None : HomeDialogState
+
+    data object DeleteSelectedConfirm : HomeDialogState
+}
+
 /** [HomeViewModel.filterState] — UI-only, never fails/loads. */
 internal data class FilterState(
     val activeTab: ItemType = ItemType.TASK,

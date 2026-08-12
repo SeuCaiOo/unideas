@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +17,7 @@ import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemsViewMode
 
@@ -48,6 +49,7 @@ internal fun ItemsContent(
     hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -60,6 +62,7 @@ internal fun ItemsContent(
                 sectionFilter = filterState.sectionFilter,
                 onEvent = onEvent,
                 modifier = Modifier.fillMaxSize(),
+                homeMode = homeMode,
                 footer = footer,
             )
         } else {
@@ -69,6 +72,7 @@ internal fun ItemsContent(
                 hasAnyItem = hasAnyItem,
                 onEvent = onEvent,
                 modifier = Modifier.fillMaxSize(),
+                homeMode = homeMode,
                 footer = footer,
             )
         }
@@ -80,22 +84,41 @@ internal fun ItemsContent(
  * states too: [ItemsContent] is the only one of the three that still renders them (it routes an
  * empty [HomeItemsState.tabItems] away from both children before they ever see it).
  */
-internal class ItemsContentPreviewProvider : PreviewParameterProvider<HomePreviewFixture> {
-    override val values = HomePreviewProvider().values
+internal data class ItemsContentPreviewScenario(
+    val fixture: HomePreviewFixture,
+    val homeMode: HomeMode = HomeMode.Normal,
+)
+
+internal class ItemsContentPreviewProvider : PreviewParameterProvider<ItemsContentPreviewScenario> {
+    private val fixtures = HomePreviewProvider().values.toList()
+
+    override val values: Sequence<ItemsContentPreviewScenario> = fixtures
+        .map { ItemsContentPreviewScenario(it) }
+        .plus(
+            ItemsContentPreviewScenario(
+                fixture = fixtures.first { it.itemsState.tabItems.isNotEmpty() },
+                homeMode = HomeMode.Selection(
+                    fixtures.first { it.itemsState.tabItems.isNotEmpty() }
+                        .itemsState.tabItems.take(2).map { it.id }.toSet(),
+                ),
+            ),
+        )
+        .asSequence()
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsContentListPreview(
-    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: HomePreviewFixture,
+    @PreviewParameter(ItemsContentPreviewProvider::class) scenario: ItemsContentPreviewScenario,
 ) {
     UdsTheme {
         Surface {
             ItemsContent(
-                itemsState = fixture.itemsState,
-                filterState = fixture.filterState.copy(viewMode = ItemsViewMode.LIST),
-                hasAnyItem = fixture.hasAnyItem,
+                itemsState = scenario.fixture.itemsState,
+                filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.LIST),
+                hasAnyItem = scenario.fixture.hasAnyItem,
                 onEvent = {},
+                homeMode = scenario.homeMode,
             )
         }
     }
@@ -104,15 +127,16 @@ private fun ItemsContentListPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsContentGridPreview(
-    @PreviewParameter(ItemsContentPreviewProvider::class) fixture: HomePreviewFixture,
+    @PreviewParameter(ItemsContentPreviewProvider::class) scenario: ItemsContentPreviewScenario,
 ) {
     UdsTheme {
         Surface {
             ItemsContent(
-                itemsState = fixture.itemsState,
-                filterState = fixture.filterState.copy(viewMode = ItemsViewMode.GRID),
-                hasAnyItem = fixture.hasAnyItem,
+                itemsState = scenario.fixture.itemsState,
+                filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.GRID),
+                hasAnyItem = scenario.fixture.hasAnyItem,
                 onEvent = {},
+                homeMode = scenario.homeMode,
             )
         }
     }

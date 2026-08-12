@@ -2,8 +2,9 @@ package com.seucaio.unideas.feature.home.features.home.viewmodel
 
 import com.seucaio.unideas.domain.model.ItemType
 
-/** User interactions on the "Todos os itens" tab. */
 sealed interface HomeEvent {
+
+    //region normal events
 
     data class OnTabChanged(val type: ItemType) : HomeEvent
 
@@ -22,4 +23,28 @@ sealed interface HomeEvent {
     data class OnAddClicked(val type: ItemType) : HomeEvent
 
     data object OnRetryClicked : HomeEvent
+
+    //endregion
+
+    //region selection events
+
+    sealed interface SelectionEvent : HomeEvent
+
+    data class OnItemLongPressed(val itemId: Long) : SelectionEvent
+
+    data class OnItemSelectionToggled(val itemId: Long) : SelectionEvent
+
+    data object OnSelectionCleared : SelectionEvent
+
+    data object OnDeleteSelectedClicked : SelectionEvent
+
+    data object OnDeleteSelectedConfirmClicked : SelectionEvent
+
+    data object OnDeleteDialogDismissed : SelectionEvent
+
+    data object OnSelectAllClicked : SelectionEvent
+
+    data class OnGroupSelectAllClicked(val sectionId: Long?) : SelectionEvent
+
+    //endregion
 }

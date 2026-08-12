@@ -37,4 +37,13 @@
         <item quantity="one">Overdue by %d day</item>
         <item quantity="other">Overdue by %d days</item>
     </plurals>
+    <string name="home_selection_clear">Clear selection</string>
+    <string name="home_selection_delete">Delete</string>
+    <string name="home_selection_select_all">Select all</string>
+    <plurals name="home_selection_count">
+        <item quantity="one">%d item selected</item>
+        <item quantity="other">%d items selected</item>
+    </plurals>
+    <string name="home_delete_selected_title">Delete items</string>
+    <string name="home_delete_selected_message">This action cannot be undone.</string>
 </resources>

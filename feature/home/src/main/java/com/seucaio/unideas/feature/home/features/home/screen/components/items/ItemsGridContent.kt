@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -32,6 +32,7 @@ import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
 /** Column count for [ItemsGridContent]'s grid. */
@@ -45,6 +46,7 @@ private data class GridGroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
+    val homeMode: HomeMode,
 )
 
 /**
@@ -67,6 +69,7 @@ internal fun ItemsGridContent(
     sectionFilter: Long?,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -84,6 +87,7 @@ internal fun ItemsGridContent(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
+        homeMode = homeMode,
     )
 
     val pinnedGroups = if (showHeaders) itemsState.groupedTabItems.filter { it.isPinned } else emptyList()
@@ -117,6 +121,7 @@ private fun LazyGridScope.sectionGroup(
 
     if (context.showHeaders) {
         item(key = "group-$key", span = { GridItemSpan(ITEMS_GRID_COLUMNS) }) {
+            val homeMode = context.homeMode
             CollapsibleGroupHeader(
                 title = group.sectionName ?: context.noSectionLabel,
                 itemCount = group.items.size,
@@ -129,15 +134,22 @@ private fun LazyGridScope.sectionGroup(
                     }
                 },
                 indentStart = indentStart,
+                isSelected = when (homeMode) {
+                    is HomeMode.Selection -> group.items.all { it.id in homeMode.selectedItemIds }
+                    HomeMode.Normal -> null
+                },
+                onToggleSelection = { context.onEvent(HomeEvent.OnGroupSelectAllClicked(group.sectionId)) },
             )
         }
     }
     if (!context.showHeaders || expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemCard(
-                ui = item.toListItemUi(context.checkContentDescription),
+                ui = item.toListItemUi(context.checkContentDescription, context.homeMode),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
+                onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(8.dp),
             )
@@ -145,20 +157,41 @@ private fun LazyGridScope.sectionGroup(
     }
 }
 
-internal class ItemsGridPreviewProvider : PreviewParameterProvider<HomeItemsState> {
-    override val values = HomePreviewProvider().values
+internal data class ItemsGridPreviewScenario(
+    val itemsState: HomeItemsState,
+    val homeMode: HomeMode = HomeMode.Normal,
+)
+
+internal class ItemsGridPreviewProvider : PreviewParameterProvider<ItemsGridPreviewScenario> {
+    private val itemsStates = HomePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
+        .toList()
+
+    override val values: Sequence<ItemsGridPreviewScenario> = itemsStates
+        .map { ItemsGridPreviewScenario(it) }
+        .plus(
+            ItemsGridPreviewScenario(
+                itemsState = itemsStates.first(),
+                homeMode = HomeMode.Selection(itemsStates.first().tabItems.take(2).map { it.id }.toSet()),
+            ),
+        )
+        .asSequence()
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) scenario: ItemsGridPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {})
+            ItemsGridContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                onEvent = {},
+                homeMode = scenario.homeMode,
+            )
         }
     }
 }
@@ -166,11 +199,16 @@ private fun ItemsGridContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsGridContentWithFooterPreview(
-    @PreviewParameter(ItemsGridPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsGridPreviewProvider::class) scenario: ItemsGridPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsGridContent(itemsState = itemsState, sectionFilter = null, onEvent = {}) {
+            ItemsGridContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                onEvent = {},
+                homeMode = scenario.homeMode,
+            ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

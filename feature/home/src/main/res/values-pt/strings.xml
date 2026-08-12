@@ -37,4 +37,13 @@
         <item quantity="one">Venceu há %d dia</item>
         <item quantity="other">Venceu há %d dias</item>
     </plurals>
+    <string name="home_selection_clear">Limpar seleção</string>
+    <string name="home_selection_delete">Excluir</string>
+    <string name="home_selection_select_all">Selecionar todos</string>
+    <plurals name="home_selection_count">
+        <item quantity="one">%d item selecionado</item>
+        <item quantity="other">%d itens selecionados</item>
+    </plurals>
+    <string name="home_delete_selected_title">Excluir itens</string>
+    <string name="home_delete_selected_message">Esta ação não pode ser desfeita.</string>
 </resources>

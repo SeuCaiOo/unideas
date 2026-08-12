@@ -1,16 +1,16 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.runtime.Composable
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.lists.ListItemUi
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 
-/**
- * Maps [Item] to `:uds`'s domain-agnostic [ListItemUi], so screens can call `:uds`'s
- * `ListItemRow` directly instead of going through a feature-local wrapper composable.
- */
 @Composable
-internal fun Item.toListItemUi(checkContentDescription: String): ListItemUi = ListItemUi(
+internal fun Item.toListItemUi(
+    checkContentDescription: String,
+    homeMode: HomeMode = HomeMode.Normal
+): ListItemUi = ListItemUi(
     id = id,
     title = title,
     meta = if (isRecurring) recurrence.summaryLabel(dueDate) else null,
@@ -20,4 +20,8 @@ internal fun Item.toListItemUi(checkContentDescription: String): ListItemUi = Li
     badgeLabel = dueBadgeLabel(this),
     badgeColor = dueBadgeColor(this),
     checkContentDescription = checkContentDescription,
+    isSelected = when (homeMode) {
+        is HomeMode.Selection -> id in homeMode.selectedItemIds
+        HomeMode.Normal -> null
+    },
 )

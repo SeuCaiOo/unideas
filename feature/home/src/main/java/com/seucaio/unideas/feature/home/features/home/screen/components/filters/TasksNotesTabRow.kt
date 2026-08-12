@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.filters
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable

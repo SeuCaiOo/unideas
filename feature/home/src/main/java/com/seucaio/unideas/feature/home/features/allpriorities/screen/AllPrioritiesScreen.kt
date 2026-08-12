@@ -30,7 +30,7 @@ import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrio
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesUiAction
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesUiState
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesViewModel
-import com.seucaio.unideas.feature.home.features.home.screen.components.toListItemUi
+import com.seucaio.unideas.feature.home.features.home.screen.components.items.toListItemUi
 import org.koin.androidx.compose.koinViewModel
 
 @Composable

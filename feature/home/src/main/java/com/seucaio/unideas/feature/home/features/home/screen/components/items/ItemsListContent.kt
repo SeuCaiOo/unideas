@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.home.features.home.screen.components
+package com.seucaio.unideas.feature.home.features.home.screen.components.items
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,6 +34,7 @@ import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.screen.HomePreviewProvider
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
 /**
@@ -61,6 +62,7 @@ internal fun ItemsListContent(
     hasAnyItem: Boolean,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     val checkContentDescription = stringResource(R.string.home_item_recurring_content_description)
@@ -73,6 +75,7 @@ internal fun ItemsListContent(
             checkContentDescription = checkContentDescription,
             onEvent = onEvent,
             modifier = modifier,
+            homeMode = homeMode,
             footer = footer,
         )
     } else {
@@ -89,9 +92,11 @@ internal fun ItemsListContent(
             },
             itemContent = { item ->
                 ListItemRow(
-                    ui = item.toListItemUi(checkContentDescription),
+                    ui = item.toListItemUi(checkContentDescription, homeMode),
                     onClick = { onEvent(HomeEvent.OnItemClicked(item.id)) },
+                    onLongClick = { onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                     onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                    onToggleSelection = { onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             },
@@ -108,6 +113,7 @@ private data class GroupRenderContext(
     val collapsedKeys: Set<Long>,
     val onToggleCollapse: (Long) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
+    val homeMode: HomeMode,
 )
 
 @Composable
@@ -117,6 +123,7 @@ private fun GroupedItemsList(
     checkContentDescription: String,
     onEvent: (HomeEvent) -> Unit,
     modifier: Modifier = Modifier,
+    homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
     var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
@@ -131,6 +138,7 @@ private fun GroupedItemsList(
             collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
         },
         onEvent = onEvent,
+        homeMode = homeMode,
     )
 
     LazyColumn(modifier = modifier) {
@@ -154,6 +162,7 @@ private fun LazyListScope.sectionGroup(
     val expanded = key !in context.collapsedKeys
 
     item(key = "group-$key") {
+        val homeMode = context.homeMode
         CollapsibleGroupHeader(
             title = group.sectionName ?: context.noSectionLabel,
             itemCount = group.items.size,
@@ -166,14 +175,21 @@ private fun LazyListScope.sectionGroup(
                 }
             },
             indentStart = indentStart,
+            isSelected = when (homeMode) {
+                is HomeMode.Selection -> group.items.all { it.id in homeMode.selectedItemIds }
+                HomeMode.Normal -> null
+            },
+            onToggleSelection = { context.onEvent(HomeEvent.OnGroupSelectAllClicked(group.sectionId)) },
         )
     }
     if (expanded) {
         items(group.items, key = { it.id }) { item ->
             ListItemRow(
-                ui = item.toListItemUi(context.checkContentDescription),
+                ui = item.toListItemUi(context.checkContentDescription, context.homeMode),
                 onClick = { context.onEvent(HomeEvent.OnItemClicked(item.id)) },
+                onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
+                onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -181,20 +197,42 @@ private fun LazyListScope.sectionGroup(
     }
 }
 
-internal class ItemsListPreviewProvider : PreviewParameterProvider<HomeItemsState> {
-    override val values = HomePreviewProvider().values
+internal data class ItemsListPreviewScenario(
+    val itemsState: HomeItemsState,
+    val homeMode: HomeMode = HomeMode.Normal,
+)
+
+internal class ItemsListPreviewProvider : PreviewParameterProvider<ItemsListPreviewScenario> {
+    private val itemsStates = HomePreviewProvider().values
         .map { it.itemsState }
         .filter { it.tabItems.isNotEmpty() }
+        .toList()
+
+    override val values: Sequence<ItemsListPreviewScenario> = itemsStates
+        .map { ItemsListPreviewScenario(it) }
+        .plus(
+            ItemsListPreviewScenario(
+                itemsState = itemsStates.first(),
+                homeMode = HomeMode.Selection(itemsStates.first().groupedTabItems.first().items.map { it.id }.toSet(),),
+            ),
+        )
+        .asSequence()
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemsListContentPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) scenario: ItemsListPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {})
+            ItemsListContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                hasAnyItem = true,
+                onEvent = {},
+                homeMode = scenario.homeMode,
+            )
         }
     }
 }
@@ -202,11 +240,17 @@ private fun ItemsListContentPreview(
 @PreviewLightDark
 @Composable
 private fun ItemsListContentWithFooterPreview(
-    @PreviewParameter(ItemsListPreviewProvider::class) itemsState: HomeItemsState,
+    @PreviewParameter(ItemsListPreviewProvider::class) scenario: ItemsListPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsListContent(itemsState = itemsState, sectionFilter = null, hasAnyItem = true, onEvent = {}) {
+            ItemsListContent(
+                itemsState = scenario.itemsState,
+                sectionFilter = null,
+                hasAnyItem = true,
+                onEvent = {},
+                homeMode = scenario.homeMode,
+            ) {
                 NavRow(
                     icon = Icons.AutoMirrored.Outlined.List,
                     label = "View all items",

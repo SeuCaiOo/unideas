@@ -24,4 +24,5 @@ internal fun Item.toListItemUi(
         is HomeMode.Selection -> id in homeMode.selectedItemIds
         HomeMode.Normal -> null
     },
+    isPinned = isPinned,
 )

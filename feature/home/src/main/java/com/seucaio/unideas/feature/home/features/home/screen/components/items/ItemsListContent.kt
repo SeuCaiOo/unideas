@@ -78,6 +78,7 @@ internal fun ItemsListContent(
                     onLongClick = { onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                     onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
                     onToggleSelection = { onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
+                    onTogglePin = { onEvent(HomeEvent.OnItemPinToggled(item.id, !item.isPinned)) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             },
@@ -171,6 +172,7 @@ private fun LazyListScope.sectionGroup(
                 onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
                 onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
+                onTogglePin = { context.onEvent(HomeEvent.OnItemPinToggled(item.id, !item.isPinned)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )

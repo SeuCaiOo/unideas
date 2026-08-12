@@ -13,4 +13,5 @@ data class ListItemUi(
     val badgeColor: Color,
     val checkContentDescription: String,
     val isSelected: Boolean? = null,
+    val isPinned: Boolean = false,
 )

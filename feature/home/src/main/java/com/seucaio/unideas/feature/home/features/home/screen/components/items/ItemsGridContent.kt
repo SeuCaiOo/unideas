@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.lists.CollapsibleGroupHeader
 import com.seucaio.unideas.ds.components.lists.GroupHeader
-import com.seucaio.unideas.ds.components.lists.ListItemCard
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemCard
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
 import com.seucaio.unideas.feature.home.R

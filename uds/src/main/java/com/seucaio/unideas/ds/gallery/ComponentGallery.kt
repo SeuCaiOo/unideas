@@ -61,12 +61,12 @@ import com.seucaio.unideas.ds.components.inputs.SelectionBottomSheet
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.lists.ActionRow
 import com.seucaio.unideas.ds.components.lists.GroupHeader
-import com.seucaio.unideas.ds.components.lists.ListItemRow
-import com.seucaio.unideas.ds.components.lists.ListItemUi
 import com.seucaio.unideas.ds.components.lists.ManageListRow
 import com.seucaio.unideas.ds.components.lists.MetaChipsRow
 import com.seucaio.unideas.ds.components.lists.MetaRow
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
+import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.ds.components.navigation.TabItem
 import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi

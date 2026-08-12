@@ -26,8 +26,8 @@ import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.lists.CollapsibleGroupHeader
 import com.seucaio.unideas.ds.components.lists.GroupHeader
 import com.seucaio.unideas.ds.components.lists.ListContent
-import com.seucaio.unideas.ds.components.lists.ListItemRow
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
 import com.seucaio.unideas.feature.home.R
@@ -39,7 +39,7 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
 /**
  * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
- * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent]. Called from
+ * [com.seucaio.unideas.ds.components.lists.model.ListItemUi]/dispatches [HomeEvent]. Called from
  * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [HomeItemsState.tabItems] is
  * non-empty, [ItemsContent] already handles the empty state. [ItemsGridContent] is the
  * [ItemsViewMode.GRID] sibling.

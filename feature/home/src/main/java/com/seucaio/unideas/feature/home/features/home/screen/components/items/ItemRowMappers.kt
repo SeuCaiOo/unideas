@@ -3,7 +3,7 @@ package com.seucaio.unideas.feature.home.features.home.screen.components.items
 import androidx.compose.runtime.Composable
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.ds.components.lists.ListItemUi
+import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 
 @Composable

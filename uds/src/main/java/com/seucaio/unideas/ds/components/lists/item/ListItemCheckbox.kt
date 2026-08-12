@@ -1,4 +1,4 @@
-package com.seucaio.unideas.ds.components.lists
+package com.seucaio.unideas.ds.components.lists.item
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Flag
@@ -73,6 +74,7 @@ fun HomeScreen(
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val selectedItemIds by viewModel.selectedItemIds.collectAsStateWithLifecycle()
+    val isSelectionMode by viewModel.isSelectionMode.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
@@ -94,6 +96,7 @@ fun HomeScreen(
         filterState = filterState,
         itemsState = itemsState,
         selectedItemIds = selectedItemIds,
+        isSelectionMode = isSelectionMode,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
@@ -109,6 +112,7 @@ private fun HomeContent(
     filterState: FilterState,
     itemsState: HomeItemsState,
     selectedItemIds: Set<Long>,
+    isSelectionMode: Boolean,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
@@ -119,7 +123,8 @@ private fun HomeContent(
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val isSelectionMode = selectedItemIds.isNotEmpty()
+    val allSelected = itemsState.tabItems.isNotEmpty() &&
+        itemsState.tabItems.map { it.id }.toSet() == selectedItemIds
 
     LaunchedEffect(Unit) {
         if (!ColdStartPriorityPrompt.shown) {
@@ -147,6 +152,16 @@ private fun HomeContent(
                     ),
                     onNavigateBack = { onEvent(HomeEvent.OnSelectionCleared) },
                     navigationBackIcon = Icons.Default.Close,
+                    actions = {
+                        IconButton(onClick = { onEvent(HomeEvent.OnSelectAllClicked) }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                                contentDescription = stringResource(
+                                    if (allSelected) R.string.home_selection_clear else R.string.home_selection_select_all,
+                                ),
+                            )
+                        }
+                    },
                 )
             } else {
                 UnideasTopBar(
@@ -289,6 +304,7 @@ private fun HomeScreenPreview(
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             selectedItemIds = emptySet(),
+            isSelectionMode = false,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
@@ -310,6 +326,7 @@ private fun HomeScreenSelectionModePreview(
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             selectedItemIds = fixture.itemsState.tabItems.take(2).map { it.id }.toSet(),
+            isSelectionMode = true,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},

@@ -38,5 +38,7 @@ sealed interface HomeEvent {
 
     data object OnDeleteSelectedClicked : SelectionEvent
 
+    data object OnSelectAllClicked : SelectionEvent
+
     //endregion
 }

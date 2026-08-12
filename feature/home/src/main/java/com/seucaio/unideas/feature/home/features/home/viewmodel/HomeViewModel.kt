@@ -66,7 +66,12 @@ class HomeViewModel(
 
     //region selection mode
 
-    // Event-driven, no query behind it — selection mode is simply "selectedItemIds is not empty".
+    // isSelectionMode is tracked separately from selectedItemIds — "select all" toggling back to
+    // zero selected must not read the same as pressing X (OnSelectionCleared), which is the only
+    // event that actually exits the mode.
+    private val _isSelectionMode = MutableStateFlow(false)
+    val isSelectionMode: StateFlow<Boolean> = _isSelectionMode.asStateFlow()
+
     private val _selectedItemIds = MutableStateFlow(emptySet<Long>())
     val selectedItemIds: StateFlow<Set<Long>> = _selectedItemIds.asStateFlow()
 
@@ -118,18 +123,28 @@ class HomeViewModel(
 
     private fun handleSelectionEvent(event: HomeEvent.SelectionEvent) {
         when (event) {
-            is HomeEvent.OnItemLongPressed -> toggleSelection(event.itemId)
+            is HomeEvent.OnItemLongPressed -> {
+                _isSelectionMode.value = true
+                toggleSelection(event.itemId)
+            }
             is HomeEvent.OnItemSelectionToggled -> toggleSelection(event.itemId)
-            is HomeEvent.OnSelectionCleared -> _selectedItemIds.value = emptySet()
+            is HomeEvent.OnSelectionCleared -> {
+                _isSelectionMode.value = false
+                _selectedItemIds.value = emptySet()
+            }
             is HomeEvent.OnDeleteSelectedClicked -> handleDeleteSelected()
+            is HomeEvent.OnSelectAllClicked -> {
+                val allIds = currentItems.map { it.id }.toSet()
+                _selectedItemIds.value = if (_selectedItemIds.value == allIds) emptySet() else allIds
+            }
         }
     }
 
     private fun handleItemClicked(itemId: Long) {
-        if (_selectedItemIds.value.isEmpty()) {
-            sendUiAction(HomeUiAction.NavigateToDetail(itemId))
-        } else {
+        if (_isSelectionMode.value) {
             toggleSelection(itemId)
+        } else {
+            sendUiAction(HomeUiAction.NavigateToDetail(itemId))
         }
     }
 
@@ -142,7 +157,10 @@ class HomeViewModel(
     private fun handleDeleteSelected() = viewModelScope.launch {
         val ids = _selectedItemIds.value.toList()
         homeUseCase.deleteItems(ids)
-            .onSuccess { _selectedItemIds.value = emptySet() }
+            .onSuccess {
+                _isSelectionMode.value = false
+                _selectedItemIds.value = emptySet()
+            }
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 

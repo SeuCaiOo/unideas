@@ -57,7 +57,10 @@ internal fun ItemsContent(
     }
 }
 
-@Deprecated("Avoid — grid layout, don't extend or use.")
+@Deprecated(
+    "Grid layout kept breaking visually on real devices and was pulled from the UI. Use the " +
+        "ItemsContent(sectionFilter, ...) overload instead.",
+)
 @Composable
 internal fun ItemsContentViewMode(
     itemsState: HomeItemsState,

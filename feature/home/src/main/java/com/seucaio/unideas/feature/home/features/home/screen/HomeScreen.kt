@@ -211,9 +211,7 @@ private fun HomeSuccessBody(
             sectionFilter = filterState.sectionFilter,
             tagFilters = filterState.tagFilters,
             onSectionFilterChange = { onEvent(HomeEvent.OnSectionFilterChanged(it)) },
-            onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) },
-            viewMode = filterState.viewMode,
-            onViewModeChange = { onEvent(HomeEvent.OnViewModeChanged(it)) },
+            onTagFilterToggle = { onEvent(HomeEvent.OnTagFilterToggled(it)) }
         )
         ItemsContent(
             itemsState = itemsState,

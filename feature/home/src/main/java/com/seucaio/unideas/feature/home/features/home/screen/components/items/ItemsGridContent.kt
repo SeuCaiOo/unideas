@@ -49,7 +49,10 @@ private data class GridGroupRenderContext(
     val homeMode: HomeMode,
 )
 
-@Deprecated("Avoid — grid layout, don't extend or use.")
+@Deprecated(
+    "Grid layout kept breaking visually on real devices and was pulled from the UI " +
+        "(no way to reach it from ItemsFiltersBar anymore). Use ItemsListContent instead.",
+)
 @Composable
 internal fun ItemsGridContent(
     itemsState: HomeItemsState,

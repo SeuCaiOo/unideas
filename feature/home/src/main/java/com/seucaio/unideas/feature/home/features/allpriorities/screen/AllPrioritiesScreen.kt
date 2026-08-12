@@ -23,7 +23,7 @@ import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.lists.ListItemRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesEvent

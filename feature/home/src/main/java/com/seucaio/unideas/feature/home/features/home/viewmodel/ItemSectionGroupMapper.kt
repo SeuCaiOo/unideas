@@ -3,12 +3,6 @@ package com.seucaio.unideas.feature.home.features.home.viewmodel
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.Section
 
-/**
- * Groups by [Item.sectionId], ordered to match [sections] (creation order from
- * [com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase]), with an unsectioned bucket
- * ([ItemSectionGroup.sectionName] `null`) appended last if any item has no section. Sections with
- * no items in this list are omitted — an empty group would have nothing to render.
- */
 internal fun List<Item>.groupBySection(sections: List<Section>): List<ItemSectionGroup> {
     val bySectionId = groupBy { it.sectionId }
     val named = sections.mapNotNull { section ->
@@ -16,13 +10,25 @@ internal fun List<Item>.groupBySection(sections: List<Section>): List<ItemSectio
             ItemSectionGroup(
                 sectionId = section.id,
                 sectionName = section.name,
-                items = items,
+                items = items.sortedByDescending { it.isPinned },
                 isPinned = section.isPinned
             )
         }
     }
-    val unsectioned = bySectionId[null]?.let { items ->
-        ItemSectionGroup(sectionId = null, sectionName = null, items = items)
-    }
-    return if (unsectioned != null) named + unsectioned else named
+    val unsectionedItems = bySectionId[null].orEmpty()
+    val pinnedItemsGroup =
+        unsectionedItems.filter { it.isPinned }.takeIf { it.isNotEmpty() }?.let { items ->
+            ItemSectionGroup(
+                sectionId = null,
+                sectionName = null,
+                items = items,
+                isPinned = true,
+                isPinnedItemsGroup = true
+            )
+        }
+    val unsectioned =
+        unsectionedItems.filterNot { it.isPinned }.takeIf { it.isNotEmpty() }?.let { items ->
+            ItemSectionGroup(sectionId = null, sectionName = null, items = items)
+        }
+    return listOfNotNull(pinnedItemsGroup) + named + listOfNotNull(unsectioned)
 }

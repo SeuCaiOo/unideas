@@ -104,6 +104,15 @@ class ItemMapperTest {
     }
 
     @Test
+    fun `toEntity and toDomain round-trip preserves isPinned`() {
+        val original = ItemStub.task(isPinned = true)
+
+        val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
+
+        assertEquals(true, row.toDomain().isPinned)
+    }
+
+    @Test
     fun `round-trip preserves nulls for a minimal note`() {
         val original = ItemStub.note()
 

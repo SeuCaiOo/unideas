@@ -29,6 +29,33 @@ internal fun ItemsFiltersBar(
     tagFilters: Set<Long>,
     onSectionFilterChange: (Long?) -> Unit,
     onTagFilterToggle: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Filters(
+            sections = sections,
+            tags = tags,
+            sectionFilter = sectionFilter,
+            tagFilters = tagFilters,
+            onSectionFilterChange = onSectionFilterChange,
+            onTagFilterToggle = onTagFilterToggle,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Deprecated(
+    "Grid layout kept breaking visually on real devices and was pulled from the UI. Use the " +
+        "ItemsFiltersBar overload without viewMode/onViewModeChange instead.",
+)
+@Composable
+internal fun ItemsFiltersBarViewMode(
+    sections: List<Section>,
+    tags: List<Tag>,
+    sectionFilter: Long?,
+    tagFilters: Set<Long>,
+    onSectionFilterChange: (Long?) -> Unit,
+    onTagFilterToggle: (Long) -> Unit,
     viewMode: ItemsViewMode,
     onViewModeChange: (ItemsViewMode) -> Unit,
     modifier: Modifier = Modifier,
@@ -71,9 +98,7 @@ private fun ItemsFiltersBarPreview() {
                 sectionFilter = null,
                 tagFilters = emptySet(),
                 onSectionFilterChange = {},
-                onTagFilterToggle = {},
-                viewMode = ItemsViewMode.LIST,
-                onViewModeChange = {},
+                onTagFilterToggle = {}
             )
         }
     }

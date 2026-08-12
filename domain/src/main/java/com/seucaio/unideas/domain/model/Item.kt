@@ -16,6 +16,7 @@ import java.time.LocalTime
  * @property completedAt non-null means completed (only meaningful for [ItemType.TASK]).
  * @property lastCompletedScheduledDate the `dueDate` of a recurring task's most recently
  *   completed occurrence — only meaningful when [isRecurring]; see [isCompleted].
+ * @property isPinned when true, appears in the priority panel regardless of [urgency].
  */
 data class Item(
     val id: Long = 0L,
@@ -30,6 +31,7 @@ data class Item(
     val completedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
     val lastCompletedScheduledDate: LocalDate? = null,
+    val isPinned: Boolean = false,
     val tags: List<Tag> = emptyList(),
 ) {
     /**

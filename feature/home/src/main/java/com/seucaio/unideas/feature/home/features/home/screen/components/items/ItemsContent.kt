@@ -28,22 +28,46 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemsViewMode
  */
 internal const val NO_SECTION_KEY = -1L
 
+/** Render key for the synthetic "pinned items without a section" group — distinct from [NO_SECTION_KEY], since both real groups have `sectionId = null`. */
+internal const val PINNED_ITEMS_GROUP_KEY = -2L
+
 /**
  * Extra start indent for a pinned group's [CollapsibleGroupHeader], nesting it under the
  * emphasized "Pinned" [GroupHeader] above it.
  */
 internal val PINNED_INDENT = 12.dp
 
-/**
- * Home's tab-items content: the one empty-state check both view modes need, then dispatch by
- * [FilterState.viewMode] to [ItemsListContent] or [ItemsGridContent] — each owns its own
- * layout/grouping rendering (including per-item spacing — the caller doesn't pass padding down),
- * this only decides which one runs. [footer], if present, renders after the last item/group in
- * either mode — a plain `@Composable`, each child adapts it to its own
- * `LazyColumn`/`LazyVerticalGrid` internally.
- */
 @Composable
 internal fun ItemsContent(
+    itemsState: HomeItemsState,
+    sectionFilter: Long?,
+    hasAnyItem: Boolean,
+    onEvent: (HomeEvent) -> Unit,
+    modifier: Modifier = Modifier,
+    homeMode: HomeMode = HomeMode.Normal,
+    footer: (@Composable () -> Unit)? = null,
+) {
+    if (!itemsState.isLoaded) return
+
+    ItemsOrEmptyContent(itemsState, hasAnyItem, modifier) {
+        ItemsListContent(
+            itemsState = itemsState,
+            sectionFilter = sectionFilter,
+            hasAnyItem = hasAnyItem,
+            onEvent = onEvent,
+            modifier = Modifier.fillMaxSize(),
+            homeMode = homeMode,
+            footer = footer,
+        )
+    }
+}
+
+@Deprecated(
+    "Grid layout kept breaking visually on real devices and was pulled from the UI. Use the " +
+        "ItemsContent(sectionFilter, ...) overload instead.",
+)
+@Composable
+internal fun ItemsContentViewMode(
     itemsState: HomeItemsState,
     filterState: FilterState,
     hasAnyItem: Boolean,
@@ -52,11 +76,8 @@ internal fun ItemsContent(
     homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        if (itemsState.tabItems.isEmpty()) {
-            val emptyMessageRes = if (hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
-            UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
-        } else if (filterState.viewMode == ItemsViewMode.GRID) {
+    ItemsOrEmptyContent(itemsState, hasAnyItem, modifier) {
+        if (filterState.viewMode == ItemsViewMode.GRID) {
             ItemsGridContent(
                 itemsState = itemsState,
                 sectionFilter = filterState.sectionFilter,
@@ -79,11 +100,23 @@ internal fun ItemsContent(
     }
 }
 
-/**
- * Unfiltered — unlike [ItemsListPreviewProvider]/[ItemsGridPreviewProvider], includes the empty
- * states too: [ItemsContent] is the only one of the three that still renders them (it routes an
- * empty [HomeItemsState.tabItems] away from both children before they ever see it).
- */
+@Composable
+private fun ItemsOrEmptyContent(
+    itemsState: HomeItemsState,
+    hasAnyItem: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        if (itemsState.tabItems.isEmpty()) {
+            val emptyMessageRes = if (hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
+            UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
+        } else {
+            content()
+        }
+    }
+}
+
 internal data class ItemsContentPreviewScenario(
     val fixture: HomePreviewFixture,
     val homeMode: HomeMode = HomeMode.Normal,
@@ -108,12 +141,12 @@ internal class ItemsContentPreviewProvider : PreviewParameterProvider<ItemsConte
 
 @PreviewLightDark
 @Composable
-private fun ItemsContentListPreview(
+private fun ItemsContentViewModeListPreview(
     @PreviewParameter(ItemsContentPreviewProvider::class) scenario: ItemsContentPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsContent(
+            ItemsContentViewMode(
                 itemsState = scenario.fixture.itemsState,
                 filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.LIST),
                 hasAnyItem = scenario.fixture.hasAnyItem,
@@ -126,12 +159,12 @@ private fun ItemsContentListPreview(
 
 @PreviewLightDark
 @Composable
-private fun ItemsContentGridPreview(
+private fun ItemsContentViewModeGridPreview(
     @PreviewParameter(ItemsContentPreviewProvider::class) scenario: ItemsContentPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemsContent(
+            ItemsContentViewMode(
                 itemsState = scenario.fixture.itemsState,
                 filterState = scenario.fixture.filterState.copy(viewMode = ItemsViewMode.GRID),
                 hasAnyItem = scenario.fixture.hasAnyItem,

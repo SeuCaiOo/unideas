@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -56,6 +54,7 @@ class HomeViewModel(
             HomeItemsState(
                 tabItems = tabItems,
                 groupedTabItems = tabItems.groupBySection(filter.availableSections),
+                isLoaded = true,
             )
         }.stateIn(viewModelScope, WhileSubscribed(5_000), HomeItemsState())
 
@@ -80,10 +79,9 @@ class HomeViewModel(
 
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
-            homeUseCase.hasAnyItem()
-                .map<Boolean, HomeUiState> { HomeUiState.Success(hasAnyItem = it) }
-                .onStart { emit(HomeUiState.Loading) }
-                .catch { emit(HomeUiState.Error(R.string.home_load_error)) }
+            combine(homeUseCase.hasAnyItem(), itemsState) { hasAnyItem, items ->
+                if (items.isLoaded) HomeUiState.Success(hasAnyItem = hasAnyItem) else HomeUiState.Loading
+            }.catch { emit(HomeUiState.Error(R.string.home_load_error)) }
         }
         .stateIn(viewModelScope, WhileSubscribed(5_000), HomeUiState.Loading)
 
@@ -108,6 +106,7 @@ class HomeViewModel(
             is HomeEvent.OnTabChanged -> _filterState.update { it.changeTab(event.type) }
             is HomeEvent.OnSectionFilterChanged -> _filterState.update { it.sectionFilter(event.sectionId) }
             is HomeEvent.OnSectionPinToggled -> handleSectionPinToggle(event.sectionId, event.isPinned)
+            is HomeEvent.OnItemPinToggled -> handleItemPinToggle(event.itemId, event.isPinned)
             is HomeEvent.OnTagFilterToggled -> _filterState.update { it.toggleTag(event.tagId) }
             is HomeEvent.OnViewModeChanged -> _filterState.update { it.toggleViewMode(event.viewMode) }
             is HomeEvent.OnItemClicked -> handleItemClicked(event.itemId)
@@ -174,6 +173,11 @@ class HomeViewModel(
     private fun handleSectionPinToggle(sectionId: Long, isPinned: Boolean) = viewModelScope.launch {
         homeUseCase.setSectionPinned(sectionId, isPinned)
             .onSuccess { loadReferenceData() }
+            .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleItemPinToggle(itemId: Long, isPinned: Boolean) = viewModelScope.launch {
+        homeUseCase.setItemPinned(itemId, isPinned)
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 

@@ -68,6 +68,7 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
                         ItemSectionGroup(home.id, home.name, homeItems),
                         ItemSectionGroup(sectionId = null, sectionName = null, items = unsectionedItems),
                     ),
+                    isLoaded = true,
                 ),
                 filterState = FilterState(
                     activeTab = ItemType.TASK,
@@ -92,6 +93,7 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
                 itemsState = HomeItemsState(
                     tabItems = filteredItems,
                     groupedTabItems = listOf(ItemSectionGroup(home.id, home.name, filteredItems)),
+                    isLoaded = true,
                 ),
                 filterState = FilterState(
                     activeTab = ItemType.TASK,
@@ -106,7 +108,11 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
         },
         // filtered-to-zero: user has items elsewhere, just none match this tab/filter
         HomePreviewFixture(
-            itemsState = HomeItemsState(tabItems = emptyList(), groupedTabItems = emptyList()),
+            itemsState = HomeItemsState(
+                tabItems = emptyList(),
+                groupedTabItems = emptyList(),
+                isLoaded = true
+            ),
             filterState = FilterState(
                 activeTab = ItemType.NOTE,
                 sectionFilter = 1L,
@@ -119,7 +125,7 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
         ),
         // true first-run empty state: no items anywhere in the app
         HomePreviewFixture(
-            itemsState = HomeItemsState(),
+            itemsState = HomeItemsState(isLoaded = true),
             filterState = FilterState(),
             hasAnyItem = false,
         ),

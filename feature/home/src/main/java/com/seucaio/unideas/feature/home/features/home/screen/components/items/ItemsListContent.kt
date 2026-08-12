@@ -21,13 +21,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.lists.CollapsibleGroupHeader
 import com.seucaio.unideas.ds.components.lists.GroupHeader
 import com.seucaio.unideas.ds.components.lists.ListContent
-import com.seucaio.unideas.ds.components.lists.ListItemRow
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.pinnedContainerColor
 import com.seucaio.unideas.feature.home.R
@@ -37,24 +36,6 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
-/**
- * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
- * [com.seucaio.unideas.ds.components.lists.ListItemUi]/dispatches [HomeEvent]. Called from
- * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [HomeItemsState.tabItems] is
- * non-empty, [ItemsContent] already handles the empty state. [ItemsGridContent] is the
- * [ItemsViewMode.GRID] sibling.
- *
- * When [sectionFilter] is `null`, renders [HomeItemsState.groupedTabItems] instead — pinned Sections'
- * groups first, under an emphasized "Pinned" [GroupHeader] divider (indented further than usual,
- * so they read as nested under it, not a sibling section at the same level), then the rest with no
- * divider at all — an "Others" label added no real information and, styled like a section header,
- * was mistaken for an empty, clickable section on first look. Each group keeps its own
- * collapsible header and rows. Collapse state is local UI-only state (not in the ViewModel —
- * purely cosmetic, no business logic, nothing to test at the VM level per `mvi.md`). [footer], if
- * present, renders as the list's last row — a plain `@Composable` so callers (and [ItemsContent])
- * don't need to know this renders on a `LazyColumn` (as opposed to [ItemsGridContent]'s
- * `LazyVerticalGrid`).
- */
 @Composable
 internal fun ItemsListContent(
     itemsState: HomeItemsState,
@@ -97,6 +78,7 @@ internal fun ItemsListContent(
                     onLongClick = { onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                     onToggleCheck = { onEvent(HomeEvent.OnCompleteClicked(item.id)) },
                     onToggleSelection = { onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
+                    onTogglePin = { onEvent(HomeEvent.OnItemPinToggled(item.id, !item.isPinned)) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             },
@@ -109,9 +91,10 @@ internal fun ItemsListContent(
 /** Everything a rendered [ItemSectionGroup] needs besides the group itself — shared across all groups in one list. */
 private data class GroupRenderContext(
     val noSectionLabel: String,
+    val pinnedItemsLabel: String,
     val checkContentDescription: String,
-    val collapsedKeys: Set<Long>,
-    val onToggleCollapse: (Long) -> Unit,
+    val expandedOverrides: Map<Long, Boolean>,
+    val onToggleCollapse: (key: Long, defaultExpanded: Boolean) -> Unit,
     val onEvent: (HomeEvent) -> Unit,
     val homeMode: HomeMode,
 )
@@ -126,16 +109,18 @@ private fun GroupedItemsList(
     homeMode: HomeMode = HomeMode.Normal,
     footer: (@Composable () -> Unit)? = null,
 ) {
-    var collapsedKeys by remember { mutableStateOf(emptySet<Long>()) }
+    var expandedOverrides by remember { mutableStateOf(emptyMap<Long, Boolean>()) }
     val pinnedGroups = groups.filter { it.isPinned }
     val otherGroups = groups.filterNot { it.isPinned }
     val pinnedLabel = stringResource(R.string.home_group_pinned)
     val context = GroupRenderContext(
         noSectionLabel = noSectionLabel,
+        pinnedItemsLabel = stringResource(R.string.home_group_pinned_items),
         checkContentDescription = checkContentDescription,
-        collapsedKeys = collapsedKeys,
-        onToggleCollapse = { key ->
-            collapsedKeys = if (key in collapsedKeys) collapsedKeys - key else collapsedKeys + key
+        expandedOverrides = expandedOverrides,
+        onToggleCollapse = { key, defaultExpanded ->
+            val currentlyExpanded = expandedOverrides[key] ?: defaultExpanded
+            expandedOverrides = expandedOverrides + (key to !currentlyExpanded)
         },
         onEvent = onEvent,
         homeMode = homeMode,
@@ -158,16 +143,16 @@ private fun LazyListScope.sectionGroup(
     context: GroupRenderContext,
     indentStart: Dp = 0.dp,
 ) {
-    val key = group.sectionId ?: NO_SECTION_KEY
-    val expanded = key !in context.collapsedKeys
+    val key = if (group.isPinnedItemsGroup) PINNED_ITEMS_GROUP_KEY else group.sectionId ?: NO_SECTION_KEY
+    val expanded = context.expandedOverrides[key] ?: group.isPinned
 
     item(key = "group-$key") {
         val homeMode = context.homeMode
         CollapsibleGroupHeader(
-            title = group.sectionName ?: context.noSectionLabel,
+            title = if (group.isPinnedItemsGroup) context.pinnedItemsLabel else group.sectionName ?: context.noSectionLabel,
             itemCount = group.items.size,
             expanded = expanded,
-            onToggle = { context.onToggleCollapse(key) },
+            onToggle = { context.onToggleCollapse(key, group.isPinned) },
             isPinned = group.isPinned,
             onTogglePin = group.sectionId?.let { sectionId ->
                 {
@@ -190,6 +175,7 @@ private fun LazyListScope.sectionGroup(
                 onLongClick = { context.onEvent(HomeEvent.OnItemLongPressed(item.id)) },
                 onToggleCheck = { context.onEvent(HomeEvent.OnCompleteClicked(item.id)) },
                 onToggleSelection = { context.onEvent(HomeEvent.OnItemSelectionToggled(item.id)) },
+                onTogglePin = { context.onEvent(HomeEvent.OnItemPinToggled(item.id, !item.isPinned)) },
                 containerColor = pinnedContainerColor(group.isPinned, MaterialTheme.colorScheme.surfaceVariant),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )

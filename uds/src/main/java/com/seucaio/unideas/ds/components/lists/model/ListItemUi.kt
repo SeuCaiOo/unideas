@@ -1,4 +1,4 @@
-package com.seucaio.unideas.ds.components.lists
+package com.seucaio.unideas.ds.components.lists.model
 
 import androidx.compose.ui.graphics.Color
 
@@ -13,4 +13,5 @@ data class ListItemUi(
     val badgeColor: Color,
     val checkContentDescription: String,
     val isSelected: Boolean? = null,
+    val isPinned: Boolean = false,
 )

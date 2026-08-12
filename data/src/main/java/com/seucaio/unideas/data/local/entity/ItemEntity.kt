@@ -43,4 +43,5 @@ data class ItemEntity(
     val completedAt: Long? = null,
     val createdAt: Long,
     val lastCompletedScheduledDate: Long? = null,
+    val isPinned: Boolean = false,
 )

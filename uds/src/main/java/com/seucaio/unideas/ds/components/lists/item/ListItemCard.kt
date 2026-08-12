@@ -1,4 +1,4 @@
-package com.seucaio.unideas.ds.components.lists
+package com.seucaio.unideas.ds.components.lists.item
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -42,6 +43,10 @@ import com.seucaio.unideas.ds.theme.pinnedContainerColor
  * gives the title the cell's full width on its own line, `maxLines = 2` since cells are narrower
  * than a full-width row.
  */
+@Deprecated(
+    "Grid layout kept breaking visually on real devices and was pulled from the UI " +
+        "(ItemsGridContent). Use ListItemRow instead.",
+)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ListItemCard(

@@ -142,6 +142,33 @@ class ItemDaoTest {
     }
 
     @Test
+    fun getPriorityItemsIncludesPinnedItemsRegardlessOfDueDate() = runTest {
+        dao.insert(task(title = "vencida", dueDate = 1_000L))
+        dao.insert(task(title = "fixada futura", dueDate = 9_000L, isPinned = true))
+        dao.insert(task(title = "fixada sem prazo", isPinned = true))
+        dao.insert(task(title = "futura não fixada", dueDate = 9_000L))
+        dao.insert(task(title = "fixada concluída", dueDate = 1_000L, completedAt = 2_000L, isPinned = true))
+
+        val priorities = dao.getPriorityItems(dueOnOrBefore = 3_000L).first()
+
+        assertEquals(
+            listOf("fixada futura", "fixada sem prazo", "vencida"),
+            priorities.map { it.item.title },
+        )
+    }
+
+    @Test
+    fun setPinnedUpdatesOnlyTheTargetItem() = runTest {
+        val pinnedId = dao.insert(task(title = "alvo"))
+        val otherId = dao.insert(task(title = "outro"))
+
+        dao.setPinned(pinnedId, true)
+
+        assertEquals(true, dao.getItemById(pinnedId).first()!!.item.isPinned)
+        assertEquals(false, dao.getItemById(otherId).first()!!.item.isPinned)
+    }
+
+    @Test
     fun getItemsWithDueDateReturnsEveryPendingItemWithADueDateRegardlessOfHowFarOut() = runTest {
         dao.insert(task(title = "vencida", dueDate = 1_000L))
         dao.insert(task(title = "distante", dueDate = 999_999_999L))
@@ -192,6 +219,7 @@ class ItemDaoTest {
         dueDate: Long? = null,
         completedAt: Long? = null,
         createdAt: Long = 1_000L,
+        isPinned: Boolean = false,
     ): ItemEntity = ItemEntity(
         type = ItemType.TASK,
         title = title,
@@ -200,6 +228,7 @@ class ItemDaoTest {
         recurrence = Recurrence.None,
         completedAt = completedAt,
         createdAt = createdAt,
+        isPinned = isPinned,
     )
 
     private fun note(title: String): ItemEntity = ItemEntity(

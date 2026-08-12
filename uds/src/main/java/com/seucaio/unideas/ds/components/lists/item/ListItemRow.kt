@@ -1,4 +1,4 @@
-package com.seucaio.unideas.ds.components.lists
+package com.seucaio.unideas.ds.components.lists.item
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -40,12 +41,13 @@ fun ListItemRow(
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     onLongClick: (() -> Unit)? = null,
     onToggleSelection: (() -> Unit)? = null,
+    onTogglePin: (() -> Unit)? = null,
 ) {
     Row(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Card))
-            .background(containerColor)
+            .background(pinnedContainerColor(ui.isPinned, containerColor))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -89,7 +91,11 @@ fun ListItemRow(
                 }
             }
         }
-        ListItemTrailingIndicator(ui, onToggleSelection)
+        if (ui.isSelected != null) {
+            SelectionIndicator(ui.isSelected, onToggle = { onToggleSelection?.invoke() })
+        } else {
+            NormalTrailingContent(ui, onTogglePin)
+        }
     }
 }
 
@@ -105,7 +111,8 @@ private fun ListItemRowPreview() {
                     badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm"
                 ),
                 onClick = {},
-                onToggleCheck = {}
+                onToggleCheck = {},
+                onTogglePin = {},
             )
         }
     }
@@ -127,6 +134,7 @@ private fun ListItemRowSelectionModePreview() {
                     onClick = {},
                     onToggleCheck = {},
                     onToggleSelection = {},
+                    onTogglePin = {},
                 )
                 ListItemRow(
                     ui = ListItemUi(
@@ -138,6 +146,7 @@ private fun ListItemRowSelectionModePreview() {
                     onClick = {},
                     onToggleCheck = {},
                     onToggleSelection = {},
+                    onTogglePin = {},
                 )
             }
         }
@@ -153,11 +162,12 @@ private fun ListItemRowPinnedPreview() {
                 ui = ListItemUi(
                     id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
                     checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
-                    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm"
+                    badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
+                    isPinned = true,
                 ),
                 onClick = {},
                 onToggleCheck = {},
-                containerColor = pinnedContainerColor(isPinned = true, base = MaterialTheme.colorScheme.surfaceVariant),
+                onTogglePin = {},
             )
         }
     }

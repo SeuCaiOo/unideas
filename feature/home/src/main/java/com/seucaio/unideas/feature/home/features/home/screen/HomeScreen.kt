@@ -217,7 +217,7 @@ private fun HomeSuccessBody(
         )
         ItemsContent(
             itemsState = itemsState,
-            filterState = filterState,
+            sectionFilter = filterState.sectionFilter,
             hasAnyItem = hasAnyItem,
             onEvent = onEvent,
             homeMode = homeMode,

@@ -49,20 +49,6 @@ private data class GridGroupRenderContext(
     val homeMode: HomeMode,
 )
 
-/**
- * Home's tab-items **grid** — [ItemsViewMode.GRID] sibling of [ItemsListContent], same grouping/
- * collapse behavior, [ListItemCard] cells instead of a plain row (that doesn't fit a half-width
- * cell — its title has nowhere to go, confirmed on-device). Called from [ItemsContent]; assumes
- * [HomeItemsState.tabItems] is non-empty, [ItemsContent] already handles the empty state.
- *
- * When [sectionFilter] is `null`, renders [HomeItemsState.groupedTabItems] the same way as
- * [ItemsListContent] — pinned Sections' groups first, under an emphasized "Pinned" [GroupHeader]
- * divider (indented further, so they read as nested under it), then the rest with no divider at
- * all, each spanning both columns. Collapse state is local UI-only state (not in the ViewModel —
- * purely cosmetic, no business logic, nothing to test at the VM level per `mvi.md`). [footer], if
- * present, renders as a full-width row after the last group — same content type as
- * [ItemsListContent]'s, adapted here to a spanning grid item instead of a plain list row.
- */
 @Deprecated("Avoid — grid layout, don't extend or use.")
 @Composable
 internal fun ItemsGridContent(

@@ -21,7 +21,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.lists.CollapsibleGroupHeader
 import com.seucaio.unideas.ds.components.lists.GroupHeader
@@ -37,24 +36,6 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 
-/**
- * Home's tab-items **list** — on top of `:uds`'s generic [ListContent], maps [Item] to
- * [com.seucaio.unideas.ds.components.lists.model.ListItemUi]/dispatches [HomeEvent]. Called from
- * [ItemsContent] when [ItemsViewMode.LIST] is active — assumes [HomeItemsState.tabItems] is
- * non-empty, [ItemsContent] already handles the empty state. [ItemsGridContent] is the
- * [ItemsViewMode.GRID] sibling.
- *
- * When [sectionFilter] is `null`, renders [HomeItemsState.groupedTabItems] instead — pinned Sections'
- * groups first, under an emphasized "Pinned" [GroupHeader] divider (indented further than usual,
- * so they read as nested under it, not a sibling section at the same level), then the rest with no
- * divider at all — an "Others" label added no real information and, styled like a section header,
- * was mistaken for an empty, clickable section on first look. Each group keeps its own
- * collapsible header and rows. Collapse state is local UI-only state (not in the ViewModel —
- * purely cosmetic, no business logic, nothing to test at the VM level per `mvi.md`). [footer], if
- * present, renders as the list's last row — a plain `@Composable` so callers (and [ItemsContent])
- * don't need to know this renders on a `LazyColumn` (as opposed to [ItemsGridContent]'s
- * `LazyVerticalGrid`).
- */
 @Composable
 internal fun ItemsListContent(
     itemsState: HomeItemsState,

@@ -16,6 +16,7 @@ import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
@@ -64,6 +65,7 @@ val domainModule = module {
     factoryOf(::GetItemsWithDueDateUseCase)
     factoryOf(::HasAnyItemUseCase)
     factoryOf(::ItemFormUseCase)
+    factoryOf(::ItemOccurrenceUseCase)
     factoryOf(::HomeUseCase)
     factoryOf(::GetItemCompletionHistoryUseCase)
     factoryOf(::ProcessMissedOccurrencesUseCase)

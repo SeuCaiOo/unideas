@@ -32,8 +32,10 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia, ReminderNotifier
                         (2 canais: normal dispensável / urgente ongoing), notificação por item + resumo
                         de grupo por tier, deep link pro item ao tocar
-:feature:home        — Home (Painel de Prioridades, abas Tarefas/Anotações) + Todas as Prioridades
-:feature:items       — Criar/Editar Item + Detalhe do Item
+:feature:home        — Home (lista de itens, abas Tarefas/Anotações, seleção múltipla + exclusão em lote) +
+                        painel de prioridades (Bottom Sheet, acionado pelo FAB — não mais painel fixo) +
+                        Todas as Prioridades
+:feature:items       — Criar/Editar Item (tela única, unificada — ver seção de pacotes abaixo) + histórico de recorrência
 :feature:sections    — Gerenciar Seções
 :feature:tags        — Gerenciar Tags
 :feature:settings    — Configurações (usa :core:backup)
@@ -74,15 +76,18 @@ domain/
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
 │   ├── ReminderTier.kt      — cálculo puro do nível de urgência de notificação (radar/normal/urgente), #95/#96
 │   ├── ReminderWarning.kt   — sealed: None | DaysBefore(days: Int), config de aviso do item, #114
+│   ├── ItemCompletionHistory.kt — id, itemId, scheduledDate, completedAt (nulo = não feito), note; status computado
+│   │                              ON_TIME/LATE/MISSED derivado de completedAt vs scheduledDate (#126)
 │   ├── Section.kt
 │   ├── Tag.kt
 │   ├── SeedScope.kt         — enum EMPTY | BASIC | FULL — cenário de dado de exemplo, debug-only (#19)
 │   └── outcome/             — resultados ricos de operações (ver CONVENTIONS.md)
 │       ├── DeletionStatus.kt   — Deleted | BlockedByLinkedItems(count)
 │       ├── SaveResult.kt
-│       └── CompletionResult.kt — Completed | CompletedAndRenewed(newItemId)
+│       └── CompletionResult.kt — Completed | Uncompleted (toggle simples; não gera item novo — ver seção de persistência)
 ├── repository/       — interfaces (contratos), sem implementação
 │   ├── ItemRepository.kt
+│   ├── ItemCompletionHistoryRepository.kt — CRUD do histórico de ocorrência, implementado em :data (#126)
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
@@ -92,7 +97,11 @@ domain/
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
     │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete/complete)
     │   ├── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
-    │   └── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam (getPriorityItems/getItems/complete)
+    │   ├── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam (getPriorityItems/getItems/complete)
+    │   ├── SetItemPinnedUseCase.kt          — fixa/desafixa item no painel de prioridades (#127, mesmo padrão do pin de Section)
+    │   ├── GetItemCompletionHistoryUseCase.kt — lista o histórico de ocorrência de um item recorrente (#126)
+    │   └── ProcessMissedOccurrencesUseCase.kt — avança dueDate de item recorrente vencido + grava histórico "não feito";
+    │                                             único ponto de chamada é o ReminderCheckWorker (#96, ver seção de persistência)
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
     │   └── SectionUseCase.kt      — facade delegando pros 4 acima (CRUD completo, um método por operação)
     ├── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
@@ -109,16 +118,18 @@ data/
 ├── local/
 │   ├── entity/       — @Entity Room (datas como Long epoch millis)
 │   │   ├── ItemEntity.kt
+│   │   ├── ItemCompletionHistoryEntity.kt — tabela item_completion_history, FK CASCADE → items, índice único (itemId, scheduledDate) (#126/#133)
 │   │   ├── SectionEntity.kt
 │   │   ├── TagEntity.kt
 │   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
-│   ├── dao/          — ItemDao, SectionDao, TagDao (retornam Flow)
-│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder)
+│   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao (retornam Flow)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 8
+│   │                    migration/ — MIGRATION_2_3 até MIGRATION_7_8 (ver seção de persistência)
 │   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
-├── mapper/           — extension functions Entity ↔ Domain
-├── repository/       — ItemRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl, DatabaseRepositoryImpl
+├── mapper/           — extension functions Entity ↔ Domain (inclui ItemCompletionHistoryMapper)
+├── repository/       — ItemRepositoryImpl, ItemCompletionHistoryRepositoryImpl, SectionRepositoryImpl, TagRepositoryImpl, DatabaseRepositoryImpl
 └── di/               — DataModule.kt (Koin, local ao módulo — ver seção DI abaixo)
 ```
 
@@ -140,6 +151,9 @@ uds/
 ├── theme/                 — UdsTheme, Color, Type, Dimens (Material 3, light + dark, acento teal)
 ├── components/            — organizado por papel (buttons/, chips/, inputs/, lists/, navigation/,
 │                            panels/, feedback/), catálogo completo no README do módulo
+│                            — inputs/ ganhou SelectionBottomSheet, GridSelectionBottomSheet e SwitchSection (#130)
+│                            — lists/ reorganizado em lists/item/ (ListItemCard, ListItemCheckbox, ListItemRow,
+│                              ListItemTrailingIndicator) + lists/model/ListItemUi.kt (#127/#140)
 └── components/legacy/     — componentes portados ao pé da letra do antigo :core:ui, mesmos nomes
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
@@ -160,38 +174,60 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 - **Módulo com uma tela** (Sections, Tags, Settings): flat na raiz — `Screen` + `PreviewProvider` direto em `feature/<nome>/`, sem subpasta por tela. `navigation/`, `viewmodel/` e `di/` são as únicas subpastas.
 - **Módulo com várias telas** (Items — Form/Detail/List): cada tela ganha seu próprio `features/<tela>/{screen,viewmodel}/`, já que um único pacote `viewmodel/` compartilhado misturava os 4 arquivos MVI de cada tela sem nenhuma separação visual. `navigation/` e `di/` continuam fora de `features/`, compartilhados pelas telas do módulo.
 
+**`additem/` foi aposentado (#134)** — criar e editar item deixaram de ser telas separadas. `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (type inicial vindo de `initialType`), `itemId != null` carrega o item existente. Não existe mais `ItemFormScreen`.
+
 ```
 feature/items/
 ├── navigation/
 │   ├── ItemsNavGraph.kt
-│   └── ItemsRoute.kt              — @Serializable, type-safe: Form(itemId: Long?) | Detail(itemId: Long) | List
+│   └── ItemsRoute.kt              — @Serializable: Detail(itemId: Long? = null, initialType: ItemType = TASK) | List
 ├── di/
 │   └── FeatureModule.kt           — val itemsModule
-└── features/
-    ├── form/
-    │   ├── screen/    — ItemFormScreen.kt + ItemFormPreviewProvider.kt
-    │   └── viewmodel/ — ItemFormUiState.kt / ItemFormUiAction.kt / ItemFormEvent.kt / ItemFormViewModel.kt
-    ├── detail/
-    │   ├── screen/    — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt
-    │   └── viewmodel/ — ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt / ItemDetailViewModel.kt / ItemDetailDialogState.kt
-    └── list/
-        ├── screen/    — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro; acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
-        └── viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
+└── ui/
+    ├── components/
+    │   ├── ItemActions.kt, DueDateRow.kt
+    │   ├── fields/       — CompletionField, DueDateField, DueTimeField, ReminderWarningField, SectionField,
+    │   │                    TagsField, TitleDescriptionFields (+preview), TypeSelectorField
+    │   │   ├── markdown/     — MarkdownFormat/PreviewToggle/SelectionContextMenu/SyntaxHighlight/SyntaxInserter/Toolbar (#93)
+    │   │   ├── model/        — ItemFormFields.kt
+    │   │   └── recurrence/   — RecurrenceBottomSheet (picker principal, sobre SelectionBottomSheet do :uds),
+    │   │                        EveryNDaysBottomSheet, WeekdayBottomSheet, DayOfMonthBottomSheet (sobre GridSelectionBottomSheet) (#130)
+    │   └── form/         — ItemFormBody, ItemFormCommonOptions, ItemFormFooter, ItemFormOptionsSection, ItemFormTaskOptions
+    └── screens/
+        ├── detail/    — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt + ItemHistoryBottomSheet.kt (lista o
+        │                ItemCompletionHistory do item — data/status/nota por ocorrência, #126)
+        │                viewmodel/ — ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt /
+        │                             ItemDetailViewModel.kt / ItemDetailDialogState.kt
+        └── list/      — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro/seleção;
+                          acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
+                          viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
 ```
 
 ```
 feature/home/
 ├── navigation/
 │   ├── HomeNavGraph.kt
-│   └── HomeRoute.kt              — @Serializable, type-safe: Panel | AllPriorities
+│   └── HomeRoute.kt              — @Serializable: Home | AllPriorities (painel de prioridades não é rota — é
+│                                    Bottom Sheet acionado a partir da Home, não navegação)
 ├── di/
 │   └── FeatureModule.kt          — val homeModule
 └── features/
-    ├── panel/
-    │   ├── screen/    — HomeScreen.kt + HomePreviewProvider.kt + components/ (PriorityPanel.kt, Filters.kt, HomeItemRow.kt)
-    │   └── viewmodel/ — HomeUiState.kt / HomeUiAction.kt / HomeEvent.kt / HomeViewModel.kt
+    ├── home/
+    │   ├── screen/    — HomeScreen.kt + HomePreviewProvider.kt
+    │   │                components/chrome/    — AddItemFab, HomeDialogs, HomeFab, HomeTopBar
+    │   │                components/filters/    — Filters, ItemsFiltersBar, TasksNotesTabRow
+    │   │                components/items/      — DueBadgeMapping, ItemRowMappers, ItemsContent, ItemsGridContent,
+    │   │                                          ItemsListContent, RecurrenceSummaryMapping
+    │   └── viewmodel/ — HomeUiState.kt / HomeUiAction.kt / HomeEvent.kt / HomeViewModel.kt / ItemSectionGroupMapper.kt
+    │                    — HomeUiState.HomeMode: Normal | Selection(selectedItemIds) — seleção múltipla + exclusão
+    │                      em lote vive aqui (long-press no item), não em feature/items (#140)
+    ├── priority/
+    │   ├── screen/    — PriorityBottomSheet.kt + PriorityPreviewProvider.kt   — painel de prioridades, hoje um
+    │   │                Bottom Sheet mostrado a partir da HomeScreen (state local, não rota própria), não mais
+    │   │                painel fixo no topo (#138)
+    │   └── viewmodel/ — PriorityEvent.kt / PriorityUiAction.kt / PriorityUiState.kt / PriorityViewModel.kt
     └── allpriorities/
-        ├── screen/    — AllPrioritiesScreen.kt + AllPrioritiesPreviewProvider.kt   — reaproveita HomeItemRow do pacote panel/
+        ├── screen/    — AllPrioritiesScreen.kt + AllPrioritiesPreviewProvider.kt
         └── viewmodel/ — AllPrioritiesUiState.kt / AllPrioritiesUiAction.kt / AllPrioritiesEvent.kt / AllPrioritiesViewModel.kt
 ```
 
@@ -205,18 +241,31 @@ Datas armazenadas como **`Long` (epoch millis)** na entity; convertidas pra `Loc
 
 ### `ItemEntity` → tabela `items`
 ```
-id: Long                 PK autoincrement
-type: String             TASK | NOTE (enum via TypeConverter)
-title: String            obrigatório (não vazio)
-description: String?      opcional, multilinha
-sectionId: Long?          FK → sections.id (SET NULL on delete — mas exclusão é bloqueada antes, ver regra)
-dueDate: Long?            epoch millis, opcional
-dueTime: Int?             segundos do dia, opcional (só válido se dueDate != null; conversão no mapper, não em Converters)
-recurrence: String        NONE | DAILY | WEEKLY | MONTHLY (default NONE; só válido se dueDate != null)
-reminderWarning: String   NONE | DAYS_BEFORE:N (default NONE; só válido se dueDate != null)
-completedAt: Long?        epoch millis; != null = concluída (só faz sentido pra TASK)
-createdAt: Long           epoch millis, preenchido na criação
+id: Long                          PK autoincrement
+type: String                      TASK | NOTE (enum via TypeConverter)
+title: String                     obrigatório (não vazio)
+description: String?               opcional, multilinha
+sectionId: Long?                   FK → sections.id (SET NULL on delete — mas exclusão é bloqueada antes, ver regra)
+dueDate: Long?                     epoch millis, opcional
+dueTime: Int?                      segundos do dia, opcional (só válido se dueDate != null; conversão no mapper, não em Converters)
+recurrence: String                 NONE | DAILY | WEEKLY | MONTHLY | EVERY_N_DAYS:N (default NONE; só válido se dueDate != null)
+reminderWarning: String            NONE | DAYS_BEFORE:N (default NONE; só válido se dueDate != null)
+completedAt: Long?                 epoch millis; != null = concluída (item não-recorrente; só faz sentido pra TASK)
+lastCompletedScheduledDate: Long?  epoch millis; ocorrência recorrente mais recente marcada como concluída (#133) —
+                                    isCompleted de um item recorrente compara isso contra dueDate, em vez de completedAt
+isPinned: Boolean                  fixado manualmente no painel de prioridades, independente do cálculo de urgência (#127)
+createdAt: Long                    epoch millis, preenchido na criação
 ```
+
+### `ItemCompletionHistoryEntity` → tabela `item_completion_history`
+```
+id: Long           PK autoincrement
+itemId: Long        FK → items.id (CASCADE on delete)
+scheduledDate: Long  epoch millis — a ocorrência (dueDate) a que este registro se refere
+completedAt: Long?   epoch millis; nulo = ocorrência não feita ("missed")
+note: String?        opcional — justificativa livre (ex: "sem internet")
+```
+Índice único em `(itemId, scheduledDate)` — uma ocorrência só pode ter um registro de histórico (#133).
 
 ### `SectionEntity` → tabela `sections`
 ```
@@ -239,20 +288,35 @@ PK composta (itemId, tagId)
 
 ### Regras de integridade na camada de domínio (não no FK)
 - **Excluir `Section`/`Tag` com itens vinculados é BLOQUEADO** — o use case (`DeleteSectionUseCase`/`DeleteTagUseCase`) conta os vínculos e retorna `DeletionStatus.BlockedByLinkedItems(count)` **antes** de delegar ao repositório. Não é uma constraint de FK que falha silenciosamente; o usuário vê quantos itens estão vinculados.
-- **Recorrência "renasce ao concluir"**: `CompleteItemUseCase`, ao concluir um item com `recurrence` diferente de `Recurrence.None`, marca o atual como concluído E gera uma nova instância com a próxima `dueDate` (calculada a partir da data de vencimento **original**, via `recurrence.nextDueDate(...)`). Não é regra computada em tela — é geração de novo registro.
-- **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável).
+- **Recorrência: uma linha só por série, `dueDate` avança, não "renasce" (rearquitetado em #126).** Um item recorrente **nunca** gera uma nova linha em `items`. `CompleteItemUseCase` só grava um registro em `item_completion_history` pra ocorrência atual (`scheduledDate = dueDate`) e marca `lastCompletedScheduledDate = dueDate` — `dueDate` em si não muda. Quem avança `dueDate` de fato é `ProcessMissedOccurrencesUseCase`, chamado pelo `ReminderCheckWorker` (`:core:notifications`) a cada varredura periódica: pra todo item recorrente cujo `dueDate` já passou, ele anda `dueDate` pra frente via `recurrence.nextDueDate(...)`, gravando um registro `completedAt = null` (não feito) em `item_completion_history` pra cada ciclo pulado, até `dueDate >= hoje`. Ou seja, o avanço de ciclo é **lazy** (só acontece quando alguém abre o app ou o worker roda), não disparado pela ação de concluir.
+- **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável). `isPinned` (item fixado manualmente) entra na priorização independente desse cálculo.
+
+### Migrations (histórico, `data/local/database/migration/`)
+```
+MIGRATION_4_5   cria item_completion_history + índice; apaga itens recorrentes existentes (modelo antigo não
+                tinha vínculo entre instâncias de uma série — não dava pra migrar de forma determinística) (#126)
+MIGRATION_5_6   dedup de (itemId, scheduledDate) duplicados (mantém o id maior); troca o índice simples por
+                índice ÚNICO (itemId, scheduledDate) — completar 2x vira no-op no nível do banco (#133)
+MIGRATION_6_7   adiciona items.lastCompletedScheduledDate (#133)
+MIGRATION_7_8   adiciona items.isPinned, default 0 (#127)
+```
+Sem `fallbackToDestructiveMigration` — migration faltando falha alto, nunca perde dados silenciosamente (app pré-MVP, mas a regra vale mesmo assim).
 
 ## DI — estrutura Koin
 
 Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, não centralizada em `:app` (diferente do GymLog, onde tudo ficava em `:app/di/`; decisão deliberada aqui: cada camada é dona da sua fiação). `AppModule.kt` (`:app`) é o único ponto de entrada no `startKoin`, só agregando os demais via `includes(...)`.
 
 ```
-data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single), Repositories (singleOf().bind()) — confirmado em #21/#22
-domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66)
+data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single, incl. ItemCompletionHistoryDao),
+                                 Repositories (singleOf().bind(), incl. ItemCompletionHistoryRepositoryImpl) — confirmado em #21/#22/#126
+domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66),
+                                 SetItemPinnedUseCase (#127), GetItemCompletionHistoryUseCase e ProcessMissedOccurrencesUseCase (#126)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl
-                                      (single, bind ReminderRefreshTrigger), ReminderCheckWorker (workerOf, Koin-WorkManager) — #95/#115
+                                      (single, bind ReminderRefreshTrigger), ReminderCheckWorker (workerOf, Koin-WorkManager;
+                                      depende de ProcessMissedOccurrencesUseCase desde #96 — cada varredura periódica também
+                                      avança dueDate de itens recorrentes vencidos, não só notifica) — #95/#115/#96
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
                                  (items/sections/tags/settings/home já existem)
 

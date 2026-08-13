@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,9 +19,10 @@ import com.seucaio.unideas.feature.items.R
 @Composable
 fun ItemActions(
     onShareClicked: () -> Unit,
-    onDeleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClicked: (() -> Unit)? = null,
+    onHistoryClicked: (() -> Unit)? = null,
+    onDeleteClicked: (() -> Unit)? = null,
 ) {
     Row(modifier) {
         IconButton(onClick = onShareClicked) {
@@ -31,8 +33,18 @@ fun ItemActions(
                 Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.item_detail_edit))
             }
         }
-        IconButton(onClick = onDeleteClicked) {
-            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.item_detail_delete))
+        if (onHistoryClicked != null) {
+            IconButton(onClick = onHistoryClicked) {
+                Icon(Icons.Default.History, contentDescription = stringResource(R.string.item_detail_history))
+            }
+        }
+        if (onDeleteClicked != null) {
+            IconButton(onClick = onDeleteClicked) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.item_detail_delete)
+                )
+            }
         }
     }
 }
@@ -44,8 +56,8 @@ private fun ItemActionsPreview() {
         Surface {
             ItemActions(
                 onShareClicked = {},
-                onDeleteClicked = {},
                 onEditClicked = {},
+                onDeleteClicked = {},
             )
         }
     }

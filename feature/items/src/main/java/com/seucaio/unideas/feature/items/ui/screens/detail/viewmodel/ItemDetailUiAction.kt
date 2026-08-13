@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import androidx.annotation.StringRes
+import com.seucaio.unideas.domain.model.Item
 
 sealed interface ItemDetailUiAction {
 
@@ -12,5 +13,5 @@ sealed interface ItemDetailUiAction {
     /** Unexpected repository failure — raw exception message, not localized. */
     data class ShowError(val message: String) : ItemDetailUiAction
 
-    data class ShareText(val text: String) : ItemDetailUiAction
+    data class ShareText(val item: Item) : ItemDetailUiAction
 }

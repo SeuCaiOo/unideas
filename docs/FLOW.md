@@ -5,21 +5,23 @@
 
 ---
 
-## Telas do MVP (7)
+## Telas do MVP (6 + 1 dev-only)
 
 | # | Tela | Módulo | Rota (type-safe) |
 |---|---|---|---|
-| 1 | **Home** (Painel de Prioridades + abas Tarefas/Anotações) | `:feature:home` | `HomeRoute.Panel` |
+| 1 | **Home** (lista Tarefas/Anotações + painel de prioridades como Bottom Sheet) | `:feature:home` | `HomeRoute.Home` |
 | 2 | **Todas as Prioridades** | `:feature:home` | `HomeRoute.AllPriorities` |
-| 3 | **Criar/Editar Item** | `:feature:items` | `ItemsRoute.Form(itemId: Long?)` |
-| 4 | **Detalhe do Item** | `:feature:items` | `ItemsRoute.Detail(itemId: Long)` |
-| 5 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
-| 6 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
-| 7 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
+| 3 | **Criar/Editar/Detalhar Item** (tela única — ver "Detalhe do Item" abaixo) | `:feature:items` | `ItemsRoute.Detail(itemId: Long? = null, initialType: ItemType = TASK)` |
+| 4 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
+| 5 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
+| 6 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
+| — | *(dev-only)* Todos os Itens (sem abas/seleção) | `:feature:items` | `ItemsRoute.List` |
 
-Ponto de entrada do app: `HomeRoute.Panel` (`startDestination` real do `NavHost`, desde D2.1/#27 — ver `MainActivity`). **Não há bottom navigation bar** — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `NavHost` central vive no `:app`, cada feature expõe seu `*NavGraph` + `*Route`.
+Ponto de entrada do app: `HomeRoute.Home` (`startDestination` do `AppNavHost`, em `:app/navigation/`). **Não há bottom navigation bar** (existiu brevemente durante o #138, removida na mesma issue) — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `AppNavHost` central vive no `:app` (`app/src/main/java/com/seucaio/unideas/navigation/`), cada feature expõe seu `*NavGraph` + `*Route`.
 
-> **Ponto de entrada de debug remanescente:** Settings mantém uma seção **"Debug"**, só de desenvolvimento, com um item "Items" que abre `ItemsRoute.List` (#62) — uma listagem simples de todos os Items (sem abas/filtro/painel de prioridade, isso é escopo da Home), que por sua vez navega pra `ItemsRoute.Detail`/`ItemsRoute.Form`. Não foi removida quando a Home passou a existir (D2/#11) — segue como atalho útil pra QA manual; decisão de descartá-la fica em aberto.
+**`ItemsRoute.Form` não existe mais (#134).** Criar e editar item deixaram de ser telas separadas — `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (com `initialType` definindo Tarefa/Anotação inicial), `itemId != null` carrega o item pra edição/visualização.
+
+> **Ponto de entrada de debug remanescente:** Settings mantém uma seção **"Debug"**, só de desenvolvimento, com um item "Items" que abre `ItemsRoute.List` (#62) — uma listagem simples de todos os Items (sem abas/filtro/painel de prioridade, isso é escopo da Home), que por sua vez navega pra `ItemsRoute.Detail`. Não foi removida quando a Home passou a existir (D2/#11) — segue como atalho útil pra QA manual; decisão de descartá-la fica em aberto.
 
 ---
 
@@ -29,30 +31,36 @@ Ponto de entrada do app: `HomeRoute.Panel` (`startDestination` real do `NavHost`
 
 ```
 HomeScreen
-  ├── Painel de Prioridades (topo, FIXO — persiste ao trocar de aba)
-  │     → itens vencidos + vencendo em breve, limitados a N
-  │     → "Ver todas" (aparece só quando excede o limite)
-  │           → AllPrioritiesScreen  (HomeRoute.AllPriorities)
+  ├── HomeTopBar
+  │     → botão "Prioridades" → abre PriorityBottomSheet (não é navegação — state local da HomeScreen)
+  │     → ícone Configurações → SettingsScreen  (SettingsRoute.Settings)
   │
-  ├── Abas [ Tarefas | Anotações ]  (trocam o conteúdo abaixo, painel continua fixo)
+  ├── Abas [ Tarefas | Anotações ]
   │     → filtro por Seção (dropdown) + Tags (chips, múltipla seleção)
   │     → item da lista: título, cor de urgência, ícone de recorrência (se houver),
   │        checkbox de conclusão (SÓ na aba Tarefas)
-  │           → toca no item → ItemDetailScreen  (ItemsRoute.Detail(id))
-  │           → checkbox (Tarefas) → conclui direto; se recorrente, renasce
+  │           → toca no item → ItemDetailScreen  (ItemsRoute.Detail(itemId = id))
+  │           → checkbox (Tarefas) → marca a ocorrência atual como concluída (não gera item novo —
+  │              ver ARCHITECTURE.md); se atrasada/recorrente com histórico, mais nuance fica em ItemDetailScreen
+  │           → toque longo → entra em modo Seleção (HomeMode.Selection)
+  │     → [modo Seleção] selecionar itens (inclusive "selecionar todos" por seção) → excluir em lote,
+  │        com dialog de confirmação (#140)
   │     → [estado vazio] texto orientando como começar (sem tela de onboarding)
   │
-  ├── FAB "+"
+  ├── AddItemFab
   │     → escolher tipo (Tarefa / Anotação)
-  │           → ItemFormScreen (criar)  (ItemsRoute.Form(itemId = null))
+  │           → ItemDetailScreen (modo criação)  (ItemsRoute.Detail(itemId = null, initialType))
   │
-  └── ícone Configurações (topo)
-        → SettingsScreen  (SettingsRoute.Settings)
+  └── PriorityBottomSheet (aberto a partir do botão "Prioridades" da HomeTopBar)
+        → itens vencidos + vencendo em breve, limitados a N
+        → "Ver todas" (aparece só quando excede o limite)
+              → AllPrioritiesScreen  (HomeRoute.AllPriorities)
+        → toca num item → ItemDetailScreen
 ```
 
 **Regras:**
-- O Painel de Prioridades é o elemento **mais importante visualmente** — superfície teal, não é componente secundário.
-- Ele **não muda** ao alternar Tarefas/Anotações.
+- O painel de prioridades **não é mais um painel fixo no topo** (mudou no #138) — é um Bottom Sheet, acionado sob demanda, pra dar mais espaço vertical à lista principal.
+- Seleção múltipla e exclusão em lote vivem na Home (long-press num item da lista), não numa tela separada.
 - Cor de urgência (vermelho = vencido, âmbar = vencendo em ≤N dias) é o **único** uso dessas cores na UI.
 
 ---
@@ -71,45 +79,33 @@ AllPrioritiesScreen
 
 ---
 
-## Criar / Editar Item
+## Criar / Editar / Detalhar Item
 
-**Acesso:** Home FAB "+" (criar) · Detalhe do Item → "Editar" (editar). Tela única reutilizada pros dois tipos e pros dois modos.
+**Acesso:** Home `AddItemFab` (criar) · Home/Todas as Prioridades → toca num item (ver/editar/concluir). Tela única (`ItemDetailScreen`) reutilizada pros dois tipos e pros três modos — não existe mais uma tela de formulário separada (#134).
 
 ```
-ItemFormScreen  (ItemsRoute.Form(itemId))
-  → seletor de tipo no topo (Tarefa / Anotação) — troca opcional
-  → Título (curto, obrigatório)
-  → Descrição (multilinha, opcional)
-  → Seção (dropdown, opcional)
-  → Tags (chip-input, múltiplas, opcional)
+ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
+  → itemId == null → modo criação: campos editáveis desde o início, seletor de tipo usa initialType
+  → itemId != null → carrega o item; campos editáveis inline (sem alternar "modo edição" explícito)
+  → salvamento automático a cada alteração (sem botão "Salvar" — auto-save por campo)
+  → Título (curto, obrigatório) · Descrição (multilinha, opcional, com toolbar de Markdown — #93)
+  → Seção (dropdown, opcional) · Tags (chip-input, múltiplas, opcional)
   → Data de vencimento (date picker, opcional) — disponível pros dois tipos
-       → se há data → Recorrência (Nenhuma / Diária / Semanal / Mensal)
-  → Salvar → volta pra tela anterior (Home ou Detalhe)
+       → se há data → Recorrência (Nenhuma / Diária / Semanal / Mensal / A cada N dias / Dia da semana / Dia do mês)
+          via RecurrenceBottomSheet + bottom sheets específicos por tipo (#130)
+       → com data → também habilita Horário de vencimento (opcional) e Aviso (nenhum / N dias antes) (#95/#114)
+  → ações:
+       [Compartilhar]  → share sheet do sistema
+       [Excluir]       → DeleteConfirmationDialog → confirma → volta pra Home
+       [Concluir]      → só em Tarefas; marca a ocorrência atual (não gera item novo — ver ARCHITECTURE.md)
+       [Ver histórico] → ItemHistoryBottomSheet — só pra item recorrente; lista cada ocorrência (data,
+                          status ON_TIME/LATE/MISSED, nota) do ItemCompletionHistory (#126)
+  → "←" → volta
 ```
 
 **Regras:**
-- `itemId == null` → modo criar; `itemId != null` → modo editar (carrega o item).
-- Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento.
-- Sem data → recorrência indisponível/oculta.
-- Com data → também habilita **Horário de vencimento** (opcional) e **Aviso** (nenhum / N dias antes) — usados pelo `:core:notifications` pra decidir quando notificar (#95/#114).
-
----
-
-## Detalhe do Item
-
-**Acesso:** Home (lista ou painel) · Todas as Prioridades → toca num item.
-
-```
-ItemDetailScreen  (ItemsRoute.Detail(id))
-  → texto selecionável/copiável (título + descrição)
-  → metadados: seção, tags, vencimento, criado em, concluído em (se concluída)
-  → ações:
-       [Compartilhar]  → share sheet do sistema
-       [Editar]        → ItemFormScreen (editar)  (ItemsRoute.Form(id))
-       [Excluir]       → DeleteConfirmationDialog → confirma → volta pra Home
-       [Concluir]      → só em Tarefas; conclui; se recorrente, renasce ao concluir
-  → "←" → volta
-```
+- Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento; sem data, fica indisponível/oculta.
+- Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`).
 
 ---
 

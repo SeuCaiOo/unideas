@@ -1,10 +1,12 @@
 package com.seucaio.unideas.core.common.extensions
 
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 
 private const val DATE_PATTERN = "dd/MM/yyyy"
 
@@ -43,3 +45,22 @@ fun LocalDate.toEpochMilliUtc(): Long =
 
 /** Formats this [LocalDate] as `dd/MM/yyyy`. */
 fun LocalDate.toFormattedDateString(): String = format(dateFormatter)
+
+/**
+ * Next date (from this one) landing on [day] of the month, clamped to the shortest month in
+ * between — e.g. picking 30 while already past it in February resolves to February's 28th/29th,
+ * not March's.
+ */
+fun LocalDate.nextOrSameDayOfMonth(day: Int): LocalDate {
+    val thisMonth = withDayOfMonth(minOf(day, lengthOfMonth()))
+    if (!thisMonth.isBefore(this)) return thisMonth
+
+    val nextMonth = plusMonths(1)
+    return nextMonth.withDayOfMonth(minOf(day, nextMonth.lengthOfMonth()))
+}
+
+/** Next date (from this one) landing on [dayOfWeek], or this date itself if it already is. */
+fun LocalDate.nextOrSame(dayOfWeek: DayOfWeek): LocalDate = with(TemporalAdjusters.nextOrSame(dayOfWeek))
+
+/** This date, or today if `null`. */
+fun LocalDate?.orToday(): LocalDate = this ?: LocalDate.now()

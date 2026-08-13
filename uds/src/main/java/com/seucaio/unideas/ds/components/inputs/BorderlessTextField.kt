@@ -38,6 +38,8 @@ fun BorderlessTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null,
+    isError: Boolean = false,
+    supportingText: (@Composable () -> Unit)? = null,
 ) {
     var sized = modifier.fillMaxWidth()
     if (minHeight > 0.dp) sized = sized.defaultMinSize(minHeight = minHeight)
@@ -48,6 +50,8 @@ fun BorderlessTextField(
         placeholder = { Text(placeholder, style = textStyle) },
         singleLine = singleLine,
         textStyle = textStyle,
+        isError = isError,
+        supportingText = supportingText,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,

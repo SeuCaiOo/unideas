@@ -8,24 +8,14 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * Convenience facade over the single-purpose use cases the Home priority panel screen (and
- * Browse, which reuses the same ViewModel) needs — one method per operation, each just
- * delegating. No repository access here. Scoped to
- * [com.seucaio.unideas.feature.home.features.panel.viewmodel.HomeViewModel] only; see
- * [ItemDetailUseCase]/[ItemFormUseCase] for the other screens' own subsets — Item's use cases
- * split unevenly across screens, so naming each facade after the screen it serves keeps it
- * obvious where a method is actually used. [com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase]
- * stays a separate constructor parameter (not folded in here) — same as
- * [ItemFormUseCase]/[com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase] on the form
- * screen, since it's cross-entity, not Item-specific.
- */
 class HomeUseCase(
     private val getPriorityItemsUseCase: GetPriorityItemsUseCase,
     private val getItemsUseCase: GetItemsUseCase,
     private val completeItemUseCase: CompleteItemUseCase,
     private val hasAnyItemUseCase: HasAnyItemUseCase,
     private val setSectionPinnedUseCase: SetSectionPinnedUseCase,
+    private val deleteItemUseCase: DeleteItemUseCase,
+    private val setItemPinnedUseCase: SetItemPinnedUseCase,
 ) {
 
     fun getPriorityItems(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
@@ -41,4 +31,11 @@ class HomeUseCase(
 
     suspend fun setSectionPinned(id: Long, isPinned: Boolean): Result<Unit> =
         setSectionPinnedUseCase(id, isPinned)
+
+    suspend fun setItemPinned(id: Long, isPinned: Boolean): Result<Unit> =
+        setItemPinnedUseCase(id, isPinned)
+
+    suspend fun deleteItems(ids: List<Long>): Result<Unit> = runCatching {
+        ids.forEach { id -> deleteItemUseCase(id).getOrThrow() }
+    }
 }

@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.seucaio.unideas.core.notifications.BuildConfig
 import com.seucaio.unideas.core.notifications.R
 import com.seucaio.unideas.domain.model.Item
 
@@ -36,6 +37,11 @@ class ReminderNotifier(private val context: Context) {
     // "never posted yet".
     private var lastNormalIds: Set<Long>? = null
     private var lastUrgentIds: Set<Long>? = null
+
+    // Debug and release builds have distinct applicationIds and thus show as separate apps in the
+    // notification shade — with identical titles, there's no visual way to tell which build a
+    // notification came from while both are installed on the same device.
+    private val debugTitlePrefix = if (BuildConfig.DEBUG) "[DEBUG] " else ""
 
     init {
         createChannels()
@@ -98,7 +104,7 @@ class ReminderNotifier(private val context: Context) {
                 R.string.reminder_notification_normal_title
             }
         )
-        val prefixedTitle = if (urgent) "$URGENT_TITLE_EMOJI $title" else title
+        val prefixedTitle = debugTitlePrefix + (if (urgent) "$URGENT_TITLE_EMOJI $title" else title)
         postNotification(
             notificationId = notificationId,
             channelId = channelId,
@@ -141,7 +147,7 @@ class ReminderNotifier(private val context: Context) {
 
         // A tinted tier (only urgent, today) also gets an emoji title prefix — the tint alone is
         // subtle in a notification shade full of other apps' icons.
-        val titlePrefix = if (accentColor != null) "$URGENT_TITLE_EMOJI " else ""
+        val titlePrefix = debugTitlePrefix + (if (accentColor != null) "$URGENT_TITLE_EMOJI " else "")
 
         if (!silent || ids != lastIds()) {
             val body = context.resources.getQuantityString(

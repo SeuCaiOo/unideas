@@ -8,25 +8,28 @@ import java.time.LocalTime
 
 sealed interface ItemDetailEvent {
 
-    data class OnTypeChanged(val type: ItemType) : ItemDetailEvent
+    /** Events handled by [ItemDetailUiState.reduce] alone — no side effect beyond a state update. */
+    sealed interface FieldEvent : ItemDetailEvent
 
-    data class OnTitleChanged(val title: String) : ItemDetailEvent
+    data class OnTypeChanged(val type: ItemType) : FieldEvent
 
-    data class OnDescriptionChanged(val description: String) : ItemDetailEvent
+    data class OnTitleChanged(val title: String) : FieldEvent
 
-    data class OnSectionChanged(val sectionId: Long?) : ItemDetailEvent
+    data class OnDescriptionChanged(val description: String) : FieldEvent
 
-    data class OnTagToggled(val tagId: Long) : ItemDetailEvent
+    data class OnSectionChanged(val sectionId: Long?) : FieldEvent
 
-    data class OnDueDateChanged(val dueDate: LocalDate?) : ItemDetailEvent
+    data class OnTagToggled(val tagId: Long) : FieldEvent
 
-    data class OnDueTimeChanged(val dueTime: LocalTime?) : ItemDetailEvent
+    data class OnReminderToggled(val enabled: Boolean) : FieldEvent
 
-    data class OnRecurrenceChanged(val recurrence: Recurrence) : ItemDetailEvent
+    data class OnDueDateChanged(val dueDate: LocalDate?) : FieldEvent
 
-    data class OnReminderWarningChanged(val reminderWarning: ReminderWarning) : ItemDetailEvent
+    data class OnDueTimeChanged(val dueTime: LocalTime?) : FieldEvent
 
-    data object OnSaveClicked : ItemDetailEvent
+    data class OnRecurrenceChanged(val recurrence: Recurrence) : FieldEvent
+
+    data class OnReminderWarningChanged(val reminderWarning: ReminderWarning) : FieldEvent
 
     data object OnShareClicked : ItemDetailEvent
 
@@ -40,6 +43,12 @@ sealed interface ItemDetailEvent {
 
     data object OnCompleteConfirmClicked : ItemDetailEvent
 
+    data object OnHistoryClicked : ItemDetailEvent
+
     /** Retry loading the item after [ItemDetailUiState.loadFailed] — edit mode only. */
     data object OnRetryClicked : ItemDetailEvent
+
+    data object OnBackRequested : ItemDetailEvent
+
+    data object OnDiscardConfirmed : ItemDetailEvent
 }

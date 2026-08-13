@@ -5,6 +5,7 @@ import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
+import com.seucaio.unideas.domain.usecase.item.ExtendItemDueDateUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
@@ -13,6 +14,7 @@ import com.seucaio.unideas.domain.usecase.item.GetItemsWithDueDateUseCase
 import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
+import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
@@ -65,4 +67,6 @@ val domainModule = module {
     factoryOf(::HomeUseCase)
     factoryOf(::GetItemCompletionHistoryUseCase)
     factoryOf(::ProcessMissedOccurrencesUseCase)
+    factoryOf(::IgnoreOccurrenceUseCase)
+    factoryOf(::ExtendItemDueDateUseCase)
 }

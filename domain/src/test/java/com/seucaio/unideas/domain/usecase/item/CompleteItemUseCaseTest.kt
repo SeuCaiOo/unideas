@@ -59,6 +59,39 @@ class CompleteItemUseCaseTest {
         }
 
     @Test
+    fun `invoke fails to complete a recurring task's occurrence late without a note`() = runTest {
+        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        val lateCompletedAt = ItemStub.TODAY.plusDays(1).atTime(9, 0)
+
+        val result = useCase(item, lateCompletedAt)
+
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { historyRepository.insert(any()) }
+        coVerify(exactly = 0) { repository.updateItem(any()) }
+    }
+
+    @Test
+    fun `invoke completes a recurring task's occurrence late when a note is provided`() = runTest {
+        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        val lateCompletedAt = ItemStub.TODAY.plusDays(1).atTime(9, 0)
+        val note = "Sem internet"
+        val historyRecord = ItemCompletionHistory(
+            itemId = item.id,
+            scheduledDate = ItemStub.TODAY,
+            completedAt = lateCompletedAt,
+            note = note,
+        )
+        val completed = item.copy(lastCompletedScheduledDate = ItemStub.TODAY)
+        coEvery { historyRepository.insert(historyRecord) } returns 1L
+        coEvery { repository.updateItem(completed) } returns Unit
+
+        val result = useCase(item, lateCompletedAt, note)
+
+        assertEquals(CompletionResult.Completed, result.getOrNull())
+        coVerify(exactly = 1) { historyRepository.insert(historyRecord) }
+    }
+
+    @Test
     fun `invoke reopens a recurring task's already-completed occurrence instead of recording it again`() = runTest {
         val item = ItemStub.task(
             recurrence = Recurrence.Weekly,

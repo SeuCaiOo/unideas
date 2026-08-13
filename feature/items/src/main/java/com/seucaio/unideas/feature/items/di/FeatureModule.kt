@@ -13,6 +13,7 @@ val itemsModule = module {
         ItemDetailViewModel(
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
+            itemOccurrenceUseCase = get(),
             getSectionsAndTags = get(),
             savedStateHandle = get(),
             initialType = params.get(),

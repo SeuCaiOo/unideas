@@ -9,6 +9,7 @@ import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -27,6 +28,7 @@ import java.time.LocalDateTime
 class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
+    private val itemOccurrenceUseCase: ItemOccurrenceUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
     private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
@@ -246,7 +248,7 @@ class ItemDetailViewModel(
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         val now = LocalDateTime.now()
-        itemFormUseCase.complete(item, now)
+        itemOccurrenceUseCase.complete(item, now)
             .onSuccess { result ->
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
@@ -263,7 +265,7 @@ class ItemDetailViewModel(
         _dialogState.update { ItemDetailDialogState.History }
         historyJob?.cancel()
         historyJob = viewModelScope.launch {
-            itemFormUseCase.getHistory(id).collect { history -> _historyState.update { history } }
+            itemOccurrenceUseCase.getHistory(id).collect { history -> _historyState.update { history } }
         }
     }
 

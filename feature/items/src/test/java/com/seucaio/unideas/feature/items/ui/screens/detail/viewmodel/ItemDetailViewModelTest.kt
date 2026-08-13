@@ -12,6 +12,7 @@ import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -40,6 +41,9 @@ class ItemDetailViewModelTest {
     private lateinit var itemFormUseCase: ItemFormUseCase
 
     @MockK
+    private lateinit var itemOccurrenceUseCase: ItemOccurrenceUseCase
+
+    @MockK
     private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -48,7 +52,10 @@ class ItemDetailViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
+        coEvery { getSectionsAndTags() } returns SectionsAndTags(
+            SectionStub.sections(),
+            TagStub.tags()
+        )
     }
 
     @After
@@ -63,22 +70,24 @@ class ItemDetailViewModelTest {
         ItemDetailViewModel(
             itemId = itemId,
             itemFormUseCase = itemFormUseCase,
+            itemOccurrenceUseCase = itemOccurrenceUseCase,
             getSectionsAndTags = getSectionsAndTags,
             savedStateHandle = savedStateHandle
         )
 
     @Test
-    fun `when creating a new item should show blank fields with available sections and tags`() = runTest {
-        val vm = viewModel(itemId = null)
+    fun `when creating a new item should show blank fields with available sections and tags`() =
+        runTest {
+            val vm = viewModel(itemId = null)
 
-        vm.uiState.test {
-            val state = awaitItem()
-            assertEquals(false, state.isEditing)
-            assertEquals("", state.title)
-            assertEquals(SectionStub.sections(), state.availableSections)
-            assertEquals(TagStub.tags(), state.availableTags)
+            vm.uiState.test {
+                val state = awaitItem()
+                assertEquals(false, state.isEditing)
+                assertEquals("", state.title)
+                assertEquals(SectionStub.sections(), state.availableSections)
+                assertEquals(TagStub.tags(), state.availableTags)
+            }
         }
-    }
 
     @Test
     fun `when editing should load the item fields via ItemFormUseCase's get`() = runTest {
@@ -109,7 +118,10 @@ class ItemDetailViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
-            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(
+                ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error),
+                awaitItem()
+            )
         }
         assertEquals(true, vm.uiState.value.loadFailed)
     }
@@ -120,7 +132,10 @@ class ItemDetailViewModelTest {
         val vm = viewModel(itemId = 1L)
 
         vm.uiAction.test {
-            assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error), awaitItem())
+            assertEquals(
+                ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error),
+                awaitItem()
+            )
         }
         assertEquals(true, vm.uiState.value.loadFailed)
     }
@@ -144,17 +159,18 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() = runTest {
-        coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
-        val vm = viewModel()
+    fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() =
+        runTest {
+            coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
+            val vm = viewModel()
 
-        vm.uiState.test {
-            val state = awaitItem()
-            assertEquals(false, state.isEditing)
-            assertTrue(state.availableSections.isEmpty())
-            assertTrue(state.availableTags.isEmpty())
+            vm.uiState.test {
+                val state = awaitItem()
+                assertEquals(false, state.isEditing)
+                assertTrue(state.availableSections.isEmpty())
+                assertTrue(state.availableTags.isEmpty())
+            }
         }
-    }
 
     @Test
     fun `when OnTitleChanged should update uiState title`() = runTest {
@@ -170,44 +186,46 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnDueDateChanged clears the date should reset recurrence, dueTime and reminderWarning`() = runTest {
-        val vm = viewModel()
+    fun `when OnDueDateChanged clears the date should reset recurrence, dueTime and reminderWarning`() =
+        runTest {
+            val vm = viewModel()
 
-        vm.uiState.test {
-            awaitItem()
-            vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
-            vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
-            vm.onEvent(ItemDetailEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
-            vm.onEvent(ItemDetailEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
-            awaitItem()
-            awaitItem()
-            awaitItem()
-            val configured = awaitItem()
-            assertEquals(Recurrence.Weekly, configured.recurrence)
-            assertEquals(LocalTime.of(14, 0), configured.dueTime)
-            assertEquals(ReminderWarning.DaysBefore(2), configured.reminderWarning)
+            vm.uiState.test {
+                awaitItem()
+                vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
+                vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
+                vm.onEvent(ItemDetailEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
+                vm.onEvent(ItemDetailEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
+                awaitItem()
+                awaitItem()
+                awaitItem()
+                val configured = awaitItem()
+                assertEquals(Recurrence.Weekly, configured.recurrence)
+                assertEquals(LocalTime.of(14, 0), configured.dueTime)
+                assertEquals(ReminderWarning.DaysBefore(2), configured.reminderWarning)
 
-            vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
-            val cleared = awaitItem()
-            assertEquals(Recurrence.None, cleared.recurrence)
-            assertEquals(null, cleared.dueTime)
-            assertEquals(ReminderWarning.None, cleared.reminderWarning)
+                vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
+                val cleared = awaitItem()
+                assertEquals(Recurrence.None, cleared.recurrence)
+                assertEquals(null, cleared.dueTime)
+                assertEquals(ReminderWarning.None, cleared.reminderWarning)
+            }
         }
-    }
 
     @Test
-    fun `when a structured FieldEvent fires with a valid title should auto-save immediately`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-        val vm = viewModel(itemId = null)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+    fun `when a structured FieldEvent fires with a valid title should auto-save immediately`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
 
-        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+            vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
 
-        coVerify(exactly = 1) {
-            itemFormUseCase.create(match { it.title == "Nova tarefa" })
+            coVerify(exactly = 1) {
+                itemFormUseCase.create(match { it.title == "Nova tarefa" })
+            }
         }
-    }
 
     @Test
     fun `when a structured FieldEvent fires with a blank title should not save`() = runTest {
@@ -257,19 +275,20 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnTitleChanged and OnDescriptionChanged fire in sequence should debounce into a single save`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-        val vm = viewModel(itemId = null)
-        vm.uiState.test { awaitItem() }
+    fun `when OnTitleChanged and OnDescriptionChanged fire in sequence should debounce into a single save`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
-        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Descrição"))
-        testDispatcher.scheduler.advanceUntilIdle()
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Descrição"))
+            testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) {
-            itemFormUseCase.create(match { it.title == "Nova tarefa" && it.description == "Descrição" })
+            coVerify(exactly = 1) {
+                itemFormUseCase.create(match { it.title == "Nova tarefa" && it.description == "Descrição" })
+            }
         }
-    }
 
     @Test
     fun `when a structured FieldEvent fires in edit mode should auto-save via edit`() = runTest {
@@ -282,7 +301,11 @@ class ItemDetailViewModelTest {
         vm.onEvent(ItemDetailEvent.OnSectionChanged(SectionStub.sections().first().id))
 
         coVerify(exactly = 1) {
-            itemFormUseCase.edit(match { it.id == 1L && it.sectionId == SectionStub.sections().first().id })
+            itemFormUseCase.edit(
+                match {
+                    it.id == 1L && it.sectionId == SectionStub.sections().first().id
+                }
+            )
         }
     }
 
@@ -306,54 +329,61 @@ class ItemDetailViewModelTest {
         }
 
     @Test
-    fun `when the use case fails unexpectedly should emit ShowError with the exception message`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalStateException("boom"))
-        val vm = viewModel(itemId = null)
+    fun `when the use case fails unexpectedly should emit ShowError with the exception message`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalStateException("boom"))
+            val vm = viewModel(itemId = null)
 
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
 
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnBackRequested)
-            assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnBackRequested)
+                assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
+            }
         }
-    }
 
     @Test
-    fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
-        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
+    fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
+            every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+            coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+                CompletionResult.Completed
+            )
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
-        assertEquals(true, vm.uiState.value.isCompleted)
-        coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
-    }
+            assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+            assertEquals(true, vm.uiState.value.isCompleted)
+            coVerify(exactly = 1) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
 
     @Test
-    fun `when OnCompleteClicked on a completed task should open the reopen confirmation dialog`() = runTest {
-        val item = ItemStub.completedTask(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
+    fun `when OnCompleteClicked on a completed task should open the reopen confirmation dialog`() =
+        runTest {
+            val item = ItemStub.completedTask(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        assertEquals(ItemDetailDialogState.ReopenConfirm, vm.dialogState.value)
-        coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
-    }
+            assertEquals(ItemDetailDialogState.ReopenConfirm, vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
 
     @Test
     fun `when OnCompleteClicked completes a task should emit the completed snackbar`() = runTest {
         val item = ItemStub.task(id = 1L)
         val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
         every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
+        coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+            CompletionResult.Completed
+        )
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
 
@@ -371,7 +401,9 @@ class ItemDetailViewModelTest {
         val item = ItemStub.completedTask(id = 1L)
         val reopened = item.copy(completedAt = null)
         every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
+        coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+            CompletionResult.Uncompleted
+        )
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
         vm.onEvent(ItemDetailEvent.OnCompleteClicked)
@@ -380,54 +412,62 @@ class ItemDetailViewModelTest {
 
         assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
         assertEquals(false, vm.uiState.value.isCompleted)
-        coVerify(exactly = 1) { itemFormUseCase.complete(any(), any()) }
+        coVerify(exactly = 1) { itemOccurrenceUseCase.complete(any(), any(), any()) }
     }
 
     @Test
-    fun `when OnCompleteConfirmClicked reopens a task should not emit the completed snackbar`() = runTest {
-        val item = ItemStub.completedTask(id = 1L)
-        val reopened = item.copy(completedAt = null)
-        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Uncompleted)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+    fun `when OnCompleteConfirmClicked reopens a task should not emit the completed snackbar`() =
+        runTest {
+            val item = ItemStub.completedTask(id = 1L)
+            val reopened = item.copy(completedAt = null)
+            every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(reopened))
+            coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+                CompletionResult.Uncompleted
+            )
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnCompleteConfirmClicked)
-            expectNoEvents()
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnCompleteConfirmClicked)
+                expectNoEvents()
+            }
         }
-    }
 
     @Test
-    fun `when OnDialogDismissed after OnCompleteClicked on a completed task should not reopen it`() = runTest {
-        val item = ItemStub.completedTask(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+    fun `when OnDialogDismissed after OnCompleteClicked on a completed task should not reopen it`() =
+        runTest {
+            val item = ItemStub.completedTask(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        vm.onEvent(ItemDetailEvent.OnDialogDismissed)
+            vm.onEvent(ItemDetailEvent.OnDialogDismissed)
 
-        assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
-        assertEquals(true, vm.uiState.value.isCompleted)
-        coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
-    }
+            assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+            assertEquals(true, vm.uiState.value.isCompleted)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
 
     @Test
-    fun `when completing a recurring task should mark it completed without advancing dueDate`() = runTest {
-        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
-        val completed = item.copy(lastCompletedScheduledDate = ItemStub.TODAY)
-        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
-        coEvery { itemFormUseCase.complete(any(), any()) } returns Result.success(CompletionResult.Completed)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
+    fun `when completing a recurring task should mark it completed without advancing dueDate`() =
+        runTest {
+            val item =
+                ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+            val completed = item.copy(lastCompletedScheduledDate = ItemStub.TODAY)
+            every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+            coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+                CompletionResult.Completed
+            )
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnCompleteClicked)
+            vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
-        assertEquals(true, vm.uiState.value.isCompleted)
-        assertEquals(ItemStub.TODAY, vm.uiState.value.dueDate)
-    }
+            assertEquals(true, vm.uiState.value.isCompleted)
+            assertEquals(ItemStub.TODAY, vm.uiState.value.dueDate)
+        }
 
     @Test
     fun `when OnCompleteClicked on a completed recurring occurrence should open the reopen confirmation dialog`() =
@@ -445,22 +485,24 @@ class ItemDetailViewModelTest {
             vm.onEvent(ItemDetailEvent.OnCompleteClicked)
 
             assertEquals(ItemDetailDialogState.ReopenConfirm, vm.dialogState.value)
-            coVerify(exactly = 0) { itemFormUseCase.complete(any(), any()) }
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
         }
 
     @Test
-    fun `when OnHistoryClicked should open the history sheet and load the series history`() = runTest {
-        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
-        every { itemFormUseCase.getHistory(1L) } returns flowOf(emptyList())
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
+    fun `when OnHistoryClicked should open the history sheet and load the series history`() =
+        runTest {
+            val item =
+                ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnHistoryClicked)
+            vm.onEvent(ItemDetailEvent.OnHistoryClicked)
 
-        assertEquals(ItemDetailDialogState.History, vm.dialogState.value)
-        coVerify(exactly = 1) { itemFormUseCase.getHistory(1L) }
-    }
+            assertEquals(ItemDetailDialogState.History, vm.dialogState.value)
+            coVerify(exactly = 1) { itemOccurrenceUseCase.getHistory(1L) }
+        }
 
     @Test
     fun `when OnBackRequested with an empty draft should navigate back without saving`() = runTest {
@@ -475,18 +517,19 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnBackRequested with a valid title should flush the pending save and navigate back`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-        val vm = viewModel(itemId = null)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+    fun `when OnBackRequested with a valid title should flush the pending save and navigate back`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
 
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnBackRequested)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnBackRequested)
+                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            }
+            coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
         }
-        coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
-    }
 
     @Test
     fun `when OnBackRequested is blocked by a blank title the first attempt should only mark titleError`() =
@@ -530,35 +573,37 @@ class ItemDetailViewModelTest {
         }
 
     @Test
-    fun `when OnBackRequested is blocked twice in edit mode should open the edit-mode discard dialog`() = runTest {
-        val item = ItemStub.task(id = 1L)
-        every { itemFormUseCase.get(1L) } returns flowOf(item)
-        val vm = viewModel(itemId = 1L)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
-        vm.onEvent(ItemDetailEvent.OnBackRequested)
+    fun `when OnBackRequested is blocked twice in edit mode should open the edit-mode discard dialog`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
 
-        vm.onEvent(ItemDetailEvent.OnBackRequested)
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
 
-        val dialogState = vm.dialogState.value as ItemDetailDialogState.DiscardConfirm
-        assertEquals(R.string.item_detail_discard_edit_title, dialogState.titleRes)
-        assertEquals(R.string.item_detail_discard_edit_message, dialogState.messageRes)
-    }
+            val dialogState = vm.dialogState.value as ItemDetailDialogState.DiscardConfirm
+            assertEquals(R.string.item_detail_discard_edit_title, dialogState.titleRes)
+            assertEquals(R.string.item_detail_discard_edit_message, dialogState.messageRes)
+        }
 
     @Test
-    fun `when OnDiscardConfirmed in creation mode with nothing auto-saved should just navigate back`() = runTest {
-        val vm = viewModel(itemId = null)
-        vm.uiState.test { awaitItem() }
-        vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
-        vm.onEvent(ItemDetailEvent.OnBackRequested)
-        vm.onEvent(ItemDetailEvent.OnBackRequested)
+    fun `when OnDiscardConfirmed in creation mode with nothing auto-saved should just navigate back`() =
+        runTest {
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
 
-        vm.uiAction.test {
-            vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
+                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            }
+            coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
         }
-        coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
-    }
 
     @Test
     fun `when OnDiscardConfirmed in creation mode after an earlier auto-save should delete the orphaned item`() =
@@ -598,15 +643,16 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when the ViewModel is recreated with the same SavedStateHandle should restore the draft`() = runTest {
-        coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-        val savedStateHandle = SavedStateHandle()
-        val firstVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
-        firstVm.uiState.test { awaitItem() }
-        firstVm.onEvent(ItemDetailEvent.OnTitleChanged("Rascunho"))
+    fun `when the ViewModel is recreated with the same SavedStateHandle should restore the draft`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            val savedStateHandle = SavedStateHandle()
+            val firstVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
+            firstVm.uiState.test { awaitItem() }
+            firstVm.onEvent(ItemDetailEvent.OnTitleChanged("Rascunho"))
 
-        val secondVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
+            val secondVm = viewModel(itemId = null, savedStateHandle = savedStateHandle)
 
-        assertEquals("Rascunho", secondVm.uiState.value.title)
-    }
+            assertEquals("Rascunho", secondVm.uiState.value.title)
+        }
 }

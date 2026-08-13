@@ -14,6 +14,9 @@ import java.time.LocalTime
  *   with a `LocalDateTime` on purpose — [UrgencyLevel] and existing screens stay untouched.
  * @property reminderWarning only valid when [dueDate] is not null. See [ReminderTier.of].
  * @property completedAt non-null means completed (only meaningful for [ItemType.TASK]).
+ * @property lastCompletedScheduledDate the `dueDate` of a recurring task's most recently
+ *   completed occurrence — only meaningful when [isRecurring]; see [isCompleted].
+ * @property isPinned when true, appears in the priority panel regardless of [urgency].
  */
 data class Item(
     val id: Long = 0L,
@@ -27,9 +30,17 @@ data class Item(
     val reminderWarning: ReminderWarning = ReminderWarning.None,
     val completedAt: LocalDateTime? = null,
     val createdAt: LocalDateTime,
+    val lastCompletedScheduledDate: LocalDate? = null,
+    val isPinned: Boolean = false,
     val tags: List<Tag> = emptyList(),
 ) {
-    val isCompleted: Boolean get() = completedAt != null
+    /**
+     * A recurring task's `dueDate` doesn't move when completed (it only advances once its
+     * occurrence is actually in the past — [com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase]),
+     * so completion is tracked separately via [lastCompletedScheduledDate] instead of [completedAt].
+     */
+    val isCompleted: Boolean
+        get() = if (isRecurring && dueDate != null) lastCompletedScheduledDate == dueDate else completedAt != null
 
     val isRecurring: Boolean get() = recurrence !is Recurrence.None
 

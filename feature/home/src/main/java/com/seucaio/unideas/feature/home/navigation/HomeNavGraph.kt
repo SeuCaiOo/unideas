@@ -4,8 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.home.features.allpriorities.screen.AllPrioritiesScreen
-import com.seucaio.unideas.feature.home.features.browse.screen.BrowseScreen
-import com.seucaio.unideas.feature.home.features.panel.screen.HomeScreen
+import com.seucaio.unideas.feature.home.features.home.screen.HomeScreen
 
 fun NavGraphBuilder.homeNavGraph(
     onNavigateBack: (() -> Unit)?,
@@ -13,28 +12,20 @@ fun NavGraphBuilder.homeNavGraph(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToBrowse: () -> Unit,
 ) {
-    composable<HomeRoute.Panel> {
-        HomeScreen(
-            onNavigateToDetail = onNavigateToDetail,
-            onNavigateToAddItem = onNavigateToAddItem,
-            onNavigateToAllPriorities = onNavigateToAllPriorities,
-            onNavigateToSettings = onNavigateToSettings,
-            onNavigateToBrowse = onNavigateToBrowse,
-        )
-    }
     composable<HomeRoute.AllPriorities> {
         AllPrioritiesScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToDetail = onNavigateToDetail,
         )
     }
-    composable<HomeRoute.Browse> {
-        BrowseScreen(
-            onNavigateBack = onNavigateBack,
+    composable<HomeRoute.Home> {
+        HomeScreen(
+            onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToAddItem = onNavigateToAddItem,
+            onNavigateToAllPriorities = onNavigateToAllPriorities,
+            onNavigateToSettings = onNavigateToSettings,
         )
     }
 }

@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.items.ui.components.fields.markdown
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Checklist
@@ -26,7 +25,7 @@ fun MarkdownToolbar(
     onFormatClick: (MarkdownFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
         FormatButton(
             icon = Icons.Default.FormatBold,
             contentDescription = stringResource(R.string.item_form_markdown_bold),

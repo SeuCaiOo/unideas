@@ -56,14 +56,17 @@ import com.seucaio.unideas.ds.components.inputs.DateFieldButton
 import com.seucaio.unideas.ds.components.inputs.DropdownField
 import com.seucaio.unideas.ds.components.inputs.FilterDropdownPill
 import com.seucaio.unideas.ds.components.inputs.FormField
+import com.seucaio.unideas.ds.components.inputs.GridSelectionBottomSheet
+import com.seucaio.unideas.ds.components.inputs.SelectionBottomSheet
+import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.lists.ActionRow
 import com.seucaio.unideas.ds.components.lists.GroupHeader
-import com.seucaio.unideas.ds.components.lists.ListItemRow
-import com.seucaio.unideas.ds.components.lists.ListItemUi
 import com.seucaio.unideas.ds.components.lists.ManageListRow
 import com.seucaio.unideas.ds.components.lists.MetaChipsRow
 import com.seucaio.unideas.ds.components.lists.MetaRow
 import com.seucaio.unideas.ds.components.lists.NavRow
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
+import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.ds.components.navigation.TabItem
 import com.seucaio.unideas.ds.components.panels.PriorityPanel
 import com.seucaio.unideas.ds.components.panels.PriorityRowUi
@@ -236,6 +239,62 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
                     allOptionLabel = "All sections",
                     onSelect = { selected = it }
                 )
+            }
+            Labeled("SwitchSection") {
+                var checked by remember { mutableStateOf(true) }
+                SwitchSection(label = "Reminder", checked = checked, onCheckedChange = { checked = it }) {
+                    Text(
+                        "Revealed content",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+            }
+            Labeled("SelectionBottomSheet") {
+                var selected by remember { mutableStateOf("Weekly") }
+                var showSheet by remember { mutableStateOf(false) }
+                DateFieldButton(
+                    valueLabel = selected,
+                    onClick = { showSheet = true },
+                    onClear = {},
+                    clearContentDescription = "Clear"
+                )
+                if (showSheet) {
+                    SelectionBottomSheet(
+                        title = "Repeat",
+                        options = listOf("Daily", "Weekly", "Monthly"),
+                        selectedOption = selected,
+                        optionLabel = { it },
+                        onOptionSelected = {
+                            selected = it
+                            showSheet = false
+                        },
+                        onDismiss = { showSheet = false },
+                    )
+                }
+            }
+            Labeled("GridSelectionBottomSheet") {
+                var selectedDay by remember { mutableIntStateOf(15) }
+                var showDaySheet by remember { mutableStateOf(false) }
+                DateFieldButton(
+                    valueLabel = selectedDay.toString(),
+                    onClick = { showDaySheet = true },
+                    onClear = {},
+                    clearContentDescription = "Clear"
+                )
+                if (showDaySheet) {
+                    GridSelectionBottomSheet(
+                        title = "Which day of the month?",
+                        options = (1..31).toList(),
+                        selectedOption = selectedDay,
+                        optionLabel = { it.toString() },
+                        onOptionSelected = {
+                            selectedDay = it
+                            showDaySheet = false
+                        },
+                        onDismiss = { showDaySheet = false },
+                    )
+                }
             }
             Labeled("DateFieldButton") {
                 DateFieldButton(

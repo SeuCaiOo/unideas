@@ -1,17 +1,18 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,21 +21,49 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 
 class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
 
-    private var originalItem: Item? = null
+    private companion object {
+        const val TEXT_DEBOUNCE_MS = 500L
+        const val UI_STATE_KEY = "itemDetailUiState"
+    }
 
-    private val _uiState = MutableStateFlow(
-        ItemDetailUiState(isEditing = itemId != null, isLoading = itemId != null, type = initialType),
+    private var originalItem: Item? = null
+    private var currentItemId: Long? = itemId
+    private var historyJob: Job? = null
+    private var debounceJob: Job? = null
+    private var hasPendingTextSave = false
+
+    private val editUiState = MutableStateFlow(
+        ItemDetailUiState(
+            isEditing = itemId != null,
+            isLoading = itemId != null,
+            type = initialType
+        )
     )
-    val uiState: StateFlow<ItemDetailUiState> = _uiState.asStateFlow()
+
+    val uiState: StateFlow<ItemDetailUiState> = if (itemId == null) {
+        savedStateHandle.getStateFlow(UI_STATE_KEY, ItemDetailUiState(type = initialType))
+    } else {
+        editUiState.asStateFlow()
+    }
+
+    private fun updateUiState(transform: (ItemDetailUiState) -> ItemDetailUiState) {
+        if (itemId == null) {
+            savedStateHandle[UI_STATE_KEY] = transform(uiState.value)
+        } else {
+            editUiState.update(transform)
+        }
+    }
 
     private val _uiAction = Channel<ItemDetailUiAction>(Channel.BUFFERED)
     val uiAction: Flow<ItemDetailUiAction> = _uiAction.receiveAsFlow()
@@ -42,126 +71,149 @@ class ItemDetailViewModel(
     private val _dialogState = MutableStateFlow<ItemDetailDialogState>(ItemDetailDialogState.None)
     val dialogState: StateFlow<ItemDetailDialogState> = _dialogState.asStateFlow()
 
-    init {
-        viewModelScope.launch { loadFormData() }
-    }
+    private val _historyState = MutableStateFlow<List<ItemCompletionHistory>>(emptyList())
+    val historyState: StateFlow<List<ItemCompletionHistory>> = _historyState.asStateFlow()
 
-    private suspend fun loadFormData() {
-        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _uiState.update {
-                it.copy(availableSections = referenceData.sections, availableTags = referenceData.tags)
+    init {
+        viewModelScope.launch {
+            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
+                updateUiState { it.setReferenceData(referenceData.sections, referenceData.tags) }
             }
+            if (itemId != null) loadItem(itemId)
         }
-        if (itemId != null) loadItem(itemId)
     }
 
     private suspend fun loadItem(id: Long) {
         val item = runCatching { itemFormUseCase.get(id).first() }.getOrNull()
         if (item == null) {
             sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_form_load_error))
-            _uiState.update { it.copy(isLoading = false, loadFailed = true) }
+            updateUiState { it.markLoadFailed() }
             return
         }
         originalItem = item
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                type = item.type,
-                title = item.title,
-                description = item.description.orEmpty(),
-                sectionId = item.sectionId,
-                selectedTagIds = item.tags.map { tag -> tag.id }.toSet(),
-                dueDate = item.dueDate,
-                dueTime = item.dueTime,
-                recurrence = item.recurrence,
-                reminderWarning = item.reminderWarning,
-                isCompleted = item.isCompleted,
-                completedAt = item.completedAt,
-                loadFailed = false,
-            )
-        }
+        updateUiState { it.applyLoadedItem(item) }
     }
 
     fun onEvent(event: ItemDetailEvent) {
         when (event) {
-            is ItemDetailEvent.OnTypeChanged -> _uiState.update { it.copy(type = event.type) }
-            is ItemDetailEvent.OnTitleChanged -> _uiState.update { it.copy(title = event.title) }
-            is ItemDetailEvent.OnDescriptionChanged ->
-                _uiState.update { it.copy(description = event.description) }
-            is ItemDetailEvent.OnSectionChanged -> _uiState.update { it.copy(sectionId = event.sectionId) }
-            is ItemDetailEvent.OnTagToggled -> _uiState.update { it.toggleTag(event.tagId) }
-            is ItemDetailEvent.OnDueDateChanged -> _uiState.update {
-                it.copy(
-                    dueDate = event.dueDate,
-                    dueTime = if (event.dueDate == null) null else it.dueTime,
-                    recurrence = if (event.dueDate == null) Recurrence.None else it.recurrence,
-                    reminderWarning = if (event.dueDate == null) ReminderWarning.None else it.reminderWarning,
-                )
-            }
-            is ItemDetailEvent.OnDueTimeChanged -> _uiState.update { it.copy(dueTime = event.dueTime) }
-            is ItemDetailEvent.OnRecurrenceChanged -> _uiState.update { it.copy(recurrence = event.recurrence) }
-            is ItemDetailEvent.OnReminderWarningChanged ->
-                _uiState.update { it.copy(reminderWarning = event.reminderWarning) }
-            is ItemDetailEvent.OnSaveClicked -> handleSave()
+            is ItemDetailEvent.FieldEvent -> handleFieldEvent(event)
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
-            is ItemDetailEvent.OnDialogDismissed -> _dialogState.update { ItemDetailDialogState.None }
+            is ItemDetailEvent.OnDialogDismissed -> {
+                historyJob?.cancel()
+                _dialogState.update { ItemDetailDialogState.None }
+            }
             is ItemDetailEvent.OnDeleteConfirmClicked -> handleDelete()
             is ItemDetailEvent.OnCompleteClicked -> handleCompleteClicked()
             is ItemDetailEvent.OnCompleteConfirmClicked -> {
                 _dialogState.update { ItemDetailDialogState.None }
                 handleComplete()
             }
+            is ItemDetailEvent.OnHistoryClicked -> handleHistoryClicked()
             is ItemDetailEvent.OnRetryClicked -> retryLoad()
+            is ItemDetailEvent.OnBackRequested -> handleBackRequested()
+            is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
         }
     }
 
     private fun retryLoad() {
         val id = itemId ?: return
-        _uiState.update { it.copy(isLoading = true, loadFailed = false) }
+        updateUiState { it.startLoading() }
         viewModelScope.launch { loadItem(id) }
     }
 
-    private fun ItemDetailUiState.toggleTag(tagId: Long): ItemDetailUiState =
-        copy(selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId)
+    /** Title/description debounce ~500ms per keystroke — everything else saves immediately.
+     * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
+     * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
+    private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
+        updateUiState { it.reduce(event) }
+        when (event) {
+            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = true
+                debounceJob = viewModelScope.launch {
+                    delay(TEXT_DEBOUNCE_MS)
+                    hasPendingTextSave = false
+                    if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
+                }
+            }
 
-    private fun handleSave() = viewModelScope.launch {
-        val state = _uiState.value
-        val selectedTags = state.availableTags.filter { it.id in state.selectedTagIds }
-
-        val result: Result<Unit> = if (itemId == null) {
-            itemFormUseCase.create(
-                Item(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
-                    createdAt = LocalDateTime.now(),
-                    tags = selectedTags,
-                ),
-            ).map { }
-        } else {
-            val original = originalItem ?: return@launch
-            itemFormUseCase.edit(
-                original.copy(
-                    type = state.type,
-                    title = state.title,
-                    description = state.description.ifBlank { null },
-                    sectionId = state.sectionId,
-                    dueDate = state.dueDate,
-                    dueTime = state.dueTime,
-                    recurrence = state.recurrence,
-                    reminderWarning = state.reminderWarning,
-                    tags = selectedTags,
-                ),
-            )
+            else -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = false
+                if (uiState.value.isTitleValid) {
+                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
+                }
+            }
         }
+    }
 
-        result.onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+    /** Safety save: a pending text debounce shouldn't be lost just because the user left the
+     * screen before it fired. [viewModelScope] is already cancelled by the time this runs, so the
+     * flush can't ride on it — a short, local Room write is an acceptable synchronous cost here. */
+    override fun onCleared() {
+        if (hasPendingTextSave && uiState.value.isTitleValid) {
+            runBlocking { persist() }
+        }
+        super.onCleared()
+    }
+
+    private fun handleBackRequested() = viewModelScope.launch {
+        val state = uiState.value
+        when {
+            state.isPristine -> sendUiAction(ItemDetailUiAction.NavigateBack)
+            state.isTitleValid -> {
+                debounceJob?.cancel()
+                hasPendingTextSave = false
+                persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+            }
+
+            state.titleError -> _dialogState.update { discardConfirmDialogState() }
+
+            else -> updateUiState { it.copy(titleError = true) }
+        }
+    }
+
+    private fun discardConfirmDialogState(): ItemDetailDialogState.DiscardConfirm = if (itemId != null) {
+        ItemDetailDialogState.DiscardConfirm(
+            titleRes = R.string.item_detail_discard_edit_title,
+            messageRes = R.string.item_detail_discard_edit_message,
+        )
+    } else {
+        ItemDetailDialogState.DiscardConfirm(
+            titleRes = R.string.item_detail_discard_new_title,
+            messageRes = R.string.item_detail_discard_new_message,
+        )
+    }
+
+    private fun handleDiscardConfirmed() = viewModelScope.launch {
+        _dialogState.update { ItemDetailDialogState.None }
+        val id = currentItemId
+        if (itemId == null && id != null) {
+            itemFormUseCase.delete(id)
+                .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
+                .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
+        } else {
+            sendUiAction(ItemDetailUiAction.NavigateBack)
+        }
+    }
+
+    private suspend fun persist(): Result<Unit> {
+        val id = currentItemId
+
+        return if (id == null) {
+            val newItem = uiState.value.toItem(original = null)
+            itemFormUseCase.create(newItem)
+                .onSuccess { newId ->
+                    currentItemId = newId
+                    originalItem = newItem.copy(id = newId)
+                }
+                .map { }
+        } else {
+            val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
+            val updated = uiState.value.toItem(original)
+            itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
+        }
     }
 
     private suspend fun handleFailure(error: Throwable) {
@@ -181,35 +233,43 @@ class ItemDetailViewModel(
     }
 
     private fun handleCompleteClicked() {
-        if (_uiState.value.isCompleted) {
+        if (uiState.value.isCompleted) {
             _dialogState.update { ItemDetailDialogState.ReopenConfirm }
         } else {
             handleComplete()
         }
     }
 
+    /** Only [CompletionResult.Completed] gets a snackbar — reopening (via [ItemDetailDialogState.ReopenConfirm])
+     * is a correction, not an action worth celebrating. */
     private fun handleComplete() = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         val now = LocalDateTime.now()
         itemFormUseCase.complete(item, now)
             .onSuccess { result ->
-                val completedAt = if (result is CompletionResult.Uncompleted) null else now
-                originalItem = item.copy(completedAt = completedAt)
-                _uiState.update { it.copy(isCompleted = completedAt != null, completedAt = completedAt) }
+                val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
+                originalItem = updated
+                updateUiState { it.applyCompletion(updated) }
+                if (result == CompletionResult.Completed) {
+                    sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
+                }
             }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 
-    private fun handleShare() = viewModelScope.launch {
-        val item = originalItem ?: return@launch
-        sendUiAction(ItemDetailUiAction.ShareText(buildShareText(item)))
+    private fun handleHistoryClicked() {
+        val id = itemId ?: return
+        _dialogState.update { ItemDetailDialogState.History }
+        historyJob?.cancel()
+        historyJob = viewModelScope.launch {
+            itemFormUseCase.getHistory(id).collect { history -> _historyState.update { history } }
+        }
     }
 
-    private fun buildShareText(item: Item): String = buildString {
-        appendLine(item.title)
-        item.description?.let { appendLine(it) }
-        item.dueDate?.let { appendLine(it.toFormattedDateString()) }
+    private fun handleShare() = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        sendUiAction(ItemDetailUiAction.ShareText(item))
     }
 
     private suspend fun sendUiAction(action: ItemDetailUiAction) = _uiAction.send(action)

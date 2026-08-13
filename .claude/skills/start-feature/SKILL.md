@@ -59,19 +59,21 @@ If docs are already up to date (last commit is a `docs:` commit, or no meaningfu
 
 The unideas project board has two staging levels before work starts — `Backlog` (everything captured/specced) and `Todo` (the prioritized subset, promoted manually) — then `In Progress`, `Done`, and `Released`. No `In Review`. `finish-issue` deliberately doesn't move the card, so this step is where stale cards get swept to Done.
 
-**Done criterion: the issue's PR merged into `dev`** — NOT "the GitHub issue is closed". Feature PRs always target `dev`, never the repo's default branch (`main`), so GitHub's `Closes #N` auto-close never fires on merge — waiting for `state:closed` would leave cards stuck in "In Progress" forever. `Released` is the separate, later step for "shipped in an actual generated version" (`0.0.x`/`0.1.0`, moved manually at release time) — don't conflate the two.
+**Done criterion: the issue's PR merged into its actual base** — `dev` for a normal feature issue, or the active epic branch (`feature/<parent>-*`) for a sub-issue of a long-lived epic — NOT "the GitHub issue is closed". Feature PRs never target the repo's default branch (`main`) directly, so GitHub's `Closes #N` auto-close never fires on merge — waiting for `state:closed` would leave cards stuck in "In Progress" forever. `Released` is the separate, later step for "shipped in an actual generated version" (`0.0.x`/`0.1.0`, moved manually at release time) — don't conflate the two.
 
-Check for merged PRs (into `dev`) referencing an issue not yet in "Done":
+Check for merged PRs referencing an issue not yet in "Done" — **run this against `dev` AND every active epic branch**, not just `dev`. A sub-issue's PR targets the epic branch, not `dev` (same rule as branch selection in step -1), so a `--base dev` check alone silently misses it — confirmed the hard way (#130, 2026-08-09): PR #131 merged into `feature/96-...` on schedule, but the issue sat `OPEN`/"In Progress" on the board because this step never looked there. List active epic branches first (`git branch -a | grep -E 'feature/[0-9]+-'`, or check the Improvements artifact for entries still tagged "Em andamento"), then repeat the check per branch:
 
 ```bash
 gh pr list --base dev --state merged --json number,title,body,mergedAt --limit 30
+# repeat once per active epic branch, e.g.:
+gh pr list --base feature/96-item-manual-ordering-priority-and-recurrence-history --state merged --json number,title,body,mergedAt --limit 30
 ```
 
 For each merged PR, extract the issue number from its `Closes #<N>` line in the body. For each such issue:
 
 ```bash
 # 1. Close the issue now if still open (don't wait for the dev->main release)
-gh issue close <N> --comment "Mergeado em \`dev\` via #<PR>. Fecho aqui — o board rastreia \"já está numa versão gerada\" separadamente, na coluna Released."
+gh issue close <N> --comment "Mergeado em \`<base-branch>\` via #<PR>. Fecho aqui — o board rastreia \"já está numa versão gerada\" separadamente, na coluna Released."
 
 # 2. Move its board card to Done
 ISSUE_NODE_ID=$(gh api repos/SeuCaiOo/unideas/issues/<N> --jq '.node_id')
@@ -305,9 +307,20 @@ gh api graphql -f query="
 
 If `parent` is non-null, find the parent's project item and current status the same way as step 7 (swap in the parent's issue number). If the parent's status is `Backlog` or `Todo`, move it to `In Progress` too — starting work on any sub-issue means the epic itself is now in progress, even though it isn't finished. If the parent is already `In Progress` (a later sibling sub-issue), leave it as-is. Report which parent (if any) was promoted, and to what status it was found before promoting.
 
-### 10. Sync the Improvements artifact (mark as started)
+### 10. Sync the Improvements artifact (mark as started) — badge AND section move, every issue, not just epics
 
-Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading). This step is about visibility, not completion, so keep it light: no status tag change is required for an in-progress item (the artifact's convention only tags `✅ Merged`/`⏳ In Progress` on *epics*, not individual sub-issues mid-flight) — but if this issue **is** an epic itself (has its own sub-issues) or the parent promoted in step 9, add/update its `⏳ In Progress` status tag now, same format as the Done-time tag in step 0. Republish with the same `url`. Skip silently if nothing needs to change (e.g. this is a plain leaf issue with no epic-level tag to add).
+Same artifact as referenced in step 0 — `.claude/skills/add-improvement/SKILL.md` has the URL. `WebFetch` its current content, find the entry for this issue (`(#<issue-number>)` in the heading).
+
+**This is a two-part edit, both parts required for every issue whose board `Status` just changed in step 7 (or step 9 for its parent) — plain sub-issues too, not just epics:**
+
+1. Add/update the `<span class="badge st-progress">In Progress</span>` in that issue's own `<summary>`, plus a matching status phrase in the summary text: `⏳ **In Progress** (branch <code><type>/#<N>/<slug></code>, base <code><base-branch></code>, plano salvo em <code>.claude/plans/</code>)` — see #133's entry (from #96/#133, 2026-08-09) as the template.
+2. **Physically move** the whole `<details>` block for this issue into the `sec-andamento` ("Em andamento") `<h2>` section — cut it out of wherever it currently sits (`sec-backlog` for a plain sub-issue, `sec-inicial` etc.) and paste it there. A badge without the matching physical section (or vice versa) is exactly the inconsistency this step exists to prevent.
+
+If this issue has a parent epic (promoted in step 9), also update the parent's own checklist line for this issue (e.g. "`#N` — ... — **Backlog**, ..." → "`#N` — ... — ⏳ **In Progress**, branch criada, plano salvo") so the epic's checklist and the issue's own entry agree.
+
+Republish with the same `url`.
+
+**Do not skip the badge/section move because a prose field (like a `pré-req` line) was already updated** — those are different edits. Confirmed the hard way (#134, 2026-08-10): DoR/`pré-req` text got updated, the GitHub board card genuinely moved to In Progress, but the artifact's own #134 entry was left sitting badge-less in "Backlog" — caught by the user diffing the artifact against the live board, not by this skill. The previous wording of this step ("no status tag required for a plain sub-issue mid-flight") was itself the bug; #133 already set the correct precedent (full badge + section move for a leaf issue) before this step's text fell out of sync with that precedent.
 
 ### 11. Enter planning mode
 
@@ -339,6 +352,8 @@ Then present the plan to the user and ask for confirmation before starting imple
 | Leaving a parent epic stuck in Backlog while its sub-issues progress | Always run step 9 (starting) and the Parent epic sync in step 0 (finishing) — use the native `parent`/`subIssuesSummary` GraphQL fields, never guess the parent number from body text |
 | Closing a parent epic while sibling sub-issues are still open | Only close the parent when `subIssuesSummary.completed == total` — otherwise just confirm it's `In Progress` |
 | Closing a parent epic on `subIssuesSummary` alone, without checking its own body checklist | The parent has its own DoD (a checklist in its body, even if not labeled "DoD") — reconcile and check it off before closing, same as `finish-issue` does for leaf issues |
+| Step 0 checking only `--base dev`, missing sub-issues of an active epic | A sub-issue's PR targets the epic branch, not `dev` — always repeat the merged-PR check once per active epic branch too (confirmed the hard way, #130: PR #131 merged into `feature/96-...`, but the issue stayed open/In Progress because only `dev` was checked) |
 | Forgetting to sync the Improvements artifact | Always run step 0's artifact sync (finishing) and step 10 (starting) — it's the same URL `add-improvement` writes to, don't wait for the user to paste the link |
+| Updating a prose field (e.g. `pré-req`) in the artifact but leaving the badge/section stale for a plain sub-issue that just moved to In Progress | Step 10 requires BOTH the `st-progress` badge AND physically moving the `<details>` block into `sec-andamento`, for every issue, not just epics — confirmed the hard way (#134, 2026-08-10) |
 | Creating the branch with plain `git checkout -b` for an issue-tied feature | Always use `createLinkedBranch` (step 3) instead — plain branch creation + a later `Closes #N` in the PR body does NOT reliably link the issue's Development section for `dev`-targeting PRs (confirmed empirically, #22/#35) |
 | Trusting the DoR "pré-requisitos concluídos" checkbox alone, without checking GitHub's native `blocked_by` dependency | Step 2 checks both — the checkbox is prose someone ticked by hand and can be stale; `issue_dependencies_summary.blocked_by` is GitHub's real dependency graph. Query it every time, not just when something feels off (confirmed the hard way, #115) |

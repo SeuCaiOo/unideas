@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -17,7 +18,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
+import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -35,6 +40,12 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailV
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+private fun Item.toShareText(): String = buildString {
+    appendLine(title)
+    description?.let { appendLine(it) }
+    dueDate?.let { appendLine(it.toFormattedDateString()) }
+}
+
 @Composable
 fun ItemDetailScreen(
     itemId: Long?,
@@ -44,6 +55,7 @@ fun ItemDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val historyState by viewModel.historyState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -57,7 +69,7 @@ fun ItemDetailScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemDetailUiAction.ShareText -> context.shareText(action.text)
+                is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
             }
         }
     }
@@ -65,6 +77,7 @@ fun ItemDetailScreen(
     ItemDetailScreenContent(
         uiState = uiState,
         dialogState = dialogState,
+        historyState = historyState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -76,11 +89,19 @@ fun ItemDetailScreen(
 private fun ItemDetailScreenContent(
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
+    historyState: List<ItemCompletionHistory>,
     onEvent: (ItemDetailEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+
+    BackHandler {
+        onEvent(ItemDetailEvent.OnBackRequested)
+    }
+
+    val topBarNavigateBack = updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
+
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
             onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
@@ -88,11 +109,11 @@ private fun ItemDetailScreenContent(
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
             onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
             onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
+            onReminderToggled = { onEvent(ItemDetailEvent.OnReminderToggled(it)) },
             onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
             onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
             onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
-            onSaveClicked = { onEvent(ItemDetailEvent.OnSaveClicked) },
             onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )
     }
@@ -100,11 +121,20 @@ private fun ItemDetailScreenContent(
     Scaffold(
         topBar = {
             UnideasTopBar(
-                onNavigateBack = updatedOnNavigateBack,
+                onNavigateBack = topBarNavigateBack,
                 actions = {
                     ItemActions(
                         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onDeleteClicked = { onEvent(ItemDetailEvent.OnDeleteClicked) }
+                        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
+                            { onEvent(ItemDetailEvent.OnHistoryClicked) }
+                        } else {
+                            null
+                        },
+                        onDeleteClicked = if (uiState.isEditing) {
+                            { onEvent(ItemDetailEvent.OnDeleteClicked) }
+                        } else {
+                            null
+                        },
                     )
                 },
             )
@@ -126,6 +156,15 @@ private fun ItemDetailScreenContent(
         }
     }
 
+    ItemDetailDialogs(dialogState, historyState, onEvent)
+}
+
+@Composable
+private fun ItemDetailDialogs(
+    dialogState: ItemDetailDialogState,
+    historyState: List<ItemCompletionHistory>,
+    onEvent: (ItemDetailEvent) -> Unit,
+) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
         DeleteConfirmationDialog(
             titleRes = R.string.item_detail_delete_title,
@@ -143,6 +182,22 @@ private fun ItemDetailScreenContent(
             onConfirm = { onEvent(ItemDetailEvent.OnCompleteConfirmClicked) },
         )
     }
+
+    if (dialogState is ItemDetailDialogState.History) {
+        ItemHistoryBottomSheet(
+            history = historyState,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+        )
+    }
+
+    if (dialogState is ItemDetailDialogState.DiscardConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = dialogState.titleRes,
+            messageRes = dialogState.messageRes,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnDiscardConfirmed) },
+        )
+    }
 }
 
 @PreviewLightDark
@@ -154,6 +209,7 @@ private fun ItemDetailScreenPreview(
         ItemDetailScreenContent(
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
+            historyState = emptyList(),
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

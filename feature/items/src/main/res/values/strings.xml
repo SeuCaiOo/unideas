@@ -75,6 +75,7 @@
     <string name="item_detail_ignore">Ignore</string>
     <string name="item_detail_ignore_confirm_title">Ignore this occurrence?</string>
     <string name="item_detail_ignore_confirm_message">This marks the occurrence as missed and moves on to the next one. Describe why.</string>
+    <string name="item_detail_extend_deadline">Extend deadline</string>
     <string name="item_detail_history">History</string>
     <string name="item_detail_history_title">Occurrence history</string>
     <string name="item_detail_history_empty">No occurrences recorded yet</string>

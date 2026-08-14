@@ -75,6 +75,7 @@
     <string name="item_detail_ignore">Ignorar</string>
     <string name="item_detail_ignore_confirm_title">Ignorar ocorrência?</string>
     <string name="item_detail_ignore_confirm_message">Isso marca essa ocorrência como não feita e avança para a próxima. Descreva o motivo.</string>
+    <string name="item_detail_extend_deadline">Aumentar prazo</string>
     <string name="item_detail_history">Histórico</string>
     <string name="item_detail_history_title">Histórico de ocorrências</string>
     <string name="item_detail_history_empty">Nenhuma ocorrência registrada ainda</string>

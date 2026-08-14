@@ -37,6 +37,11 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailE
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceDialogState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceEvent
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiAction
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -52,10 +57,13 @@ fun ItemDetailScreen(
     onNavigateBack: (() -> Unit)?,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
+    occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
-    val historyState by viewModel.historyState.collectAsStateWithLifecycle()
+    val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
+    val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
+    val historyState by occurrenceViewModel.historyState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -70,6 +78,21 @@ fun ItemDetailScreen(
                 )
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
+                is ItemDetailUiAction.ItemPersisted ->
+                    occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnItemUpdatedExternally(action.item))
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        occurrenceViewModel.uiAction.collect { action ->
+            when (action) {
+                is ItemOccurrenceUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
+                    resources.getString(action.messageRes)
+                )
+                is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is ItemOccurrenceUiAction.ItemPersisted ->
+                    viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
             }
         }
     }
@@ -77,8 +100,11 @@ fun ItemDetailScreen(
     ItemDetailScreenContent(
         uiState = uiState,
         dialogState = dialogState,
+        occurrenceState = occurrenceState,
+        occurrenceDialogState = occurrenceDialogState,
         historyState = historyState,
         onEvent = viewModel::onEvent,
+        onOccurrenceEvent = occurrenceViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
     )
@@ -89,8 +115,11 @@ fun ItemDetailScreen(
 private fun ItemDetailScreenContent(
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
+    occurrenceState: ItemOccurrenceUiState,
+    occurrenceDialogState: ItemOccurrenceDialogState,
     historyState: List<ItemCompletionHistory>,
     onEvent: (ItemDetailEvent) -> Unit,
+    onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -114,7 +143,6 @@ private fun ItemDetailScreenContent(
             onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
             onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
             onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
-            onCompleteClicked = { onEvent(ItemDetailEvent.OnCompleteClicked) },
         )
     }
 
@@ -122,21 +150,7 @@ private fun ItemDetailScreenContent(
         topBar = {
             UnideasTopBar(
                 onNavigateBack = topBarNavigateBack,
-                actions = {
-                    ItemActions(
-                        onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-                        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
-                            { onEvent(ItemDetailEvent.OnHistoryClicked) }
-                        } else {
-                            null
-                        },
-                        onDeleteClicked = if (uiState.isEditing) {
-                            { onEvent(ItemDetailEvent.OnDeleteClicked) }
-                        } else {
-                            null
-                        },
-                    )
-                },
+                actions = { ItemDetailTopBarActions(uiState, onEvent, onOccurrenceEvent) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -151,18 +165,43 @@ private fun ItemDetailScreenContent(
             else -> ItemFormBody(
                 state = uiState,
                 events = fieldsEvents,
+                occurrenceState = occurrenceState,
+                onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
+                onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
+                onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
                 modifier = Modifier.padding(padding),
             )
         }
     }
 
-    ItemDetailDialogs(dialogState, historyState, onEvent)
+    ItemDetailDialogs(dialogState, onEvent)
+    ItemOccurrenceDialogs(occurrenceDialogState, historyState, onOccurrenceEvent)
+}
+
+@Composable
+private fun ItemDetailTopBarActions(
+    uiState: ItemDetailUiState,
+    onEvent: (ItemDetailEvent) -> Unit,
+    onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
+) {
+    ItemActions(
+        onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
+            { onOccurrenceEvent(ItemOccurrenceEvent.OnHistoryClicked) }
+        } else {
+            null
+        },
+        onDeleteClicked = if (uiState.isEditing) {
+            { onEvent(ItemDetailEvent.OnDeleteClicked) }
+        } else {
+            null
+        },
+    )
 }
 
 @Composable
 private fun ItemDetailDialogs(
     dialogState: ItemDetailDialogState,
-    historyState: List<ItemCompletionHistory>,
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
@@ -171,22 +210,6 @@ private fun ItemDetailDialogs(
             messageRes = R.string.item_detail_delete_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
             onConfirm = { onEvent(ItemDetailEvent.OnDeleteConfirmClicked) },
-        )
-    }
-
-    if (dialogState is ItemDetailDialogState.ReopenConfirm) {
-        DeleteConfirmationDialog(
-            titleRes = R.string.item_detail_reopen_title,
-            messageRes = R.string.item_detail_reopen_message,
-            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
-            onConfirm = { onEvent(ItemDetailEvent.OnCompleteConfirmClicked) },
-        )
-    }
-
-    if (dialogState is ItemDetailDialogState.History) {
-        ItemHistoryBottomSheet(
-            history = historyState,
-            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
         )
     }
 
@@ -200,6 +223,67 @@ private fun ItemDetailDialogs(
     }
 }
 
+@Composable
+private fun ItemOccurrenceDialogs(
+    dialogState: ItemOccurrenceDialogState,
+    historyState: List<ItemCompletionHistory>,
+    onEvent: (ItemOccurrenceEvent) -> Unit,
+) {
+    if (dialogState is ItemOccurrenceDialogState.ReopenConfirm) {
+        DeleteConfirmationDialog(
+            titleRes = R.string.item_detail_reopen_title,
+            messageRes = R.string.item_detail_reopen_message,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemOccurrenceEvent.OnCompleteConfirmClicked) },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.CompleteConfirm) {
+        NoteConfirmDialog(
+            titleRes = if (dialogState.isLate) {
+                R.string.item_detail_complete_late_confirm_title
+            } else {
+                R.string.item_detail_complete_confirm_title
+            },
+            messageRes = if (dialogState.isLate) {
+                R.string.item_detail_complete_late_confirm_message
+            } else {
+                R.string.item_detail_complete_confirm_message
+            },
+            noteRequired = dialogState.isLate,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked(note)) },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.IgnoreConfirm) {
+        NoteConfirmDialog(
+            titleRes = R.string.item_detail_ignore_confirm_title,
+            messageRes = R.string.item_detail_ignore_confirm_message,
+            noteRequired = true,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnIgnoreConfirmClicked(note.orEmpty())) },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.ExtendDeadlineConfirm) {
+        ExtendDeadlineDatePickerDialog(
+            currentDueDate = dialogState.currentDueDate,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { newDueDate ->
+                onEvent(ItemOccurrenceEvent.OnExtendDeadlineConfirmClicked(newDueDate))
+            },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.History) {
+        ItemHistoryBottomSheet(
+            history = historyState,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+        )
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun ItemDetailScreenPreview(
@@ -209,8 +293,11 @@ private fun ItemDetailScreenPreview(
         ItemDetailScreenContent(
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
+            occurrenceState = ItemOccurrenceUiState(),
+            occurrenceDialogState = ItemOccurrenceDialogState.None,
             historyState = emptyList(),
             onEvent = {},
+            onOccurrenceEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },
         )

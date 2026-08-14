@@ -84,6 +84,14 @@ data class ItemDetailUiState(
         loadFailed = false,
     )
 
+    fun applyExternalOccurrenceUpdate(item: Item): ItemDetailUiState = copy(
+        hasReminder = item.dueDate != null,
+        dueDate = item.dueDate,
+        dueTime = item.dueTime,
+        recurrence = item.recurrence,
+        reminderWarning = item.reminderWarning,
+    )
+
     /** Applies the current fields onto [original] — `null` (first save while creating) starts from a
      * blank [Item] instead. */
     fun toItem(original: Item?): Item =

@@ -78,6 +78,8 @@ fun ItemDetailScreen(
                 )
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
+                is ItemDetailUiAction.ItemPersisted ->
+                    occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnItemUpdatedExternally(action.item))
             }
         }
     }
@@ -89,6 +91,8 @@ fun ItemDetailScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is ItemOccurrenceUiAction.ItemPersisted ->
+                    viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
             }
         }
     }

@@ -97,7 +97,20 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnRetryClicked -> retryLoad()
             is ItemDetailEvent.OnBackRequested -> handleBackRequested()
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
+            is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
         }
+    }
+
+    private fun handleItemUpdatedExternally(item: Item) {
+        originalItem = originalItem?.copy(
+            completedAt = item.completedAt,
+            lastCompletedScheduledDate = item.lastCompletedScheduledDate,
+            dueDate = item.dueDate,
+            dueTime = item.dueTime,
+            recurrence = item.recurrence,
+            reminderWarning = item.reminderWarning,
+        )
+        updateUiState { it.applyExternalOccurrenceUpdate(item) }
     }
 
     private fun retryLoad() {
@@ -106,9 +119,6 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    /** Title/description debounce ~500ms per keystroke — everything else saves immediately.
-     * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
-     * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
         when (event) {
@@ -196,7 +206,10 @@ class ItemDetailViewModel(
         } else {
             val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
             val updated = uiState.value.toItem(original)
-            itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
+            itemFormUseCase.edit(updated).onSuccess {
+                originalItem = updated
+                sendUiAction(ItemDetailUiAction.ItemPersisted(updated))
+            }
         }
     }
 

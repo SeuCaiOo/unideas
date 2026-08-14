@@ -72,7 +72,22 @@ class ItemOccurrenceViewModel(
                 historyJob?.cancel()
                 _dialogState.update { ItemOccurrenceDialogState.None }
             }
+
+            is ItemOccurrenceEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
         }
+    }
+
+    private fun handleItemUpdatedExternally(item: Item) {
+        originalItem = originalItem?.copy(
+            title = item.title,
+            description = item.description,
+            sectionId = item.sectionId,
+            dueDate = item.dueDate,
+            dueTime = item.dueTime,
+            recurrence = item.recurrence,
+            reminderWarning = item.reminderWarning,
+            tags = item.tags,
+        )
     }
 
     private fun handleCompleteClicked() {
@@ -97,6 +112,7 @@ class ItemOccurrenceViewModel(
                         completedAt = updated.completedAt
                     )
                 }
+                sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
                 if (result == CompletionResult.Completed) {
                     sendUiAction(ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
                 }

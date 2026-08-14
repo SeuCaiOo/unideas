@@ -8,6 +8,7 @@ import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.feature.home.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,6 +88,13 @@ class HomeViewModel(
 
     //endregion
 
+    //region pull-to-refresh
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    //endregion
+
     //region one-shot navigation/snackbar events
 
     private val _uiAction = Channel<HomeUiAction>(Channel.BUFFERED)
@@ -113,6 +121,7 @@ class HomeViewModel(
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
+            is HomeEvent.OnRefreshRequested -> handleRefresh()
             is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
     }
@@ -181,6 +190,15 @@ class HomeViewModel(
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
+    private fun handleRefresh() = viewModelScope.launch {
+        _isRefreshing.value = true
+        homeUseCase.refreshReminders()
+        // refreshNow() is fire-and-forget (WorkManager enqueue, no suspend result to await) — a
+        // short synthetic delay keeps the pull-to-refresh spinner visible instead of flashing.
+        delay(REFRESH_INDICATOR_MIN_DURATION_MS)
+        _isRefreshing.value = false
+    }
+
     private fun handleComplete(itemId: Long) = viewModelScope.launch {
         val item = currentItems.firstOrNull { it.id == itemId } ?: return@launch
         homeUseCase.complete(item, LocalDateTime.now())
@@ -189,4 +207,8 @@ class HomeViewModel(
 
     private fun sendUiAction(action: HomeUiAction) =
         viewModelScope.launch { _uiAction.send(action) }
+
+    private companion object {
+        const val REFRESH_INDICATOR_MIN_DURATION_MS = 600L
+    }
 }

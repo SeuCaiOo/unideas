@@ -10,37 +10,29 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
-import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
 import java.time.LocalDateTime
 
 @Composable
-fun ItemFormFooter(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modifier: Modifier = Modifier) {
+fun ItemFormFooter(
+    state: ItemFormFieldsState,
+    occurrenceState: ItemOccurrenceUiState,
+    onCompleteClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier) {
         if (state.typeIsTask && state.isEditing) {
             CompletionField(
-                isCompleted = state.isCompleted,
-                completedAt = state.completedAt,
-                onCompleteClicked = events.onCompleteClicked,
+                isCompleted = occurrenceState.isCompleted,
+                completedAt = occurrenceState.completedAt,
+                onCompleteClicked = onCompleteClicked,
                 modifier = Modifier.padding(top = 16.dp),
             )
         }
     }
 }
-
-private val noopEvents = ItemFormFieldsEvents(
-    onTypeChanged = {},
-    onTitleChanged = {},
-    onDescriptionChanged = {},
-    onSectionChanged = {},
-    onTagToggled = {},
-    onReminderToggled = {},
-    onDueDateChanged = {},
-    onDueTimeChanged = {},
-    onRecurrenceChanged = {},
-    onReminderWarningChanged = {},
-)
 
 @PreviewLightDark
 @Composable
@@ -53,7 +45,8 @@ private fun ItemFormFooterTaskEditingPreview() {
                     title = "Pay bills",
                     isEditing = true,
                 ),
-                events = noopEvents,
+                occurrenceState = ItemOccurrenceUiState(),
+                onCompleteClicked = {},
             )
         }
     }
@@ -69,10 +62,12 @@ private fun ItemFormFooterTaskCompletedPreview() {
                     type = ItemType.TASK,
                     title = "Pay bills",
                     isEditing = true,
+                ),
+                occurrenceState = ItemOccurrenceUiState(
                     isCompleted = true,
                     completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
                 ),
-                events = noopEvents,
+                onCompleteClicked = {},
             )
         }
     }
@@ -85,7 +80,8 @@ private fun ItemFormFooterNoteOrNewItemPreview() {
         Surface {
             ItemFormFooter(
                 state = ItemDetailUiState(type = ItemType.NOTE, title = "Groceries"),
-                events = noopEvents,
+                occurrenceState = ItemOccurrenceUiState(),
+                onCompleteClicked = {},
             )
         }
     }

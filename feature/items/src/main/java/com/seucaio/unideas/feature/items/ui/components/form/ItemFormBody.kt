@@ -19,6 +19,7 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFiel
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
 
 /**
  * Composes the item form's four parts, top to bottom: title/description, type selector, the
@@ -26,7 +27,13 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailU
  * save). Each part owns its own visibility rules — this just lays them out in order.
  */
 @Composable
-fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modifier: Modifier = Modifier) {
+fun ItemFormBody(
+    state: ItemFormFieldsState,
+    events: ItemFormFieldsEvents,
+    occurrenceState: ItemOccurrenceUiState,
+    onCompleteClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -55,7 +62,11 @@ fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modif
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            ItemFormFooter(state = state, events = events)
+            ItemFormFooter(
+                state = state,
+                occurrenceState = occurrenceState,
+                onCompleteClicked = onCompleteClicked,
+            )
         }
     }
 }
@@ -81,6 +92,8 @@ private fun ItemFormBodyPreview(
                     onRecurrenceChanged = {},
                     onReminderWarningChanged = {},
                 ),
+                occurrenceState = ItemOccurrenceUiState(),
+                onCompleteClicked = {},
             )
         }
     }

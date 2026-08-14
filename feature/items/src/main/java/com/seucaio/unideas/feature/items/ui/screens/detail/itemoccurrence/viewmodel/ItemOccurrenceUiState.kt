@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel
 
 import java.time.LocalDate
 import java.time.LocalDateTime

@@ -17,9 +17,9 @@ import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFi
 import com.seucaio.unideas.feature.items.ui.components.fields.TypeSelectorField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 
 /**
  * Composes the item form's four parts, top to bottom: title/description, type selector, the

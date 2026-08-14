@@ -13,8 +13,8 @@ import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
 import com.seucaio.unideas.feature.items.ui.components.fields.TagsField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 
 /** Section and tags — shared by both item types (task and note). */
 @Composable

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement

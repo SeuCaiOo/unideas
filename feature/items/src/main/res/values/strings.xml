@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Item Form -->
     <string name="item_form_load_error">Couldn\'t load the item</string>
     <string name="item_title_required">Title is required</string>
     <string name="item_form_title_view">Item</string>
@@ -50,6 +51,8 @@
     <string name="item_form_reminder_3_days">3 days before</string>
     <string name="item_form_reminder_7_days">7 days before</string>
     <string name="item_form_more_options">More options</string>
+
+    <!-- Item Detail — General -->
     <string name="item_detail_load_error">Couldn\'t load the item</string>
     <string name="item_detail_section_label">Section</string>
     <string name="item_detail_tags_label">Tags</string>
@@ -66,6 +69,13 @@
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="item_detail_reopen_title">Reopen task?</string>
     <string name="item_detail_reopen_message">This will mark the task as pending again and clear its completion date.</string>
+    <string name="item_detail_completed_snackbar">Task completed</string>
+    <string name="item_detail_discard_edit_title">Title can\'t be empty</string>
+    <string name="item_detail_discard_edit_message">Everything else is already saved. Leaving will keep the title as it was.</string>
+    <string name="item_detail_discard_new_title">Leave without a title?</string>
+    <string name="item_detail_discard_new_message">Add a title to save this item, or leave to discard it.</string>
+
+    <!-- Item Detail — Completion & Occurrence Actions -->
     <string name="item_detail_complete_confirm_title">Complete task?</string>
     <string name="item_detail_complete_confirm_message">You can add a note about this occurrence (optional).</string>
     <string name="item_detail_complete_late_confirm_title">Complete late task?</string>
@@ -76,17 +86,33 @@
     <string name="item_detail_ignore_confirm_title">Ignore this occurrence?</string>
     <string name="item_detail_ignore_confirm_message">This marks the occurrence as missed and moves on to the next one. Describe why.</string>
     <string name="item_detail_extend_deadline">Extend deadline</string>
+
+    <!-- Occurrence History -->
     <string name="item_detail_history">History</string>
     <string name="item_detail_history_title">Occurrence history</string>
     <string name="item_detail_history_empty">No occurrences recorded yet</string>
     <string name="item_detail_history_status_on_time">On time</string>
     <string name="item_detail_history_status_late">Late</string>
     <string name="item_detail_history_status_missed">Missed</string>
-    <string name="item_detail_completed_snackbar">Task completed</string>
-    <string name="item_detail_discard_edit_title">Title can\'t be empty</string>
-    <string name="item_detail_discard_edit_message">Everything else is already saved. Leaving will keep the title as it was.</string>
-    <string name="item_detail_discard_new_title">Leave without a title?</string>
-    <string name="item_detail_discard_new_message">Add a title to save this item, or leave to discard it.</string>
+    <string name="item_detail_history_note_label">Note: %1$s</string>
+    <string name="item_history_rate_label">completed on time</string>
+    <string name="item_history_streak">Current streak: %1$d on time</string>
+    <string name="item_history_filter_all">All</string>
+    <string name="item_history_filter_on_time">On time</string>
+    <string name="item_history_filter_late">Late</string>
+    <string name="item_history_filter_with_note">With note</string>
+    <string name="item_history_completed_at">Completed at %1$s</string>
+    <string name="item_history_extended_trail">Deadline extended %1$d time(s), from %2$s to %3$s</string>
+    <plurals name="item_history_occurrence_count">
+        <item quantity="one">%d occurrence</item>
+        <item quantity="other">%d occurrences</item>
+    </plurals>
+    <plurals name="item_history_days_late">
+        <item quantity="one">Late by %d day</item>
+        <item quantity="other">Late by %d days</item>
+    </plurals>
+
+    <!-- Items List -->
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>

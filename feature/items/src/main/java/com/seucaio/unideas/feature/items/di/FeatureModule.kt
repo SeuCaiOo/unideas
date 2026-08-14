@@ -1,7 +1,8 @@
 package com.seucaio.unideas.feature.items.di
 
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailViewModel
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceViewModel
+import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryViewModel
 import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -23,6 +24,12 @@ val itemsModule = module {
         ItemOccurrenceViewModel(
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
+            itemOccurrenceUseCase = get(),
+        )
+    }
+    viewModel { params ->
+        ItemHistoryViewModel(
+            itemId = params.get(),
             itemOccurrenceUseCase = get(),
         )
     }

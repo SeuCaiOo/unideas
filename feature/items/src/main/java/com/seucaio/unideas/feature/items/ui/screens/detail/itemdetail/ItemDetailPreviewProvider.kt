@@ -1,10 +1,10 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
 
 class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {

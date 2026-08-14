@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
@@ -319,21 +319,5 @@ class ItemOccurrenceViewModelTest {
 
             assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = false), vm.dialogState.value)
             coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
-        }
-
-    @Test
-    fun `when OnHistoryClicked should open the history sheet and load the series history`() =
-        runTest {
-            val item =
-                ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
-            every { itemFormUseCase.get(1L) } returns flowOf(item)
-            every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
-            val vm = viewModel(itemId = 1L)
-            vm.uiState.test { awaitItem() }
-
-            vm.onEvent(ItemOccurrenceEvent.OnHistoryClicked)
-
-            assertEquals(ItemOccurrenceDialogState.History, vm.dialogState.value)
-            coVerify(exactly = 1) { itemOccurrenceUseCase.getHistory(1L) }
         }
 }

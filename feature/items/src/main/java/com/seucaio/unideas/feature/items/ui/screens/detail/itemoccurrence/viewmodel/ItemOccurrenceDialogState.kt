@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel
 
 import java.time.LocalDate
 
@@ -13,6 +13,4 @@ sealed interface ItemOccurrenceDialogState {
     data object IgnoreConfirm : ItemOccurrenceDialogState
 
     data class ExtendDeadlineConfirm(val currentDueDate: LocalDate) : ItemOccurrenceDialogState
-
-    data object History : ItemOccurrenceDialogState
 }

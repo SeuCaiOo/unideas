@@ -48,6 +48,38 @@ class IgnoreOccurrenceUseCaseTest {
     }
 
     @Test
+    fun `invoke carries pending extension info into history and clears it from the item`() = runTest {
+        val originalDueDate = ItemStub.TODAY.minusWeeks(1)
+        val item = ItemStub.task(
+            recurrence = Recurrence.Weekly,
+            dueDate = ItemStub.TODAY,
+            pendingExtensionOriginalDueDate = originalDueDate,
+            pendingExtensionCount = 2,
+        )
+        val historyRecord = ItemCompletionHistory(
+            itemId = item.id,
+            scheduledDate = ItemStub.TODAY,
+            completedAt = null,
+            note = note,
+            originalScheduledDate = originalDueDate,
+            extensionCount = 2,
+        )
+        val advanced = item.copy(
+            dueDate = ItemStub.TODAY.plusWeeks(1),
+            pendingExtensionOriginalDueDate = null,
+            pendingExtensionCount = 0,
+        )
+        coEvery { historyRepository.insert(historyRecord) } returns 1L
+        coEvery { repository.updateItem(advanced) } returns Unit
+
+        val result = useCase(item, note, ItemStub.TODAY)
+
+        assertEquals(advanced, result.getOrNull())
+        coVerify(exactly = 1) { historyRepository.insert(historyRecord) }
+        coVerify(exactly = 1) { repository.updateItem(advanced) }
+    }
+
+    @Test
     fun `invoke fails for a non-recurring item`() = runTest {
         val item = ItemStub.task(recurrence = Recurrence.None, dueDate = ItemStub.TODAY)
 

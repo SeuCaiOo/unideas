@@ -6,8 +6,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private const val DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm"
+private const val TIME_PATTERN = "HH:mm"
 
 private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
+private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern(TIME_PATTERN)
 
 /**
  * Converts epoch millis (as persisted in the database) to a [LocalDateTime]
@@ -28,3 +30,6 @@ fun LocalDateTime.toFormattedDateString(): String = toLocalDate().toFormattedDat
 
 /** Formats this [LocalDateTime] as `MM/dd/yyyy HH:mm`. */
 fun LocalDateTime.toFormattedDateTimeString(): String = format(dateTimeFormatter)
+
+/** Formats the time portion of this [LocalDateTime] as `HH:mm`. */
+fun LocalDateTime.toFormattedTimeString(): String = format(timeFormatter)

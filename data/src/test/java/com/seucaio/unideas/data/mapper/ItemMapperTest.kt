@@ -113,6 +113,19 @@ class ItemMapperTest {
     }
 
     @Test
+    fun `toEntity and toDomain round-trip preserves pending extension fields`() {
+        val original = ItemStub.task(
+            pendingExtensionOriginalDueDate = ItemStub.TODAY.minusDays(5),
+            pendingExtensionCount = 2,
+        )
+
+        val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
+
+        assertEquals(original.pendingExtensionOriginalDueDate, row.toDomain().pendingExtensionOriginalDueDate)
+        assertEquals(2, row.toDomain().pendingExtensionCount)
+    }
+
+    @Test
     fun `round-trip preserves nulls for a minimal note`() {
         val original = ItemStub.note()
 

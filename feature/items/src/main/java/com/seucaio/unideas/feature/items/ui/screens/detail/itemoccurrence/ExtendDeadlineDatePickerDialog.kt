@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence
 
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog

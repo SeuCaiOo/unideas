@@ -14,8 +14,8 @@ import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
 import com.seucaio.unideas.feature.items.ui.components.fields.OverdueOccurrenceActions
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 import java.time.LocalDate
 import java.time.LocalDateTime
 

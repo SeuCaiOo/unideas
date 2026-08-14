@@ -168,6 +168,7 @@ private fun ItemDetailScreenContent(
                 occurrenceState = occurrenceState,
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
+                onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -262,6 +263,16 @@ private fun ItemOccurrenceDialogs(
             noteRequired = true,
             onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
             onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnIgnoreConfirmClicked(note.orEmpty())) },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.ExtendDeadlineConfirm) {
+        ExtendDeadlineDatePickerDialog(
+            currentDueDate = dialogState.currentDueDate,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { newDueDate ->
+                onEvent(ItemOccurrenceEvent.OnExtendDeadlineConfirmClicked(newDueDate))
+            },
         )
     }
 

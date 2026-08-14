@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import com.seucaio.unideas.domain.model.Item
+import java.time.LocalDate
 
 sealed interface ItemOccurrenceEvent {
 
@@ -13,6 +14,10 @@ sealed interface ItemOccurrenceEvent {
     data object OnIgnoreClicked : ItemOccurrenceEvent
 
     data class OnIgnoreConfirmClicked(val note: String) : ItemOccurrenceEvent
+
+    data object OnExtendDeadlineClicked : ItemOccurrenceEvent
+
+    data class OnExtendDeadlineConfirmClicked(val newDueDate: LocalDate) : ItemOccurrenceEvent
 
     data object OnHistoryClicked : ItemOccurrenceEvent
 

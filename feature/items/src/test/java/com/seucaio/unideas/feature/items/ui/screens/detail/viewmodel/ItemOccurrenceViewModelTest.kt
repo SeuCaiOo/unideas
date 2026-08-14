@@ -272,6 +272,40 @@ class ItemOccurrenceViewModelTest {
     }
 
     @Test
+    fun `when OnExtendDeadlineClicked should open the date picker with the current dueDate`() =
+        runTest {
+            val dueDate = LocalDate.now().minusDays(2)
+            val item = ItemStub.task(id = 1L, dueDate = dueDate)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked)
+
+            assertEquals(ItemOccurrenceDialogState.ExtendDeadlineConfirm(dueDate), vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.extendDueDate(any(), any(), any()) }
+        }
+
+    @Test
+    fun `when OnExtendDeadlineConfirmClicked should extend the dueDate`() = runTest {
+        val dueDate = LocalDate.now().minusDays(2)
+        val newDueDate = LocalDate.now().plusDays(3)
+        val item = ItemStub.task(id = 1L, dueDate = dueDate)
+        val extended = item.copy(dueDate = newDueDate)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemOccurrenceUseCase.extendDueDate(any(), any(), any()) } returns Result.success(extended)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked)
+
+        vm.onEvent(ItemOccurrenceEvent.OnExtendDeadlineConfirmClicked(newDueDate))
+
+        assertEquals(ItemOccurrenceDialogState.None, vm.dialogState.value)
+        assertEquals(newDueDate, vm.uiState.value.dueDate)
+        coVerify(exactly = 1) { itemOccurrenceUseCase.extendDueDate(item, newDueDate, any()) }
+    }
+
+    @Test
     fun `when OnHistoryClicked should open the history sheet and load the series history`() =
         runTest {
             val item =

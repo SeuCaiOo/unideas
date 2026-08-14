@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
+import com.seucaio.unideas.feature.items.ui.components.fields.OverdueOccurrenceActions
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemOccurrenceUiState
@@ -24,6 +25,7 @@ fun ItemFormFooter(
     occurrenceState: ItemOccurrenceUiState,
     onCompleteClicked: () -> Unit,
     onIgnoreClicked: () -> Unit,
+    onExtendDeadlineClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
@@ -33,9 +35,16 @@ fun ItemFormFooter(
                 isLate = occurrenceState.isLate,
                 completedAt = occurrenceState.completedAt,
                 onCompleteClicked = onCompleteClicked,
-                onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
                 modifier = Modifier.padding(top = 16.dp),
             )
+
+            if (occurrenceState.isLate) {
+                OverdueOccurrenceActions(
+                    onExtendDeadlineClicked = onExtendDeadlineClicked,
+                    onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
         }
     }
 }
@@ -67,6 +76,13 @@ private class ItemFormFooterPreviewProvider : PreviewParameterProvider<ItemFormF
             ),
         ),
         ItemFormFooterPreviewData(
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Renew subscription", isEditing = true),
+            occurrenceState = ItemOccurrenceUiState(
+                dueDate = LocalDate.now().minusDays(3),
+                isRecurring = false,
+            ),
+        ),
+        ItemFormFooterPreviewData(
             state = ItemDetailUiState(type = ItemType.NOTE, title = "Groceries"),
             occurrenceState = ItemOccurrenceUiState(),
         ),
@@ -85,6 +101,7 @@ private fun ItemFormFooterPreview(
                 occurrenceState = previewData.occurrenceState,
                 onCompleteClicked = {},
                 onIgnoreClicked = {},
+                onExtendDeadlineClicked = {},
             )
         }
     }

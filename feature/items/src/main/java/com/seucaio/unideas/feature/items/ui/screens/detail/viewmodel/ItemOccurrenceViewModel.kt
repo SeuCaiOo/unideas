@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 class ItemOccurrenceViewModel(
@@ -78,6 +79,16 @@ class ItemOccurrenceViewModel(
             is ItemOccurrenceEvent.OnIgnoreConfirmClicked -> {
                 _dialogState.update { ItemOccurrenceDialogState.None }
                 handleIgnore(event.note)
+            }
+
+            is ItemOccurrenceEvent.OnExtendDeadlineClicked -> {
+                val dueDate = uiState.value.dueDate ?: return
+                _dialogState.update { ItemOccurrenceDialogState.ExtendDeadlineConfirm(dueDate) }
+            }
+
+            is ItemOccurrenceEvent.OnExtendDeadlineConfirmClicked -> {
+                _dialogState.update { ItemOccurrenceDialogState.None }
+                handleExtendDeadline(event.newDueDate)
             }
 
             is ItemOccurrenceEvent.OnHistoryClicked -> handleHistoryClicked()
@@ -143,6 +154,17 @@ class ItemOccurrenceViewModel(
     private fun handleIgnore(note: String) = viewModelScope.launch {
         val item = originalItem ?: return@launch
         itemOccurrenceUseCase.ignore(item, note)
+            .onSuccess { updated ->
+                originalItem = updated
+                _uiState.update { it.copy(dueDate = updated.dueDate, isRecurring = updated.isRecurring) }
+                sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
+            }
+            .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleExtendDeadline(newDueDate: LocalDate) = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        itemOccurrenceUseCase.extendDueDate(item, newDueDate)
             .onSuccess { updated ->
                 originalItem = updated
                 _uiState.update { it.copy(dueDate = updated.dueDate, isRecurring = updated.isRecurring) }

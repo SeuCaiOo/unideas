@@ -20,7 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
@@ -58,6 +57,7 @@ private fun Item.toShareText(): String = buildString {
 fun ItemDetailScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
+    onNavigateToHistory: (Long) -> Unit,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
@@ -66,7 +66,6 @@ fun ItemDetailScreen(
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
-    val historyState by occurrenceViewModel.historyState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -101,14 +100,15 @@ fun ItemDetailScreen(
     }
 
     ItemDetailScreenContent(
+        itemId = itemId,
         uiState = uiState,
         dialogState = dialogState,
         occurrenceState = occurrenceState,
         occurrenceDialogState = occurrenceDialogState,
-        historyState = historyState,
         onEvent = viewModel::onEvent,
         onOccurrenceEvent = occurrenceViewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToHistory = onNavigateToHistory,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -116,14 +116,15 @@ fun ItemDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ItemDetailScreenContent(
+    itemId: Long?,
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
     occurrenceState: ItemOccurrenceUiState,
     occurrenceDialogState: ItemOccurrenceDialogState,
-    historyState: List<ItemCompletionHistory>,
     onEvent: (ItemDetailEvent) -> Unit,
     onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
+    onNavigateToHistory: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -153,7 +154,7 @@ private fun ItemDetailScreenContent(
         topBar = {
             UnideasTopBar(
                 onNavigateBack = topBarNavigateBack,
-                actions = { ItemDetailTopBarActions(uiState, onEvent, onOccurrenceEvent) },
+                actions = { ItemDetailTopBarActions(itemId, uiState, onEvent, onNavigateToHistory) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -178,19 +179,20 @@ private fun ItemDetailScreenContent(
     }
 
     ItemDetailDialogs(dialogState, onEvent)
-    ItemOccurrenceDialogs(occurrenceDialogState, historyState, onOccurrenceEvent)
+    ItemOccurrenceDialogs(occurrenceDialogState, onOccurrenceEvent)
 }
 
 @Composable
 private fun ItemDetailTopBarActions(
+    itemId: Long?,
     uiState: ItemDetailUiState,
     onEvent: (ItemDetailEvent) -> Unit,
-    onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
+    onNavigateToHistory: (Long) -> Unit,
 ) {
     ItemActions(
         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None) {
-            { onOccurrenceEvent(ItemOccurrenceEvent.OnHistoryClicked) }
+        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None && itemId != null) {
+            { onNavigateToHistory(itemId) }
         } else {
             null
         },
@@ -229,7 +231,6 @@ private fun ItemDetailDialogs(
 @Composable
 private fun ItemOccurrenceDialogs(
     dialogState: ItemOccurrenceDialogState,
-    historyState: List<ItemCompletionHistory>,
     onEvent: (ItemOccurrenceEvent) -> Unit,
 ) {
     if (dialogState is ItemOccurrenceDialogState.ReopenConfirm) {
@@ -278,13 +279,6 @@ private fun ItemOccurrenceDialogs(
             },
         )
     }
-
-    if (dialogState is ItemOccurrenceDialogState.History) {
-        ItemHistoryBottomSheet(
-            history = historyState,
-            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
-        )
-    }
 }
 
 @PreviewLightDark
@@ -294,14 +288,15 @@ private fun ItemDetailScreenPreview(
 ) {
     UdsTheme {
         ItemDetailScreenContent(
+            itemId = 1L,
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
             occurrenceState = ItemOccurrenceUiState(),
             occurrenceDialogState = ItemOccurrenceDialogState.None,
-            historyState = emptyList(),
             onEvent = {},
             onOccurrenceEvent = {},
             onNavigateBack = {},
+            onNavigateToHistory = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

@@ -81,9 +81,9 @@ internal fun ItemHistoryContent(
         modifier = modifier
             .fillMaxWidth()
             .padding(contentPadding)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         item { HistorySummaryCard(uiState) }
         item { HistoryFilterRow(uiState.activeFilter, onEvent) }

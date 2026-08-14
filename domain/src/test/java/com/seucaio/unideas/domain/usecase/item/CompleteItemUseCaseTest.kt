@@ -59,6 +59,37 @@ class CompleteItemUseCaseTest {
         }
 
     @Test
+    fun `invoke carries pending extension info into history and clears it from the item`() = runTest {
+        val originalDueDate = ItemStub.TODAY.minusWeeks(1)
+        val item = ItemStub.task(
+            recurrence = Recurrence.Weekly,
+            dueDate = ItemStub.TODAY,
+            pendingExtensionOriginalDueDate = originalDueDate,
+            pendingExtensionCount = 3,
+        )
+        val historyRecord = ItemCompletionHistory(
+            itemId = item.id,
+            scheduledDate = ItemStub.TODAY,
+            completedAt = completedAt,
+            originalScheduledDate = originalDueDate,
+            extensionCount = 3,
+        )
+        val completed = item.copy(
+            lastCompletedScheduledDate = ItemStub.TODAY,
+            pendingExtensionOriginalDueDate = null,
+            pendingExtensionCount = 0,
+        )
+        coEvery { historyRepository.insert(historyRecord) } returns 1L
+        coEvery { repository.updateItem(completed) } returns Unit
+
+        val result = useCase(item, completedAt)
+
+        assertEquals(CompletionResult.Completed, result.getOrNull())
+        coVerify(exactly = 1) { historyRepository.insert(historyRecord) }
+        coVerify(exactly = 1) { repository.updateItem(completed) }
+    }
+
+    @Test
     fun `invoke fails to complete a recurring task's occurrence late without a note`() = runTest {
         val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
         val lateCompletedAt = ItemStub.TODAY.plusDays(1).atTime(9, 0)

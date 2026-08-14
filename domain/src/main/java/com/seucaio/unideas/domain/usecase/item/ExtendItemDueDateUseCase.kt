@@ -18,7 +18,11 @@ class ExtendItemDueDateUseCase(
             require(dueDate.isBefore(today)) { "Only an overdue item's dueDate can be extended" }
             require(newDueDate.isAfter(dueDate)) { "newDueDate must be after the current dueDate" }
 
-            val extended = item.copy(dueDate = newDueDate)
+            val extended = item.copy(
+                dueDate = newDueDate,
+                pendingExtensionOriginalDueDate = item.pendingExtensionOriginalDueDate ?: dueDate,
+                pendingExtensionCount = item.pendingExtensionCount + 1,
+            )
             repository.updateItem(extended)
             reminderRefreshTrigger.refreshNow()
             extended

@@ -23,10 +23,15 @@ class ExtendItemDueDateUseCaseTest {
     }
 
     @Test
-    fun `invoke moves dueDate forward without touching history`() = runTest {
-        val item = ItemStub.task(dueDate = ItemStub.TODAY.minusDays(3))
+    fun `invoke moves dueDate forward without writing to history`() = runTest {
+        val originalDueDate = ItemStub.TODAY.minusDays(3)
+        val item = ItemStub.task(dueDate = originalDueDate)
         val newDueDate = ItemStub.TODAY.plusDays(2)
-        val extended = item.copy(dueDate = newDueDate)
+        val extended = item.copy(
+            dueDate = newDueDate,
+            pendingExtensionOriginalDueDate = originalDueDate,
+            pendingExtensionCount = 1,
+        )
         coEvery { repository.updateItem(extended) } returns Unit
 
         val result = useCase(item, newDueDate, ItemStub.TODAY)
@@ -34,6 +39,29 @@ class ExtendItemDueDateUseCaseTest {
         assertEquals(extended, result.getOrNull())
         coVerify(exactly = 1) { repository.updateItem(extended) }
     }
+
+    @Test
+    fun `invoke keeps the first original dueDate and increments the count on a second extension`() =
+        runTest {
+            val originalDueDate = ItemStub.TODAY.minusDays(5)
+            val item = ItemStub.task(
+                dueDate = ItemStub.TODAY.minusDays(1),
+                pendingExtensionOriginalDueDate = originalDueDate,
+                pendingExtensionCount = 1,
+            )
+            val newDueDate = ItemStub.TODAY.plusDays(2)
+            val extended = item.copy(
+                dueDate = newDueDate,
+                pendingExtensionOriginalDueDate = originalDueDate,
+                pendingExtensionCount = 2,
+            )
+            coEvery { repository.updateItem(extended) } returns Unit
+
+            val result = useCase(item, newDueDate, ItemStub.TODAY)
+
+            assertEquals(extended, result.getOrNull())
+            coVerify(exactly = 1) { repository.updateItem(extended) }
+        }
 
     @Test
     fun `invoke fails when the item is not overdue`() = runTest {

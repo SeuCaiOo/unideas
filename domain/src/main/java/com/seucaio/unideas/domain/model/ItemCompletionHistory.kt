@@ -10,6 +10,11 @@ import java.time.LocalDateTime
  *
  * @property completedAt `null` means the occurrence was missed (recurrence advanced without the
  *   item ever being marked done for [scheduledDate]).
+ * @property originalScheduledDate the `dueDate` this occurrence had before it was extended one or
+ *   more times, if it was ever extended before resolving — `null` when it never was. Distinct
+ *   from [scheduledDate], which is the (possibly extended) date it actually resolved against.
+ * @property extensionCount how many times "extend deadline" pushed this occurrence forward before
+ *   it resolved. `0` when it was never extended.
  */
 data class ItemCompletionHistory(
     val id: Long = 0L,
@@ -17,6 +22,8 @@ data class ItemCompletionHistory(
     val scheduledDate: LocalDate,
     val completedAt: LocalDateTime?,
     val note: String? = null,
+    val originalScheduledDate: LocalDate? = null,
+    val extensionCount: Int = 0,
 ) {
     val status: CompletionStatus get() = when {
         completedAt == null -> CompletionStatus.MISSED

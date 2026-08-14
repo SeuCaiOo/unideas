@@ -27,11 +27,17 @@ class IgnoreOccurrenceUseCase(
                     itemId = item.id,
                     scheduledDate = dueDate,
                     completedAt = null,
-                    note = note
+                    note = note,
+                    originalScheduledDate = item.pendingExtensionOriginalDueDate,
+                    extensionCount = item.pendingExtensionCount,
                 ),
             )
             val nextDueDate = requireNotNull(item.recurrence.nextDueDate(dueDate))
-            val advanced = item.copy(dueDate = nextDueDate)
+            val advanced = item.copy(
+                dueDate = nextDueDate,
+                pendingExtensionOriginalDueDate = null,
+                pendingExtensionCount = 0,
+            )
             repository.updateItem(advanced)
             reminderRefreshTrigger.refreshNow()
             advanced

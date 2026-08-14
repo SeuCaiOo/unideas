@@ -63,9 +63,17 @@ class CompleteItemUseCase(
                     scheduledDate = scheduledDate,
                     completedAt = completedAt,
                     note = note,
+                    originalScheduledDate = item.pendingExtensionOriginalDueDate,
+                    extensionCount = item.pendingExtensionCount,
                 ),
             )
-            repository.updateItem(item.copy(lastCompletedScheduledDate = scheduledDate))
+            repository.updateItem(
+                item.copy(
+                    lastCompletedScheduledDate = scheduledDate,
+                    pendingExtensionOriginalDueDate = null,
+                    pendingExtensionCount = 0,
+                ),
+            )
             CompletionResult.Completed
         }
 }

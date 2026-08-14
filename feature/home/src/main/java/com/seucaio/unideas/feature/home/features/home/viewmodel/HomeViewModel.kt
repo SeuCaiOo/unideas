@@ -8,7 +8,6 @@ import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.feature.home.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -193,9 +192,6 @@ class HomeViewModel(
     private fun handleRefresh() = viewModelScope.launch {
         _isRefreshing.value = true
         homeUseCase.refreshReminders()
-        // refreshNow() is fire-and-forget (WorkManager enqueue, no suspend result to await) — a
-        // short synthetic delay keeps the pull-to-refresh spinner visible instead of flashing.
-        delay(REFRESH_INDICATOR_MIN_DURATION_MS)
         _isRefreshing.value = false
     }
 
@@ -207,8 +203,4 @@ class HomeViewModel(
 
     private fun sendUiAction(action: HomeUiAction) =
         viewModelScope.launch { _uiAction.send(action) }
-
-    private companion object {
-        const val REFRESH_INDICATOR_MIN_DURATION_MS = 600L
-    }
 }

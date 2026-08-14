@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ fun CompletionField(
     completedAt: LocalDateTime?,
     onCompleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
+    onIgnoreClicked: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -45,12 +47,19 @@ fun CompletionField(
             }
             Text(stringResource(labelRes))
         }
-        completedAt?.let {
-            Text(
-                text = stringResource(R.string.item_detail_completed_on, it.toFormattedDateString()),
+        when {
+            completedAt != null -> Text(
+                text = stringResource(R.string.item_detail_completed_on, completedAt.toFormattedDateString()),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.weight(1f),
             )
+
+            isLate && onIgnoreClicked != null -> TextButton(
+                onClick = onIgnoreClicked,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(stringResource(R.string.item_detail_ignore))
+            }
         }
     }
 }
@@ -59,13 +68,14 @@ private data class CompletionFieldPreviewData(
     val isCompleted: Boolean,
     val isLate: Boolean,
     val completedAt: LocalDateTime? = null,
+    val ignorable: Boolean = false,
 )
 
 private class CompletionFieldPreviewProvider : PreviewParameterProvider<CompletionFieldPreviewData> {
 
     override val values: Sequence<CompletionFieldPreviewData> = sequenceOf(
         CompletionFieldPreviewData(isCompleted = false, isLate = false),
-        CompletionFieldPreviewData(isCompleted = false, isLate = true),
+        CompletionFieldPreviewData(isCompleted = false, isLate = true, ignorable = true),
         CompletionFieldPreviewData(
             isCompleted = true,
             isLate = false,
@@ -73,6 +83,8 @@ private class CompletionFieldPreviewProvider : PreviewParameterProvider<Completi
         ),
     )
 }
+
+private val noopClick: () -> Unit = {}
 
 @PreviewLightDark
 @Composable
@@ -85,7 +97,8 @@ private fun CompletionFieldPreview(
                 isCompleted = previewData.isCompleted,
                 isLate = previewData.isLate,
                 completedAt = previewData.completedAt,
-                onCompleteClicked = {},
+                onCompleteClicked = noopClick,
+                onIgnoreClicked = if (previewData.ignorable) noopClick else null,
                 modifier = Modifier.padding(16.dp),
             )
         }

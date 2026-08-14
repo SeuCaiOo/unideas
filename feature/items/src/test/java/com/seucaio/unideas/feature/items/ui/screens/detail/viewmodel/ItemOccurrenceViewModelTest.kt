@@ -234,6 +234,44 @@ class ItemOccurrenceViewModelTest {
         }
 
     @Test
+    fun `when OnIgnoreClicked should open the ignore confirmation dialog`() = runTest {
+        val item = ItemStub.task(
+            id = 1L,
+            recurrence = Recurrence.Weekly,
+            dueDate = LocalDate.now().minusDays(1),
+        )
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnIgnoreClicked)
+
+        assertEquals(ItemOccurrenceDialogState.IgnoreConfirm, vm.dialogState.value)
+        coVerify(exactly = 0) { itemOccurrenceUseCase.ignore(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when OnIgnoreConfirmClicked should ignore the occurrence and advance dueDate`() = runTest {
+        val item = ItemStub.task(
+            id = 1L,
+            recurrence = Recurrence.Weekly,
+            dueDate = LocalDate.now().minusDays(1),
+        )
+        val advanced = item.copy(dueDate = LocalDate.now().plusDays(6))
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemOccurrenceUseCase.ignore(any(), any(), any()) } returns Result.success(advanced)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemOccurrenceEvent.OnIgnoreClicked)
+
+        vm.onEvent(ItemOccurrenceEvent.OnIgnoreConfirmClicked(note = "Estava viajando"))
+
+        assertEquals(ItemOccurrenceDialogState.None, vm.dialogState.value)
+        assertEquals(advanced.dueDate, vm.uiState.value.dueDate)
+        coVerify(exactly = 1) { itemOccurrenceUseCase.ignore(item, "Estava viajando", any()) }
+    }
+
+    @Test
     fun `when OnHistoryClicked should open the history sheet and load the series history`() =
         runTest {
             val item =

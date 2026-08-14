@@ -10,6 +10,10 @@ sealed interface ItemOccurrenceEvent {
 
     data class OnCompleteWithNoteConfirmClicked(val note: String?) : ItemOccurrenceEvent
 
+    data object OnIgnoreClicked : ItemOccurrenceEvent
+
+    data class OnIgnoreConfirmClicked(val note: String) : ItemOccurrenceEvent
+
     data object OnHistoryClicked : ItemOccurrenceEvent
 
     data object OnDialogDismissed : ItemOccurrenceEvent

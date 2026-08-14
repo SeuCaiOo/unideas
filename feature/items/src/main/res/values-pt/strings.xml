@@ -72,6 +72,9 @@
     <string name="item_detail_complete_late_confirm_message">Essa ocorrência venceu. Descreva o que aconteceu para concluir.</string>
     <string name="item_detail_note_optional_label">Nota (opcional)</string>
     <string name="item_detail_note_required_label">Nota</string>
+    <string name="item_detail_ignore">Ignorar</string>
+    <string name="item_detail_ignore_confirm_title">Ignorar ocorrência?</string>
+    <string name="item_detail_ignore_confirm_message">Isso marca essa ocorrência como não feita e avança para a próxima. Descreva o motivo.</string>
     <string name="item_detail_history">Histórico</string>
     <string name="item_detail_history_title">Histórico de ocorrências</string>
     <string name="item_detail_history_empty">Nenhuma ocorrência registrada ainda</string>

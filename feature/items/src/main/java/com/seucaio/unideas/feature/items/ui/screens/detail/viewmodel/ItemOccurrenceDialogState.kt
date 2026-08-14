@@ -8,5 +8,7 @@ sealed interface ItemOccurrenceDialogState {
 
     data class CompleteConfirm(val isLate: Boolean) : ItemOccurrenceDialogState
 
+    data object IgnoreConfirm : ItemOccurrenceDialogState
+
     data object History : ItemOccurrenceDialogState
 }

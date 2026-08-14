@@ -32,6 +32,7 @@ fun ItemFormBody(
     events: ItemFormFieldsEvents,
     occurrenceState: ItemOccurrenceUiState,
     onCompleteClicked: () -> Unit,
+    onIgnoreClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -66,6 +67,7 @@ fun ItemFormBody(
                 state = state,
                 occurrenceState = occurrenceState,
                 onCompleteClicked = onCompleteClicked,
+                onIgnoreClicked = onIgnoreClicked,
             )
         }
     }
@@ -94,6 +96,7 @@ private fun ItemFormBodyPreview(
                 ),
                 occurrenceState = ItemOccurrenceUiState(),
                 onCompleteClicked = {},
+                onIgnoreClicked = {},
             )
         }
     }

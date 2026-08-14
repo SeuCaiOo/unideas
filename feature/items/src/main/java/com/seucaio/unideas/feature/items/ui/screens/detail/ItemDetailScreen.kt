@@ -167,6 +167,7 @@ private fun ItemDetailScreenContent(
                 events = fieldsEvents,
                 occurrenceState = occurrenceState,
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
+                onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -251,6 +252,16 @@ private fun ItemOccurrenceDialogs(
             noteRequired = dialogState.isLate,
             onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
             onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked(note)) },
+        )
+    }
+
+    if (dialogState is ItemOccurrenceDialogState.IgnoreConfirm) {
+        NoteConfirmDialog(
+            titleRes = R.string.item_detail_ignore_confirm_title,
+            messageRes = R.string.item_detail_ignore_confirm_message,
+            noteRequired = true,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnIgnoreConfirmClicked(note.orEmpty())) },
         )
     }
 

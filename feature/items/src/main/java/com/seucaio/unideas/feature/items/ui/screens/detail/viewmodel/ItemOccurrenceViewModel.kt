@@ -54,6 +54,7 @@ class ItemOccurrenceViewModel(
                         isCompleted = item.isCompleted,
                         completedAt = item.completedAt,
                         dueDate = item.dueDate,
+                        isRecurring = item.isRecurring,
                     )
                 }
             }
@@ -71,6 +72,12 @@ class ItemOccurrenceViewModel(
             is ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked -> {
                 _dialogState.update { ItemOccurrenceDialogState.None }
                 handleComplete(event.note)
+            }
+
+            is ItemOccurrenceEvent.OnIgnoreClicked -> _dialogState.update { ItemOccurrenceDialogState.IgnoreConfirm }
+            is ItemOccurrenceEvent.OnIgnoreConfirmClicked -> {
+                _dialogState.update { ItemOccurrenceDialogState.None }
+                handleIgnore(event.note)
             }
 
             is ItemOccurrenceEvent.OnHistoryClicked -> handleHistoryClicked()
@@ -94,7 +101,7 @@ class ItemOccurrenceViewModel(
             reminderWarning = item.reminderWarning,
             tags = item.tags,
         )
-        _uiState.update { it.copy(dueDate = item.dueDate) }
+        _uiState.update { it.copy(dueDate = item.dueDate, isRecurring = item.isRecurring) }
     }
 
     private fun handleCompleteClicked() {
@@ -122,12 +129,24 @@ class ItemOccurrenceViewModel(
                         isCompleted = updated.isCompleted,
                         completedAt = updated.completedAt,
                         dueDate = updated.dueDate,
+                        isRecurring = updated.isRecurring,
                     )
                 }
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
                 if (result == CompletionResult.Completed) {
                     sendUiAction(ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
                 }
+            }
+            .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleIgnore(note: String) = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        itemOccurrenceUseCase.ignore(item, note)
+            .onSuccess { updated ->
+                originalItem = updated
+                _uiState.update { it.copy(dueDate = updated.dueDate, isRecurring = updated.isRecurring) }
+                sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
             }
             .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }
     }

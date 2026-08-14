@@ -52,7 +52,8 @@ class ItemOccurrenceViewModel(
                 _uiState.update {
                     it.copy(
                         isCompleted = item.isCompleted,
-                        completedAt = item.completedAt
+                        completedAt = item.completedAt,
+                        dueDate = item.dueDate,
                     )
                 }
             }
@@ -64,7 +65,12 @@ class ItemOccurrenceViewModel(
             is ItemOccurrenceEvent.OnCompleteClicked -> handleCompleteClicked()
             is ItemOccurrenceEvent.OnCompleteConfirmClicked -> {
                 _dialogState.update { ItemOccurrenceDialogState.None }
-                handleComplete()
+                handleComplete(note = null)
+            }
+
+            is ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked -> {
+                _dialogState.update { ItemOccurrenceDialogState.None }
+                handleComplete(event.note)
             }
 
             is ItemOccurrenceEvent.OnHistoryClicked -> handleHistoryClicked()
@@ -88,28 +94,34 @@ class ItemOccurrenceViewModel(
             reminderWarning = item.reminderWarning,
             tags = item.tags,
         )
+        _uiState.update { it.copy(dueDate = item.dueDate) }
     }
 
     private fun handleCompleteClicked() {
-        if (uiState.value.isCompleted) {
-            _dialogState.update { ItemOccurrenceDialogState.ReopenConfirm }
-        } else {
-            handleComplete()
+        val item = originalItem ?: return
+        when {
+            uiState.value.isCompleted -> _dialogState.update { ItemOccurrenceDialogState.ReopenConfirm }
+            item.isRecurring -> _dialogState.update {
+                ItemOccurrenceDialogState.CompleteConfirm(isLate = uiState.value.isLate)
+            }
+
+            else -> handleComplete(note = null)
         }
     }
 
-    private fun handleComplete() = viewModelScope.launch {
+    private fun handleComplete(note: String?) = viewModelScope.launch {
         val item = originalItem ?: return@launch
         if (item.type != ItemType.TASK) return@launch
         val now = LocalDateTime.now()
-        itemOccurrenceUseCase.complete(item, now)
+        itemOccurrenceUseCase.complete(item, now, note)
             .onSuccess { result ->
                 val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
                 originalItem = updated
                 _uiState.update {
                     it.copy(
                         isCompleted = updated.isCompleted,
-                        completedAt = updated.completedAt
+                        completedAt = updated.completedAt,
+                        dueDate = updated.dueDate,
                     )
                 }
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))

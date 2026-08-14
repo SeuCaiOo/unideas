@@ -316,6 +316,8 @@ class ItemDetailViewModelTest {
 
             vm.uiAction.test {
                 vm.onEvent(ItemDetailEvent.OnBackRequested)
+                val persisted = awaitItem()
+                check(persisted is ItemDetailUiAction.ItemPersisted && persisted.item.title == "Título editado")
                 assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
             }
 

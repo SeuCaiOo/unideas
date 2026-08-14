@@ -8,6 +8,8 @@ sealed interface ItemOccurrenceEvent {
 
     data object OnCompleteConfirmClicked : ItemOccurrenceEvent
 
+    data class OnCompleteWithNoteConfirmClicked(val note: String?) : ItemOccurrenceEvent
+
     data object OnHistoryClicked : ItemOccurrenceEvent
 
     data object OnDialogDismissed : ItemOccurrenceEvent

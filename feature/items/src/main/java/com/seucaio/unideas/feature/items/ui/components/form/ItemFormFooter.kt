@@ -26,6 +26,7 @@ fun ItemFormFooter(
         if (state.typeIsTask && state.isEditing) {
             CompletionField(
                 isCompleted = occurrenceState.isCompleted,
+                isLate = occurrenceState.isLate,
                 completedAt = occurrenceState.completedAt,
                 onCompleteClicked = onCompleteClicked,
                 modifier = Modifier.padding(top = 16.dp),

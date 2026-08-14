@@ -23,6 +23,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemOccurrenceViewModelTest {
@@ -99,6 +100,7 @@ class ItemOccurrenceViewModelTest {
 
         vm.uiAction.test {
             vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+            awaitItem() // ItemPersisted
             assertEquals(
                 ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar),
                 awaitItem(),
@@ -140,6 +142,7 @@ class ItemOccurrenceViewModelTest {
 
             vm.uiAction.test {
                 vm.onEvent(ItemOccurrenceEvent.OnCompleteConfirmClicked)
+                awaitItem() // ItemPersisted
                 expectNoEvents()
             }
         }
@@ -161,6 +164,20 @@ class ItemOccurrenceViewModelTest {
         }
 
     @Test
+    fun `when OnCompleteClicked on a pending recurring task should open the complete confirmation dialog`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = LocalDate.now())
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+
+            assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = false), vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
+
+    @Test
     fun `when completing a recurring task should mark it completed without advancing dueDate`() =
         runTest {
             val item =
@@ -172,11 +189,30 @@ class ItemOccurrenceViewModelTest {
             )
             val vm = viewModel(itemId = 1L)
             vm.uiState.test { awaitItem() }
-
             vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
 
+            vm.onEvent(ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked(note = null))
+
+            assertEquals(ItemOccurrenceDialogState.None, vm.dialogState.value)
             assertEquals(true, vm.uiState.value.isCompleted)
+            coVerify(exactly = 1) { itemOccurrenceUseCase.complete(item, any(), null) }
         }
+
+    @Test
+    fun `when OnCompleteClicked on a pending late recurring task should require a note`() = runTest {
+        val item = ItemStub.task(
+            id = 1L,
+            recurrence = Recurrence.Weekly,
+            dueDate = LocalDate.now().minusDays(1),
+        )
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+
+        assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = true), vm.dialogState.value)
+    }
 
     @Test
     fun `when OnCompleteClicked on a completed recurring occurrence should open the reopen confirmation dialog`() =

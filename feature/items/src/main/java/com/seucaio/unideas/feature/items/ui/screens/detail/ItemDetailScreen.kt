@@ -236,6 +236,24 @@ private fun ItemOccurrenceDialogs(
         )
     }
 
+    if (dialogState is ItemOccurrenceDialogState.CompleteConfirm) {
+        NoteConfirmDialog(
+            titleRes = if (dialogState.isLate) {
+                R.string.item_detail_complete_late_confirm_title
+            } else {
+                R.string.item_detail_complete_confirm_title
+            },
+            messageRes = if (dialogState.isLate) {
+                R.string.item_detail_complete_late_confirm_message
+            } else {
+                R.string.item_detail_complete_confirm_message
+            },
+            noteRequired = dialogState.isLate,
+            onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
+            onConfirm = { note -> onEvent(ItemOccurrenceEvent.OnCompleteWithNoteConfirmClicked(note)) },
+        )
+    }
+
     if (dialogState is ItemOccurrenceDialogState.History) {
         ItemHistoryBottomSheet(
             history = historyState,

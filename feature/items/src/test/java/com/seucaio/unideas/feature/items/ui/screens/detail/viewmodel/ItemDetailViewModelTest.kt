@@ -325,6 +325,24 @@ class ItemDetailViewModelTest {
         }
 
     @Test
+    fun `when OnItemUpdatedExternally sets completion fields a subsequent persist should not clobber them`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            val completedByOccurrence = item.copy(completedAt = ItemStub.TODAY.atTime(9, 0))
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnItemUpdatedExternally(completedByOccurrence))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            coVerify(exactly = 1) {
+                itemFormUseCase.edit(match { it.completedAt == completedByOccurrence.completedAt })
+            }
+        }
+
+    @Test
     fun `when the use case fails unexpectedly should emit ShowError with the exception message`() =
         runTest {
             coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalStateException("boom"))

@@ -306,6 +306,22 @@ class ItemOccurrenceViewModelTest {
     }
 
     @Test
+    fun `when OnItemUpdatedExternally changes recurrence a subsequent complete should use the updated item`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, recurrence = Recurrence.None, dueDate = null)
+            val recurringUpdate = item.copy(recurrence = Recurrence.Weekly, dueDate = LocalDate.now())
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemOccurrenceEvent.OnItemUpdatedExternally(recurringUpdate))
+
+            vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+
+            assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = false), vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
+
+    @Test
     fun `when OnHistoryClicked should open the history sheet and load the series history`() =
         runTest {
             val item =

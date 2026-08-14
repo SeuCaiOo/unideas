@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,91 +78,83 @@ internal fun ItemHistoryContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    LazyColumn(
+    Column(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(contentPadding)
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        item { HistorySummaryCard(uiState) }
-        item { HistoryFilterRow(uiState.activeFilter, onEvent) }
+        HistorySummaryCard(uiState, modifier = Modifier.padding(vertical = 16.dp))
+        HistoryFilterRow(
+            activeFilter = uiState.activeFilter,
+            onEvent = onEvent,
+            modifier = Modifier.padding(vertical = 16.dp),
+        )
 
         if (uiState.filteredHistory.isEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.item_detail_history_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = stringResource(R.string.item_detail_history_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         } else {
-            items(uiState.filteredHistory) { entry -> ItemHistoryCard(entry) }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(uiState.filteredHistory) { entry -> ItemHistoryCard(entry) }
+            }
         }
     }
 }
 
 @Composable
-private fun HistorySummaryCard(uiState: ItemHistoryUiState) {
+private fun HistorySummaryCard(uiState: ItemHistoryUiState, modifier: Modifier = Modifier) {
     Surface(
+        modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = MaterialTheme.shapes.large,
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "${uiState.onTimeRatePercent}%",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Text(
-                    text = " " + stringResource(R.string.item_history_rate_label),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            HistorySummaryHeader(uiState)
+            HistorySummaryChips(uiState)
+        }
+    }
+}
+
+@Composable
+private fun HistorySummaryHeader(uiState: ItemHistoryUiState) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Column {
+            Text(
+                text = "${uiState.onTimeRatePercent}%",
+                style = MaterialTheme.typography.displaySmall
+            )
+            Text(
+                text = stringResource(R.string.item_history_rate_label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = pluralStringResource(
                     R.plurals.item_history_occurrence_count,
                     uiState.history.size,
                     uiState.history.size,
                 ),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                HistoryCountChip(
-                    uiState.onTimeCount,
-                    R.string.item_history_filter_on_time,
-                    MaterialTheme.colorScheme.primary
-                )
-                HistoryCountChip(
-                    uiState.lateCount,
-                    R.string.item_detail_history_status_late,
-                    MaterialTheme.colorScheme.tertiary
-                )
-                HistoryCountChip(
-                    uiState.missedCount,
-                    R.string.item_detail_history_status_missed,
-                    MaterialTheme.colorScheme.error
-                )
-            }
-
             if (uiState.currentStreak > 0) {
                 Text(
                     text = stringResource(R.string.item_history_streak, uiState.currentStreak),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
         }
@@ -169,15 +162,50 @@ private fun HistorySummaryCard(uiState: ItemHistoryUiState) {
 }
 
 @Composable
-private fun HistoryCountChip(count: Int, labelRes: Int, color: Color) {
-    Surface(color = color.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small) {
+private fun HistorySummaryChips(uiState: ItemHistoryUiState) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        HistoryCountChip(
+            count = uiState.onTimeCount,
+            labelRes = R.string.item_history_filter_on_time,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f),
+        )
+        HistoryCountChip(
+            count = uiState.lateCount,
+            labelRes = R.string.item_detail_history_status_late,
+            color = MaterialTheme.colorScheme.tertiary,
+            modifier = Modifier.weight(1f),
+        )
+        HistoryCountChip(
+            count = uiState.missedCount,
+            labelRes = R.string.item_detail_history_status_missed,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun HistoryCountChip(
+    count: Int,
+    labelRes: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = color.copy(alpha = 0.12f),
+        shape = MaterialTheme.shapes.small
+    ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = count.toString(),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = color
             )
             Text(
@@ -190,7 +218,11 @@ private fun HistoryCountChip(count: Int, labelRes: Int, color: Color) {
 }
 
 @Composable
-private fun HistoryFilterRow(activeFilter: HistoryFilter, onEvent: (ItemHistoryEvent) -> Unit) {
+private fun HistoryFilterRow(
+    activeFilter: HistoryFilter,
+    onEvent: (ItemHistoryEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val chips = listOf(
         HistoryFilter.ALL to R.string.item_history_filter_all,
         HistoryFilter.ON_TIME to R.string.item_history_filter_on_time,
@@ -206,6 +238,7 @@ private fun HistoryFilterRow(activeFilter: HistoryFilter, onEvent: (ItemHistoryE
             )
         },
         onToggle = { id -> onEvent(ItemHistoryEvent.OnFilterSelected(HistoryFilter.valueOf(id))) },
+        modifier = modifier,
     )
 }
 

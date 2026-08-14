@@ -47,47 +47,53 @@ internal fun ItemHistoryCard(entry: ItemCompletionHistory) {
                     color = entry.status.color(),
                 )
             }
+            ItemHistoryCardDetails(entry)
+        }
+    }
+}
 
-            entry.completedAt?.let { completedAt ->
-                Text(
-                    text = stringResource(
-                        R.string.item_history_completed_at,
-                        completedAt.toFormattedTimeString()
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+@Composable
+private fun ItemHistoryCardDetails(entry: ItemCompletionHistory) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        entry.completedAt?.let { completedAt ->
+            Text(
+                text = stringResource(
+                    R.string.item_history_completed_at,
+                    completedAt.toFormattedTimeString()
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
-            entry.lateDays()?.let { days ->
-                Text(
-                    text = pluralStringResource(R.plurals.item_history_days_late, days, days),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-            }
+        entry.lateDays()?.let { days ->
+            Text(
+                text = pluralStringResource(R.plurals.item_history_days_late, days, days),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
 
-            val originalScheduledDate = entry.originalScheduledDate
-            if (entry.extensionCount > 0 && originalScheduledDate != null) {
-                Text(
-                    text = stringResource(
-                        R.string.item_history_extended_trail,
-                        entry.extensionCount,
-                        originalScheduledDate.toFormattedDateString(),
-                        entry.scheduledDate.toFormattedDateString(),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        val originalScheduledDate = entry.originalScheduledDate
+        if (entry.extensionCount > 0 && originalScheduledDate != null) {
+            Text(
+                text = stringResource(
+                    R.string.item_history_extended_trail,
+                    entry.extensionCount,
+                    originalScheduledDate.toFormattedDateString(),
+                    entry.scheduledDate.toFormattedDateString(),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
-            entry.note?.let { note ->
-                Text(
-                    text = stringResource(R.string.item_detail_history_note_label, note),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        entry.note?.let { note ->
+            Text(
+                text = stringResource(R.string.item_detail_history_note_label, note),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

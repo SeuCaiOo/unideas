@@ -82,6 +82,7 @@
     <string name="item_detail_history_status_on_time">No prazo</string>
     <string name="item_detail_history_status_late">Atrasada</string>
     <string name="item_detail_history_status_missed">Não feita</string>
+    <string name="item_detail_history_note_label">Nota: %1$s</string>
     <string name="item_detail_completed_snackbar">Tarefa concluída</string>
     <string name="item_detail_discard_edit_title">Título não pode ficar vazio</string>
     <string name="item_detail_discard_edit_message">O restante já está salvo. Ao sair, o título volta a ser o que era.</string>

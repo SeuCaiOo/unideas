@@ -1,6 +1,8 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
 
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.CompletionStatus
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
@@ -335,5 +337,45 @@ class ItemOccurrenceViewModelTest {
 
             assertEquals(ItemOccurrenceDialogState.History, vm.dialogState.value)
             coVerify(exactly = 1) { itemOccurrenceUseCase.getHistory(1L) }
+        }
+
+    @Test
+    fun `when OnHistoryClicked should expose each entry's status and note in historyState`() =
+        runTest {
+            val item =
+                ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+            val onTime = ItemCompletionHistory(
+                id = 1L,
+                itemId = 1L,
+                scheduledDate = LocalDate.of(2026, 7, 1),
+                completedAt = LocalDate.of(2026, 7, 1).atTime(10, 0),
+            )
+            val late = ItemCompletionHistory(
+                id = 2L,
+                itemId = 1L,
+                scheduledDate = LocalDate.of(2026, 7, 8),
+                completedAt = LocalDate.of(2026, 7, 9).atTime(10, 0),
+                note = "Sem tempo no dia",
+            )
+            val missed = ItemCompletionHistory(
+                id = 3L,
+                itemId = 1L,
+                scheduledDate = LocalDate.of(2026, 7, 15),
+                completedAt = null,
+                note = "Não deu essa semana",
+            )
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime, late, missed))
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemOccurrenceEvent.OnHistoryClicked)
+
+            assertEquals(listOf(onTime, late, missed), vm.historyState.value)
+            assertEquals(CompletionStatus.ON_TIME, vm.historyState.value[0].status)
+            assertEquals(CompletionStatus.LATE, vm.historyState.value[1].status)
+            assertEquals("Sem tempo no dia", vm.historyState.value[1].note)
+            assertEquals(CompletionStatus.MISSED, vm.historyState.value[2].status)
+            assertEquals("Não deu essa semana", vm.historyState.value[2].note)
         }
 }

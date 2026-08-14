@@ -70,18 +70,31 @@ private fun ItemHistorySheetContent(history: List<ItemCompletionHistory>, modifi
 
 @Composable
 private fun ItemHistoryRow(entry: ItemCompletionHistory, modifier: Modifier = Modifier) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(text = entry.scheduledDate.toFormattedDateString(), style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = stringResource(entry.status.labelRes()),
-            style = MaterialTheme.typography.bodyMedium,
-            color = entry.status.color(),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(text = entry.scheduledDate.toFormattedDateString(), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(entry.status.labelRes()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = entry.status.color(),
+            )
+        }
+
+        entry.note?.let { note ->
+            Text(
+                text = stringResource(R.string.item_detail_history_note_label, note),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -116,12 +129,14 @@ private fun ItemHistorySheetContentPreview() {
                         itemId = 1L,
                         scheduledDate = LocalDate.of(2026, 7, 8),
                         completedAt = LocalDateTime.of(2026, 7, 9, 10, 0),
+                        note = "Sem tempo no dia, terminei no dia seguinte",
                     ),
                     ItemCompletionHistory(
                         id = 3L,
                         itemId = 1L,
                         scheduledDate = LocalDate.of(2026, 7, 15),
                         completedAt = null,
+                        note = "Não deu pra fazer essa semana",
                     ),
                 ),
             )

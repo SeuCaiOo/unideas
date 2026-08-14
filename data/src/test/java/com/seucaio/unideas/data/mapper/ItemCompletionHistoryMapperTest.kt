@@ -53,6 +53,20 @@ class ItemCompletionHistoryMapperTest {
     }
 
     @Test
+    fun `toEntity and toDomain round-trip preserves extension tracking fields`() {
+        val original = ItemCompletionHistory(
+            id = 8L,
+            itemId = 3L,
+            scheduledDate = LocalDate.of(2026, 6, 22),
+            completedAt = LocalDateTime.of(2026, 6, 23, 8, 0),
+            originalScheduledDate = LocalDate.of(2026, 6, 15),
+            extensionCount = 2,
+        )
+
+        assertEquals(original, original.toEntity().toDomain())
+    }
+
+    @Test
     fun `toDomain maps a missed occurrence entity`() {
         val entity = ItemCompletionHistoryEntity(
             id = 1L,

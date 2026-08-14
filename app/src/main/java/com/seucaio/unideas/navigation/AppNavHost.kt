@@ -62,6 +62,9 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 onNavigateToAddItem = { type ->
                     navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
                 },
+                onNavigateToHistory = { itemId ->
+                    navController.navigate(ItemsRoute.History(itemId))
+                },
             )
         }
     }

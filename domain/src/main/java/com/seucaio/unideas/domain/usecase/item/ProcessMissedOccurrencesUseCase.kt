@@ -25,14 +25,29 @@ class ProcessMissedOccurrencesUseCase(
         if (!item.isRecurring || !dueDate.isBefore(today)) return@resultCatching item
 
         var scheduledDate: LocalDate = dueDate
+        var isFirstCycle = true
         while (scheduledDate.isBefore(today)) {
-            historyRepository.insert(
-                ItemCompletionHistory(itemId = item.id, scheduledDate = scheduledDate, completedAt = null),
-            )
+            if (scheduledDate != item.lastCompletedScheduledDate) {
+                historyRepository.insert(
+                    ItemCompletionHistory(
+                        itemId = item.id,
+                        scheduledDate = scheduledDate,
+                        completedAt = null,
+                        originalScheduledDate = if (isFirstCycle) item.pendingExtensionOriginalDueDate else null,
+                        extensionCount = if (isFirstCycle) item.pendingExtensionCount else 0,
+                    ),
+                )
+            }
             scheduledDate = requireNotNull(item.recurrence.nextDueDate(scheduledDate))
+            isFirstCycle = false
         }
 
-        val advanced = item.copy(dueDate = scheduledDate)
+        val advanced = item.copy(
+            dueDate = scheduledDate,
+            lastCompletedScheduledDate = null,
+            pendingExtensionOriginalDueDate = null,
+            pendingExtensionCount = 0,
+        )
         repository.updateItem(advanced)
         advanced
     }

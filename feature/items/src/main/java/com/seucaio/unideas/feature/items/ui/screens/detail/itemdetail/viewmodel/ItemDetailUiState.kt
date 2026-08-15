@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
 import com.seucaio.unideas.core.common.extensions.orToday
 import com.seucaio.unideas.domain.model.Item
@@ -32,8 +32,6 @@ data class ItemDetailUiState(
     override val reminderWarning: ReminderWarning = ReminderWarning.None,
     override val availableSections: List<Section> = emptyList(),
     override val availableTags: List<Tag> = emptyList(),
-    override val isCompleted: Boolean = false,
-    override val completedAt: LocalDateTime? = null,
     val loadFailed: Boolean = false,
     override val titleError: Boolean = false,
 ) : ItemFormFieldsState, Serializable {
@@ -83,13 +81,16 @@ data class ItemDetailUiState(
         dueTime = item.dueTime,
         recurrence = item.recurrence,
         reminderWarning = item.reminderWarning,
-        isCompleted = item.isCompleted,
-        completedAt = item.completedAt,
         loadFailed = false,
     )
 
-    fun applyCompletion(item: Item): ItemDetailUiState =
-        copy(isCompleted = item.isCompleted, completedAt = item.completedAt, dueDate = item.dueDate)
+    fun applyExternalOccurrenceUpdate(item: Item): ItemDetailUiState = copy(
+        hasReminder = item.dueDate != null,
+        dueDate = item.dueDate,
+        dueTime = item.dueTime,
+        recurrence = item.recurrence,
+        reminderWarning = item.reminderWarning,
+    )
 
     /** Applies the current fields onto [original] — `null` (first save while creating) starts from a
      * blank [Item] instead. */

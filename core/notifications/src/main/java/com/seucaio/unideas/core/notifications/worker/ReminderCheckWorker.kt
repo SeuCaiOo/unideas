@@ -17,6 +17,11 @@ import java.time.LocalDateTime
  * ([ProcessMissedOccurrencesUseCase], #126), buckets each by [ReminderTier.of], and refreshes the
  * two aggregated notifications. Radar tier needs no notification — already surfaced by the
  * priority panel.
+ *
+ * [GetItemsWithDueDateUseCase]'s query can't exclude a recurring item completed for its *current*
+ * cycle (it never sets `completedAt`, only `lastCompletedScheduledDate`) without also hiding it
+ * from [ProcessMissedOccurrencesUseCase] once that cycle actually goes overdue — so the
+ * already-resolved filter has to run here instead, after missed-occurrence processing.
  */
 class ReminderCheckWorker(
     context: Context,
@@ -31,6 +36,7 @@ class ReminderCheckWorker(
         val nextCheck = ReminderScheduler.nextCheckSlot(now)
         val items = getItemsWithDueDate().first()
             .map { processMissedOccurrences(it, now.toLocalDate()).getOrDefault(it) }
+            .filterNot { it.isCompleted }
 
         val normal = mutableListOf<Item>()
         val urgent = mutableListOf<Item>()

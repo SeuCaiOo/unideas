@@ -19,8 +19,8 @@ import com.seucaio.unideas.feature.items.ui.components.fields.ReminderWarningFie
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.RecurrenceField
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 
 /** Due date/time, recurrence and reminder warning — task-only, not present on notes. */
 @Composable

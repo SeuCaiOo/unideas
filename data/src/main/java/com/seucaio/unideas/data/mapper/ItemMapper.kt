@@ -26,6 +26,8 @@ private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     createdAt = entity.createdAt.toLocalDateTime(),
     lastCompletedScheduledDate = entity.lastCompletedScheduledDate?.toLocalDate(),
     isPinned = entity.isPinned,
+    pendingExtensionOriginalDueDate = entity.pendingExtensionOriginalDueDate?.toLocalDate(),
+    pendingExtensionCount = entity.pendingExtensionCount,
     tags = tags.map { it.toDomain() },
 )
 
@@ -50,4 +52,6 @@ internal fun Item.toEntity(): ItemEntity = ItemEntity(
     createdAt = createdAt.toEpochMilli(),
     lastCompletedScheduledDate = lastCompletedScheduledDate?.toEpochMilli(),
     isPinned = isPinned,
+    pendingExtensionOriginalDueDate = pendingExtensionOriginalDueDate?.toEpochMilli(),
+    pendingExtensionCount = pendingExtensionCount,
 )

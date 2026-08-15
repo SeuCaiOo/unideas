@@ -17,8 +17,9 @@ import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFi
 import com.seucaio.unideas.feature.items.ui.components.fields.TypeSelectorField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 
 /**
  * Composes the item form's four parts, top to bottom: title/description, type selector, the
@@ -26,7 +27,15 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailU
  * save). Each part owns its own visibility rules — this just lays them out in order.
  */
 @Composable
-fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modifier: Modifier = Modifier) {
+fun ItemFormBody(
+    state: ItemFormFieldsState,
+    events: ItemFormFieldsEvents,
+    occurrenceState: ItemOccurrenceUiState,
+    onCompleteClicked: () -> Unit,
+    onIgnoreClicked: () -> Unit,
+    onExtendDeadlineClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -55,7 +64,13 @@ fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modif
                 modifier = Modifier.padding(top = 16.dp)
             )
 
-            ItemFormFooter(state = state, events = events)
+            ItemFormFooter(
+                state = state,
+                occurrenceState = occurrenceState,
+                onCompleteClicked = onCompleteClicked,
+                onIgnoreClicked = onIgnoreClicked,
+                onExtendDeadlineClicked = onExtendDeadlineClicked,
+            )
         }
     }
 }
@@ -81,6 +96,10 @@ private fun ItemFormBodyPreview(
                     onRecurrenceChanged = {},
                     onReminderWarningChanged = {},
                 ),
+                occurrenceState = ItemOccurrenceUiState(),
+                onCompleteClicked = {},
+                onIgnoreClicked = {},
+                onExtendDeadlineClicked = {},
             )
         }
     }

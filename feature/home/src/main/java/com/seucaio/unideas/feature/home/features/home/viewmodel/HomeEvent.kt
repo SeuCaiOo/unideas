@@ -26,6 +26,8 @@ sealed interface HomeEvent {
 
     data object OnRetryClicked : HomeEvent
 
+    data object OnRefreshRequested : HomeEvent
+
     //endregion
 
     //region selection events

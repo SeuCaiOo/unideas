@@ -87,6 +87,13 @@ class HomeViewModel(
 
     //endregion
 
+    //region pull-to-refresh
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    //endregion
+
     //region one-shot navigation/snackbar events
 
     private val _uiAction = Channel<HomeUiAction>(Channel.BUFFERED)
@@ -113,6 +120,7 @@ class HomeViewModel(
             is HomeEvent.OnCompleteClicked -> handleComplete(event.itemId)
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
+            is HomeEvent.OnRefreshRequested -> handleRefresh()
             is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
     }
@@ -179,6 +187,12 @@ class HomeViewModel(
     private fun handleItemPinToggle(itemId: Long, isPinned: Boolean) = viewModelScope.launch {
         homeUseCase.setItemPinned(itemId, isPinned)
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleRefresh() = viewModelScope.launch {
+        _isRefreshing.value = true
+        homeUseCase.refreshReminders()
+        _isRefreshing.value = false
     }
 
     private fun handleComplete(itemId: Long) = viewModelScope.launch {

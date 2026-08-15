@@ -12,6 +12,8 @@ internal fun ItemCompletionHistoryEntity.toDomain(): ItemCompletionHistory = Ite
     scheduledDate = scheduledDate.toLocalDate(),
     completedAt = completedAt?.toLocalDateTime(),
     note = note,
+    originalScheduledDate = originalScheduledDate?.toLocalDate(),
+    extensionCount = extensionCount,
 )
 
 internal fun ItemCompletionHistory.toEntity(): ItemCompletionHistoryEntity =
@@ -21,4 +23,6 @@ internal fun ItemCompletionHistory.toEntity(): ItemCompletionHistoryEntity =
         scheduledDate = scheduledDate.toEpochMilli(),
         completedAt = completedAt?.toEpochMilli(),
         note = note,
+        originalScheduledDate = originalScheduledDate?.toEpochMilli(),
+        extensionCount = extensionCount,
     )

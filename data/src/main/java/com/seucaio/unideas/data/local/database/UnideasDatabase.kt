@@ -17,6 +17,7 @@ import com.seucaio.unideas.data.local.database.migration.MIGRATION_4_5
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_5_6
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_6_7
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_7_8
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_8_9
 import com.seucaio.unideas.data.local.entity.ItemCompletionHistoryEntity
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
@@ -46,7 +47,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         ItemTagCrossRef::class,
         ItemCompletionHistoryEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -100,7 +101,8 @@ abstract class UnideasDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
-                    MIGRATION_7_8
+                    MIGRATION_7_8,
+                    MIGRATION_8_9
                 )
                 .build()
     }

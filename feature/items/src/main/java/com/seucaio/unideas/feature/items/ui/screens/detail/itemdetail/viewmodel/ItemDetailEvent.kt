@@ -1,5 +1,6 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
+import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -8,7 +9,6 @@ import java.time.LocalTime
 
 sealed interface ItemDetailEvent {
 
-    /** Events handled by [ItemDetailUiState.reduce] alone — no side effect beyond a state update. */
     sealed interface FieldEvent : ItemDetailEvent
 
     data class OnTypeChanged(val type: ItemType) : FieldEvent
@@ -39,16 +39,11 @@ sealed interface ItemDetailEvent {
 
     data object OnDialogDismissed : ItemDetailEvent
 
-    data object OnCompleteClicked : ItemDetailEvent
-
-    data object OnCompleteConfirmClicked : ItemDetailEvent
-
-    data object OnHistoryClicked : ItemDetailEvent
-
-    /** Retry loading the item after [ItemDetailUiState.loadFailed] — edit mode only. */
     data object OnRetryClicked : ItemDetailEvent
 
     data object OnBackRequested : ItemDetailEvent
 
     data object OnDiscardConfirmed : ItemDetailEvent
+
+    data class OnItemUpdatedExternally(val item: Item) : ItemDetailEvent
 }

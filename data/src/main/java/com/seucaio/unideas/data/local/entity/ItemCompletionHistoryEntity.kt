@@ -29,4 +29,6 @@ data class ItemCompletionHistoryEntity(
     val scheduledDate: Long,
     val completedAt: Long?,
     val note: String? = null,
+    val originalScheduledDate: Long? = null,
+    val extensionCount: Int = 0,
 )

@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -22,6 +24,7 @@ import java.time.LocalDateTime
 @Composable
 fun CompletionField(
     isCompleted: Boolean,
+    isLate: Boolean,
     completedAt: LocalDateTime?,
     onCompleteClicked: () -> Unit,
     modifier: Modifier = Modifier,
@@ -35,7 +38,12 @@ fun CompletionField(
             onClick = onCompleteClicked,
             modifier = Modifier.weight(1f),
         ) {
-            Text(stringResource(if (isCompleted) R.string.item_detail_reopen else R.string.item_detail_complete))
+            val labelRes = when {
+                isCompleted -> R.string.item_detail_reopen
+                isLate -> R.string.item_detail_complete_late
+                else -> R.string.item_detail_complete
+            }
+            Text(stringResource(labelRes))
         }
         completedAt?.let {
             Text(
@@ -47,29 +55,36 @@ fun CompletionField(
     }
 }
 
-@PreviewLightDark
-@Composable
-private fun CompletionFieldNotDonePreview() {
-    UdsTheme {
-        Surface {
-            CompletionField(
-                isCompleted = false,
-                completedAt = null,
-                onCompleteClicked = {},
-                modifier = Modifier.padding(16.dp),
-            )
-        }
-    }
+private data class CompletionFieldPreviewData(
+    val isCompleted: Boolean,
+    val isLate: Boolean,
+    val completedAt: LocalDateTime? = null,
+)
+
+private class CompletionFieldPreviewProvider : PreviewParameterProvider<CompletionFieldPreviewData> {
+
+    override val values: Sequence<CompletionFieldPreviewData> = sequenceOf(
+        CompletionFieldPreviewData(isCompleted = false, isLate = false),
+        CompletionFieldPreviewData(isCompleted = false, isLate = true),
+        CompletionFieldPreviewData(
+            isCompleted = true,
+            isLate = false,
+            completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
+        ),
+    )
 }
 
 @PreviewLightDark
 @Composable
-private fun CompletionFieldDonePreview() {
+private fun CompletionFieldPreview(
+    @PreviewParameter(CompletionFieldPreviewProvider::class) previewData: CompletionFieldPreviewData,
+) {
     UdsTheme {
         Surface {
             CompletionField(
-                isCompleted = true,
-                completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
+                isCompleted = previewData.isCompleted,
+                isLate = previewData.isLate,
+                completedAt = previewData.completedAt,
                 onCompleteClicked = {},
                 modifier = Modifier.padding(16.dp),
             )

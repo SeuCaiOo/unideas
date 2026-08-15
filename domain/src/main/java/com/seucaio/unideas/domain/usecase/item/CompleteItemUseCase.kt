@@ -12,28 +12,23 @@ import com.seucaio.unideas.domain.util.resultCatching
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * Toggles a task's completion (checkbox behavior — click again to undo).
- *
- * A recurring task is a **single row whose `dueDate` does not move here** — completing it only
- * records an [ItemCompletionHistory] entry for the current occurrence and sets
- * [Item.lastCompletedScheduledDate]; a second click on the same occurrence reopens it (deletes the
- * entry) instead of recording a new one. `dueDate` only advances once that occurrence is actually
- * in the past, via [ProcessMissedOccurrencesUseCase] — never as a side effect of clicking here. A
- * non-recurring task keeps the plain toggle, [Item.completedAt] set or cleared.
- */
 class CompleteItemUseCase(
     private val repository: ItemRepository,
     private val historyRepository: ItemCompletionHistoryRepository,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
 ) : UseCase {
 
-    suspend operator fun invoke(item: Item, completedAt: LocalDateTime): Result<CompletionResult> =
+    suspend operator fun invoke(
+        item: Item,
+        completedAt: LocalDateTime,
+        note: String? = null,
+    ): Result<CompletionResult> =
         resultCatching {
             require(item.type == ItemType.TASK) { "Only tasks can be completed" }
 
             val result = when {
-                item.isRecurring && item.dueDate != null -> toggleOccurrence(item, item.dueDate, completedAt)
+                item.isRecurring && item.dueDate != null ->
+                    toggleOccurrence(item, item.dueDate, completedAt, note)
 
                 item.isCompleted -> {
                     repository.updateItem(item.copy(completedAt = null))
@@ -53,16 +48,32 @@ class CompleteItemUseCase(
         item: Item,
         scheduledDate: LocalDate,
         completedAt: LocalDateTime,
+        note: String?,
     ): CompletionResult =
         if (item.isCompleted) {
             historyRepository.deleteOccurrence(item.id, scheduledDate)
             repository.updateItem(item.copy(lastCompletedScheduledDate = null))
             CompletionResult.Uncompleted
         } else {
+            val isLate = completedAt.toLocalDate().isAfter(scheduledDate)
+            require(!isLate || !note.isNullOrBlank()) { "A note is required to complete a late occurrence" }
             historyRepository.insert(
-                ItemCompletionHistory(itemId = item.id, scheduledDate = scheduledDate, completedAt = completedAt),
+                ItemCompletionHistory(
+                    itemId = item.id,
+                    scheduledDate = scheduledDate,
+                    completedAt = completedAt,
+                    note = note,
+                    originalScheduledDate = item.pendingExtensionOriginalDueDate,
+                    extensionCount = item.pendingExtensionCount,
+                ),
             )
-            repository.updateItem(item.copy(lastCompletedScheduledDate = scheduledDate))
+            repository.updateItem(
+                item.copy(
+                    lastCompletedScheduledDate = scheduledDate,
+                    pendingExtensionOriginalDueDate = null,
+                    pendingExtensionCount = 0,
+                ),
+            )
             CompletionResult.Completed
         }
 }

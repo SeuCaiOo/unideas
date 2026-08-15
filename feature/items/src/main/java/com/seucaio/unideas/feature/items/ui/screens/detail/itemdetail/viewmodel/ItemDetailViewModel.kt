@@ -1,12 +1,10 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
@@ -22,7 +20,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.time.LocalDateTime
 
 class ItemDetailViewModel(
     private val itemId: Long?,
@@ -39,7 +36,6 @@ class ItemDetailViewModel(
 
     private var originalItem: Item? = null
     private var currentItemId: Long? = itemId
-    private var historyJob: Job? = null
     private var debounceJob: Job? = null
     private var hasPendingTextSave = false
 
@@ -71,9 +67,6 @@ class ItemDetailViewModel(
     private val _dialogState = MutableStateFlow<ItemDetailDialogState>(ItemDetailDialogState.None)
     val dialogState: StateFlow<ItemDetailDialogState> = _dialogState.asStateFlow()
 
-    private val _historyState = MutableStateFlow<List<ItemCompletionHistory>>(emptyList())
-    val historyState: StateFlow<List<ItemCompletionHistory>> = _historyState.asStateFlow()
-
     init {
         viewModelScope.launch {
             runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
@@ -99,21 +92,25 @@ class ItemDetailViewModel(
             is ItemDetailEvent.FieldEvent -> handleFieldEvent(event)
             is ItemDetailEvent.OnShareClicked -> handleShare()
             is ItemDetailEvent.OnDeleteClicked -> _dialogState.update { ItemDetailDialogState.DeleteConfirm }
-            is ItemDetailEvent.OnDialogDismissed -> {
-                historyJob?.cancel()
-                _dialogState.update { ItemDetailDialogState.None }
-            }
+            is ItemDetailEvent.OnDialogDismissed -> _dialogState.update { ItemDetailDialogState.None }
             is ItemDetailEvent.OnDeleteConfirmClicked -> handleDelete()
-            is ItemDetailEvent.OnCompleteClicked -> handleCompleteClicked()
-            is ItemDetailEvent.OnCompleteConfirmClicked -> {
-                _dialogState.update { ItemDetailDialogState.None }
-                handleComplete()
-            }
-            is ItemDetailEvent.OnHistoryClicked -> handleHistoryClicked()
             is ItemDetailEvent.OnRetryClicked -> retryLoad()
             is ItemDetailEvent.OnBackRequested -> handleBackRequested()
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
+            is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
         }
+    }
+
+    private fun handleItemUpdatedExternally(item: Item) {
+        originalItem = originalItem?.copy(
+            completedAt = item.completedAt,
+            lastCompletedScheduledDate = item.lastCompletedScheduledDate,
+            dueDate = item.dueDate,
+            dueTime = item.dueTime,
+            recurrence = item.recurrence,
+            reminderWarning = item.reminderWarning,
+        )
+        updateUiState { it.applyExternalOccurrenceUpdate(item) }
     }
 
     private fun retryLoad() {
@@ -122,9 +119,6 @@ class ItemDetailViewModel(
         viewModelScope.launch { loadItem(id) }
     }
 
-    /** Title/description debounce ~500ms per keystroke — everything else saves immediately.
-     * [hasPendingTextSave] (not [debounceJob]'s cancellation state — [viewModelScope] is already
-     * torn down by the time [onCleared] runs) tracks whether that debounce is still owed. */
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
         when (event) {
@@ -212,7 +206,10 @@ class ItemDetailViewModel(
         } else {
             val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
             val updated = uiState.value.toItem(original)
-            itemFormUseCase.edit(updated).onSuccess { originalItem = updated }
+            itemFormUseCase.edit(updated).onSuccess {
+                originalItem = updated
+                sendUiAction(ItemDetailUiAction.ItemPersisted(updated))
+            }
         }
     }
 
@@ -230,41 +227,6 @@ class ItemDetailViewModel(
         itemFormUseCase.delete(id)
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
-    }
-
-    private fun handleCompleteClicked() {
-        if (uiState.value.isCompleted) {
-            _dialogState.update { ItemDetailDialogState.ReopenConfirm }
-        } else {
-            handleComplete()
-        }
-    }
-
-    /** Only [CompletionResult.Completed] gets a snackbar — reopening (via [ItemDetailDialogState.ReopenConfirm])
-     * is a correction, not an action worth celebrating. */
-    private fun handleComplete() = viewModelScope.launch {
-        val item = originalItem ?: return@launch
-        if (item.type != ItemType.TASK) return@launch
-        val now = LocalDateTime.now()
-        itemFormUseCase.complete(item, now)
-            .onSuccess { result ->
-                val updated = itemFormUseCase.get(item.id).first() ?: return@onSuccess
-                originalItem = updated
-                updateUiState { it.applyCompletion(updated) }
-                if (result == CompletionResult.Completed) {
-                    sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
-                }
-            }
-            .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
-    }
-
-    private fun handleHistoryClicked() {
-        val id = itemId ?: return
-        _dialogState.update { ItemDetailDialogState.History }
-        historyJob?.cancel()
-        historyJob = viewModelScope.launch {
-            itemFormUseCase.getHistory(id).collect { history -> _historyState.update { history } }
-        }
     }
 
     private fun handleShare() = viewModelScope.launch {

@@ -1,12 +1,11 @@
-package com.seucaio.unideas.feature.items.ui.screens.detail
+package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
 
@@ -40,8 +39,6 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
         ItemDetailUiState(
             isEditing = true,
             title = "Renew subscription",
-            isCompleted = true,
-            completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
         ),
     )
 }

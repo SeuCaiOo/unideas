@@ -63,25 +63,22 @@ class DatabaseSeeder(
     }
 
     private suspend fun seedFull() {
-        val sections = seedFullSections()
-        val tags = seedFullTags()
+        val sections = FullSections(
+            workId = sectionDao.insert(SectionEntity(name = "Trabalho")),
+            homeId = sectionDao.insert(SectionEntity(name = "Casa")),
+        )
+        val tags = FullTags(
+            urgentId = tagDao.insert(TagEntity(name = "urgente")),
+            personalId = tagDao.insert(TagEntity(name = "pessoal")),
+            ideaId = tagDao.insert(TagEntity(name = "ideias")),
+        )
         val today = LocalDate.now()
 
         seedFullPriorityTasks(today, sections, tags)
         seedFullExtraTasks(today, sections, tags)
+        seedFullReevaluationScenarios(today, sections)
         seedFullNotes(today, sections, tags)
     }
-
-    private suspend fun seedFullSections() = FullSections(
-        workId = sectionDao.insert(SectionEntity(name = "Trabalho")),
-        homeId = sectionDao.insert(SectionEntity(name = "Casa")),
-    )
-
-    private suspend fun seedFullTags() = FullTags(
-        urgentId = tagDao.insert(TagEntity(name = "urgente")),
-        personalId = tagDao.insert(TagEntity(name = "pessoal")),
-        ideaId = tagDao.insert(TagEntity(name = "ideias")),
-    )
 
     // Enough overdue/due-soon tasks to exceed Constants.PRIORITY_PANEL_LIMIT and show "See all".
     private suspend fun seedFullPriorityTasks(today: LocalDate, sections: FullSections, tags: FullTags) {
@@ -174,6 +171,46 @@ class DatabaseSeeder(
         )
     }
 
+    // Pre-set item/history states the occurrence reevaluation engine (#151) reads on its own —
+    // lets a manual pull-to-refresh test exercise the dedup/carry-over paths without editing
+    // the DB by hand. Titles double as the expected outcome, checkable at a glance post-refresh.
+    private suspend fun seedFullReevaluationScenarios(today: LocalDate, sections: FullSections) {
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Reavaliação: já concluída hoje (não deve notificar)",
+                description = "dueDate = hoje, lastCompletedScheduledDate = hoje",
+                dueDate = today,
+                sectionId = sections.homeId,
+                recurrence = Recurrence.Daily,
+                lastCompletedScheduledDate = today,
+            ),
+        )
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Reavaliação: concluída, aguardando avanço (sem MISSED duplicado)",
+                description = "dueDate = ontem, lastCompletedScheduledDate = ontem",
+                dueDate = today.minusDays(1),
+                sectionId = sections.homeId,
+                recurrence = Recurrence.Daily,
+                lastCompletedScheduledDate = today.minusDays(1),
+            ),
+        )
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Reavaliação: extensão pendente nunca resolvida",
+                description = "dueDate atrasado, já adiado uma vez, nunca resolvido",
+                dueDate = today.minusWeeks(1),
+                sectionId = sections.homeId,
+                recurrence = Recurrence.Weekly,
+                pendingExtensionOriginalDueDate = today.minusWeeks(2),
+                pendingExtensionCount = 1,
+            ),
+        )
+    }
+
     private suspend fun seedFullNotes(today: LocalDate, sections: FullSections, tags: FullTags) {
         insertItem(
             SeedItem(
@@ -206,6 +243,9 @@ class DatabaseSeeder(
             recurrence = spec.recurrence,
             completedAt = spec.completedAt?.toEpochMilli(),
             createdAt = LocalDateTime.now().toEpochMilli(),
+            lastCompletedScheduledDate = spec.lastCompletedScheduledDate?.toEpochMilli(),
+            pendingExtensionOriginalDueDate = spec.pendingExtensionOriginalDueDate?.toEpochMilli(),
+            pendingExtensionCount = spec.pendingExtensionCount,
         )
         itemDao.insertItemWithTags(entity, spec.tagIds)
     }
@@ -224,6 +264,9 @@ class DatabaseSeeder(
         val tagIds: List<Long> = emptyList(),
         val recurrence: Recurrence = Recurrence.None,
         val completedAt: LocalDateTime? = null,
+        val lastCompletedScheduledDate: LocalDate? = null,
+        val pendingExtensionOriginalDueDate: LocalDate? = null,
+        val pendingExtensionCount: Int = 0,
     )
 
     private companion object {

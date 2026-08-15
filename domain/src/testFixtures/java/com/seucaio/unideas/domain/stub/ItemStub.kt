@@ -33,6 +33,8 @@ object ItemStub {
         createdAt: LocalDateTime = CREATED_AT,
         lastCompletedScheduledDate: LocalDate? = null,
         isPinned: Boolean = false,
+        pendingExtensionOriginalDueDate: LocalDate? = null,
+        pendingExtensionCount: Int = 0,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -48,6 +50,8 @@ object ItemStub {
         createdAt = createdAt,
         lastCompletedScheduledDate = lastCompletedScheduledDate,
         isPinned = isPinned,
+        pendingExtensionOriginalDueDate = pendingExtensionOriginalDueDate,
+        pendingExtensionCount = pendingExtensionCount,
         tags = tags,
     )
 

@@ -244,12 +244,12 @@ private fun HistoryFilterRow(
 
 @PreviewLightDark
 @Composable
-private fun ItemHistoryContentPreview(
-    @PreviewParameter(ItemHistoryContentPreviewProvider::class) uiState: ItemHistoryUiState,
+private fun ItemHistoryScreenContentPreview(
+    @PreviewParameter(ItemHistoryScreenContentPreviewProvider::class) uiState: ItemHistoryUiState,
 ) {
     UdsTheme {
         Surface {
-            ItemHistoryContent(uiState = uiState, onEvent = {})
+            ItemHistoryScreenContent(uiState = uiState, onEvent = {}, onNavigateBack = {})
         }
     }
 }

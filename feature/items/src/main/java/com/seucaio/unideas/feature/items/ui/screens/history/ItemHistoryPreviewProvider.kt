@@ -6,7 +6,7 @@ import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistor
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class ItemHistoryContentPreviewProvider : PreviewParameterProvider<ItemHistoryUiState> {
+class ItemHistoryScreenContentPreviewProvider : PreviewParameterProvider<ItemHistoryUiState> {
 
     override val values: Sequence<ItemHistoryUiState> = sequenceOf(
         ItemHistoryUiState(

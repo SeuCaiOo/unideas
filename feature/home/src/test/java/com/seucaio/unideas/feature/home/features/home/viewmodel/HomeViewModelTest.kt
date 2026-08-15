@@ -15,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -283,6 +284,17 @@ class HomeViewModelTest {
             val state = awaitItem() as HomeUiState.Success
             assertEquals(true, state.hasAnyItem)
         }
+    }
+
+    @Test
+    fun `when OnRefreshRequested should call HomeUseCase's refreshReminders and leave isRefreshing false`() = runTest {
+        every { homeUseCase.refreshReminders() } returns Unit
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnRefreshRequested)
+
+        verify(exactly = 1) { homeUseCase.refreshReminders() }
+        assertEquals(false, vm.isRefreshing.value)
     }
 
     @Test

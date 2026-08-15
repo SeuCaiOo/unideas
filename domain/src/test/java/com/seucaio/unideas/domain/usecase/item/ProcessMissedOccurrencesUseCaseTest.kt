@@ -87,4 +87,52 @@ class ProcessMissedOccurrencesUseCaseTest {
         }
         coVerify(exactly = 1) { repository.updateItem(advanced) }
     }
+
+    @Test
+    fun `invoke skips MISSED for a cycle already completed and clears lastCompletedScheduledDate`() = runTest {
+        val item = ItemStub.task(
+            recurrence = Recurrence.Weekly,
+            dueDate = today.minusWeeks(1),
+            lastCompletedScheduledDate = today.minusWeeks(1),
+        )
+        val advanced = item.copy(dueDate = today, lastCompletedScheduledDate = null)
+        coEvery { repository.updateItem(advanced) } returns Unit
+
+        val result = useCase(item, today)
+
+        assertEquals(advanced, result.getOrNull())
+        coVerify(exactly = 0) { historyRepository.insert(any()) }
+        coVerify(exactly = 1) { repository.updateItem(advanced) }
+    }
+
+    @Test
+    fun `invoke carries pending extension fields onto the first MISSED entry and clears them from the item`() =
+        runTest {
+            val item = ItemStub.task(
+                recurrence = Recurrence.Weekly,
+                dueDate = today.minusWeeks(1),
+                pendingExtensionOriginalDueDate = today.minusWeeks(3),
+                pendingExtensionCount = 2,
+            )
+            val missedRecord = ItemCompletionHistory(
+                itemId = item.id,
+                scheduledDate = today.minusWeeks(1),
+                completedAt = null,
+                originalScheduledDate = today.minusWeeks(3),
+                extensionCount = 2,
+            )
+            val advanced = item.copy(
+                dueDate = today,
+                pendingExtensionOriginalDueDate = null,
+                pendingExtensionCount = 0,
+            )
+            coEvery { historyRepository.insert(missedRecord) } returns 1L
+            coEvery { repository.updateItem(advanced) } returns Unit
+
+            val result = useCase(item, today)
+
+            assertEquals(advanced, result.getOrNull())
+            coVerify(exactly = 1) { historyRepository.insert(missedRecord) }
+            coVerify(exactly = 1) { repository.updateItem(advanced) }
+        }
 }

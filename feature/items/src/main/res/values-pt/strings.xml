@@ -112,6 +112,18 @@
         <item quantity="other">Atrasada em %d dias</item>
     </plurals>
 
+    <!-- Item Config Screen -->
+    <string name="item_detail_config">Configurações</string>
+    <string name="item_config_title">Configurações</string>
+    <string name="item_config_section_organization">Organização</string>
+    <string name="item_config_section_recurrence">Recorrência e aviso</string>
+    <string name="item_config_section_danger_zone">Zona de risco</string>
+    <string name="item_config_type_subtitle_task">Pode ser concluída, gera histórico</string>
+    <string name="item_config_type_subtitle_note">Só texto, sem conclusão</string>
+    <string name="item_config_type_change_button">Alterar</string>
+    <string name="item_config_type_switch_title">Trocar o tipo do item?</string>
+    <string name="item_config_type_switch_message">Isso reseta recorrência, data de vencimento, horário e aviso — não dá pra recuperar. Seção, tags, título e descrição continuam como estão. Histórico já registrado não é apagado, só deixa de receber novas entradas.</string>
+
     <!-- Items List -->
     <string name="items_list_title">Itens</string>
     <string name="items_list_empty">Nenhum item ainda</string>

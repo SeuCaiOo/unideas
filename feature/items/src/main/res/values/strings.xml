@@ -112,6 +112,18 @@
         <item quantity="other">Late by %d days</item>
     </plurals>
 
+    <!-- Item Config Screen -->
+    <string name="item_detail_config">Configuration</string>
+    <string name="item_config_title">Configuration</string>
+    <string name="item_config_section_organization">Organization</string>
+    <string name="item_config_section_recurrence">Recurrence and reminder</string>
+    <string name="item_config_section_danger_zone">Danger zone</string>
+    <string name="item_config_type_subtitle_task">Can be completed, generates history</string>
+    <string name="item_config_type_subtitle_note">Just text, no completion</string>
+    <string name="item_config_type_change_button">Change</string>
+    <string name="item_config_type_switch_title">Change item type?</string>
+    <string name="item_config_type_switch_message">This resets recurrence, due date, time and reminder — they can\'t be recovered. Section, tags, title and description stay as they are. Existing history isn\'t deleted, it just stops receiving new entries.</string>
+
     <!-- Items List -->
     <string name="items_list_title">Items</string>
     <string name="items_list_empty">No items yet</string>

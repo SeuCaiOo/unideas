@@ -98,7 +98,13 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnBackRequested -> handleBackRequested()
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
             is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
+            is ItemDetailEvent.OnScreenResumed -> handleScreenResumed()
         }
+    }
+
+    private fun handleScreenResumed() {
+        val id = itemId ?: return
+        viewModelScope.launch { loadItem(id) }
     }
 
     private fun handleItemUpdatedExternally(item: Item) {

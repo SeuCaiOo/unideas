@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +22,7 @@ fun ItemActions(
     onShareClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClicked: (() -> Unit)? = null,
+    onConfigClicked: (() -> Unit)? = null,
     onHistoryClicked: (() -> Unit)? = null,
     onDeleteClicked: (() -> Unit)? = null,
 ) {
@@ -31,6 +33,11 @@ fun ItemActions(
         if (onEditClicked != null) {
             IconButton(onClick = onEditClicked) {
                 Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.item_detail_edit))
+            }
+        }
+        if (onConfigClicked != null) {
+            IconButton(onClick = onConfigClicked) {
+                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.item_detail_config))
             }
         }
         if (onHistoryClicked != null) {

@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
@@ -58,11 +59,17 @@ fun ItemDetailScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
+    onNavigateToConfig: (Long) -> Unit,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(ItemDetailEvent.OnScreenResumed)
+        onPauseOrDispose { }
+    }
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
@@ -109,6 +116,7 @@ fun ItemDetailScreen(
         onOccurrenceEvent = occurrenceViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
+        onNavigateToConfig = onNavigateToConfig,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -125,6 +133,7 @@ private fun ItemDetailScreenContent(
     onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
+    onNavigateToConfig: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -154,7 +163,9 @@ private fun ItemDetailScreenContent(
         topBar = {
             UnideasTopBar(
                 onNavigateBack = topBarNavigateBack,
-                actions = { ItemDetailTopBarActions(itemId, uiState, onEvent, onNavigateToHistory) },
+                actions = {
+                    ItemDetailTopBarActions(itemId, uiState, onEvent, onNavigateToHistory, onNavigateToConfig)
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -188,9 +199,15 @@ private fun ItemDetailTopBarActions(
     uiState: ItemDetailUiState,
     onEvent: (ItemDetailEvent) -> Unit,
     onNavigateToHistory: (Long) -> Unit,
+    onNavigateToConfig: (Long) -> Unit,
 ) {
     ItemActions(
         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+        onConfigClicked = if (uiState.isEditing && itemId != null) {
+            { onNavigateToConfig(itemId) }
+        } else {
+            null
+        },
         onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None && itemId != null) {
             { onNavigateToHistory(itemId) }
         } else {
@@ -297,6 +314,7 @@ private fun ItemDetailScreenPreview(
             onOccurrenceEvent = {},
             onNavigateBack = {},
             onNavigateToHistory = {},
+            onNavigateToConfig = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

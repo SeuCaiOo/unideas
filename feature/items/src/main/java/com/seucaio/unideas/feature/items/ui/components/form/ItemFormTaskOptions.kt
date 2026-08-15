@@ -22,7 +22,6 @@ import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.Recurre
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 
-/** Due date/time, recurrence and reminder warning — task-only, not present on notes. */
 @Composable
 fun ItemFormTaskOptions(
     state: ItemFormFieldsState,

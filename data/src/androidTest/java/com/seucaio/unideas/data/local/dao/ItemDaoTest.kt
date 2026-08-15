@@ -158,6 +158,20 @@ class ItemDaoTest {
     }
 
     @Test
+    fun getPriorityItemsIncludesNotesWithADueDateSameAsTasks() = runTest {
+        dao.insert(note(title = "nota vencida", dueDate = 1_000L))
+        dao.insert(note(title = "nota futura", dueDate = 9_000L))
+        dao.insert(task(title = "tarefa vencida", dueDate = 1_000L))
+
+        val priorities = dao.getPriorityItems(dueOnOrBefore = 3_000L).first()
+
+        assertEquals(
+            setOf("nota vencida", "tarefa vencida"),
+            priorities.map { it.item.title }.toSet(),
+        )
+    }
+
+    @Test
     fun setPinnedUpdatesOnlyTheTargetItem() = runTest {
         val pinnedId = dao.insert(task(title = "alvo"))
         val otherId = dao.insert(task(title = "outro"))
@@ -231,9 +245,10 @@ class ItemDaoTest {
         isPinned = isPinned,
     )
 
-    private fun note(title: String): ItemEntity = ItemEntity(
+    private fun note(title: String, dueDate: Long? = null): ItemEntity = ItemEntity(
         type = ItemType.NOTE,
         title = title,
+        dueDate = dueDate,
         createdAt = 1_000L,
     )
 

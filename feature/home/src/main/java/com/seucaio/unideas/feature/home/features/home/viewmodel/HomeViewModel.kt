@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.home.features.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
@@ -19,11 +20,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,10 +80,26 @@ class HomeViewModel(
 
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
+    private val hasAnyPriorityItemFlow: Flow<Boolean> =
+        homeUseCase.getPriorityItems(today = LocalDate.now(), dueSoonDays = Constants.DUE_SOON_DAYS)
+            .map { it.isNotEmpty() }
+            .catch { emit(false) }
+
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
-            combine(homeUseCase.hasAnyItem(), itemsState) { hasAnyItem, items ->
-                if (items.isLoaded) HomeUiState.Success(hasAnyItem = hasAnyItem) else HomeUiState.Loading
+            combine(
+                homeUseCase.hasAnyItem(),
+                hasAnyPriorityItemFlow,
+                itemsState
+            ) { hasAnyItem, hasAnyPriorityItem, items ->
+                if (items.isLoaded) {
+                    HomeUiState.Success(
+                        hasAnyItem = hasAnyItem,
+                        hasAnyPriorityItem = hasAnyPriorityItem
+                    )
+                } else {
+                    HomeUiState.Loading
+                }
             }.catch { emit(HomeUiState.Error(R.string.home_load_error)) }
         }
         .stateIn(viewModelScope, WhileSubscribed(5_000), HomeUiState.Loading)

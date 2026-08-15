@@ -46,6 +46,7 @@ class HomeViewModelTest {
         coEvery { getSectionsAndTags() } returns SectionsAndTags(emptyList(), emptyList())
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
         every { homeUseCase.hasAnyItem() } returns flowOf(true)
+        every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(emptyList())
     }
 
     @After
@@ -256,6 +257,38 @@ class HomeViewModelTest {
 
         vm.itemsState.test {
             assertEquals(emptyList<Nothing>(), awaitItem().tabItems)
+        }
+    }
+
+    @Test
+    fun `when there are priority items should expose hasAnyPriorityItem as true`() = runTest {
+        every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(listOf(ItemStub.overdueTask()))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(true, state.hasAnyPriorityItem)
+        }
+    }
+
+    @Test
+    fun `when there are no priority items should expose hasAnyPriorityItem as false`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(false, state.hasAnyPriorityItem)
+        }
+    }
+
+    @Test
+    fun `when getPriorityItems throws should degrade hasAnyPriorityItem to false, not a screen error`() = runTest {
+        every { homeUseCase.getPriorityItems(any(), any()) } returns flow { throw IllegalStateException("boom") }
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(false, state.hasAnyPriorityItem)
         }
     }
 

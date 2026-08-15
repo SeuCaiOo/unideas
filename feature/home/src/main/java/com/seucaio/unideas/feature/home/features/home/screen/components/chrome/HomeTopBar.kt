@@ -29,6 +29,7 @@ import java.time.LocalDateTime
 internal fun HomeTopBar(
     homeMode: HomeMode,
     itemsState: HomeItemsState,
+    hasAnyPriorityItem: Boolean,
     onNavigateBack: (() -> Unit)?,
     onShowPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -66,6 +67,7 @@ internal fun HomeTopBar(
             onNavigateBack = onNavigateBack,
             actions = {
                 HomeTopBarActions(
+                    hasAnyPriorityItem = hasAnyPriorityItem,
                     onShowPriorities = onShowPriorities,
                     onNavigateToSettings = onNavigateToSettings,
                 )
@@ -75,12 +77,18 @@ internal fun HomeTopBar(
 }
 
 @Composable
-private fun RowScope.HomeTopBarActions(onShowPriorities: () -> Unit, onNavigateToSettings: () -> Unit) {
-    IconButton(onClick = onShowPriorities) {
-        Icon(
-            Icons.Outlined.Flag,
-            contentDescription = stringResource(R.string.priority_panel_title),
-        )
+private fun RowScope.HomeTopBarActions(
+    hasAnyPriorityItem: Boolean,
+    onShowPriorities: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+) {
+    if (hasAnyPriorityItem) {
+        IconButton(onClick = onShowPriorities) {
+            Icon(
+                Icons.Outlined.Flag,
+                contentDescription = stringResource(R.string.priority_panel_title),
+            )
+        }
     }
     IconButton(onClick = onNavigateToSettings) {
         Icon(
@@ -110,6 +118,7 @@ private fun HomeTopBarPreview(@PreviewParameter(HomeTopBarPreviewProvider::class
             HomeTopBar(
                 homeMode = homeMode,
                 itemsState = HomeItemsState(tabItems = homeTopBarPreviewItems),
+                hasAnyPriorityItem = true,
                 onNavigateBack = {},
                 onShowPriorities = {},
                 onNavigateToSettings = {},

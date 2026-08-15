@@ -141,6 +141,26 @@ private fun ItemConfigFields(
             .padding(horizontal = 16.dp),
     ) {
         SectionLabel(stringResource(R.string.item_config_section_organization), Modifier.padding(top = 16.dp))
+        OrganizationFields(uiState, onEvent)
+
+        SectionLabel(stringResource(R.string.item_config_section_recurrence), Modifier.padding(top = 24.dp))
+        RecurrenceAndReminderFields(uiState, onEvent, Modifier.padding(top = 8.dp))
+
+        SectionLabel(stringResource(R.string.item_config_section_danger_zone), Modifier.padding(top = 24.dp))
+        TypeDangerZone(
+            type = uiState.type,
+            onChangeTypeClicked = {
+                val newType = if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
+                onEvent(ItemConfigEvent.OnChangeTypeClicked(newType))
+            },
+            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+        )
+    }
+}
+
+@Composable
+private fun OrganizationFields(uiState: ItemConfigUiState, onEvent: (ItemConfigEvent) -> Unit) {
+    Column {
         if (uiState.availableSections.isNotEmpty()) {
             SectionField(
                 availableSections = uiState.availableSections,
@@ -157,51 +177,47 @@ private fun ItemConfigFields(
                 modifier = Modifier.padding(top = 16.dp),
             )
         }
+    }
+}
 
-        SectionLabel(stringResource(R.string.item_config_section_recurrence), Modifier.padding(top = 24.dp))
-        SwitchSection(
-            label = stringResource(R.string.item_form_has_reminder_label),
-            checked = uiState.hasReminder,
-            onCheckedChange = { onEvent(ItemConfigEvent.OnReminderToggled(it)) },
-            modifier = Modifier.padding(top = 8.dp),
-        ) {
-            RecurrenceField(
-                recurrence = uiState.recurrence,
+@Composable
+private fun RecurrenceAndReminderFields(
+    uiState: ItemConfigUiState,
+    onEvent: (ItemConfigEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SwitchSection(
+        label = stringResource(R.string.item_form_has_reminder_label),
+        checked = uiState.hasReminder,
+        onCheckedChange = { onEvent(ItemConfigEvent.OnReminderToggled(it)) },
+        modifier = modifier,
+    ) {
+        RecurrenceField(
+            recurrence = uiState.recurrence,
+            dueDate = uiState.dueDate,
+            onRecurrenceChanged = { onEvent(ItemConfigEvent.OnRecurrenceChanged(it)) },
+            onDueDateChanged = { onEvent(ItemConfigEvent.OnDueDateChanged(it)) },
+            modifier = Modifier.padding(top = 16.dp),
+        )
+
+        if (uiState.recurrence == Recurrence.None) {
+            DueDateField(
                 dueDate = uiState.dueDate,
-                onRecurrenceChanged = { onEvent(ItemConfigEvent.OnRecurrenceChanged(it)) },
                 onDueDateChanged = { onEvent(ItemConfigEvent.OnDueDateChanged(it)) },
-                modifier = Modifier.padding(top = 16.dp),
-            )
-
-            if (uiState.recurrence == Recurrence.None) {
-                DueDateField(
-                    dueDate = uiState.dueDate,
-                    onDueDateChanged = { onEvent(ItemConfigEvent.OnDueDateChanged(it)) },
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-            }
-
-            DueTimeField(
-                dueTime = uiState.dueTime,
-                onDueTimeChanged = { onEvent(ItemConfigEvent.OnDueTimeChanged(it)) },
-                modifier = Modifier.padding(top = 16.dp),
-            )
-
-            ReminderWarningField(
-                reminderWarning = uiState.reminderWarning,
-                onReminderWarningChanged = { onEvent(ItemConfigEvent.OnReminderWarningChanged(it)) },
                 modifier = Modifier.padding(top = 16.dp),
             )
         }
 
-        SectionLabel(stringResource(R.string.item_config_section_danger_zone), Modifier.padding(top = 24.dp))
-        TypeDangerZone(
-            type = uiState.type,
-            onChangeTypeClicked = {
-                val newType = if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
-                onEvent(ItemConfigEvent.OnChangeTypeClicked(newType))
-            },
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+        DueTimeField(
+            dueTime = uiState.dueTime,
+            onDueTimeChanged = { onEvent(ItemConfigEvent.OnDueTimeChanged(it)) },
+            modifier = Modifier.padding(top = 16.dp),
+        )
+
+        ReminderWarningField(
+            reminderWarning = uiState.reminderWarning,
+            onReminderWarningChanged = { onEvent(ItemConfigEvent.OnReminderWarningChanged(it)) },
+            modifier = Modifier.padding(top = 16.dp),
         )
     }
 }

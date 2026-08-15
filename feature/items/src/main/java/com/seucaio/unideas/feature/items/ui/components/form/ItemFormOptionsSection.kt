@@ -40,6 +40,8 @@ fun ItemFormOptionsSection(
     }
 }
 
+private val previewDueDate = LocalDate.of(2026, 8, 1)
+
 private val noopEvents = ItemFormFieldsEvents(
     onTypeChanged = {},
     onTitleChanged = {},
@@ -63,7 +65,7 @@ private fun ItemFormOptionsSectionTaskFullPreview() {
                 state = ItemDetailUiState(
                     type = ItemType.TASK,
                     hasReminder = true,
-                    dueDate = LocalDate.of(2026, 8, 1),
+                    dueDate = previewDueDate,
                 ),
                 events = noopEvents,
                 initiallyExpanded = true,
@@ -96,7 +98,7 @@ private fun ItemFormOptionsSectionNoteCollapsedPreview() {
                 state = ItemDetailUiState(
                     type = ItemType.NOTE,
                     hasReminder = true,
-                    dueDate = LocalDate.of(2026, 8, 1),
+                    dueDate = previewDueDate,
                 ),
                 events = noopEvents,
             )

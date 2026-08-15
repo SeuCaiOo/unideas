@@ -89,7 +89,7 @@ class ItemConfigViewModel(
         itemFormUseCase.edit(updated)
             .onSuccess {
                 originalItem = updated
-                _uiState.update { it.afterTypeSwitch(dialog.newType) }
+                _uiState.update { it.applyLoadedItem(updated) }
             }
             .onFailure { sendUiAction(ItemConfigUiAction.ShowError(it.message.orEmpty())) }
 

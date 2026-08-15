@@ -87,13 +87,4 @@ data class ItemConfigUiState(
         recurrence = Recurrence.None,
         reminderWarning = ReminderWarning.None,
     )
-
-    fun afterTypeSwitch(newType: ItemType): ItemConfigUiState = copy(
-        type = newType,
-        hasReminder = false,
-        dueDate = null,
-        dueTime = null,
-        recurrence = Recurrence.None,
-        reminderWarning = ReminderWarning.None,
-    )
 }

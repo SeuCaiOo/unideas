@@ -118,11 +118,7 @@ data class ItemDetailUiState(
     )
 
     fun reduce(event: ItemDetailEvent.FieldEvent): ItemDetailUiState = when (event) {
-        is ItemDetailEvent.OnTypeChanged -> if (event.type == ItemType.NOTE) {
-            changeDueDate(null).copy(type = event.type, hasReminder = false)
-        } else {
-            copy(type = event.type)
-        }
+        is ItemDetailEvent.OnTypeChanged -> copy(type = event.type)
         is ItemDetailEvent.OnTitleChanged -> copy(title = event.title, titleError = false)
         is ItemDetailEvent.OnDescriptionChanged -> copy(description = event.description)
         is ItemDetailEvent.OnSectionChanged -> copy(sectionId = event.sectionId)

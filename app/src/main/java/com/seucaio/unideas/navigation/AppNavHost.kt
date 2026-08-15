@@ -65,6 +65,9 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 onNavigateToHistory = { itemId ->
                     navController.navigate(ItemsRoute.History(itemId))
                 },
+                onNavigateToConfig = { itemId ->
+                    navController.navigate(ItemsRoute.Config(itemId))
+                },
             )
         }
     }

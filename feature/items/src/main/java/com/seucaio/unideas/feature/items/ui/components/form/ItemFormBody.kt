@@ -21,11 +21,6 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetail
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 
-/**
- * Composes the item form's four parts, top to bottom: title/description, type selector, the
- * collapsed [ItemFormOptionsSection] (section/tags/due fields), and [ItemFormFooter] (completion +
- * save). Each part owns its own visibility rules — this just lays them out in order.
- */
 @Composable
 fun ItemFormBody(
     state: ItemFormFieldsState,
@@ -52,11 +47,13 @@ fun ItemFormBody(
         )
 
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            TypeSelectorField(
-                type = state.type,
-                onTypeChanged = events.onTypeChanged,
-                modifier = Modifier.padding(top = 16.dp),
-            )
+            if (!state.isEditing) {
+                TypeSelectorField(
+                    type = state.type,
+                    onTypeChanged = events.onTypeChanged,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
 
             ItemFormOptionsSection(
                 state = state,

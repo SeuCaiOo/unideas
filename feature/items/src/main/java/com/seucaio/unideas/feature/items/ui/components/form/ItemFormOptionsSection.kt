@@ -20,12 +20,6 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFiel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
 
-/**
- * All of [ItemFormBody]'s secondary options — [ItemFormCommonOptions] (section/tags, both types)
- * plus [ItemFormTaskOptions] (due date/time/recurrence/reminder, task-only) — behind one collapsed
- * toggle, so the type/task-vs-note visibility rules live in a single place instead of being
- * re-checked at each call site.
- */
 @Composable
 fun ItemFormOptionsSection(
     state: ItemFormFieldsState,
@@ -42,12 +36,11 @@ fun ItemFormOptionsSection(
         modifier = modifier,
     ) {
         ItemFormCommonOptions(state, events)
-
-        if (state.typeIsTask) {
-            ItemFormTaskOptions(state, events, modifier = Modifier.padding(top = 16.dp))
-        }
+        ItemFormTaskOptions(state, events, modifier = Modifier.padding(top = 16.dp))
     }
 }
+
+private val previewDueDate = LocalDate.of(2026, 8, 1)
 
 private val noopEvents = ItemFormFieldsEvents(
     onTypeChanged = {},
@@ -72,7 +65,7 @@ private fun ItemFormOptionsSectionTaskFullPreview() {
                 state = ItemDetailUiState(
                     type = ItemType.TASK,
                     hasReminder = true,
-                    dueDate = LocalDate.of(2026, 8, 1),
+                    dueDate = previewDueDate,
                 ),
                 events = noopEvents,
                 initiallyExpanded = true,
@@ -96,14 +89,17 @@ private fun ItemFormOptionsSectionTaskMinimalPreview() {
     }
 }
 
-/** Note: no due fields at all (task-only), and collapsed by default. */
 @PreviewLightDark
 @Composable
 private fun ItemFormOptionsSectionNoteCollapsedPreview() {
     UdsTheme {
         Surface {
             ItemFormOptionsSection(
-                state = ItemDetailUiState(type = ItemType.NOTE),
+                state = ItemDetailUiState(
+                    type = ItemType.NOTE,
+                    hasReminder = true,
+                    dueDate = previewDueDate,
+                ),
                 events = noopEvents,
             )
         }

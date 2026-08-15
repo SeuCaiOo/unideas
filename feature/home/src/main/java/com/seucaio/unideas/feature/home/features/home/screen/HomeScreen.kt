@@ -116,8 +116,9 @@ private fun HomeContent(
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        if (!ColdStartPriorityPrompt.shown) {
+    LaunchedEffect(uiState) {
+        val state = uiState
+        if (!ColdStartPriorityPrompt.shown && state is HomeUiState.Success && state.hasAnyPriorityItem) {
             ColdStartPriorityPrompt.shown = true
             showPriorityBottomSheet = true
         }
@@ -137,6 +138,7 @@ private fun HomeContent(
             HomeTopBar(
                 homeMode = homeMode,
                 itemsState = itemsState,
+                hasAnyPriorityItem = (uiState as? HomeUiState.Success)?.hasAnyPriorityItem == true,
                 onNavigateBack = updatedOnNavigateBack,
                 onShowPriorities = { showPriorityBottomSheet = true },
                 onNavigateToSettings = onNavigateToSettings,
@@ -241,7 +243,7 @@ private fun HomeScreenPreview(
 ) {
     UdsTheme {
         HomeContent(
-            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem, hasAnyPriorityItem = true),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Normal,
@@ -264,7 +266,7 @@ private fun HomeScreenSelectionModePreview(
 ) {
     UdsTheme {
         HomeContent(
-            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem, hasAnyPriorityItem = true),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Selection(fixture.itemsState.tabItems.take(2).map { it.id }.toSet()),

@@ -12,5 +12,8 @@ sealed interface ItemsRoute {
     data class History(val itemId: Long) : ItemsRoute
 
     @Serializable
+    data class Config(val itemId: Long) : ItemsRoute
+
+    @Serializable
     data object List : ItemsRoute
 }

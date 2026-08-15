@@ -154,6 +154,23 @@ class ItemDetailViewModelTest {
     }
 
     @Test
+    fun `when OnScreenResumed should silently reload fields edited on another screen, like Config`() = runTest {
+        val original = ItemStub.task(id = 1L, recurrence = Recurrence.None)
+        val editedElsewhere = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(original), flowOf(editedElsewhere))
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnScreenResumed)
+
+        vm.uiState.test {
+            val state = awaitItem()
+            assertEquals(Recurrence.Weekly, state.recurrence)
+            assertEquals(false, state.isLoading)
+        }
+    }
+
+    @Test
     fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() =
         runTest {
             coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
@@ -208,7 +225,7 @@ class ItemDetailViewModelTest {
         }
 
     @Test
-    fun `when OnTypeChanged to NOTE should clear hasReminder, dueDate, dueTime, recurrence and reminderWarning`() =
+    fun `when OnTypeChanged to NOTE should preserve hasReminder, dueDate, dueTime, recurrence and reminderWarning`() =
         runTest {
             val vm = viewModel()
 
@@ -227,11 +244,11 @@ class ItemDetailViewModelTest {
                 vm.onEvent(ItemDetailEvent.OnTypeChanged(ItemType.NOTE))
                 val switched = awaitItem()
                 assertEquals(ItemType.NOTE, switched.type)
-                assertEquals(false, switched.hasReminder)
-                assertEquals(null, switched.dueDate)
-                assertEquals(null, switched.dueTime)
-                assertEquals(Recurrence.None, switched.recurrence)
-                assertEquals(ReminderWarning.None, switched.reminderWarning)
+                assertTrue(switched.hasReminder)
+                assertEquals(configured.dueDate, switched.dueDate)
+                assertEquals(LocalTime.of(14, 0), switched.dueTime)
+                assertEquals(Recurrence.Weekly, switched.recurrence)
+                assertEquals(ReminderWarning.DaysBefore(2), switched.reminderWarning)
             }
         }
 

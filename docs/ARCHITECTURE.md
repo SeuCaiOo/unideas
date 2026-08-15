@@ -188,12 +188,14 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 
 **`additem/` foi aposentado (#134)** — criar e editar item deixaram de ser telas separadas. `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (type inicial vindo de `initialType`), `itemId != null` carrega o item existente. Não existe mais `ItemFormScreen`.
 
+**Tipo do item trava após a criação (#160).** `TypeSelectorField` só aparece em modo criação — trocar Tarefa↔Anotação de um item já existente exige a Config Screen (guardrail com confirmação + reset total, ver `config/` abaixo). `dueDate`/`dueTime`/`recurrence`/`reminderWarning` deixaram de ser exclusivos de Tarefa (`ItemFormOptionsSection`/`ItemFormTaskOptions` não gateiam mais por `typeIsTask`) — `completedAt`/conclusão continua sendo a única diferença estrutural real entre os dois tipos, reforçada em runtime por `CompleteItemUseCase`.
+
 ```
 feature/items/
 ├── navigation/
 │   ├── ItemsNavGraph.kt
 │   └── ItemsRoute.kt              — @Serializable: Detail(itemId: Long? = null, initialType: ItemType = TASK) |
-│                                     History(itemId: Long) (#101/C) | List
+│                                     History(itemId: Long) (#101/C) | Config(itemId: Long) (#160) | List
 ├── di/
 │   └── FeatureModule.kt           — val itemsModule
 └── ui/
@@ -205,7 +207,8 @@ feature/items/
     │   │   ├── model/        — ItemFormFields.kt
     │   │   └── recurrence/   — RecurrenceBottomSheet (picker principal, sobre SelectionBottomSheet do :uds),
     │   │                        EveryNDaysBottomSheet, WeekdayBottomSheet, DayOfMonthBottomSheet (sobre GridSelectionBottomSheet) (#130)
-    │   └── form/         — ItemFormBody, ItemFormCommonOptions, ItemFormFooter, ItemFormOptionsSection, ItemFormTaskOptions,
+    │   └── form/         — ItemFormBody, ItemFormCommonOptions, ItemFormFooter, ItemFormOptionsSection, ItemFormTaskOptions
+    │                        (campos de data/recorrência/aviso — disponíveis pros dois tipos desde #160, apesar do nome),
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     └── screens/
         ├── detail/
@@ -223,6 +226,15 @@ feature/items/
         │                 (% no prazo, contagem por status, sequência atual), filtros (Todas/No prazo/Atrasadas/Com
         │                 nota), ItemHistoryCard por ocorrência (hora, dias de atraso, nota, trilha de extensão)
         │                 + ItemHistoryPreviewProvider.kt + viewmodel/ (ItemHistoryUiState/Event/ViewModel)
+        ├── config/     — ItemConfigScreen.kt (tela própria, #160): edição de seção/tags/lembrete/recorrência/
+        │                 data/horário/aviso de um item já existente, mais o fluxo guardado de troca de tipo
+        │                 (dialog de confirmação + reset total dos campos "pesados" — `switchedType()`/
+        │                 `ItemConfigDialogState.TypeSwitchConfirm`) + viewmodel/ (ItemConfigUiState/Event/
+        │                 UiAction/ViewModel/DialogState). Reaproveita `ItemFormUseCase`/`GetSectionsAndTagsUseCase`,
+        │                 sem facade nova. Acessada via ícone de engrenagem no toolbar do `ItemDetailScreen`
+        │                 (`itemId != null`); ponto de entrada só funcional por ora — os cards de navegação
+        │                 polidos e a remoção da seção "Mais opções" inline (ainda presente, redundante com esta
+        │                 tela até lá) são escopo do #162, que depende deste
         └── list/      — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro/seleção;
                           acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
                           viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt

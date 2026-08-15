@@ -62,6 +62,7 @@ HomeScreen
 - O painel de prioridades **não é mais um painel fixo no topo** (mudou no #138) — é um Bottom Sheet, acionado sob demanda, pra dar mais espaço vertical à lista principal.
 - Seleção múltipla e exclusão em lote vivem na Home (long-press num item da lista), não numa tela separada.
 - Cor de urgência (vermelho = vencido, âmbar = vencendo em ≤N dias) é o **único** uso dessas cores na UI.
+- **Pull-to-refresh** (#101/D): puxar a lista pra baixo dispara o motor de reavaliação de ocorrências fora do ciclo periódico do `ReminderCheckWorker` — mesmo gatilho manual que existia só via Settings ("Rodar verificação de lembretes agora"), agora também acessível direto na tela principal.
 
 ---
 
@@ -94,18 +95,27 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
        → se há data → Recorrência (Nenhuma / Diária / Semanal / Mensal / A cada N dias / Dia da semana / Dia do mês)
           via RecurrenceBottomSheet + bottom sheets específicos por tipo (#130)
        → com data → também habilita Horário de vencimento (opcional) e Aviso (nenhum / N dias antes) (#95/#114)
-  → ações:
+  → ações (Tarefa, ocorrência dentro do prazo):
+       [Concluir]      → nota opcional; ItemOccurrenceViewModel (#101/B), separado do form
+  → ações (Tarefa, ocorrência vencida — OverdueOccurrenceActions):
+       [Concluir atrasado] → NoteConfirmDialog, nota **obrigatória** explicando o atraso (#101/A)
+       [Ignorar]            → NoteConfirmDialog, nota **obrigatória**; avança dueDate um ciclo na hora,
+                               sem esperar o worker (#101/A)
+       [Aumentar prazo]     → ExtendDeadlineDatePickerDialog; empurra dueDate sem fechar a ocorrência
+                               (não conta como concluída nem perdida) (#101/A)
+  → ações (comuns):
        [Compartilhar]  → share sheet do sistema
        [Excluir]       → DeleteConfirmationDialog → confirma → volta pra Home
-       [Concluir]      → só em Tarefas; marca a ocorrência atual (não gera item novo — ver ARCHITECTURE.md)
-       [Ver histórico] → ItemHistoryBottomSheet — só pra item recorrente; lista cada ocorrência (data,
-                          status ON_TIME/LATE/MISSED, nota) do ItemCompletionHistory (#126)
+       [Ver histórico] → ItemHistoryScreen (tela própria, ItemsRoute.History(itemId)) — só pra item recorrente;
+                          resumo (% no prazo, sequência atual), filtros, cartão por ocorrência com hora, dias
+                          de atraso, nota e trilha de extensão (#101/C, substituiu o bottom sheet antigo)
   → "←" → volta
 ```
 
 **Regras:**
 - Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento; sem data, fica indisponível/oculta.
-- Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`).
+- Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica, pull-to-refresh na Home, ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`, motor de reavaliação #101/D). "Ignorar" é a exceção — avança `dueDate` na hora.
+- `ItemDetailScreen` hoisteia dois ViewModels lado a lado (`ItemDetailViewModel` pro form, `ItemOccurrenceViewModel` pro ciclo de vida da ocorrência) — sincronizados via `OnItemUpdatedExternally` pra uma escrita de um lado não sobrescrever a do outro (#101/B).
 
 ---
 

@@ -12,12 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
-import com.seucaio.unideas.feature.items.ui.components.fields.OverdueOccurrenceActions
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun ItemFormFooter(
@@ -34,17 +34,12 @@ fun ItemFormFooter(
                 isCompleted = occurrenceState.isCompleted,
                 isLate = occurrenceState.isLate,
                 completedAt = occurrenceState.completedAt,
+                overdueDays = occurrenceState.dueDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()).toInt() },
                 onCompleteClicked = onCompleteClicked,
+                onExtendDeadlineClicked = onExtendDeadlineClicked,
+                onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
                 modifier = Modifier.padding(top = 16.dp),
             )
-
-            if (occurrenceState.isLate) {
-                OverdueOccurrenceActions(
-                    onExtendDeadlineClicked = onExtendDeadlineClicked,
-                    onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
         }
     }
 }

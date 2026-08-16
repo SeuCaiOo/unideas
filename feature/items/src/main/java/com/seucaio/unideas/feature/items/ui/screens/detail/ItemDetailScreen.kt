@@ -163,9 +163,7 @@ private fun ItemDetailScreenContent(
         topBar = {
             UnideasTopBar(
                 onNavigateBack = topBarNavigateBack,
-                actions = {
-                    ItemDetailTopBarActions(itemId, uiState, onEvent, onNavigateToHistory, onNavigateToConfig)
-                },
+                actions = { ItemDetailTopBarActions(uiState, onEvent) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -184,6 +182,12 @@ private fun ItemDetailScreenContent(
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
+                onNavigateToConfig = { itemId?.let(onNavigateToConfig) },
+                onNavigateToHistory = if (itemId != null && uiState.recurrence != Recurrence.None) {
+                    { onNavigateToHistory(itemId) }
+                } else {
+                    null
+                },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -195,24 +199,11 @@ private fun ItemDetailScreenContent(
 
 @Composable
 private fun ItemDetailTopBarActions(
-    itemId: Long?,
     uiState: ItemDetailUiState,
     onEvent: (ItemDetailEvent) -> Unit,
-    onNavigateToHistory: (Long) -> Unit,
-    onNavigateToConfig: (Long) -> Unit,
 ) {
     ItemActions(
         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-        onConfigClicked = if (uiState.isEditing && itemId != null) {
-            { onNavigateToConfig(itemId) }
-        } else {
-            null
-        },
-        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None && itemId != null) {
-            { onNavigateToHistory(itemId) }
-        } else {
-            null
-        },
         onDeleteClicked = if (uiState.isEditing) {
             { onEvent(ItemDetailEvent.OnDeleteClicked) }
         } else {

@@ -89,6 +89,7 @@
 
     <!-- Occurrence History -->
     <string name="item_detail_history">History</string>
+    <string name="item_detail_history_card_subtitle">See all occurrences</string>
     <string name="item_detail_history_title">Occurrence history</string>
     <string name="item_detail_history_empty">No occurrences recorded yet</string>
     <string name="item_detail_history_status_on_time">On time</string>
@@ -113,7 +114,6 @@
     </plurals>
 
     <!-- Item Config Screen -->
-    <string name="item_detail_config">Configuration</string>
     <string name="item_config_title">Configuration</string>
     <string name="item_config_section_organization">Organization</string>
     <string name="item_config_section_recurrence">Recurrence and reminder</string>
@@ -123,6 +123,11 @@
     <string name="item_config_type_change_button">Change</string>
     <string name="item_config_type_switch_title">Change item type?</string>
     <string name="item_config_type_switch_message">This resets recurrence, due date, time and reminder — they can\'t be recovered. Section, tags, title and description stay as they are. Existing history isn\'t deleted, it just stops receiving new entries.</string>
+    <string name="item_config_card_subtitle_empty">Tap to configure</string>
+    <plurals name="item_config_card_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
+    </plurals>
 
     <!-- Items List -->
     <string name="items_list_title">Items</string>

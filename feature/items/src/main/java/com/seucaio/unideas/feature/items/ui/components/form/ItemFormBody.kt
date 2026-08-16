@@ -53,52 +53,60 @@ fun ItemFormBody(
     onNavigateToHistory: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .imePadding(),
-    ) {
-        if (state.isEditing) {
-            TextBadge(
-                text = stringResource(
-                    if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
-                ),
-                background = MaterialTheme.colorScheme.primaryContainer,
-                content = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
+        ) {
+            if (state.isEditing) {
+                TextBadge(
+                    text = stringResource(
+                        if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+                    ),
+                    background = MaterialTheme.colorScheme.primaryContainer,
+                    content = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+                )
+            }
+
+            TitleDescriptionFields(
+                title = state.title,
+                description = state.description,
+                onTitleChanged = events.onTitleChanged,
+                onDescriptionChanged = events.onDescriptionChanged,
+                isEditing = state.isEditing,
+                titleError = state.titleError,
             )
+
+            if (!state.isEditing) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    TypeSelectorField(
+                        type = state.type,
+                        onTypeChanged = events.onTypeChanged,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+
+                    ItemFormOptionsSection(
+                        state = state,
+                        events = events,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
         }
 
-        TitleDescriptionFields(
-            title = state.title,
-            description = state.description,
-            onTitleChanged = events.onTitleChanged,
-            onDescriptionChanged = events.onDescriptionChanged,
-            isEditing = state.isEditing,
-            titleError = state.titleError,
-        )
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            if (!state.isEditing) {
-                TypeSelectorField(
-                    type = state.type,
-                    onTypeChanged = events.onTypeChanged,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
-
-                ItemFormOptionsSection(
-                    state = state,
-                    events = events,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            } else {
+        // Below the scrollable content, never pushed off-screen by it — the weight(1f) above
+        // shrinks first as title/description grow, so these stay visible without their own scroll.
+        if (state.isEditing) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 NavCard(
                     icon = Icons.Default.Settings,
                     title = stringResource(R.string.item_config_title),
                     subtitle = configCardSubtitle(state),
                     onClick = onNavigateToConfig,
-                    modifier = Modifier.padding(top = 16.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
 
                 if (onNavigateToHistory != null) {
@@ -110,15 +118,15 @@ fun ItemFormBody(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-            }
 
-            ItemFormFooter(
-                state = state,
-                occurrenceState = occurrenceState,
-                onCompleteClicked = onCompleteClicked,
-                onIgnoreClicked = onIgnoreClicked,
-                onExtendDeadlineClicked = onExtendDeadlineClicked,
-            )
+                ItemFormFooter(
+                    state = state,
+                    occurrenceState = occurrenceState,
+                    onCompleteClicked = onCompleteClicked,
+                    onIgnoreClicked = onIgnoreClicked,
+                    onExtendDeadlineClicked = onExtendDeadlineClicked,
+                )
+            }
         }
     }
 }

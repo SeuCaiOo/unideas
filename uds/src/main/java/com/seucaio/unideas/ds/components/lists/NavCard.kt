@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
@@ -72,6 +74,12 @@ fun NavCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            Icon(
+                Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                tint = LocalUdsExtendedColors.current.textTertiary,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }

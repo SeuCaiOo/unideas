@@ -64,7 +64,12 @@
     <string name="item_detail_complete">Mark as complete</string>
     <string name="item_detail_complete_late">Complete late</string>
     <string name="item_detail_reopen">Reopen task</string>
+    <string name="item_detail_completed_status">Completed</string>
     <string name="item_detail_completed_on">Completed on %1$s</string>
+    <plurals name="item_detail_overdue_days">
+        <item quantity="one">Overdue by %d day</item>
+        <item quantity="other">Overdue by %d days</item>
+    </plurals>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="item_detail_reopen_title">Reopen task?</string>

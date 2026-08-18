@@ -1,7 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
 import java.time.LocalDate
@@ -10,8 +9,6 @@ import java.time.LocalTime
 sealed interface ItemDetailEvent {
 
     sealed interface FieldEvent : ItemDetailEvent
-
-    data class OnTypeChanged(val type: ItemType) : FieldEvent
 
     data class OnTitleChanged(val title: String) : FieldEvent
 

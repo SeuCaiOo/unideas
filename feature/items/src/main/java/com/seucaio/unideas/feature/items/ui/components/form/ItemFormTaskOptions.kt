@@ -75,7 +75,6 @@ private fun ItemFormTaskOptionsPreview(
             ItemFormTaskOptions(
                 state = previewState,
                 events = ItemFormFieldsEvents(
-                    onTypeChanged = {},
                     onTitleChanged = {},
                     onDescriptionChanged = {},
                     onSectionChanged = {},

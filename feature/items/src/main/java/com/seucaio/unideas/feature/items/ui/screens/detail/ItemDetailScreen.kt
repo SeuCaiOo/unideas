@@ -146,7 +146,6 @@ private fun ItemDetailScreenContent(
 
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
-            onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
             onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
             onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },

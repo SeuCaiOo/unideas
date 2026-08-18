@@ -53,7 +53,6 @@ private fun ItemFormCommonOptionsPreview(
             ItemFormCommonOptions(
                 state = previewState,
                 events = ItemFormFieldsEvents(
-                    onTypeChanged = {},
                     onTitleChanged = {},
                     onDescriptionChanged = {},
                     onSectionChanged = {},

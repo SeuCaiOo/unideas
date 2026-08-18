@@ -43,7 +43,6 @@ fun ItemFormOptionsSection(
 private val previewDueDate = LocalDate.of(2026, 8, 1)
 
 private val noopEvents = ItemFormFieldsEvents(
-    onTypeChanged = {},
     onTitleChanged = {},
     onDescriptionChanged = {},
     onSectionChanged = {},

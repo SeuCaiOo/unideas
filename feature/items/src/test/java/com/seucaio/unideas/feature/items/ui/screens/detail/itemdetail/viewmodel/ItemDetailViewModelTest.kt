@@ -3,7 +3,6 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
-import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.SectionsAndTags
@@ -223,60 +222,6 @@ class ItemDetailViewModelTest {
                 assertEquals(ReminderWarning.None, cleared.reminderWarning)
             }
         }
-
-    @Test
-    fun `when OnTypeChanged to NOTE should preserve hasReminder, dueDate, dueTime, recurrence and reminderWarning`() =
-        runTest {
-            val vm = viewModel()
-
-            vm.uiState.test {
-                awaitItem()
-                vm.onEvent(ItemDetailEvent.OnReminderToggled(true))
-                vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
-                vm.onEvent(ItemDetailEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
-                vm.onEvent(ItemDetailEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
-                awaitItem()
-                awaitItem()
-                awaitItem()
-                val configured = awaitItem()
-                assertTrue(configured.hasReminder)
-
-                vm.onEvent(ItemDetailEvent.OnTypeChanged(ItemType.NOTE))
-                val switched = awaitItem()
-                assertEquals(ItemType.NOTE, switched.type)
-                assertTrue(switched.hasReminder)
-                assertEquals(configured.dueDate, switched.dueDate)
-                assertEquals(LocalTime.of(14, 0), switched.dueTime)
-                assertEquals(Recurrence.Weekly, switched.recurrence)
-                assertEquals(ReminderWarning.DaysBefore(2), switched.reminderWarning)
-            }
-        }
-
-    @Test
-    fun `when OnTypeChanged to TASK should preserve title, description, section and tags`() = runTest {
-        val note = ItemStub.note(
-            id = 1L,
-            title = "Ideia solta",
-            description = "Descrição da anotação",
-            sectionId = SectionStub.sections().first().id,
-            tags = listOf(TagStub.tags().first()),
-        )
-        every { itemFormUseCase.get(1L) } returns flowOf(note)
-        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
-        val vm = viewModel(itemId = 1L)
-
-        vm.uiState.test {
-            awaitItem()
-
-            vm.onEvent(ItemDetailEvent.OnTypeChanged(ItemType.TASK))
-            val switched = awaitItem()
-            assertEquals(ItemType.TASK, switched.type)
-            assertEquals(note.title, switched.title)
-            assertEquals(note.description, switched.description)
-            assertEquals(note.sectionId, switched.sectionId)
-            assertEquals(setOf(TagStub.tags().first().id), switched.selectedTagIds)
-        }
-    }
 
     @Test
     fun `when a structured FieldEvent fires with a valid title should auto-save immediately`() =

@@ -24,7 +24,6 @@ import com.seucaio.unideas.ds.components.lists.NavCard
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFields
-import com.seucaio.unideas.feature.items.ui.components.fields.TypeSelectorField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.label
@@ -35,12 +34,6 @@ import java.time.format.DateTimeFormatter
 
 private val cardTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-/**
- * Composes the item form's parts, top to bottom: title/description, then a mode split — creation
- * shows the type selector and every field inline; editing shows a type badge plus the
- * Configurações/Histórico nav cards (#162, replacing the #160 functional toolbar entry point and
- * the old inline "Mais opções" section) — and [ItemFormFooter] (completion) either way.
- */
 @Composable
 fun ItemFormBody(
     state: ItemFormFieldsState,
@@ -82,12 +75,6 @@ fun ItemFormBody(
 
             if (!state.isEditing) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    TypeSelectorField(
-                        type = state.type,
-                        onTypeChanged = events.onTypeChanged,
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-
                     ItemFormOptionsSection(
                         state = state,
                         events = events,
@@ -160,7 +147,6 @@ private fun ItemFormBodyPreview(
             ItemFormBody(
                 state = previewState,
                 events = ItemFormFieldsEvents(
-                    onTypeChanged = {},
                     onTitleChanged = {},
                     onDescriptionChanged = {},
                     onSectionChanged = {},

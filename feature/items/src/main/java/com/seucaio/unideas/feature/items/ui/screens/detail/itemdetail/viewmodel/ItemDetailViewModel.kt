@@ -41,7 +41,7 @@ class ItemDetailViewModel(
 
     private val editUiState = MutableStateFlow(
         ItemDetailUiState(
-            isEditing = itemId != null,
+            itemId = itemId,
             isLoading = itemId != null,
             type = initialType
         )
@@ -122,24 +122,12 @@ class ItemDetailViewModel(
 
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
-        when (event) {
-            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = true
-                debounceJob = viewModelScope.launch {
-                    delay(TEXT_DEBOUNCE_MS)
-                    hasPendingTextSave = false
-                    if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
-                }
-            }
-
-            else -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = false
-                if (uiState.value.isTitleValid) {
-                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
-                }
-            }
+        debounceJob?.cancel()
+        hasPendingTextSave = true
+        debounceJob = viewModelScope.launch {
+            delay(TEXT_DEBOUNCE_MS)
+            hasPendingTextSave = false
+            if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
         }
     }
 
@@ -202,6 +190,7 @@ class ItemDetailViewModel(
                 .onSuccess { newId ->
                     currentItemId = newId
                     originalItem = newItem.copy(id = newId)
+                    updateUiState { it.copy(itemId = newId) }
                 }
                 .map { }
         } else {

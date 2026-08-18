@@ -72,16 +72,6 @@ fun ItemFormBody(
                 isEditing = state.isEditing,
                 titleError = state.titleError,
             )
-
-            if (!state.isEditing) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    ItemFormOptionsSection(
-                        state = state,
-                        events = events,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-            }
         }
 
         // Below the scrollable content, never pushed off-screen by it — the weight(1f) above
@@ -149,13 +139,6 @@ private fun ItemFormBodyPreview(
                 events = ItemFormFieldsEvents(
                     onTitleChanged = {},
                     onDescriptionChanged = {},
-                    onSectionChanged = {},
-                    onTagToggled = {},
-                    onReminderToggled = {},
-                    onDueDateChanged = {},
-                    onDueTimeChanged = {},
-                    onRecurrenceChanged = {},
-                    onReminderWarningChanged = {},
                 ),
                 occurrenceState = ItemOccurrenceUiState(),
                 onCompleteClicked = {},

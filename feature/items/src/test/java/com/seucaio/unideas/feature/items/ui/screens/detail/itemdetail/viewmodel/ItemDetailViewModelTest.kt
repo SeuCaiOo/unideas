@@ -197,58 +197,6 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when OnDueDateChanged clears the date should reset recurrence, dueTime and reminderWarning`() =
-        runTest {
-            val vm = viewModel()
-
-            vm.uiState.test {
-                awaitItem()
-                vm.onEvent(ItemDetailEvent.OnDueDateChanged(ItemStub.TODAY))
-                vm.onEvent(ItemDetailEvent.OnRecurrenceChanged(Recurrence.Weekly))
-                vm.onEvent(ItemDetailEvent.OnDueTimeChanged(LocalTime.of(14, 0)))
-                vm.onEvent(ItemDetailEvent.OnReminderWarningChanged(ReminderWarning.DaysBefore(2)))
-                awaitItem()
-                awaitItem()
-                awaitItem()
-                val configured = awaitItem()
-                assertEquals(Recurrence.Weekly, configured.recurrence)
-                assertEquals(LocalTime.of(14, 0), configured.dueTime)
-                assertEquals(ReminderWarning.DaysBefore(2), configured.reminderWarning)
-
-                vm.onEvent(ItemDetailEvent.OnDueDateChanged(null))
-                val cleared = awaitItem()
-                assertEquals(Recurrence.None, cleared.recurrence)
-                assertEquals(null, cleared.dueTime)
-                assertEquals(ReminderWarning.None, cleared.reminderWarning)
-            }
-        }
-
-    @Test
-    fun `when a structured FieldEvent fires with a valid title should auto-save immediately`() =
-        runTest {
-            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
-            val vm = viewModel(itemId = null)
-            vm.uiState.test { awaitItem() }
-            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
-
-            vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
-
-            coVerify(exactly = 1) {
-                itemFormUseCase.create(match { it.title == "Nova tarefa" })
-            }
-        }
-
-    @Test
-    fun `when a structured FieldEvent fires with a blank title should not save`() = runTest {
-        val vm = viewModel(itemId = null)
-        vm.uiState.test { awaitItem() }
-
-        vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
-
-        coVerify(exactly = 0) { itemFormUseCase.create(any()) }
-    }
-
-    @Test
     fun `when the ViewModel is cleared with a pending debounce should flush it synchronously`() {
         coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
         val store = ViewModelStore()
@@ -302,21 +250,18 @@ class ItemDetailViewModelTest {
         }
 
     @Test
-    fun `when a structured FieldEvent fires in edit mode should auto-save via edit`() = runTest {
+    fun `when OnTitleChanged fires in edit mode should auto-save via edit once the debounce elapses`() = runTest {
         val item = ItemStub.task(id = 1L)
         every { itemFormUseCase.get(1L) } returns flowOf(item)
         coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
 
-        vm.onEvent(ItemDetailEvent.OnSectionChanged(SectionStub.sections().first().id))
+        vm.onEvent(ItemDetailEvent.OnTitleChanged("Título editado"))
+        testDispatcher.scheduler.advanceUntilIdle()
 
         coVerify(exactly = 1) {
-            itemFormUseCase.edit(
-                match {
-                    it.id == 1L && it.sectionId == SectionStub.sections().first().id
-                }
-            )
+            itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" })
         }
     }
 
@@ -483,7 +428,8 @@ class ItemDetailViewModelTest {
             val vm = viewModel(itemId = null)
             vm.uiState.test { awaitItem() }
             vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
-            vm.onEvent(ItemDetailEvent.OnTagToggled(TagStub.tags().first().id))
+            testDispatcher.scheduler.advanceUntilIdle()
+            vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
             vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
             vm.onEvent(ItemDetailEvent.OnBackRequested)
             vm.onEvent(ItemDetailEvent.OnBackRequested)

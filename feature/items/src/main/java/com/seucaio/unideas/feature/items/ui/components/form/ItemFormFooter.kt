@@ -53,25 +53,25 @@ private class ItemFormFooterPreviewProvider : PreviewParameterProvider<ItemFormF
 
     override val values: Sequence<ItemFormFooterPreviewData> = sequenceOf(
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", itemId = 1L),
             occurrenceState = ItemOccurrenceUiState(),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", itemId = 1L),
             occurrenceState = ItemOccurrenceUiState(
                 isCompleted = true,
                 completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
             ),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Water the plants", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Water the plants", itemId = 2L),
             occurrenceState = ItemOccurrenceUiState(
                 dueDate = LocalDate.now().minusDays(3),
                 isRecurring = true,
             ),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Renew subscription", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Renew subscription", itemId = 3L),
             occurrenceState = ItemOccurrenceUiState(
                 dueDate = LocalDate.now().minusDays(3),
                 isRecurring = false,

@@ -107,7 +107,6 @@ fun ItemDetailScreen(
     }
 
     ItemDetailScreenContent(
-        itemId = itemId,
         uiState = uiState,
         dialogState = dialogState,
         occurrenceState = occurrenceState,
@@ -124,7 +123,6 @@ fun ItemDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ItemDetailScreenContent(
-    itemId: Long?,
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
     occurrenceState: ItemOccurrenceUiState,
@@ -148,13 +146,6 @@ private fun ItemDetailScreenContent(
         ItemFormFieldsEvents(
             onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
-            onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
-            onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
-            onReminderToggled = { onEvent(ItemDetailEvent.OnReminderToggled(it)) },
-            onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
-            onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
-            onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
-            onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
         )
     }
 
@@ -181,11 +172,13 @@ private fun ItemDetailScreenContent(
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
-                onNavigateToConfig = { itemId?.let(onNavigateToConfig) },
-                onNavigateToHistory = if (itemId != null && uiState.recurrence != Recurrence.None) {
-                    { onNavigateToHistory(itemId) }
-                } else {
-                    null
+                onNavigateToConfig = { uiState.itemId?.let(onNavigateToConfig) },
+                onNavigateToHistory = uiState.itemId?.let { savedItemId ->
+                    if (uiState.recurrence != Recurrence.None) {
+                        { onNavigateToHistory(savedItemId) }
+                    } else {
+                        null
+                    }
                 },
                 modifier = Modifier.padding(padding),
             )
@@ -295,7 +288,6 @@ private fun ItemDetailScreenPreview(
 ) {
     UdsTheme {
         ItemDetailScreenContent(
-            itemId = 1L,
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
             occurrenceState = ItemOccurrenceUiState(),

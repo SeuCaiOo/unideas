@@ -43,11 +43,4 @@ val ItemFormFieldsState.persistableReminderWarning: ReminderWarning
 data class ItemFormFieldsEvents(
     val onTitleChanged: (String) -> Unit,
     val onDescriptionChanged: (String) -> Unit,
-    val onSectionChanged: (Long?) -> Unit,
-    val onTagToggled: (Long) -> Unit,
-    val onReminderToggled: (Boolean) -> Unit,
-    val onDueDateChanged: (LocalDate?) -> Unit,
-    val onDueTimeChanged: (LocalTime?) -> Unit,
-    val onRecurrenceChanged: (Recurrence) -> Unit,
-    val onReminderWarningChanged: (ReminderWarning) -> Unit,
 )

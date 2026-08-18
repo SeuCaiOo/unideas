@@ -50,7 +50,6 @@
     <string name="item_form_reminder_2_days">2 dias antes</string>
     <string name="item_form_reminder_3_days">3 dias antes</string>
     <string name="item_form_reminder_7_days">7 dias antes</string>
-    <string name="item_form_more_options">Mais opções</string>
 
     <!-- Item Detail — General -->
     <string name="item_detail_load_error">Não foi possível carregar o item</string>

@@ -29,7 +29,7 @@ fun ItemFormFooter(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
-        if (state.typeIsTask && state.isEditing) {
+        if (state.typeIsTask) {
             CompletionField(
                 isCompleted = occurrenceState.isCompleted,
                 isLate = occurrenceState.isLate,

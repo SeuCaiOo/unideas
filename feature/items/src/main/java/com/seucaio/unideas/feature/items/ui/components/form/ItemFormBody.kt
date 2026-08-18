@@ -53,16 +53,14 @@ fun ItemFormBody(
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
         ) {
-            if (state.isEditing) {
-                TextBadge(
-                    text = stringResource(
-                        if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
-                    ),
-                    background = MaterialTheme.colorScheme.primaryContainer,
-                    content = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp),
-                )
-            }
+            TextBadge(
+                text = stringResource(
+                    if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+                ),
+                background = MaterialTheme.colorScheme.primaryContainer,
+                content = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+            )
 
             TitleDescriptionFields(
                 title = state.title,
@@ -76,34 +74,32 @@ fun ItemFormBody(
 
         // Below the scrollable content, never pushed off-screen by it — the weight(1f) above
         // shrinks first as title/description grow, so these stay visible without their own scroll.
-        if (state.isEditing) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            NavCard(
+                icon = Icons.Default.Settings,
+                title = stringResource(R.string.item_config_title),
+                subtitle = configCardSubtitle(state),
+                onClick = onNavigateToConfig,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+
+            if (onNavigateToHistory != null) {
                 NavCard(
-                    icon = Icons.Default.Settings,
-                    title = stringResource(R.string.item_config_title),
-                    subtitle = configCardSubtitle(state),
-                    onClick = onNavigateToConfig,
+                    icon = Icons.Default.History,
+                    title = stringResource(R.string.item_detail_history),
+                    subtitle = stringResource(R.string.item_detail_history_card_subtitle),
+                    onClick = onNavigateToHistory,
                     modifier = Modifier.padding(top = 8.dp),
                 )
-
-                if (onNavigateToHistory != null) {
-                    NavCard(
-                        icon = Icons.Default.History,
-                        title = stringResource(R.string.item_detail_history),
-                        subtitle = stringResource(R.string.item_detail_history_card_subtitle),
-                        onClick = onNavigateToHistory,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-
-                ItemFormFooter(
-                    state = state,
-                    occurrenceState = occurrenceState,
-                    onCompleteClicked = onCompleteClicked,
-                    onIgnoreClicked = onIgnoreClicked,
-                    onExtendDeadlineClicked = onExtendDeadlineClicked,
-                )
             }
+
+            ItemFormFooter(
+                state = state,
+                occurrenceState = occurrenceState,
+                onCompleteClicked = onCompleteClicked,
+                onIgnoreClicked = onIgnoreClicked,
+                onExtendDeadlineClicked = onExtendDeadlineClicked,
+            )
         }
     }
 }

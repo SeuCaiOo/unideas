@@ -92,7 +92,8 @@ class ItemOccurrenceViewModel(
     }
 
     private fun handleItemUpdatedExternally(item: Item) {
-        originalItem = originalItem?.copy(
+        val current = originalItem
+        originalItem = current?.copy(
             title = item.title,
             description = item.description,
             sectionId = item.sectionId,
@@ -101,8 +102,15 @@ class ItemOccurrenceViewModel(
             recurrence = item.recurrence,
             reminderWarning = item.reminderWarning,
             tags = item.tags,
-        )
-        _uiState.update { it.copy(dueDate = item.dueDate, isRecurring = item.isRecurring) }
+        ) ?: item
+        _uiState.update {
+            it.copy(
+                isCompleted = item.isCompleted,
+                completedAt = item.completedAt,
+                dueDate = item.dueDate,
+                isRecurring = item.isRecurring,
+            )
+        }
     }
 
     private fun handleCompleteClicked() {

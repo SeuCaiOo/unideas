@@ -189,8 +189,10 @@ class ItemDetailViewModel(
             itemFormUseCase.create(newItem)
                 .onSuccess { newId ->
                     currentItemId = newId
-                    originalItem = newItem.copy(id = newId)
+                    val createdItem = newItem.copy(id = newId)
+                    originalItem = createdItem
                     updateUiState { it.copy(itemId = newId) }
+                    sendUiAction(ItemDetailUiAction.ItemPersisted(createdItem))
                 }
                 .map { }
         } else {

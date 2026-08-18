@@ -341,6 +341,8 @@ class ItemDetailViewModelTest {
 
             vm.uiAction.test {
                 vm.onEvent(ItemDetailEvent.OnBackRequested)
+                val persisted = awaitItem()
+                check(persisted is ItemDetailUiAction.ItemPersisted && persisted.item.title == "Nova tarefa")
                 assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
             }
             coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
@@ -429,6 +431,7 @@ class ItemDetailViewModelTest {
             vm.uiState.test { awaitItem() }
             vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
             testDispatcher.scheduler.advanceUntilIdle()
+            vm.uiAction.test { awaitItem() } // drains the ItemPersisted sent by the auto-save above
             vm.onEvent(ItemDetailEvent.OnDescriptionChanged("Algo"))
             vm.onEvent(ItemDetailEvent.OnTitleChanged(""))
             vm.onEvent(ItemDetailEvent.OnBackRequested)

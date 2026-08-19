@@ -172,7 +172,7 @@ private fun ItemDetailScreenContent(
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
-                onNavigateToConfig = { uiState.itemId?.let(onNavigateToConfig) },
+                onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
                 onNavigateToHistory = uiState.itemId?.let { savedItemId ->
                     if (uiState.recurrence != Recurrence.None) {
                         { onNavigateToHistory(savedItemId) }

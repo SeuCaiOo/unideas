@@ -42,7 +42,7 @@ data class ItemDetailUiState(
     override val typeIsTask: Boolean get() = type == ItemType.TASK
 
     val isPristine: Boolean
-        get() = title.isBlank() && description.isBlank() && sectionId == null &&
+        get() = itemId == null && title.isBlank() && description.isBlank() && sectionId == null &&
             selectedTagIds.isEmpty() && dueDate == null
 
     fun setReferenceData(sections: List<Section>, tags: List<Tag>): ItemDetailUiState =

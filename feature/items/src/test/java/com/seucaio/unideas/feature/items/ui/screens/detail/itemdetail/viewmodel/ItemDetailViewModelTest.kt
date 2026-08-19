@@ -445,6 +445,25 @@ class ItemDetailViewModelTest {
         }
 
     @Test
+    fun `when OnDeleteConfirmClicked fires for an item auto-saved during creation should delete it`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            coEvery { itemFormUseCase.delete(10L) } returns Result.success(Unit)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            testDispatcher.scheduler.advanceUntilIdle()
+            vm.uiAction.test { awaitItem() } // drains the ItemPersisted sent by the auto-save above
+
+            vm.onEvent(ItemDetailEvent.OnDeleteClicked)
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnDeleteConfirmClicked)
+                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            }
+            coVerify(exactly = 1) { itemFormUseCase.delete(10L) }
+        }
+
+    @Test
     fun `when OnDiscardConfirmed in edit mode should never delete the item`() = runTest {
         val item = ItemStub.task(id = 1L)
         every { itemFormUseCase.get(1L) } returns flowOf(item)

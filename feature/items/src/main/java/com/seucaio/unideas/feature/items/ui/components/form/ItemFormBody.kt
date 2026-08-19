@@ -72,34 +72,34 @@ fun ItemFormBody(
             )
         }
 
-        // Below the scrollable content, never pushed off-screen by it — the weight(1f) above
-        // shrinks first as title/description grow, so these stay visible without their own scroll.
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            NavCard(
-                icon = Icons.Default.Settings,
-                title = stringResource(R.string.item_config_title),
-                subtitle = configCardSubtitle(state),
-                onClick = onNavigateToConfig,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-
-            if (onNavigateToHistory != null) {
+        if (state.isEditing) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 NavCard(
-                    icon = Icons.Default.History,
-                    title = stringResource(R.string.item_detail_history),
-                    subtitle = stringResource(R.string.item_detail_history_card_subtitle),
-                    onClick = onNavigateToHistory,
+                    icon = Icons.Default.Settings,
+                    title = stringResource(R.string.item_config_title),
+                    subtitle = configCardSubtitle(state),
+                    onClick = onNavigateToConfig,
                     modifier = Modifier.padding(top = 8.dp),
                 )
-            }
 
-            ItemFormFooter(
-                state = state,
-                occurrenceState = occurrenceState,
-                onCompleteClicked = onCompleteClicked,
-                onIgnoreClicked = onIgnoreClicked,
-                onExtendDeadlineClicked = onExtendDeadlineClicked,
-            )
+                if (onNavigateToHistory != null) {
+                    NavCard(
+                        icon = Icons.Default.History,
+                        title = stringResource(R.string.item_detail_history),
+                        subtitle = stringResource(R.string.item_detail_history_card_subtitle),
+                        onClick = onNavigateToHistory,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+
+                ItemFormFooter(
+                    state = state,
+                    occurrenceState = occurrenceState,
+                    onCompleteClicked = onCompleteClicked,
+                    onIgnoreClicked = onIgnoreClicked,
+                    onExtendDeadlineClicked = onExtendDeadlineClicked,
+                )
+            }
         }
     }
 }

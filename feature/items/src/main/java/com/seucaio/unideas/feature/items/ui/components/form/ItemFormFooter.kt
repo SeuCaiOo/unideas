@@ -12,12 +12,12 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
-import com.seucaio.unideas.feature.items.ui.components.fields.OverdueOccurrenceActions
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun ItemFormFooter(
@@ -29,22 +29,17 @@ fun ItemFormFooter(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
-        if (state.typeIsTask && state.isEditing) {
+        if (state.typeIsTask) {
             CompletionField(
                 isCompleted = occurrenceState.isCompleted,
                 isLate = occurrenceState.isLate,
                 completedAt = occurrenceState.completedAt,
+                overdueDays = occurrenceState.dueDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()).toInt() },
                 onCompleteClicked = onCompleteClicked,
+                onExtendDeadlineClicked = onExtendDeadlineClicked,
+                onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
                 modifier = Modifier.padding(top = 16.dp),
             )
-
-            if (occurrenceState.isLate) {
-                OverdueOccurrenceActions(
-                    onExtendDeadlineClicked = onExtendDeadlineClicked,
-                    onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
         }
     }
 }
@@ -58,25 +53,25 @@ private class ItemFormFooterPreviewProvider : PreviewParameterProvider<ItemFormF
 
     override val values: Sequence<ItemFormFooterPreviewData> = sequenceOf(
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", itemId = 1L),
             occurrenceState = ItemOccurrenceUiState(),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Pay bills", itemId = 1L),
             occurrenceState = ItemOccurrenceUiState(
                 isCompleted = true,
                 completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
             ),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Water the plants", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Water the plants", itemId = 2L),
             occurrenceState = ItemOccurrenceUiState(
                 dueDate = LocalDate.now().minusDays(3),
                 isRecurring = true,
             ),
         ),
         ItemFormFooterPreviewData(
-            state = ItemDetailUiState(type = ItemType.TASK, title = "Renew subscription", isEditing = true),
+            state = ItemDetailUiState(type = ItemType.TASK, title = "Renew subscription", itemId = 3L),
             occurrenceState = ItemOccurrenceUiState(
                 dueDate = LocalDate.now().minusDays(3),
                 isRecurring = false,

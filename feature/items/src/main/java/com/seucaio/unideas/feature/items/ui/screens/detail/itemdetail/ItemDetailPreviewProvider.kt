@@ -15,18 +15,17 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
     override val values: Sequence<ItemDetailUiState> = sequenceOf(
         // Screen right after opening, before the reference-data load resolves — the form is
         // already fully usable, no spinner blocking it.
-        ItemDetailUiState(isEditing = false, type = ItemType.NOTE),
+        ItemDetailUiState(type = ItemType.NOTE),
         ItemDetailUiState(
             type = ItemType.NOTE,
             title = "Pay bills",
             description = "Electricity and water",
-            isEditing = false,
             availableSections = sections,
             availableTags = tags,
         ),
-        ItemDetailUiState(isEditing = false),
+        ItemDetailUiState(),
         ItemDetailUiState(
-            isEditing = true,
+            itemId = 1L,
             title = "Pay bills",
             description = "Electricity and water",
             sectionId = 1L,
@@ -37,7 +36,7 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
             availableTags = tags,
         ),
         ItemDetailUiState(
-            isEditing = true,
+            itemId = 2L,
             title = "Renew subscription",
         ),
     )

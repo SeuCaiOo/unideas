@@ -41,7 +41,7 @@ class ItemDetailViewModel(
 
     private val editUiState = MutableStateFlow(
         ItemDetailUiState(
-            isEditing = itemId != null,
+            itemId = itemId,
             isLoading = itemId != null,
             type = initialType
         )
@@ -122,24 +122,12 @@ class ItemDetailViewModel(
 
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
-        when (event) {
-            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = true
-                debounceJob = viewModelScope.launch {
-                    delay(TEXT_DEBOUNCE_MS)
-                    hasPendingTextSave = false
-                    if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
-                }
-            }
-
-            else -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = false
-                if (uiState.value.isTitleValid) {
-                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
-                }
-            }
+        debounceJob?.cancel()
+        hasPendingTextSave = true
+        debounceJob = viewModelScope.launch {
+            delay(TEXT_DEBOUNCE_MS)
+            hasPendingTextSave = false
+            if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
         }
     }
 
@@ -201,7 +189,10 @@ class ItemDetailViewModel(
             itemFormUseCase.create(newItem)
                 .onSuccess { newId ->
                     currentItemId = newId
-                    originalItem = newItem.copy(id = newId)
+                    val createdItem = newItem.copy(id = newId)
+                    originalItem = createdItem
+                    updateUiState { it.copy(itemId = newId) }
+                    sendUiAction(ItemDetailUiAction.ItemPersisted(createdItem))
                 }
                 .map { }
         } else {
@@ -223,7 +214,7 @@ class ItemDetailViewModel(
     }
 
     private fun handleDelete() = viewModelScope.launch {
-        val id = itemId ?: return@launch
+        val id = currentItemId ?: return@launch
         _dialogState.update { ItemDetailDialogState.None }
         itemFormUseCase.delete(id)
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }

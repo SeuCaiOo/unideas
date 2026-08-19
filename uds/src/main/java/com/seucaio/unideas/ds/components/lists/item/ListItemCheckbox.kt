@@ -26,15 +26,16 @@ import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 
 @Composable
-internal fun ListItemCheckbox(
+fun ListItemCheckbox(
     checked: Boolean,
     contentDescription: String,
     onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
     size: Dp = 22.dp,
     iconSize: Dp = 16.dp,
 ) {
     Box(
-        Modifier
+        modifier
             .size(size)
             .clip(RoundedCornerShape(Radii.Checkbox))
             .background(if (checked) MaterialTheme.colorScheme.primary else Color.Transparent)

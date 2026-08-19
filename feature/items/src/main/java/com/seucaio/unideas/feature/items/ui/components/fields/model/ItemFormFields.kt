@@ -41,14 +41,6 @@ val ItemFormFieldsState.persistableReminderWarning: ReminderWarning
     get() = if (hasReminder) reminderWarning else ReminderWarning.None
 
 data class ItemFormFieldsEvents(
-    val onTypeChanged: (ItemType) -> Unit,
     val onTitleChanged: (String) -> Unit,
     val onDescriptionChanged: (String) -> Unit,
-    val onSectionChanged: (Long?) -> Unit,
-    val onTagToggled: (Long) -> Unit,
-    val onReminderToggled: (Boolean) -> Unit,
-    val onDueDateChanged: (LocalDate?) -> Unit,
-    val onDueTimeChanged: (LocalTime?) -> Unit,
-    val onRecurrenceChanged: (Recurrence) -> Unit,
-    val onReminderWarningChanged: (ReminderWarning) -> Unit,
 )

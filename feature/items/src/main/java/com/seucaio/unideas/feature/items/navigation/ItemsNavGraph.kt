@@ -15,7 +15,7 @@ fun NavGraphBuilder.itemsNavGraph(
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToHistory: (Long) -> Unit,
-    onNavigateToConfig: (Long) -> Unit,
+    onNavigateToConfig: (Long, Boolean) -> Unit,
 ) {
     composable<ItemsRoute.Detail>(
         deepLinks = listOf(navDeepLink<ItemsRoute.Detail>(basePath = "unideas://item")),
@@ -35,7 +35,7 @@ fun NavGraphBuilder.itemsNavGraph(
     }
     composable<ItemsRoute.Config> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Config>()
-        ItemConfigScreen(itemId = route.itemId, onNavigateBack = onNavigateBack)
+        ItemConfigScreen(itemId = route.itemId, isNewItem = route.isNewItem, onNavigateBack = onNavigateBack)
     }
     composable<ItemsRoute.List> {
         ItemsListScreen(

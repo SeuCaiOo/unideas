@@ -13,6 +13,7 @@ class TitleDescriptionFieldsPreviewProvider : PreviewParameterProvider<TitleDesc
     override val values: Sequence<TitleDescriptionPreviewData> = sequenceOf(
         // New item, nothing typed yet.
         TitleDescriptionPreviewData(title = "", description = "", isEditing = false),
+        TitleDescriptionPreviewData(title = "", description = "", isEditing = true),
         // Plain text, no Markdown at all.
         TitleDescriptionPreviewData(
             title = "Comprar mantimentos",

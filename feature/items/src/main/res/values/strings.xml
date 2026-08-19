@@ -9,6 +9,7 @@
     <string name="item_form_type_note">Note</string>
     <string name="item_form_title_label">Title</string>
     <string name="item_form_description_label">Description</string>
+    <string name="item_form_description_empty">No description</string>
     <string name="item_form_markdown_bold">Bold</string>
     <string name="item_form_markdown_italic">Italic</string>
     <string name="item_form_markdown_strikethrough">Strikethrough</string>

@@ -58,6 +58,7 @@ import org.koin.core.parameter.parametersOf
 fun ItemConfigScreen(
     itemId: Long,
     onNavigateBack: (() -> Unit)?,
+    isNewItem: Boolean = false,
     viewModel: ItemConfigViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,6 +80,7 @@ fun ItemConfigScreen(
     ItemConfigScreenContent(
         uiState = uiState,
         dialogState = dialogState,
+        isNewItem = isNewItem,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
@@ -90,6 +92,7 @@ fun ItemConfigScreen(
 private fun ItemConfigScreenContent(
     uiState: ItemConfigUiState,
     dialogState: ItemConfigDialogState,
+    isNewItem: Boolean,
     onEvent: (ItemConfigEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
@@ -112,6 +115,7 @@ private fun ItemConfigScreenContent(
             )
             else -> ItemConfigFields(
                 uiState = uiState,
+                isNewItem = isNewItem,
                 onEvent = onEvent,
                 modifier = Modifier.padding(padding),
             )
@@ -131,6 +135,7 @@ private fun ItemConfigScreenContent(
 @Composable
 private fun ItemConfigFields(
     uiState: ItemConfigUiState,
+    isNewItem: Boolean,
     onEvent: (ItemConfigEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -146,15 +151,19 @@ private fun ItemConfigFields(
         SectionLabel(stringResource(R.string.item_config_section_recurrence), Modifier.padding(top = 24.dp))
         RecurrenceAndReminderFields(uiState, onEvent, Modifier.padding(top = 8.dp))
 
-        SectionLabel(stringResource(R.string.item_config_section_danger_zone), Modifier.padding(top = 24.dp))
-        TypeDangerZone(
-            type = uiState.type,
-            onChangeTypeClicked = {
-                val newType = if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
-                onEvent(ItemConfigEvent.OnChangeTypeClicked(newType))
-            },
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
-        )
+        // Type only becomes a "danger" change once other data (occurrences, history) exists on top
+        // of it — a brand-new item has none of that yet, so there's nothing risky to warn about.
+        if (!isNewItem) {
+            SectionLabel(stringResource(R.string.item_config_section_danger_zone), Modifier.padding(top = 24.dp))
+            TypeDangerZone(
+                type = uiState.type,
+                onChangeTypeClicked = {
+                    val newType = if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
+                    onEvent(ItemConfigEvent.OnChangeTypeClicked(newType))
+                },
+                modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+            )
+        }
     }
 }
 
@@ -266,22 +275,26 @@ private fun TypeDangerZone(type: ItemType, onChangeTypeClicked: () -> Unit, modi
     }
 }
 
-private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigUiState> {
-    override val values: Sequence<ItemConfigUiState> = sequenceOf(
-        ItemConfigUiState(isLoading = false, type = ItemType.TASK, hasReminder = true),
-        ItemConfigUiState(isLoading = false, type = ItemType.NOTE),
+private data class ItemConfigPreviewScenario(val uiState: ItemConfigUiState, val isNewItem: Boolean = false)
+
+private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigPreviewScenario> {
+    override val values: Sequence<ItemConfigPreviewScenario> = sequenceOf(
+        ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK, hasReminder = true)),
+        ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.NOTE)),
+        ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK), isNewItem = true),
     )
 }
 
 @PreviewLightDark
 @Composable
 private fun ItemConfigScreenPreview(
-    @PreviewParameter(ItemConfigPreviewProvider::class) previewState: ItemConfigUiState,
+    @PreviewParameter(ItemConfigPreviewProvider::class) scenario: ItemConfigPreviewScenario,
 ) {
     UdsTheme {
         ItemConfigScreenContent(
-            uiState = previewState,
+            uiState = scenario.uiState,
             dialogState = ItemConfigDialogState.None,
+            isNewItem = scenario.isNewItem,
             onEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },

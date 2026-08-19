@@ -67,8 +67,8 @@ fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier
                 onNavigateToHistory = { itemId ->
                     navController.navigate(ItemsRoute.History(itemId))
                 },
-                onNavigateToConfig = { itemId ->
-                    navController.navigate(ItemsRoute.Config(itemId))
+                onNavigateToConfig = { itemId, isNewItem ->
+                    navController.navigate(ItemsRoute.Config(itemId, isNewItem))
                 },
             )
         }

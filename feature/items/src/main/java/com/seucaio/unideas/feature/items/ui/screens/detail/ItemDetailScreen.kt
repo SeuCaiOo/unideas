@@ -59,7 +59,7 @@ fun ItemDetailScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
-    onNavigateToConfig: (Long) -> Unit,
+    onNavigateToConfig: (Long, Boolean) -> Unit,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
@@ -115,7 +115,7 @@ fun ItemDetailScreen(
         onOccurrenceEvent = occurrenceViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
-        onNavigateToConfig = onNavigateToConfig,
+        onNavigateToConfig = { configuredItemId -> onNavigateToConfig(configuredItemId, itemId == null) },
         snackbarHostState = snackbarHostState,
     )
 }

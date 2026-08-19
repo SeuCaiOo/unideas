@@ -23,6 +23,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -59,6 +61,8 @@ fun BorderlessTextField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+            errorContainerColor = Color.Transparent,
         ),
         keyboardOptions = if (onImeAction != null) {
             KeyboardOptions(imeAction = imeAction)
@@ -125,18 +129,63 @@ fun BorderlessTextField(
     )
 }
 
+private enum class BorderlessTextFieldPreviewScenario {
+    Empty, Filled, MultiLine, Error
+}
+
+private class BorderlessTextFieldPreviewProvider : PreviewParameterProvider<BorderlessTextFieldPreviewScenario> {
+    override val values = BorderlessTextFieldPreviewScenario.entries.asSequence()
+}
+
 @PreviewLightDark
 @Composable
-private fun BorderlessTextFieldPreview() {
+private fun BorderlessTextFieldPreview(
+    @PreviewParameter(BorderlessTextFieldPreviewProvider::class) scenario: BorderlessTextFieldPreviewScenario,
+) {
     UdsTheme {
-        var text by remember { mutableStateOf("") }
         Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            BorderlessTextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = "Untitled",
-                textStyle = MaterialTheme.typography.headlineLarge,
-            )
+            when (scenario) {
+                BorderlessTextFieldPreviewScenario.Empty -> {
+                    var text by remember { mutableStateOf("") }
+                    BorderlessTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = "Untitled",
+                        textStyle = MaterialTheme.typography.headlineLarge,
+                    )
+                }
+                BorderlessTextFieldPreviewScenario.Filled -> {
+                    var text by remember { mutableStateOf("Pay electricity bill") }
+                    BorderlessTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = "Untitled",
+                        textStyle = MaterialTheme.typography.headlineLarge,
+                    )
+                }
+                BorderlessTextFieldPreviewScenario.MultiLine -> {
+                    var text by remember { mutableStateOf("Renew the annual streaming subscription before it lapses") }
+                    BorderlessTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = "Description",
+                        minHeight = 80.dp,
+                        singleLine = false,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                BorderlessTextFieldPreviewScenario.Error -> {
+                    var text by remember { mutableStateOf("") }
+                    BorderlessTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        placeholder = "Untitled",
+                        textStyle = MaterialTheme.typography.headlineLarge,
+                        isError = true,
+                        supportingText = { Text("Title is required") },
+                    )
+                }
+            }
         }
     }
 }

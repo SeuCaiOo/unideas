@@ -159,23 +159,35 @@ class ItemHistoryViewModelTest {
 
     @Test
     fun `when OnAddEntryClicked should open the AddEditEntry dialog with no existing entry`() = runTest {
-        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime, late))
         val vm = viewModel()
 
+        vm.uiState.test { awaitItem() } // subscribes so uiState.value reflects the mocked history
         vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
 
-        assertEquals(ItemHistoryDialogState.AddEditEntry(null), vm.dialogState.value)
+        assertEquals(
+            ItemHistoryDialogState.AddEditEntry(
+                existing = null,
+                blockedDates = setOf(onTime.scheduledDate, late.scheduledDate),
+            ),
+            vm.dialogState.value,
+        )
     }
 
     @Test
-    fun `when OnEditEntryClicked should open the AddEditEntry dialog with that entry`() = runTest {
-        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
-        val vm = viewModel()
+    fun `when OnEditEntryClicked should open the AddEditEntry dialog with that entry and exclude its own date from blockedDates`() =
+        runTest {
+            every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime, late))
+            val vm = viewModel()
 
-        vm.onEvent(ItemHistoryEvent.OnEditEntryClicked(onTime))
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemHistoryEvent.OnEditEntryClicked(onTime))
 
-        assertEquals(ItemHistoryDialogState.AddEditEntry(onTime), vm.dialogState.value)
-    }
+            assertEquals(
+                ItemHistoryDialogState.AddEditEntry(existing = onTime, blockedDates = setOf(late.scheduledDate)),
+                vm.dialogState.value,
+            )
+        }
 
     @Test
     fun `when OnDeleteEntryClicked should open the DeleteConfirm dialog for that entry`() = runTest {
@@ -235,7 +247,7 @@ class ItemHistoryViewModelTest {
     }
 
     @Test
-    fun `when OnEntrySubmitted fails with a validation error should emit ShowSnackbar and keep the dialog open`() =
+    fun `when OnEntrySubmitted fails with a validation error should emit ShowSnackbar and close the dialog`() =
         runTest {
             every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
             val vm = viewModel()
@@ -247,11 +259,11 @@ class ItemHistoryViewModelTest {
                 vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(LocalDate.of(2026, 7, 20), null, null))
                 assertEquals(ItemHistoryUiAction.ShowSnackbar(R.string.item_history_entry_invalid), awaitItem())
             }
-            assertEquals(ItemHistoryDialogState.AddEditEntry(null), vm.dialogState.value)
+            assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
         }
 
     @Test
-    fun `when OnEntrySubmitted fails unexpectedly should emit ShowError`() = runTest {
+    fun `when OnEntrySubmitted fails unexpectedly should emit ShowError and close the dialog`() = runTest {
         every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
         val vm = viewModel()
         vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
@@ -261,6 +273,7 @@ class ItemHistoryViewModelTest {
             vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(LocalDate.of(2026, 7, 20), null, null))
             assertEquals(ItemHistoryUiAction.ShowError("boom"), awaitItem())
         }
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
     }
 
     @Test
@@ -277,7 +290,7 @@ class ItemHistoryViewModelTest {
     }
 
     @Test
-    fun `when OnDeleteConfirmClicked fails should emit ShowError and keep the dialog open`() = runTest {
+    fun `when OnDeleteConfirmClicked fails should emit ShowError and close the dialog`() = runTest {
         every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
         val vm = viewModel()
         vm.onEvent(ItemHistoryEvent.OnDeleteEntryClicked(onTime))
@@ -288,6 +301,6 @@ class ItemHistoryViewModelTest {
             vm.onEvent(ItemHistoryEvent.OnDeleteConfirmClicked)
             assertEquals(ItemHistoryUiAction.ShowError("boom"), awaitItem())
         }
-        assertEquals(ItemHistoryDialogState.DeleteConfirm(onTime), vm.dialogState.value)
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
     }
 }

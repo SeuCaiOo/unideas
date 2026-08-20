@@ -112,6 +112,7 @@ private fun ItemHistoryScreenContent(
         is ItemHistoryDialogState.None -> Unit
         is ItemHistoryDialogState.AddEditEntry -> AddEditHistoryEntryBottomSheet(
             existing = dialogState.existing,
+            blockedDates = dialogState.blockedDates,
             onDismiss = { currentOnEvent(ItemHistoryEvent.OnDialogDismissed) },
             onConfirm = { scheduledDate, completedAt, note ->
                 currentOnEvent(ItemHistoryEvent.OnEntrySubmitted(scheduledDate, completedAt, note))

@@ -40,9 +40,23 @@ class ItemHistoryViewModel(
     fun onEvent(event: ItemHistoryEvent) {
         when (event) {
             is ItemHistoryEvent.OnFilterSelected -> activeFilter.update { event.filter }
-            is ItemHistoryEvent.OnAddEntryClicked -> handleDialog(ItemHistoryDialogState.AddEditEntry())
+            is ItemHistoryEvent.OnAddEntryClicked ->
+                handleDialog(
+                    ItemHistoryDialogState.AddEditEntry(
+                        blockedDates = blockedDates(
+                            existing = null
+                        )
+                    )
+                )
+
             is ItemHistoryEvent.OnEditEntryClicked ->
-                handleDialog(ItemHistoryDialogState.AddEditEntry(event.entry))
+                handleDialog(
+                    ItemHistoryDialogState.AddEditEntry(
+                        event.entry,
+                        blockedDates(existing = event.entry)
+                    ),
+                )
+
             is ItemHistoryEvent.OnDeleteEntryClicked ->
                 handleDialog(ItemHistoryDialogState.DeleteConfirm(event.entry))
             is ItemHistoryEvent.OnDeleteConfirmClicked -> handleDeleteConfirmed()
@@ -53,6 +67,11 @@ class ItemHistoryViewModel(
     }
 
     private fun handleDialog(state: ItemHistoryDialogState) = _dialogState.update { state }
+
+    private fun blockedDates(existing: ItemCompletionHistory?): Set<LocalDate> {
+        val dates = uiState.value.history.map { it.scheduledDate }.toSet()
+        return if (existing != null) dates - existing.scheduledDate else dates
+    }
 
     private fun handleEntrySubmitted(
         scheduledDate: LocalDate,
@@ -69,14 +88,23 @@ class ItemHistoryViewModel(
         )
         itemOccurrenceUseCase.saveHistoryEntry(record)
             .onSuccess { handleDialog(ItemHistoryDialogState.None) }
-            .onFailure { handleFailure(it) }
+            .onFailure {
+                // Close the sheet before showing feedback — its ModalBottomSheet opens in a
+                // separate platform window, so a snackbar anchored to this screen's Scaffold
+                // would stay hidden behind it while the sheet is still open.
+                handleDialog(ItemHistoryDialogState.None)
+                handleFailure(it)
+            }
     }
 
     private fun handleDeleteConfirmed() = viewModelScope.launch {
         val entry = (_dialogState.value as? ItemHistoryDialogState.DeleteConfirm)?.entry ?: return@launch
         itemOccurrenceUseCase.deleteHistoryEntry(entry.id)
             .onSuccess { handleDialog(ItemHistoryDialogState.None) }
-            .onFailure { handleFailure(it) }
+            .onFailure {
+                handleDialog(ItemHistoryDialogState.None)
+                handleFailure(it)
+            }
     }
 
     private suspend fun handleFailure(error: Throwable) {

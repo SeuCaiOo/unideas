@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -46,12 +47,13 @@ private val COMPLETED_AT_TIME = LocalTime.NOON
 @Composable
 fun AddEditHistoryEntryBottomSheet(
     existing: ItemCompletionHistory?,
+    blockedDates: Set<LocalDate>,
     onDismiss: () -> Unit,
     onConfirm: (scheduledDate: LocalDate, completedAt: LocalDateTime?, note: String?) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        AddEditHistoryEntrySheetContent(existing = existing, onConfirm = onConfirm)
+        AddEditHistoryEntrySheetContent(existing = existing, blockedDates = blockedDates, onConfirm = onConfirm)
     }
 }
 
@@ -61,6 +63,7 @@ fun AddEditHistoryEntrySheetContent(
     existing: ItemCompletionHistory?,
     onConfirm: (scheduledDate: LocalDate, completedAt: LocalDateTime?, note: String?) -> Unit,
     modifier: Modifier = Modifier,
+    blockedDates: Set<LocalDate> = emptySet(),
 ) {
     var scheduledDate by remember { mutableStateOf(existing?.scheduledDate) }
     var completed by remember { mutableStateOf(existing?.completedAt != null) }
@@ -114,6 +117,7 @@ fun AddEditHistoryEntrySheetContent(
     if (showDatePicker) {
         HistoryEntryDatePickerDialog(
             scheduledDate = scheduledDate,
+            blockedDates = blockedDates,
             onDismiss = { showDatePicker = false },
             onConfirm = { scheduledDate = it },
         )
@@ -124,10 +128,22 @@ fun AddEditHistoryEntrySheetContent(
 @Composable
 private fun HistoryEntryDatePickerDialog(
     scheduledDate: LocalDate?,
+    blockedDates: Set<LocalDate>,
     onDismiss: () -> Unit,
     onConfirm: (LocalDate) -> Unit,
 ) {
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = scheduledDate?.toEpochMilliUtc())
+    val selectableDates = remember(blockedDates) {
+        object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val date = utcTimeMillis.toLocalDateUtc()
+                return !date.isAfter(LocalDate.now()) && date !in blockedDates
+            }
+        }
+    }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = scheduledDate?.toEpochMilliUtc(),
+        selectableDates = selectableDates,
+    )
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {

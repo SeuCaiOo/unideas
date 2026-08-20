@@ -131,6 +131,10 @@
     <string name="item_config_card_subtitle_empty">Tap to configure</string>
     <string name="item_config_section_name_required">Section name is required</string>
     <string name="item_config_tag_name_required">Tag name is required</string>
+    <string name="item_config_add_section">Add section</string>
+    <string name="item_config_add_tag">Add tag</string>
+    <string name="item_config_add_section_placeholder">New section name</string>
+    <string name="item_config_add_tag_placeholder">New tag name</string>
     <plurals name="item_config_card_tags">
         <item quantity="one">%d tag</item>
         <item quantity="other">%d tags</item>

@@ -131,6 +131,10 @@
     <string name="item_config_card_subtitle_empty">Toque para configurar</string>
     <string name="item_config_section_name_required">O nome da seção é obrigatório</string>
     <string name="item_config_tag_name_required">O nome da tag é obrigatório</string>
+    <string name="item_config_add_section">Adicionar seção</string>
+    <string name="item_config_add_tag">Adicionar tag</string>
+    <string name="item_config_add_section_placeholder">Nome da nova seção</string>
+    <string name="item_config_add_tag_placeholder">Nome da nova tag</string>
     <plurals name="item_config_card_tags">
         <item quantity="one">%d tag</item>
         <item quantity="other">%d tags</item>

@@ -53,16 +53,16 @@ import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
 import com.seucaio.unideas.feature.items.ui.components.fields.TagsField
 import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.RecurrenceField
 import com.seucaio.unideas.feature.items.ui.components.fields.sectionstags.QuickCreateBottomSheet
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsDialogState
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsEvent
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsUiAction
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsUiState
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsViewModel
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigDialogState
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigEvent
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigUiAction
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigUiState
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigViewModel
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsDialogState
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsEvent
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsUiAction
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsUiState
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 

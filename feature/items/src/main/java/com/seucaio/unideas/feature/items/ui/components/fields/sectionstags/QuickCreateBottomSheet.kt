@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
-import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsDialogState
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsDialogState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

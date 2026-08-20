@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags
 
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag

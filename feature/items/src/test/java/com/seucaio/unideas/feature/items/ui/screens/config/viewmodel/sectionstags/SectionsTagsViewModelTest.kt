@@ -1,4 +1,4 @@
-package com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel
+package com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags
 
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.stub.SectionStub

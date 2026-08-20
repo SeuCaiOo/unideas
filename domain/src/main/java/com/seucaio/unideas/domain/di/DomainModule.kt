@@ -1,6 +1,6 @@
 package com.seucaio.unideas.domain.di
 
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
@@ -49,7 +49,8 @@ val domainModule = module {
     factoryOf(::DeleteTagUseCase)
     factoryOf(::TagUseCase)
 
-    factoryOf(::GetSectionsAndTagsUseCase)
+    factoryOf(::SectionsAndTagsUseCase)
+
     factoryOf(::SeedDatabaseUseCase)
     factoryOf(::ClearDatabaseUseCase)
 

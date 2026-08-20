@@ -4,7 +4,10 @@ import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.CompletionStatus
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
+import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
@@ -152,5 +155,139 @@ class ItemHistoryViewModelTest {
             val state = awaitItem()
             assertEquals(listOf(late, missed), state.filteredHistory)
         }
+    }
+
+    @Test
+    fun `when OnAddEntryClicked should open the AddEditEntry dialog with no existing entry`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+        val vm = viewModel()
+
+        vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
+
+        assertEquals(ItemHistoryDialogState.AddEditEntry(null), vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnEditEntryClicked should open the AddEditEntry dialog with that entry`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
+        val vm = viewModel()
+
+        vm.onEvent(ItemHistoryEvent.OnEditEntryClicked(onTime))
+
+        assertEquals(ItemHistoryDialogState.AddEditEntry(onTime), vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnDeleteEntryClicked should open the DeleteConfirm dialog for that entry`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
+        val vm = viewModel()
+
+        vm.onEvent(ItemHistoryEvent.OnDeleteEntryClicked(onTime))
+
+        assertEquals(ItemHistoryDialogState.DeleteConfirm(onTime), vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnDialogDismissed should close the dialog`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
+
+        vm.onEvent(ItemHistoryEvent.OnDialogDismissed)
+
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnEntrySubmitted with no existing entry should save a new record and close the dialog`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
+        val scheduledDate = LocalDate.of(2026, 7, 20)
+        val completedAt = LocalDateTime.of(2026, 7, 20, 12, 0)
+        val expected = ItemCompletionHistory(
+            id = 0L,
+            itemId = 1L,
+            scheduledDate = scheduledDate,
+            completedAt = completedAt,
+            note = "Feito",
+        )
+        coEvery { itemOccurrenceUseCase.saveHistoryEntry(expected) } returns Result.success(Unit)
+
+        vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(scheduledDate, completedAt, "Feito"))
+
+        coVerify(exactly = 1) { itemOccurrenceUseCase.saveHistoryEntry(expected) }
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnEntrySubmitted while editing should save with the existing entry's id`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnEditEntryClicked(onTime))
+        val expected = onTime.copy(note = "Ajustado")
+        coEvery { itemOccurrenceUseCase.saveHistoryEntry(expected) } returns Result.success(Unit)
+
+        vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(onTime.scheduledDate, onTime.completedAt, "Ajustado"))
+
+        coVerify(exactly = 1) { itemOccurrenceUseCase.saveHistoryEntry(expected) }
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnEntrySubmitted fails with a validation error should emit ShowSnackbar and keep the dialog open`() =
+        runTest {
+            every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+            val vm = viewModel()
+            vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
+            coEvery { itemOccurrenceUseCase.saveHistoryEntry(any()) } returns
+                Result.failure(IllegalArgumentException("boom"))
+
+            vm.uiAction.test {
+                vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(LocalDate.of(2026, 7, 20), null, null))
+                assertEquals(ItemHistoryUiAction.ShowSnackbar(R.string.item_history_entry_invalid), awaitItem())
+            }
+            assertEquals(ItemHistoryDialogState.AddEditEntry(null), vm.dialogState.value)
+        }
+
+    @Test
+    fun `when OnEntrySubmitted fails unexpectedly should emit ShowError`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnAddEntryClicked)
+        coEvery { itemOccurrenceUseCase.saveHistoryEntry(any()) } returns Result.failure(IllegalStateException("boom"))
+
+        vm.uiAction.test {
+            vm.onEvent(ItemHistoryEvent.OnEntrySubmitted(LocalDate.of(2026, 7, 20), null, null))
+            assertEquals(ItemHistoryUiAction.ShowError("boom"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmClicked succeeds should delete the entry and close the dialog`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnDeleteEntryClicked(onTime))
+        coEvery { itemOccurrenceUseCase.deleteHistoryEntry(onTime.id) } returns Result.success(Unit)
+
+        vm.onEvent(ItemHistoryEvent.OnDeleteConfirmClicked)
+
+        coVerify(exactly = 1) { itemOccurrenceUseCase.deleteHistoryEntry(onTime.id) }
+        assertEquals(ItemHistoryDialogState.None, vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnDeleteConfirmClicked fails should emit ShowError and keep the dialog open`() = runTest {
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime))
+        val vm = viewModel()
+        vm.onEvent(ItemHistoryEvent.OnDeleteEntryClicked(onTime))
+        coEvery { itemOccurrenceUseCase.deleteHistoryEntry(onTime.id) } returns
+            Result.failure(IllegalStateException("boom"))
+
+        vm.uiAction.test {
+            vm.onEvent(ItemHistoryEvent.OnDeleteConfirmClicked)
+            assertEquals(ItemHistoryUiAction.ShowError("boom"), awaitItem())
+        }
+        assertEquals(ItemHistoryDialogState.DeleteConfirm(onTime), vm.dialogState.value)
     }
 }

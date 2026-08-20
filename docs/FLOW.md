@@ -89,20 +89,19 @@ AllPrioritiesScreen
 
 ```
 ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
-  → itemId == null → modo criação: campos editáveis desde o início, seletor de tipo usa initialType,
-                      livre pra trocar Tarefa↔Anotação até o primeiro save (#160)
-  → itemId != null → carrega o item; campos editáveis inline (sem alternar "modo edição" explícito);
-                      seletor de tipo NÃO aparece mais — trocar tipo de um item existente exige a
-                      Config Screen (ver abaixo) (#160)
-  → salvamento automático a cada alteração (sem botão "Salvar" — auto-save por campo)
+  → itemId == null → modo criação: tipo fixado por initialType (escolhido antes de entrar na tela,
+                      ex. botões de Home), mostrado como badge — sem seletor de tipo inline (#162)
+  → itemId != null → carrega o item; campos editáveis inline (sem alternar "modo edição" explícito)
+  → salvamento automático a cada alteração (sem botão "Salvar" — auto-save por campo; texto tem
+     debounce de ~500ms, campos estruturados salvam na hora — #133)
+  → primeiro auto-save bem-sucedido preenche itemId (uiState) — é o que libera os NavCards de
+     Configurações/Histórico e o footer de conclusão (escondidos até lá, não só desabilitados — #162)
   → tela silenciosamente recarrega o item ao retomar foco (`OnScreenResumed`/`LifecycleResumeEffect`),
      pra refletir mudanças feitas na Config Screen ao voltar pra cá (#160)
-  → Título (curto, obrigatório) · Descrição (multilinha, opcional, com toolbar de Markdown — #93)
-  → Seção (dropdown, opcional) · Tags (chip-input, múltiplas, opcional)
-  → Data de vencimento (date picker, opcional) — disponível pros dois tipos
-       → se há data → Recorrência (Nenhuma / Diária / Semanal / Mensal / A cada N dias / Dia da semana / Dia do mês)
-          via RecurrenceBottomSheet + bottom sheets específicos por tipo (#130)
-       → com data → também habilita Horário de vencimento (opcional) e Aviso (nenhum / N dias antes) (#95/#114)
+  → Título (curto, obrigatório) · Descrição (multilinha, opcional, com toolbar de Markdown — #93;
+     preview do Markdown mostra "Sem descrição" quando vazia, em vez de nada — #162)
+  → (todo o resto — Seção, Tags, Data de vencimento, Recorrência, Horário, Aviso — vive só na
+     Config Screen desde o #162; não aparece mais inline aqui, ver seção abaixo)
   → ações (Tarefa, ocorrência dentro do prazo):
        [Concluir]      → nota opcional; ItemOccurrenceViewModel (#101/B), separado do form
   → ações (Tarefa, ocorrência vencida — OverdueOccurrenceActions):
@@ -111,35 +110,36 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
                                sem esperar o worker (#101/A)
        [Aumentar prazo]     → ExtendDeadlineDatePickerDialog; empurra dueDate sem fechar a ocorrência
                                (não conta como concluída nem perdida) (#101/A)
-  → ações (comuns):
-       [Compartilhar]     → share sheet do sistema
-       [Configurações]    → ItemConfigScreen (tela própria, ItemsRoute.Config(itemId)) — ícone de
-                             engrenagem no toolbar, só em modo edição (#160)
-       [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home
-       [Ver histórico]    → ItemHistoryScreen (tela própria, ItemsRoute.History(itemId)) — só pra item recorrente;
-                             resumo (% no prazo, sequência atual), filtros, cartão por ocorrência com hora, dias
-                             de atraso, nota e trilha de extensão (#101/C, substituiu o bottom sheet antigo)
+  → ações (comuns, só quando state.isEditing — ver acima):
+       [Compartilhar]     → share sheet do sistema (sempre visível, mesmo em criação)
+       [Configurações]    → NavCard "Configurações" → ItemConfigScreen (ItemsRoute.Config(itemId,
+                             isNewItem)) — substituiu o ícone de engrenagem no toolbar do #160 (#162)
+       [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home (sempre visível)
+       [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
+                             pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
+                             por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C)
   → "←" → volta
 ```
 
 **Regras:**
-- Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento; sem data, fica indisponível/oculta.
+- Só **Título** é obrigatório.
 - Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica, pull-to-refresh na Home, ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`, motor de reavaliação #101/D). "Ignorar" é a exceção — avança `dueDate` na hora.
 - `ItemDetailScreen` hoisteia dois ViewModels lado a lado (`ItemDetailViewModel` pro form, `ItemOccurrenceViewModel` pro ciclo de vida da ocorrência) — sincronizados via `OnItemUpdatedExternally` pra uma escrita de um lado não sobrescrever a do outro (#101/B).
-- **A seção "Mais opções" (seção/tags/data/recorrência/aviso) ainda aparece inline aqui, redundante com a Config Screen, até o #162** — #160 só entregou o ponto de entrada funcional pra Config Screen e a trava de tipo; remover a seção inline e trocar por cards de navegação polidos é escopo do #162 (bloqueada por #160, já desbloqueada).
+- Item criado e depois excluído antes do primeiro save "de verdade" (ex. usuário desiste e sai) ainda é removido corretamente — `OnDeleteConfirmClicked` usa o `itemId` interno do ViewModel (que já pode ter sido auto-salvo), não o `itemId` de rota (#162).
 
 ---
 
 ## Configurações do Item
 
-**Acesso:** `ItemDetailScreen` (modo edição) → ícone de engrenagem no toolbar.
+**Acesso:** `ItemDetailScreen` (modo edição, ou seja `state.isEditing == true`) → `NavCard` "Configurações" no `ItemFormBody` (#162 — substituiu o ícone de engrenagem no toolbar do #160). O card só existe/aparece depois que o item tem `itemId` real (primeiro auto-save concluído) — pra item novo ainda não salvo, o card fica escondido em vez de clicável-mas-sem-efeito.
 
 ```
-ItemConfigScreen  (ItemsRoute.Config(itemId))
+ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
   → Seção (dropdown, opcional) · Tags (chip-input, múltiplas, opcional)
   → Lembrete (switch) → Recorrência · Data de vencimento (se recorrência = Nenhuma) · Horário · Aviso
      — mesmos campos/componentes do form principal, disponíveis pros dois tipos (#160)
-  → Zona de risco: tipo atual do item + botão [Alterar]
+  → Zona de risco: tipo atual do item + botão [Alterar] — só aparece quando isNewItem == false
+       (item recém-criado, sem histórico/ocorrência acumulada, não tem risco a avisar — #165 batch)
        → DeleteConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
        → confirma → reset total: dueDate/dueTime/recurrence/reminderWarning voltam a
          nulo/None, mesmo que o novo tipo também suportasse esses campos — nunca seletivo.
@@ -149,7 +149,8 @@ ItemConfigScreen  (ItemsRoute.Config(itemId))
 ```
 
 **Regras:**
-- Só alcançável a partir de um item já existente (`itemId` obrigatório) — criação continua livre/sem fricção via `TypeSelectorField` no form principal.
+- Só alcançável a partir de um item já existente (`itemId` obrigatório) — não existe mais seletor de tipo inline no form (`TypeSelectorField` foi removido no #162); o tipo é fixado só na criação (`initialType`, escolhido antes de entrar na tela) e mostrado como badge, nunca editável ali.
+- `isNewItem` é derivado do `itemId` de rota (imutável) do `ItemDetailScreen`, não do `itemId` mutável do `uiState` — só assim o sinal "isso era criação" sobrevive ao primeiro auto-save (ver #165 batch).
 - `ItemConfigViewModel` reaproveita `ItemFormUseCase`/`GetSectionsAndTagsUseCase` — sem facade nova.
 - Layout desenhado via Claude Design (V1 escolhida): https://claude.ai/code/artifact/3534d226-b174-40da-85dd-5358c32dd180
 

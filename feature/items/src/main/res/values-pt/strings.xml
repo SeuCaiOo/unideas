@@ -117,6 +117,16 @@
         <item quantity="one">Atrasada em %d dia</item>
         <item quantity="other">Atrasada em %d dias</item>
     </plurals>
+    <string name="item_history_add_entry">Adicionar entrada</string>
+    <string name="item_history_edit_entry">Editar entrada</string>
+    <string name="item_history_delete_entry">Excluir entrada</string>
+    <string name="item_history_menu_content_description">Opções</string>
+    <string name="item_history_date_label">Data</string>
+    <string name="item_history_completed_toggle">Concluído</string>
+    <string name="item_history_save">Salvar</string>
+    <string name="item_history_delete_confirm_title">Remover esta entrada?</string>
+    <string name="item_history_delete_confirm_message">Essa ação não pode ser desfeita.</string>
+    <string name="item_history_entry_invalid">Verifique a data e a nota e tente novamente</string>
 
     <!-- Item Config Screen -->
     <string name="item_config_title">Configurações</string>

@@ -54,4 +54,28 @@ class ItemCompletionHistoryRepositoryImplTest {
         assertEquals(42L, id)
         coVerify(exactly = 1) { dao.insert(record.toEntity()) }
     }
+
+    @Test
+    fun `update delegates the mapped entity to the dao`() = runTest {
+        val record = ItemCompletionHistory(
+            id = 5L,
+            itemId = 10L,
+            scheduledDate = LocalDate.of(2026, 7, 1),
+            completedAt = LocalDateTime.of(2026, 7, 1, 9, 0),
+        )
+        coEvery { dao.update(record.toEntity()) } returns Unit
+
+        repository.update(record)
+
+        coVerify(exactly = 1) { dao.update(record.toEntity()) }
+    }
+
+    @Test
+    fun `deleteById delegates to the dao`() = runTest {
+        coEvery { dao.deleteById(5L) } returns Unit
+
+        repository.deleteById(5L)
+
+        coVerify(exactly = 1) { dao.deleteById(5L) }
+    }
 }

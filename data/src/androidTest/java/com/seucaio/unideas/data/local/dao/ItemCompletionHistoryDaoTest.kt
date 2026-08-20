@@ -81,6 +81,32 @@ class ItemCompletionHistoryDaoTest {
     }
 
     @Test
+    fun updatePersistsChangesToAnExistingEntry() = runTest {
+        val itemId = seedItem()
+        val id = dao.insert(ItemCompletionHistoryEntity(itemId = itemId, scheduledDate = 1_000L, completedAt = null))
+
+        dao.update(
+            ItemCompletionHistoryEntity(id = id, itemId = itemId, scheduledDate = 1_000L, completedAt = 1_500L, note = "Atrasei"),
+        )
+
+        val updated = dao.getHistory(itemId).first().single()
+        assertEquals(1_500L, updated.completedAt)
+        assertEquals("Atrasei", updated.note)
+    }
+
+    @Test
+    fun deleteByIdRemovesOnlyThatEntry() = runTest {
+        val itemId = seedItem()
+        val keptId = dao.insert(ItemCompletionHistoryEntity(itemId = itemId, scheduledDate = 1_000L, completedAt = null))
+        val removedId = dao.insert(ItemCompletionHistoryEntity(itemId = itemId, scheduledDate = 2_000L, completedAt = null))
+
+        dao.deleteById(removedId)
+
+        val history = dao.getHistory(itemId).first()
+        assertEquals(listOf(keptId), history.map { it.id })
+    }
+
+    @Test
     fun deletingTheItemCascadesItsHistory() = runTest {
         val itemId = seedItem()
         dao.insert(ItemCompletionHistoryEntity(itemId = itemId, scheduledDate = 1_000L, completedAt = null))

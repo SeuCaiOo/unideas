@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.Job
@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,7 +26,7 @@ import kotlinx.coroutines.runBlocking
 class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
-    private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
     private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
@@ -41,7 +43,7 @@ class ItemDetailViewModel(
 
     private val editUiState = MutableStateFlow(
         ItemDetailUiState(
-            isEditing = itemId != null,
+            itemId = itemId,
             isLoading = itemId != null,
             type = initialType
         )
@@ -68,12 +70,12 @@ class ItemDetailViewModel(
     val dialogState: StateFlow<ItemDetailDialogState> = _dialogState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-                updateUiState { it.setReferenceData(referenceData.sections, referenceData.tags) }
+        sectionsAndTagsUseCase.getAll()
+            .onEach { (sections, tags) ->
+                updateUiState { it.setReferenceData(sections, tags) }
             }
-            if (itemId != null) loadItem(itemId)
-        }
+            .launchIn(viewModelScope)
+        if (itemId != null) viewModelScope.launch { loadItem(itemId) }
     }
 
     private suspend fun loadItem(id: Long) {
@@ -98,6 +100,7 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnBackRequested -> handleBackRequested()
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
             is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
+            is ItemDetailEvent.OnScreenResumed -> itemId?.let { id -> viewModelScope.launch { loadItem(id) } }
         }
     }
 
@@ -121,24 +124,12 @@ class ItemDetailViewModel(
 
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
-        when (event) {
-            is ItemDetailEvent.OnTitleChanged, is ItemDetailEvent.OnDescriptionChanged -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = true
-                debounceJob = viewModelScope.launch {
-                    delay(TEXT_DEBOUNCE_MS)
-                    hasPendingTextSave = false
-                    if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
-                }
-            }
-
-            else -> {
-                debounceJob?.cancel()
-                hasPendingTextSave = false
-                if (uiState.value.isTitleValid) {
-                    viewModelScope.launch { persist().onFailure { handleFailure(it) } }
-                }
-            }
+        debounceJob?.cancel()
+        hasPendingTextSave = true
+        debounceJob = viewModelScope.launch {
+            delay(TEXT_DEBOUNCE_MS)
+            hasPendingTextSave = false
+            if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
         }
     }
 
@@ -200,7 +191,10 @@ class ItemDetailViewModel(
             itemFormUseCase.create(newItem)
                 .onSuccess { newId ->
                     currentItemId = newId
-                    originalItem = newItem.copy(id = newId)
+                    val createdItem = newItem.copy(id = newId)
+                    originalItem = createdItem
+                    updateUiState { it.copy(itemId = newId) }
+                    sendUiAction(ItemDetailUiAction.ItemPersisted(createdItem))
                 }
                 .map { }
         } else {
@@ -222,7 +216,7 @@ class ItemDetailViewModel(
     }
 
     private fun handleDelete() = viewModelScope.launch {
-        val id = itemId ?: return@launch
+        val id = currentItemId ?: return@launch
         _dialogState.update { ItemDetailDialogState.None }
         itemFormUseCase.delete(id)
             .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }

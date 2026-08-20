@@ -9,6 +9,7 @@
     <string name="item_form_type_note">Anotação</string>
     <string name="item_form_title_label">Título</string>
     <string name="item_form_description_label">Descrição</string>
+    <string name="item_form_description_empty">Sem descrição</string>
     <string name="item_form_markdown_bold">Negrito</string>
     <string name="item_form_markdown_italic">Itálico</string>
     <string name="item_form_markdown_strikethrough">Riscado</string>
@@ -50,7 +51,6 @@
     <string name="item_form_reminder_2_days">2 dias antes</string>
     <string name="item_form_reminder_3_days">3 dias antes</string>
     <string name="item_form_reminder_7_days">7 dias antes</string>
-    <string name="item_form_more_options">Mais opções</string>
 
     <!-- Item Detail — General -->
     <string name="item_detail_load_error">Não foi possível carregar o item</string>
@@ -64,7 +64,12 @@
     <string name="item_detail_complete">Marcar como concluído</string>
     <string name="item_detail_complete_late">Concluir atrasado</string>
     <string name="item_detail_reopen">Reabrir tarefa</string>
+    <string name="item_detail_completed_status">Concluída</string>
     <string name="item_detail_completed_on">Concluída em %1$s</string>
+    <plurals name="item_detail_overdue_days">
+        <item quantity="one">Venceu há %d dia</item>
+        <item quantity="other">Venceu há %d dias</item>
+    </plurals>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_delete_message">Esta ação não pode ser desfeita.</string>
     <string name="item_detail_reopen_title">Reabrir tarefa?</string>
@@ -89,6 +94,7 @@
 
     <!-- Occurrence History -->
     <string name="item_detail_history">Histórico</string>
+    <string name="item_detail_history_card_subtitle">Ver todas as ocorrências</string>
     <string name="item_detail_history_title">Histórico de ocorrências</string>
     <string name="item_detail_history_empty">Nenhuma ocorrência registrada ainda</string>
     <string name="item_detail_history_status_on_time">No prazo</string>
@@ -110,6 +116,38 @@
     <plurals name="item_history_days_late">
         <item quantity="one">Atrasada em %d dia</item>
         <item quantity="other">Atrasada em %d dias</item>
+    </plurals>
+    <string name="item_history_add_entry">Adicionar entrada</string>
+    <string name="item_history_edit_entry">Editar entrada</string>
+    <string name="item_history_delete_entry">Excluir entrada</string>
+    <string name="item_history_menu_content_description">Opções</string>
+    <string name="item_history_date_label">Data</string>
+    <string name="item_history_completed_toggle">Concluído</string>
+    <string name="item_history_save">Salvar</string>
+    <string name="item_history_delete_confirm_title">Remover esta entrada?</string>
+    <string name="item_history_delete_confirm_message">Essa ação não pode ser desfeita.</string>
+    <string name="item_history_entry_invalid">Verifique a data e a nota e tente novamente</string>
+
+    <!-- Item Config Screen -->
+    <string name="item_config_title">Configurações</string>
+    <string name="item_config_section_organization">Organização</string>
+    <string name="item_config_section_recurrence">Recorrência e aviso</string>
+    <string name="item_config_section_danger_zone">Zona de risco</string>
+    <string name="item_config_type_subtitle_task">Pode ser concluída, gera histórico</string>
+    <string name="item_config_type_subtitle_note">Só texto, sem conclusão</string>
+    <string name="item_config_type_change_button">Alterar</string>
+    <string name="item_config_type_switch_title">Trocar o tipo do item?</string>
+    <string name="item_config_type_switch_message">Isso reseta recorrência, data de vencimento, horário e aviso — não dá pra recuperar. Seção, tags, título e descrição continuam como estão. Histórico já registrado não é apagado, só deixa de receber novas entradas.</string>
+    <string name="item_config_card_subtitle_empty">Toque para configurar</string>
+    <string name="item_config_section_name_required">O nome da seção é obrigatório</string>
+    <string name="item_config_tag_name_required">O nome da tag é obrigatório</string>
+    <string name="item_config_add_section">Adicionar seção</string>
+    <string name="item_config_add_tag">Adicionar tag</string>
+    <string name="item_config_add_section_placeholder">Nome da nova seção</string>
+    <string name="item_config_add_tag_placeholder">Nome da nova tag</string>
+    <plurals name="item_config_card_tags">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
     </plurals>
 
     <!-- Items List -->

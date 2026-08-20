@@ -1,6 +1,5 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
-import com.seucaio.unideas.core.common.extensions.orToday
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
@@ -18,7 +17,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 data class ItemDetailUiState(
-    override val isEditing: Boolean = false,
+    val itemId: Long? = null,
     val isLoading: Boolean = false,
     override val type: ItemType = ItemType.TASK,
     override val title: String = "",
@@ -36,31 +35,15 @@ data class ItemDetailUiState(
     override val titleError: Boolean = false,
 ) : ItemFormFieldsState, Serializable {
 
+    override val isEditing: Boolean get() = itemId != null
+
     override val isTitleValid: Boolean get() = title.isNotBlank()
 
     override val typeIsTask: Boolean get() = type == ItemType.TASK
 
     val isPristine: Boolean
-        get() = title.isBlank() && description.isBlank() && sectionId == null &&
+        get() = itemId == null && title.isBlank() && description.isBlank() && sectionId == null &&
             selectedTagIds.isEmpty() && dueDate == null
-
-    fun toggleReminder(enabled: Boolean): ItemDetailUiState = if (enabled) {
-        copy(hasReminder = true, dueDate = dueDate.orToday())
-    } else {
-        copy(hasReminder = false)
-    }
-
-    /**
-     * [Recurrence.None] leaves [dueDate] to be picked manually; any other recurrence auto-fills it
-     * (today if empty, kept as-is otherwise) since a recurring item is never edited to a specific date.
-     */
-    fun changeRecurrence(recurrence: Recurrence): ItemDetailUiState = copy(
-        recurrence = recurrence,
-        dueDate = if (recurrence == Recurrence.None) dueDate else dueDate.orToday(),
-    )
-
-    fun toggleTag(tagId: Long): ItemDetailUiState =
-        copy(selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId)
 
     fun setReferenceData(sections: List<Section>, tags: List<Tag>): ItemDetailUiState =
         copy(availableSections = sections, availableTags = tags)
@@ -108,25 +91,8 @@ data class ItemDetailUiState(
                 tags = availableTags.filter { it.id in selectedTagIds },
             )
 
-    /** Clearing [dueDate] also clears [dueTime]/[recurrence]/[reminderWarning] — none of them mean
-     * anything without a date. */
-    fun changeDueDate(dueDate: LocalDate?): ItemDetailUiState = copy(
-        dueDate = dueDate,
-        dueTime = if (dueDate == null) null else dueTime,
-        recurrence = if (dueDate == null) Recurrence.None else recurrence,
-        reminderWarning = if (dueDate == null) ReminderWarning.None else reminderWarning,
-    )
-
     fun reduce(event: ItemDetailEvent.FieldEvent): ItemDetailUiState = when (event) {
-        is ItemDetailEvent.OnTypeChanged -> copy(type = event.type)
         is ItemDetailEvent.OnTitleChanged -> copy(title = event.title, titleError = false)
         is ItemDetailEvent.OnDescriptionChanged -> copy(description = event.description)
-        is ItemDetailEvent.OnSectionChanged -> copy(sectionId = event.sectionId)
-        is ItemDetailEvent.OnTagToggled -> toggleTag(event.tagId)
-        is ItemDetailEvent.OnReminderToggled -> toggleReminder(event.enabled)
-        is ItemDetailEvent.OnDueDateChanged -> changeDueDate(event.dueDate)
-        is ItemDetailEvent.OnDueTimeChanged -> copy(dueTime = event.dueTime)
-        is ItemDetailEvent.OnRecurrenceChanged -> changeRecurrence(event.recurrence)
-        is ItemDetailEvent.OnReminderWarningChanged -> copy(reminderWarning = event.reminderWarning)
     }
 }

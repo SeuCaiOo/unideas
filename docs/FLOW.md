@@ -5,16 +5,17 @@
 
 ---
 
-## Telas do MVP (6 + 1 dev-only)
+## Telas do MVP (7 + 1 dev-only)
 
 | # | Tela | Módulo | Rota (type-safe) |
 |---|---|---|---|
 | 1 | **Home** (lista Tarefas/Anotações + painel de prioridades como Bottom Sheet) | `:feature:home` | `HomeRoute.Home` |
 | 2 | **Todas as Prioridades** | `:feature:home` | `HomeRoute.AllPriorities` |
 | 3 | **Criar/Editar/Detalhar Item** (tela única — ver "Detalhe do Item" abaixo) | `:feature:items` | `ItemsRoute.Detail(itemId: Long? = null, initialType: ItemType = TASK)` |
-| 4 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
-| 5 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
-| 6 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
+| 4 | **Configurações do Item** (seção/tags/recorrência/aviso + troca de tipo guardada — #160) | `:feature:items` | `ItemsRoute.Config(itemId: Long)` |
+| 5 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
+| 6 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
+| 7 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
 | — | *(dev-only)* Todos os Itens (sem abas/seleção) | `:feature:items` | `ItemsRoute.List` |
 
 Ponto de entrada do app: `HomeRoute.Home` (`startDestination` do `AppNavHost`, em `:app/navigation/`). **Não há bottom navigation bar** (existiu brevemente durante o #138, removida na mesma issue) — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `AppNavHost` central vive no `:app` (`app/src/main/java/com/seucaio/unideas/navigation/`), cada feature expõe seu `*NavGraph` + `*Route`.
@@ -63,6 +64,8 @@ HomeScreen
 - Seleção múltipla e exclusão em lote vivem na Home (long-press num item da lista), não numa tela separada.
 - Cor de urgência (vermelho = vencido, âmbar = vencendo em ≤N dias) é o **único** uso dessas cores na UI.
 - **Pull-to-refresh** (#101/D): puxar a lista pra baixo dispara o motor de reavaliação de ocorrências fora do ciclo periódico do `ReminderCheckWorker` — mesmo gatilho manual que existia só via Settings ("Rodar verificação de lembretes agora"), agora também acessível direto na tela principal.
+- Grupos de seção na lista abrem **expandidos por padrão** (#147) — antes só abriam expandidos se fixados; sem nada fixado, a Home inteira abria recolhida.
+- O botão "Prioridades" na `HomeTopBar` e o auto-abrir do `PriorityBottomSheet` no cold start só aparecem/disparam quando existe **pelo menos um item de prioridade** (#147) — antes disparava sempre, mesmo vazio.
 
 ---
 
@@ -86,15 +89,19 @@ AllPrioritiesScreen
 
 ```
 ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
-  → itemId == null → modo criação: campos editáveis desde o início, seletor de tipo usa initialType
+  → itemId == null → modo criação: tipo fixado por initialType (escolhido antes de entrar na tela,
+                      ex. botões de Home), mostrado como badge — sem seletor de tipo inline (#162)
   → itemId != null → carrega o item; campos editáveis inline (sem alternar "modo edição" explícito)
-  → salvamento automático a cada alteração (sem botão "Salvar" — auto-save por campo)
-  → Título (curto, obrigatório) · Descrição (multilinha, opcional, com toolbar de Markdown — #93)
-  → Seção (dropdown, opcional) · Tags (chip-input, múltiplas, opcional)
-  → Data de vencimento (date picker, opcional) — disponível pros dois tipos
-       → se há data → Recorrência (Nenhuma / Diária / Semanal / Mensal / A cada N dias / Dia da semana / Dia do mês)
-          via RecurrenceBottomSheet + bottom sheets específicos por tipo (#130)
-       → com data → também habilita Horário de vencimento (opcional) e Aviso (nenhum / N dias antes) (#95/#114)
+  → salvamento automático a cada alteração (sem botão "Salvar" — auto-save por campo; texto tem
+     debounce de ~500ms, campos estruturados salvam na hora — #133)
+  → primeiro auto-save bem-sucedido preenche itemId (uiState) — é o que libera os NavCards de
+     Configurações/Histórico e o footer de conclusão (escondidos até lá, não só desabilitados — #162)
+  → tela silenciosamente recarrega o item ao retomar foco (`OnScreenResumed`/`LifecycleResumeEffect`),
+     pra refletir mudanças feitas na Config Screen ao voltar pra cá (#160)
+  → Título (curto, obrigatório) · Descrição (multilinha, opcional, com toolbar de Markdown — #93;
+     preview do Markdown mostra "Sem descrição" quando vazia, em vez de nada — #162)
+  → (todo o resto — Seção, Tags, Data de vencimento, Recorrência, Horário, Aviso — vive só na
+     Config Screen desde o #162; não aparece mais inline aqui, ver seção abaixo)
   → ações (Tarefa, ocorrência dentro do prazo):
        [Concluir]      → nota opcional; ItemOccurrenceViewModel (#101/B), separado do form
   → ações (Tarefa, ocorrência vencida — OverdueOccurrenceActions):
@@ -103,19 +110,49 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
                                sem esperar o worker (#101/A)
        [Aumentar prazo]     → ExtendDeadlineDatePickerDialog; empurra dueDate sem fechar a ocorrência
                                (não conta como concluída nem perdida) (#101/A)
-  → ações (comuns):
-       [Compartilhar]  → share sheet do sistema
-       [Excluir]       → DeleteConfirmationDialog → confirma → volta pra Home
-       [Ver histórico] → ItemHistoryScreen (tela própria, ItemsRoute.History(itemId)) — só pra item recorrente;
-                          resumo (% no prazo, sequência atual), filtros, cartão por ocorrência com hora, dias
-                          de atraso, nota e trilha de extensão (#101/C, substituiu o bottom sheet antigo)
+  → ações (comuns, só quando state.isEditing — ver acima):
+       [Compartilhar]     → share sheet do sistema (sempre visível, mesmo em criação)
+       [Configurações]    → NavCard "Configurações" → ItemConfigScreen (ItemsRoute.Config(itemId,
+                             isNewItem)) — substituiu o ícone de engrenagem no toolbar do #160 (#162)
+       [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home (sempre visível)
+       [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
+                             pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
+                             por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C)
   → "←" → volta
 ```
 
 **Regras:**
-- Só **Título** é obrigatório. Recorrência só habilita se houver data de vencimento; sem data, fica indisponível/oculta.
+- Só **Título** é obrigatório.
 - Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica, pull-to-refresh na Home, ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`, motor de reavaliação #101/D). "Ignorar" é a exceção — avança `dueDate` na hora.
 - `ItemDetailScreen` hoisteia dois ViewModels lado a lado (`ItemDetailViewModel` pro form, `ItemOccurrenceViewModel` pro ciclo de vida da ocorrência) — sincronizados via `OnItemUpdatedExternally` pra uma escrita de um lado não sobrescrever a do outro (#101/B).
+- Item criado e depois excluído antes do primeiro save "de verdade" (ex. usuário desiste e sai) ainda é removido corretamente — `OnDeleteConfirmClicked` usa o `itemId` interno do ViewModel (que já pode ter sido auto-salvo), não o `itemId` de rota (#162).
+
+---
+
+## Configurações do Item
+
+**Acesso:** `ItemDetailScreen` (modo edição, ou seja `state.isEditing == true`) → `NavCard` "Configurações" no `ItemFormBody` (#162 — substituiu o ícone de engrenagem no toolbar do #160). O card só existe/aparece depois que o item tem `itemId` real (primeiro auto-save concluído) — pra item novo ainda não salvo, o card fica escondido em vez de clicável-mas-sem-efeito.
+
+```
+ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
+  → Seção (dropdown, opcional) · Tags (chip-input, múltiplas, opcional)
+  → Lembrete (switch) → Recorrência · Data de vencimento (se recorrência = Nenhuma) · Horário · Aviso
+     — mesmos campos/componentes do form principal, disponíveis pros dois tipos (#160)
+  → Zona de risco: tipo atual do item + botão [Alterar] — só aparece quando isNewItem == false
+       (item recém-criado, sem histórico/ocorrência acumulada, não tem risco a avisar — #165 batch)
+       → DeleteConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
+       → confirma → reset total: dueDate/dueTime/recurrence/reminderWarning voltam a
+         nulo/None, mesmo que o novo tipo também suportasse esses campos — nunca seletivo.
+         Título/descrição/seção/tags NUNCA são tocados. Histórico (`ItemCompletionHistory`)
+         nunca é apagado, só para de receber novas entradas se o item deixar de ser Tarefa.
+  → "←" → volta (ItemDetailScreen recarrega os campos ao retomar foco, ver acima)
+```
+
+**Regras:**
+- Só alcançável a partir de um item já existente (`itemId` obrigatório) — não existe mais seletor de tipo inline no form (`TypeSelectorField` foi removido no #162); o tipo é fixado só na criação (`initialType`, escolhido antes de entrar na tela) e mostrado como badge, nunca editável ali.
+- `isNewItem` é derivado do `itemId` de rota (imutável) do `ItemDetailScreen`, não do `itemId` mutável do `uiState` — só assim o sinal "isso era criação" sobrevive ao primeiro auto-save (ver #165 batch).
+- `ItemConfigViewModel` reaproveita só `ItemFormUseCase` — seção/tags saíram pro `SectionsTagsViewModel` dedicado (#170), hoisteado ao lado na Config Screen, com bottom sheet de criação rápida (create-only).
+- Layout desenhado via Claude Design (V1 escolhida): https://claude.ai/code/artifact/3534d226-b174-40da-85dd-5358c32dd180
 
 ---
 

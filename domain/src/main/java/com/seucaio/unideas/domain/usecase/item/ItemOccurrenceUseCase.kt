@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 
 class ItemOccurrenceUseCase(
     private val completeItem: CompleteItemUseCase,
-    private val getItemCompletionHistory: GetItemCompletionHistoryUseCase,
+    private val itemCompletionHistoryUseCase: ItemCompletionHistoryUseCase,
     private val ignoreOccurrenceUseCase: IgnoreOccurrenceUseCase,
     private val extendItemDueDateUseCase: ExtendItemDueDateUseCase,
 ) {
@@ -22,7 +22,7 @@ class ItemOccurrenceUseCase(
         completeItem(item, completedAt, note)
 
     fun getHistory(itemId: Long): Flow<List<ItemCompletionHistory>> =
-        getItemCompletionHistory(itemId)
+        itemCompletionHistoryUseCase.getHistory(itemId)
 
     suspend fun ignore(item: Item, note: String, today: LocalDate = LocalDate.now()): Result<Item> =
         ignoreOccurrenceUseCase(item, note, today)
@@ -33,4 +33,10 @@ class ItemOccurrenceUseCase(
         today: LocalDate = LocalDate.now()
     ): Result<Item> =
         extendItemDueDateUseCase(item, newDueDate, today)
+
+    suspend fun saveHistoryEntry(record: ItemCompletionHistory): Result<Unit> =
+        itemCompletionHistoryUseCase.save(record)
+
+    suspend fun deleteHistoryEntry(id: Long): Result<Unit> =
+        itemCompletionHistoryUseCase.delete(id)
 }

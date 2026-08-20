@@ -144,7 +144,7 @@ private fun LazyListScope.sectionGroup(
     indentStart: Dp = 0.dp,
 ) {
     val key = if (group.isPinnedItemsGroup) PINNED_ITEMS_GROUP_KEY else group.sectionId ?: NO_SECTION_KEY
-    val expanded = context.expandedOverrides[key] ?: group.isPinned
+    val expanded = context.expandedOverrides[key] ?: true
 
     item(key = "group-$key") {
         val homeMode = context.homeMode
@@ -152,7 +152,7 @@ private fun LazyListScope.sectionGroup(
             title = if (group.isPinnedItemsGroup) context.pinnedItemsLabel else group.sectionName ?: context.noSectionLabel,
             itemCount = group.items.size,
             expanded = expanded,
-            onToggle = { context.onToggleCollapse(key, group.isPinned) },
+            onToggle = { context.onToggleCollapse(key, true) },
             isPinned = group.isPinned,
             onTogglePin = group.sectionId?.let { sectionId ->
                 {

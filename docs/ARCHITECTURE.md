@@ -70,7 +70,9 @@ domain/
 ├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
 │   ├── Item.kt
 │   ├── ItemDetail.kt        — Item + sectionName resolvido (join feito em :data, nunca no ViewModel — ver ItemWithTagsAndSection)
-│   ├── SectionsAndTags.kt   — snapshot único de sections+tags pra telas que selecionam dos dois (ex: ItemForm)
+│   ├── SectionsAndTags.kt   — par sections+tags, emitido como Flow ao vivo por SectionsAndTagsUseCase pras telas
+│   │                          que selecionam dos dois (Home, ItemDetail, Config) — não é mais um snapshot único
+│   │                          desde #170 (criação inline de seção/tag exige refletir sem sair da tela)
 │   ├── ItemType.kt          — enum TASK | NOTE
 │   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
@@ -95,7 +97,10 @@ domain/
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
 │   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
 └── usecase/
-    ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
+    ├── SectionsAndTagsUseCase.kt  — facade get+create sobre SectionUseCase/TagUseCase: getAll(): Flow<SectionsAndTags>
+    │                                 (live, combine) + addSection/addTag; usado por HomeViewModel, ItemDetailViewModel
+    │                                 e SectionsTagsViewModel (Config Screen) — 1 parâmetro por ViewModel em vez de
+    │                                 injetar SectionUseCase+TagUseCase separados (#170)
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
     │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete)
     │   ├── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
@@ -166,6 +171,8 @@ uds/
 │                            — inputs/ ganhou SelectionBottomSheet, GridSelectionBottomSheet e SwitchSection (#130)
 │                            — lists/ reorganizado em lists/item/ (ListItemCard, ListItemCheckbox, ListItemRow,
 │                              ListItemTrailingIndicator) + lists/model/ListItemUi.kt (#127/#140)
+│                            — lists/NavCard.kt (#162) — card de navegação com chevron, reaproveitável (ex.:
+│                              entrada pra Config Screen/Histórico na tela de Detalhe)
 └── components/legacy/     — componentes portados ao pé da letra do antigo :core:ui, mesmos nomes
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
@@ -188,24 +195,30 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 
 **`additem/` foi aposentado (#134)** — criar e editar item deixaram de ser telas separadas. `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (type inicial vindo de `initialType`), `itemId != null` carrega o item existente. Não existe mais `ItemFormScreen`.
 
+**Tipo do item trava após a criação (#160/#162).** Não existe mais seletor de tipo inline no formulário (`TypeSelectorField` foi removido) — Tarefa/Anotação é definida só na criação (`initialType`) e exibida como badge (`TextBadge`) em ambos os modos; trocar Tarefa↔Anotação de um item já existente exige a Config Screen (guardrail com confirmação + reset total, ver `config/` abaixo). `dueDate`/`dueTime`/`recurrence`/`reminderWarning` deixaram de ser exclusivos de Tarefa — `completedAt`/conclusão continua sendo a única diferença estrutural real entre os dois tipos, reforçada em runtime por `CompleteItemUseCase`.
+
+**Tela de Detalhe reestruturada (#162).** `ItemFormBody` mostra o badge de tipo + `TitleDescriptionFields` rolável, e — só quando `state.isEditing` (item já persistido) — dois `NavCard` (`:uds`, com chevron) pra "Configurações" e "Histórico" (cada um com resumo próprio) mais o `ItemFormFooter` (conclusão), fixados fora da área de scroll. Pra item novo ainda não salvo (auto-save ainda não rodou), esse bloco inteiro fica oculto — não só desabilitado — já que `Configurações`/`Histórico`/conclusão não fazem sentido sem um `itemId` real. A antiga seção inline "Mais opções" (`ItemFormOptionsSection`/`ItemFormCommonOptions`/`ItemFormTaskOptions`) foi removida — os campos que ela continha (data/hora, recorrência, aviso, seção, tags) migraram pra Config Screen no #160.
+
 ```
 feature/items/
 ├── navigation/
 │   ├── ItemsNavGraph.kt
 │   └── ItemsRoute.kt              — @Serializable: Detail(itemId: Long? = null, initialType: ItemType = TASK) |
-│                                     History(itemId: Long) (#101/C) | List
+│                                     History(itemId: Long) (#101/C) | Config(itemId: Long) (#160) | List
 ├── di/
 │   └── FeatureModule.kt           — val itemsModule
 └── ui/
     ├── components/
     │   ├── ItemActions.kt, DueDateRow.kt
     │   ├── fields/       — CompletionField, DueDateField, DueTimeField, ReminderWarningField, SectionField,
-    │   │                    TagsField, TitleDescriptionFields (+preview), TypeSelectorField
+    │   │                    TagsField, TitleDescriptionFields (+preview) — DueDate/DueTime/ReminderWarning/Section/Tags
+    │   │                    são consumidos pela Config Screen (#160), não mais pelo form principal
     │   │   ├── markdown/     — MarkdownFormat/PreviewToggle/SelectionContextMenu/SyntaxHighlight/SyntaxInserter/Toolbar (#93)
     │   │   ├── model/        — ItemFormFields.kt
     │   │   └── recurrence/   — RecurrenceBottomSheet (picker principal, sobre SelectionBottomSheet do :uds),
     │   │                        EveryNDaysBottomSheet, WeekdayBottomSheet, DayOfMonthBottomSheet (sobre GridSelectionBottomSheet) (#130)
-    │   └── form/         — ItemFormBody, ItemFormCommonOptions, ItemFormFooter, ItemFormOptionsSection, ItemFormTaskOptions,
+    │   └── form/         — ItemFormBody (badge de tipo + TitleDescriptionFields + NavCards Config/Histórico + footer,
+    │                        só quando state.isEditing — #162), ItemFormFooter (conclusão),
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     └── screens/
         ├── detail/
@@ -223,6 +236,18 @@ feature/items/
         │                 (% no prazo, contagem por status, sequência atual), filtros (Todas/No prazo/Atrasadas/Com
         │                 nota), ItemHistoryCard por ocorrência (hora, dias de atraso, nota, trilha de extensão)
         │                 + ItemHistoryPreviewProvider.kt + viewmodel/ (ItemHistoryUiState/Event/ViewModel)
+        ├── config/     — ItemConfigScreen.kt (tela própria, #160): edição de seção/tags/lembrete/recorrência/
+        │                 data/horário/aviso de um item já existente, mais o fluxo guardado de troca de tipo
+        │                 (dialog de confirmação + reset total dos campos "pesados" — `switchedType()`/
+        │                 `ItemConfigDialogState.TypeSwitchConfirm`, escondido quando `isNewItem == true` — #165
+        │                 batch) + viewmodel/ (ItemConfigUiState/Event/UiAction/ViewModel/DialogState). Reaproveita
+        │                 só `ItemFormUseCase`. Acessada via `NavCard` "Configurações" no `ItemFormBody`
+        │                 (`state.isEditing`) — substituiu o ícone de engrenagem no toolbar do #160; a seção
+        │                 "Mais opções" inline foi removida no #162
+        │                 viewmodel/sectionstags/ — SectionsTagsViewModel (#170), ViewModel dedicado à listagem de
+        │                 sections/tags da Config Screen (hoisteado ao lado do ItemConfigViewModel) + criação rápida
+        │                 (create-only; CRUD completo continua em Settings) via `QuickCreateBottomSheet`
+        │                 (`ui/components/fields/sectionstags/`); injeta só `SectionsAndTagsUseCase`
         └── list/      — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro/seleção;
                           acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
                           viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt

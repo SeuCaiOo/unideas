@@ -1,12 +1,11 @@
 package com.seucaio.unideas.domain.di
 
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.CompleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.ExtendItemDueDateUseCase
-import com.seucaio.unideas.domain.usecase.item.GetItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
@@ -15,6 +14,7 @@ import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
@@ -49,7 +49,8 @@ val domainModule = module {
     factoryOf(::DeleteTagUseCase)
     factoryOf(::TagUseCase)
 
-    factoryOf(::GetSectionsAndTagsUseCase)
+    factoryOf(::SectionsAndTagsUseCase)
+
     factoryOf(::SeedDatabaseUseCase)
     factoryOf(::ClearDatabaseUseCase)
 
@@ -67,7 +68,7 @@ val domainModule = module {
     factoryOf(::ItemFormUseCase)
     factoryOf(::ItemOccurrenceUseCase)
     factoryOf(::HomeUseCase)
-    factoryOf(::GetItemCompletionHistoryUseCase)
+    factoryOf(::ItemCompletionHistoryUseCase)
     factoryOf(::ProcessMissedOccurrencesUseCase)
     factoryOf(::IgnoreOccurrenceUseCase)
     factoryOf(::ExtendItemDueDateUseCase)

@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.common.extensions.shareText
 import com.seucaio.unideas.core.common.extensions.toFormattedDateString
@@ -58,11 +59,17 @@ fun ItemDetailScreen(
     itemId: Long?,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
+    onNavigateToConfig: (Long, Boolean) -> Unit,
     initialType: ItemType = ItemType.TASK,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onEvent(ItemDetailEvent.OnScreenResumed)
+        onPauseOrDispose { }
+    }
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
@@ -100,7 +107,6 @@ fun ItemDetailScreen(
     }
 
     ItemDetailScreenContent(
-        itemId = itemId,
         uiState = uiState,
         dialogState = dialogState,
         occurrenceState = occurrenceState,
@@ -109,6 +115,7 @@ fun ItemDetailScreen(
         onOccurrenceEvent = occurrenceViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
+        onNavigateToConfig = { configuredItemId -> onNavigateToConfig(configuredItemId, itemId == null) },
         snackbarHostState = snackbarHostState,
     )
 }
@@ -116,7 +123,6 @@ fun ItemDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ItemDetailScreenContent(
-    itemId: Long?,
     uiState: ItemDetailUiState,
     dialogState: ItemDetailDialogState,
     occurrenceState: ItemOccurrenceUiState,
@@ -125,6 +131,7 @@ private fun ItemDetailScreenContent(
     onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
+    onNavigateToConfig: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -137,16 +144,8 @@ private fun ItemDetailScreenContent(
 
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
-            onTypeChanged = { onEvent(ItemDetailEvent.OnTypeChanged(it)) },
             onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
-            onSectionChanged = { onEvent(ItemDetailEvent.OnSectionChanged(it)) },
-            onTagToggled = { onEvent(ItemDetailEvent.OnTagToggled(it)) },
-            onReminderToggled = { onEvent(ItemDetailEvent.OnReminderToggled(it)) },
-            onDueDateChanged = { onEvent(ItemDetailEvent.OnDueDateChanged(it)) },
-            onDueTimeChanged = { onEvent(ItemDetailEvent.OnDueTimeChanged(it)) },
-            onRecurrenceChanged = { onEvent(ItemDetailEvent.OnRecurrenceChanged(it)) },
-            onReminderWarningChanged = { onEvent(ItemDetailEvent.OnReminderWarningChanged(it)) },
         )
     }
 
@@ -154,7 +153,7 @@ private fun ItemDetailScreenContent(
         topBar = {
             UnideasTopBar(
                 onNavigateBack = topBarNavigateBack,
-                actions = { ItemDetailTopBarActions(itemId, uiState, onEvent, onNavigateToHistory) },
+                actions = { ItemDetailTopBarActions(uiState, onEvent) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -173,6 +172,14 @@ private fun ItemDetailScreenContent(
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
+                onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
+                onNavigateToHistory = uiState.itemId?.let { savedItemId ->
+                    if (uiState.recurrence != Recurrence.None) {
+                        { onNavigateToHistory(savedItemId) }
+                    } else {
+                        null
+                    }
+                },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -184,18 +191,11 @@ private fun ItemDetailScreenContent(
 
 @Composable
 private fun ItemDetailTopBarActions(
-    itemId: Long?,
     uiState: ItemDetailUiState,
     onEvent: (ItemDetailEvent) -> Unit,
-    onNavigateToHistory: (Long) -> Unit,
 ) {
     ItemActions(
         onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
-        onHistoryClicked = if (uiState.isEditing && uiState.recurrence != Recurrence.None && itemId != null) {
-            { onNavigateToHistory(itemId) }
-        } else {
-            null
-        },
         onDeleteClicked = if (uiState.isEditing) {
             { onEvent(ItemDetailEvent.OnDeleteClicked) }
         } else {
@@ -288,7 +288,6 @@ private fun ItemDetailScreenPreview(
 ) {
     UdsTheme {
         ItemDetailScreenContent(
-            itemId = 1L,
             uiState = previewState,
             dialogState = ItemDetailDialogState.None,
             occurrenceState = ItemOccurrenceUiState(),
@@ -297,6 +296,7 @@ private fun ItemDetailScreenPreview(
             onOccurrenceEvent = {},
             onNavigateBack = {},
             onNavigateToHistory = {},
+            onNavigateToConfig = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

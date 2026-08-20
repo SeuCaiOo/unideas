@@ -1,14 +1,26 @@
 package com.seucaio.unideas.feature.items.ui.screens.history
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -24,7 +36,11 @@ import com.seucaio.unideas.feature.items.R
 import java.time.temporal.ChronoUnit
 
 @Composable
-internal fun ItemHistoryCard(entry: ItemCompletionHistory) {
+internal fun ItemHistoryCard(
+    entry: ItemCompletionHistory,
+    onEditClick: (ItemCompletionHistory) -> Unit = {},
+    onDeleteClick: (ItemCompletionHistory) -> Unit = {},
+) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.medium
@@ -35,19 +51,56 @@ internal fun ItemHistoryCard(entry: ItemCompletionHistory) {
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = entry.scheduledDate.toFormattedDateString(),
                     style = MaterialTheme.typography.bodyLarge
                 )
-                Text(
-                    text = entry.status.label(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = entry.status.color(),
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = entry.status.label(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = entry.status.color(),
+                    )
+                    ItemHistoryCardMenu(
+                        onEditClick = { onEditClick(entry) },
+                        onDeleteClick = { onDeleteClick(entry) },
+                    )
+                }
             }
             ItemHistoryCardDetails(entry)
+        }
+    }
+}
+
+@Composable
+private fun ItemHistoryCardMenu(onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+        IconButton(onClick = { menuExpanded = true }) {
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.item_history_menu_content_description)
+            )
+        }
+        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.item_history_edit_entry)) },
+                onClick = {
+                    menuExpanded = false
+                    onEditClick()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.item_history_delete_entry)) },
+                onClick = {
+                    menuExpanded = false
+                    onDeleteClick()
+                },
+            )
         }
     }
 }

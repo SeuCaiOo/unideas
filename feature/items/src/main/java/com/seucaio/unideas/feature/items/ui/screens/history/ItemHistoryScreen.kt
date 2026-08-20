@@ -9,16 +9,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -27,11 +37,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.ds.components.chips.SelectableChipRow
 import com.seucaio.unideas.ds.components.chips.SelectableChipUi
+import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
+import com.seucaio.unideas.feature.items.ui.components.AddEditHistoryEntryBottomSheet
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.HistoryFilter
+import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryDialogState
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryEvent
+import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryUiAction
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryUiState
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -44,11 +58,25 @@ fun ItemHistoryScreen(
     viewModel: ItemHistoryViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiAction.collect { action ->
+            when (action) {
+                is ItemHistoryUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(resources.getString(action.resId))
+                is ItemHistoryUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
 
     ItemHistoryScreenContent(
         uiState = uiState,
+        dialogState = dialogState,
         onEvent = viewModel::onEvent,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -56,9 +84,13 @@ fun ItemHistoryScreen(
 @Composable
 private fun ItemHistoryScreenContent(
     uiState: ItemHistoryUiState,
+    dialogState: ItemHistoryDialogState,
     onEvent: (ItemHistoryEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    val currentOnEvent by rememberUpdatedState(onEvent)
+
     Scaffold(
         topBar = {
             UnideasTopBar(
@@ -66,8 +98,32 @@ private fun ItemHistoryScreenContent(
                 onNavigateBack = onNavigateBack,
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { currentOnEvent(ItemHistoryEvent.OnAddEntryClicked) }) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.item_history_add_entry))
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         ItemHistoryContent(uiState = uiState, onEvent = onEvent, contentPadding = padding)
+    }
+
+    when (dialogState) {
+        is ItemHistoryDialogState.None -> Unit
+        is ItemHistoryDialogState.AddEditEntry -> AddEditHistoryEntryBottomSheet(
+            existing = dialogState.existing,
+            blockedDates = dialogState.blockedDates,
+            onDismiss = { currentOnEvent(ItemHistoryEvent.OnDialogDismissed) },
+            onConfirm = { scheduledDate, completedAt, note ->
+                currentOnEvent(ItemHistoryEvent.OnEntrySubmitted(scheduledDate, completedAt, note))
+            },
+        )
+        is ItemHistoryDialogState.DeleteConfirm -> DeleteConfirmationDialog(
+            titleRes = R.string.item_history_delete_confirm_title,
+            messageRes = R.string.item_history_delete_confirm_message,
+            onDismiss = { currentOnEvent(ItemHistoryEvent.OnDialogDismissed) },
+            onConfirm = { currentOnEvent(ItemHistoryEvent.OnDeleteConfirmClicked) },
+        )
     }
 }
 
@@ -103,7 +159,13 @@ internal fun ItemHistoryContent(
                 contentPadding = PaddingValues(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(uiState.filteredHistory) { entry -> ItemHistoryCard(entry) }
+                items(uiState.filteredHistory) { entry ->
+                    ItemHistoryCard(
+                        entry = entry,
+                        onEditClick = { onEvent(ItemHistoryEvent.OnEditEntryClicked(it)) },
+                        onDeleteClick = { onEvent(ItemHistoryEvent.OnDeleteEntryClicked(it)) },
+                    )
+                }
             }
         }
     }
@@ -245,11 +307,16 @@ private fun HistoryFilterRow(
 @PreviewLightDark
 @Composable
 private fun ItemHistoryScreenContentPreview(
-    @PreviewParameter(ItemHistoryScreenContentPreviewProvider::class) uiState: ItemHistoryUiState,
+    @PreviewParameter(ItemHistoryScreenContentPreviewProvider::class) scenario: ItemHistoryPreviewScenario,
 ) {
     UdsTheme {
         Surface {
-            ItemHistoryScreenContent(uiState = uiState, onEvent = {}, onNavigateBack = {})
+            ItemHistoryScreenContent(
+                uiState = scenario.uiState,
+                dialogState = scenario.dialogState,
+                onEvent = {},
+                onNavigateBack = {},
+            )
         }
     }
 }

@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -27,8 +26,7 @@ class MainActivity : ComponentActivity() {
             UdsTheme {
                 val navController = rememberNavController()
                 this.navController = navController
-                LaunchedEffect(Unit) { navController.handleDeepLink(intent) }
-                AppNavHost(navController)
+                AppNavHost(navController, initialIntent = intent)
             }
         }
     }

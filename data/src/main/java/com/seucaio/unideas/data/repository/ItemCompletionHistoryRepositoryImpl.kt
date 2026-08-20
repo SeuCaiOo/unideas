@@ -19,6 +19,10 @@ class ItemCompletionHistoryRepositoryImpl(
 
     override suspend fun insert(record: ItemCompletionHistory): Long = dao.insert(record.toEntity())
 
+    override suspend fun update(record: ItemCompletionHistory) = dao.update(record.toEntity())
+
     override suspend fun deleteOccurrence(itemId: Long, scheduledDate: LocalDate) =
         dao.deleteOccurrence(itemId, scheduledDate.toEpochMilli())
+
+    override suspend fun deleteById(id: Long) = dao.deleteById(id)
 }

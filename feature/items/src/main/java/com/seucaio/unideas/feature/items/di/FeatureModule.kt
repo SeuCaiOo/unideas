@@ -1,5 +1,7 @@
 package com.seucaio.unideas.feature.items.di
 
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigViewModel
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceViewModel
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryViewModel
@@ -15,7 +17,7 @@ val itemsModule = module {
         ItemDetailViewModel(
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
-            getSectionsAndTags = get(),
+            sectionsAndTagsUseCase = get(),
             savedStateHandle = get(),
             initialType = params.get(),
         )
@@ -33,5 +35,12 @@ val itemsModule = module {
             itemOccurrenceUseCase = get(),
         )
     }
+    viewModel { params ->
+        ItemConfigViewModel(
+            itemId = params.get(),
+            itemFormUseCase = get(),
+        )
+    }
     viewModelOf(::ItemsListViewModel)
+    viewModelOf(::SectionsTagsViewModel)
 }

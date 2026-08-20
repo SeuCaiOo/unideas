@@ -70,7 +70,9 @@ domain/
 ├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
 │   ├── Item.kt
 │   ├── ItemDetail.kt        — Item + sectionName resolvido (join feito em :data, nunca no ViewModel — ver ItemWithTagsAndSection)
-│   ├── SectionsAndTags.kt   — snapshot único de sections+tags pra telas que selecionam dos dois (ex: ItemForm)
+│   ├── SectionsAndTags.kt   — par sections+tags, emitido como Flow ao vivo por SectionsAndTagsUseCase pras telas
+│   │                          que selecionam dos dois (Home, ItemDetail, Config) — não é mais um snapshot único
+│   │                          desde #170 (criação inline de seção/tag exige refletir sem sair da tela)
 │   ├── ItemType.kt          — enum TASK | NOTE
 │   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
@@ -95,7 +97,10 @@ domain/
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
 │   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
 └── usecase/
-    ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
+    ├── SectionsAndTagsUseCase.kt  — facade get+create sobre SectionUseCase/TagUseCase: getAll(): Flow<SectionsAndTags>
+    │                                 (live, combine) + addSection/addTag; usado por HomeViewModel, ItemDetailViewModel
+    │                                 e SectionsTagsViewModel (Config Screen) — 1 parâmetro por ViewModel em vez de
+    │                                 injetar SectionUseCase+TagUseCase separados (#170)
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
     │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete)
     │   ├── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
@@ -236,9 +241,13 @@ feature/items/
         │                 (dialog de confirmação + reset total dos campos "pesados" — `switchedType()`/
         │                 `ItemConfigDialogState.TypeSwitchConfirm`, escondido quando `isNewItem == true` — #165
         │                 batch) + viewmodel/ (ItemConfigUiState/Event/UiAction/ViewModel/DialogState). Reaproveita
-        │                 `ItemFormUseCase`/`GetSectionsAndTagsUseCase`, sem facade nova. Acessada via `NavCard`
-        │                 "Configurações" no `ItemFormBody` (`state.isEditing`) — substituiu o ícone de engrenagem
-        │                 no toolbar do #160; a seção "Mais opções" inline foi removida no #162
+        │                 só `ItemFormUseCase`. Acessada via `NavCard` "Configurações" no `ItemFormBody`
+        │                 (`state.isEditing`) — substituiu o ícone de engrenagem no toolbar do #160; a seção
+        │                 "Mais opções" inline foi removida no #162
+        │                 viewmodel/sectionstags/ — SectionsTagsViewModel (#170), ViewModel dedicado à listagem de
+        │                 sections/tags da Config Screen (hoisteado ao lado do ItemConfigViewModel) + criação rápida
+        │                 (create-only; CRUD completo continua em Settings) via `QuickCreateBottomSheet`
+        │                 (`ui/components/fields/sectionstags/`); injeta só `SectionsAndTagsUseCase`
         └── list/      — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro/seleção;
                           acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
                           viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt

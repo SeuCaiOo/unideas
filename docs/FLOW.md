@@ -151,7 +151,7 @@ ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
 **Regras:**
 - Só alcançável a partir de um item já existente (`itemId` obrigatório) — não existe mais seletor de tipo inline no form (`TypeSelectorField` foi removido no #162); o tipo é fixado só na criação (`initialType`, escolhido antes de entrar na tela) e mostrado como badge, nunca editável ali.
 - `isNewItem` é derivado do `itemId` de rota (imutável) do `ItemDetailScreen`, não do `itemId` mutável do `uiState` — só assim o sinal "isso era criação" sobrevive ao primeiro auto-save (ver #165 batch).
-- `ItemConfigViewModel` reaproveita `ItemFormUseCase`/`GetSectionsAndTagsUseCase` — sem facade nova.
+- `ItemConfigViewModel` reaproveita só `ItemFormUseCase` — seção/tags saíram pro `SectionsTagsViewModel` dedicado (#170), hoisteado ao lado na Config Screen, com bottom sheet de criação rápida (create-only).
 - Layout desenhado via Claude Design (V1 escolhida): https://claude.ai/code/artifact/3534d226-b174-40da-85dd-5358c32dd180
 
 ---

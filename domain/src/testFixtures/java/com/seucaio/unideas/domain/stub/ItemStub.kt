@@ -33,6 +33,8 @@ object ItemStub {
         createdAt: LocalDateTime = CREATED_AT,
         lastCompletedScheduledDate: LocalDate? = null,
         isPinned: Boolean = false,
+        pendingExtensionOriginalDueDate: LocalDate? = null,
+        pendingExtensionCount: Int = 0,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -48,6 +50,8 @@ object ItemStub {
         createdAt = createdAt,
         lastCompletedScheduledDate = lastCompletedScheduledDate,
         isPinned = isPinned,
+        pendingExtensionOriginalDueDate = pendingExtensionOriginalDueDate,
+        pendingExtensionCount = pendingExtensionCount,
         tags = tags,
     )
 
@@ -56,6 +60,10 @@ object ItemStub {
         title: String = "Ideia de projeto",
         description: String? = "Anotação livre",
         sectionId: Long? = null,
+        dueDate: LocalDate? = null,
+        dueTime: LocalTime? = null,
+        recurrence: Recurrence = Recurrence.None,
+        reminderWarning: ReminderWarning = ReminderWarning.None,
         createdAt: LocalDateTime = CREATED_AT,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
@@ -64,6 +72,10 @@ object ItemStub {
         title = title,
         description = description,
         sectionId = sectionId,
+        dueDate = dueDate,
+        dueTime = dueTime,
+        recurrence = recurrence,
+        reminderWarning = reminderWarning,
         createdAt = createdAt,
         tags = tags,
     )

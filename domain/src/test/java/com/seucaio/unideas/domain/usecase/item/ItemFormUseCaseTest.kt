@@ -1,7 +1,5 @@
 package com.seucaio.unideas.domain.usecase.item
 
-import com.seucaio.unideas.domain.model.ItemCompletionHistory
-import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -13,7 +11,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.LocalDateTime
 
 class ItemFormUseCaseTest {
 
@@ -21,10 +18,7 @@ class ItemFormUseCaseTest {
     private val createItem: CreateItemUseCase = mockk()
     private val editItem: EditItemUseCase = mockk()
     private val deleteItem: DeleteItemUseCase = mockk()
-    private val completeItem: CompleteItemUseCase = mockk()
-    private val getItemCompletionHistory: GetItemCompletionHistoryUseCase = mockk()
-    private val useCase =
-        ItemFormUseCase(getItem, createItem, editItem, deleteItem, completeItem, getItemCompletionHistory)
+    private val useCase = ItemFormUseCase(getItem, createItem, editItem, deleteItem)
 
     @Test
     fun `get delegates to GetItemUseCase`() = runTest {
@@ -67,30 +61,5 @@ class ItemFormUseCaseTest {
 
         assertEquals(Result.success(Unit), result)
         coVerify(exactly = 1) { deleteItem(1L) }
-    }
-
-    @Test
-    fun `complete delegates to CompleteItemUseCase`() = runTest {
-        val item = ItemStub.task()
-        val completedAt = LocalDateTime.of(2026, 7, 23, 10, 0)
-        coEvery { completeItem(item, completedAt) } returns Result.success(CompletionResult.Completed)
-
-        val result = useCase.complete(item, completedAt)
-
-        assertEquals(Result.success(CompletionResult.Completed), result)
-        coVerify(exactly = 1) { completeItem(item, completedAt) }
-    }
-
-    @Test
-    fun `getHistory delegates to GetItemCompletionHistoryUseCase`() = runTest {
-        val history = listOf(
-            ItemCompletionHistory(itemId = 1L, scheduledDate = ItemStub.TODAY, completedAt = null),
-        )
-        every { getItemCompletionHistory(1L) } returns flowOf(history)
-
-        val result = useCase.getHistory(1L).first()
-
-        assertEquals(history, result)
-        verify(exactly = 1) { getItemCompletionHistory(1L) }
     }
 }

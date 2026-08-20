@@ -6,7 +6,6 @@ import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 
 interface ItemFormFieldsState {
@@ -24,8 +23,6 @@ interface ItemFormFieldsState {
     val isTitleValid: Boolean
     val hasReminder: Boolean
     val typeIsTask: Boolean
-    val isCompleted: Boolean get() = false
-    val completedAt: LocalDateTime? get() = null
     val isEditing: Boolean get() = false
     val titleError: Boolean get() = false
 }
@@ -44,15 +41,6 @@ val ItemFormFieldsState.persistableReminderWarning: ReminderWarning
     get() = if (hasReminder) reminderWarning else ReminderWarning.None
 
 data class ItemFormFieldsEvents(
-    val onTypeChanged: (ItemType) -> Unit,
     val onTitleChanged: (String) -> Unit,
     val onDescriptionChanged: (String) -> Unit,
-    val onSectionChanged: (Long?) -> Unit,
-    val onTagToggled: (Long) -> Unit,
-    val onReminderToggled: (Boolean) -> Unit,
-    val onDueDateChanged: (LocalDate?) -> Unit,
-    val onDueTimeChanged: (LocalTime?) -> Unit,
-    val onRecurrenceChanged: (Recurrence) -> Unit,
-    val onReminderWarningChanged: (ReminderWarning) -> Unit,
-    val onCompleteClicked: () -> Unit = {},
 )

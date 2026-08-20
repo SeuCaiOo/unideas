@@ -6,58 +6,121 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.ds.components.chips.TextBadge
+import com.seucaio.unideas.ds.components.lists.NavCard
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFields
-import com.seucaio.unideas.feature.items.ui.components.fields.TypeSelectorField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
-import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailPreviewProvider
-import com.seucaio.unideas.feature.items.ui.screens.detail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.label
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
+import java.time.format.DateTimeFormatter
 
-/**
- * Composes the item form's four parts, top to bottom: title/description, type selector, the
- * collapsed [ItemFormOptionsSection] (section/tags/due fields), and [ItemFormFooter] (completion +
- * save). Each part owns its own visibility rules — this just lays them out in order.
- */
+private val cardTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
 @Composable
-fun ItemFormBody(state: ItemFormFieldsState, events: ItemFormFieldsEvents, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .imePadding(),
-    ) {
-        TitleDescriptionFields(
-            title = state.title,
-            description = state.description,
-            onTitleChanged = events.onTitleChanged,
-            onDescriptionChanged = events.onDescriptionChanged,
-            isEditing = state.isEditing,
-            titleError = state.titleError,
-        )
-
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            TypeSelectorField(
-                type = state.type,
-                onTypeChanged = events.onTypeChanged,
-                modifier = Modifier.padding(top = 16.dp),
+fun ItemFormBody(
+    state: ItemFormFieldsState,
+    events: ItemFormFieldsEvents,
+    occurrenceState: ItemOccurrenceUiState,
+    onCompleteClicked: () -> Unit,
+    onIgnoreClicked: () -> Unit,
+    onExtendDeadlineClicked: () -> Unit,
+    onNavigateToConfig: () -> Unit,
+    onNavigateToHistory: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
+        ) {
+            TextBadge(
+                text = stringResource(
+                    if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+                ),
+                background = MaterialTheme.colorScheme.primaryContainer,
+                content = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
             )
 
-            ItemFormOptionsSection(
-                state = state,
-                events = events,
-                modifier = Modifier.padding(top = 16.dp)
+            TitleDescriptionFields(
+                title = state.title,
+                description = state.description,
+                onTitleChanged = events.onTitleChanged,
+                onDescriptionChanged = events.onDescriptionChanged,
+                isEditing = state.isEditing,
+                titleError = state.titleError,
             )
+        }
 
-            ItemFormFooter(state = state, events = events)
+        if (state.isEditing) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                NavCard(
+                    icon = Icons.Default.Settings,
+                    title = stringResource(R.string.item_config_title),
+                    subtitle = configCardSubtitle(state),
+                    onClick = onNavigateToConfig,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+
+                if (onNavigateToHistory != null) {
+                    NavCard(
+                        icon = Icons.Default.History,
+                        title = stringResource(R.string.item_detail_history),
+                        subtitle = stringResource(R.string.item_detail_history_card_subtitle),
+                        onClick = onNavigateToHistory,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+
+                ItemFormFooter(
+                    state = state,
+                    occurrenceState = occurrenceState,
+                    onCompleteClicked = onCompleteClicked,
+                    onIgnoreClicked = onIgnoreClicked,
+                    onExtendDeadlineClicked = onExtendDeadlineClicked,
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun configCardSubtitle(state: ItemFormFieldsState): String {
+    val parts = buildList {
+        state.recurrence.label(state.dueDate)?.let(::add)
+        state.dueTime?.let { add(it.format(cardTimeFormatter)) }
+        state.availableSections.firstOrNull { it.id == state.sectionId }?.let { add(it.name) }
+        if (state.selectedTagIds.isNotEmpty()) {
+            add(
+                pluralStringResource(
+                    R.plurals.item_config_card_tags,
+                    state.selectedTagIds.size,
+                    state.selectedTagIds.size
+                )
+            )
+        }
+    }
+    return parts.ifEmpty { null }?.joinToString(" · ") ?: stringResource(R.string.item_config_card_subtitle_empty)
 }
 
 @PreviewLightDark
@@ -70,17 +133,15 @@ private fun ItemFormBodyPreview(
             ItemFormBody(
                 state = previewState,
                 events = ItemFormFieldsEvents(
-                    onTypeChanged = {},
                     onTitleChanged = {},
                     onDescriptionChanged = {},
-                    onSectionChanged = {},
-                    onTagToggled = {},
-                    onReminderToggled = {},
-                    onDueDateChanged = {},
-                    onDueTimeChanged = {},
-                    onRecurrenceChanged = {},
-                    onReminderWarningChanged = {},
                 ),
+                occurrenceState = ItemOccurrenceUiState(),
+                onCompleteClicked = {},
+                onIgnoreClicked = {},
+                onExtendDeadlineClicked = {},
+                onNavigateToConfig = {},
+                onNavigateToHistory = {},
             )
         }
     }

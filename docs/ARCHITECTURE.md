@@ -70,14 +70,18 @@ domain/
 ├── model/            — modelos de domínio (datas como LocalDate/LocalDateTime)
 │   ├── Item.kt
 │   ├── ItemDetail.kt        — Item + sectionName resolvido (join feito em :data, nunca no ViewModel — ver ItemWithTagsAndSection)
-│   ├── SectionsAndTags.kt   — snapshot único de sections+tags pra telas que selecionam dos dois (ex: ItemForm)
+│   ├── SectionsAndTags.kt   — par sections+tags, emitido como Flow ao vivo por SectionsAndTagsUseCase pras telas
+│   │                          que selecionam dos dois (Home, ItemDetail, Config) — não é mais um snapshot único
+│   │                          desde #170 (criação inline de seção/tag exige refletir sem sair da tela)
 │   ├── ItemType.kt          — enum TASK | NOTE
 │   ├── Recurrence.kt        — sealed interface: None/Daily/Weekly/Monthly (data object) + EveryNDays(days: Int) (data class, intervalo customizado)
 │   ├── UrgencyLevel.kt      — enum OVERDUE | DUE_SOON | NORMAL (derivado de dueDate)
 │   ├── ReminderTier.kt      — cálculo puro do nível de urgência de notificação (radar/normal/urgente), #95/#96
 │   ├── ReminderWarning.kt   — sealed: None | DaysBefore(days: Int), config de aviso do item, #114
 │   ├── ItemCompletionHistory.kt — id, itemId, scheduledDate, completedAt (nulo = não feito), note; status computado
-│   │                              ON_TIME/LATE/MISSED derivado de completedAt vs scheduledDate (#126)
+│   │                              ON_TIME/LATE/MISSED derivado de completedAt vs scheduledDate (#126); originalScheduledDate/
+│   │                              extensionCount (#101/D) — carregados do Item quando a ocorrência resolve/é perdida já tendo
+│   │                              sido adiada, reconstroem "quantas vezes essa ocorrência foi adiada antes de fechar"
 │   ├── Section.kt
 │   ├── Tag.kt
 │   ├── SeedScope.kt         — enum EMPTY | BASIC | FULL — cenário de dado de exemplo, debug-only (#19)
@@ -87,21 +91,42 @@ domain/
 │       └── CompletionResult.kt — Completed | Uncompleted (toggle simples; não gera item novo — ver seção de persistência)
 ├── repository/       — interfaces (contratos), sem implementação
 │   ├── ItemRepository.kt
-│   ├── ItemCompletionHistoryRepository.kt — CRUD do histórico de ocorrência, implementado em :data (#126)
+│   ├── ItemCompletionHistoryRepository.kt — CRUD do histórico de ocorrência, implementado em :data (#126;
+│   │                                          update/deleteById(id) adicionados no #169 — delete por id, distinto de
+│   │                                          deleteOccurrence(itemId, scheduledDate), que já existia pro toggle de desmarcar)
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
 │   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
 └── usecase/
-    ├── GetSectionsAndTagsUseCase.kt  — snapshot único (suspend, não Flow) pra ItemForm; sem combine, dados não mudam com a tela aberta
+    ├── SectionsAndTagsUseCase.kt  — facade get+create sobre SectionUseCase/TagUseCase: getAll(): Flow<SectionsAndTags>
+    │                                 (live, combine) + addSection/addTag; usado por HomeViewModel, ItemDetailViewModel
+    │                                 e SectionsTagsViewModel (Config Screen) — 1 parâmetro por ViewModel em vez de
+    │                                 injetar SectionUseCase+TagUseCase separados (#170)
     ├── item/         — Create/Edit/Delete/Complete/GetItem/GetItemDetail/GetItems/GetPriorityItems
-    │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete/complete)
+    │   ├── ItemDetailUseCase.kt   — facade delegando pros use cases que ItemDetailViewModel usa (getDetail/delete)
     │   ├── ItemFormUseCase.kt     — facade delegando pros use cases que ItemFormViewModel usa (get/create/edit)
-    │   ├── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam (getPriorityItems/getItems/complete)
+    │   ├── ItemOccurrenceUseCase.kt — facade sobre complete/ignore/extend, usada por ItemOccurrenceViewModel (#101/B — ver
+    │   │                              nota abaixo sobre a divisão ItemDetailViewModel × ItemOccurrenceViewModel)
+    │   ├── HomeUseCase.kt         — facade delegando pros use cases que HomeViewModel/AllPrioritiesViewModel usam
+    │   │                            (getPriorityItems/getItems/complete/refreshReminders — #101/D, pull-to-refresh na Home)
+    │   ├── CompleteItemUseCase.kt — concluir; nota obrigatória se a conclusão for atrasada (completedAt > scheduledDate) (#101/A)
+    │   ├── IgnoreOccurrenceUseCase.kt — ação manual "ignorar ocorrência vencida" (nota obrigatória, avança dueDate um ciclo),
+    │   │                                distinta da detecção automática do ProcessMissedOccurrencesUseCase (#101/A)
+    │   ├── ExtendItemDueDateUseCase.kt — "aumentar prazo" de ocorrência vencida: empurra dueDate sem fechar a ocorrência,
+    │   │                                  seta Item.pendingExtensionOriginalDueDate/pendingExtensionCount (#101/A)
     │   ├── SetItemPinnedUseCase.kt          — fixa/desafixa item no painel de prioridades (#127, mesmo padrão do pin de Section)
-    │   ├── GetItemCompletionHistoryUseCase.kt — lista o histórico de ocorrência de um item recorrente (#126)
-    │   └── ProcessMissedOccurrencesUseCase.kt — avança dueDate de item recorrente vencido + grava histórico "não feito";
-    │                                             único ponto de chamada é o ReminderCheckWorker (#96, ver seção de persistência)
+    │   ├── ItemCompletionHistoryUseCase.kt — getHistory (Flow, lista o histórico de ocorrência de um item recorrente, #126)
+    │   │                                      + save/delete (#169, CRUD completo sobre uma entrada — cria via `id == 0L`,
+    │   │                                      edita senão; unicidade (itemId, scheduledDate) validada explicitamente em vez
+    │   │                                      de delegar ao `OnConflictStrategy` do Room; scheduledDate não pode ser futura;
+    │   │                                      nota obrigatória se a conclusão registrada for atrasada). Renomeado de
+    │   │                                      `GetItemCompletionHistoryUseCase` — não passa por `CompleteItemUseCase`/
+    │   │                                      `toggleOccurrence()`, que também mexeriam no estado de agendamento ao vivo do `Item`
+    │   └── ProcessMissedOccurrencesUseCase.kt — avança dueDate de item recorrente vencido, gravando histórico "não feito"
+    │                                             (pulando o ciclo já coberto por um COMPLETED, dedup — #101/D), carrega
+    │                                             extensão pendente pro registro MISSED gerado; único ponto de chamada é o
+    │                                             ReminderCheckWorker (#96, ver seção de persistência)
     ├── section/      — Get/Add/Rename/Delete (delete verifica vínculo antes)
     │   └── SectionUseCase.kt      — facade delegando pros 4 acima (CRUD completo, um método por operação)
     ├── tag/          — Get/Add/Rename/Delete (delete verifica vínculo antes)
@@ -109,7 +134,7 @@ domain/
     └── settings/     — SeedDatabaseUseCase/ClearDatabaseUseCase — debug-only (#19), gatilho só em Settings quando BuildConfig.DEBUG
 ```
 
-**Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `HomeUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase` ≠ `HomeUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). `HomeUseCase` é compartilhada por `HomeViewModel` e `AllPrioritiesViewModel` (mesma tela-conceito, dois pontos de entrada). Ver `CONVENTIONS.md` para o critério completo.
+**Facades de use case** (`SectionUseCase`, `TagUseCase`, `ItemDetailUseCase`, `ItemFormUseCase`, `ItemOccurrenceUseCase`, `HomeUseCase`): compõem os use cases de operação única já existentes (mantidos intactos, ainda usáveis sozinhos) — um método por operação, cada um só delegando (`fun add(name) = addSection(name)`), **sem acesso a repositório**. Existem só pra reduzir a quantidade de use cases que um ViewModel precisa receber no construtor; não são um "God object" — nomeados pela tela que servem quando a entidade se espalha por telas com subconjuntos diferentes de operações (caso do Item: `ItemDetailUseCase` ≠ `ItemFormUseCase` ≠ `ItemOccurrenceUseCase` ≠ `HomeUseCase`), ou pela entidade quando uma única tela usa o CRUD inteiro (caso de Section/Tag). `HomeUseCase` é compartilhada por `HomeViewModel` e `AllPrioritiesViewModel` (mesma tela-conceito, dois pontos de entrada). Ver `CONVENTIONS.md` para o critério completo.
 
 ### `:data` — `com.seucaio.unideas.data`
 
@@ -123,8 +148,8 @@ data/
 │   │   ├── TagEntity.kt
 │   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
 │   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao (retornam Flow)
-│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 8
-│   │                    migration/ — MIGRATION_2_3 até MIGRATION_7_8 (ver seção de persistência)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 9
+│   │                    migration/ — MIGRATION_2_3 até MIGRATION_8_9 (ver seção de persistência)
 │   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
@@ -154,6 +179,8 @@ uds/
 │                            — inputs/ ganhou SelectionBottomSheet, GridSelectionBottomSheet e SwitchSection (#130)
 │                            — lists/ reorganizado em lists/item/ (ListItemCard, ListItemCheckbox, ListItemRow,
 │                              ListItemTrailingIndicator) + lists/model/ListItemUi.kt (#127/#140)
+│                            — lists/NavCard.kt (#162) — card de navegação com chevron, reaproveitável (ex.:
+│                              entrada pra Config Screen/Histórico na tela de Detalhe)
 └── components/legacy/     — componentes portados ao pé da letra do antigo :core:ui, mesmos nomes
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
@@ -176,28 +203,64 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 
 **`additem/` foi aposentado (#134)** — criar e editar item deixaram de ser telas separadas. `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (type inicial vindo de `initialType`), `itemId != null` carrega o item existente. Não existe mais `ItemFormScreen`.
 
+**Tipo do item trava após a criação (#160/#162).** Não existe mais seletor de tipo inline no formulário (`TypeSelectorField` foi removido) — Tarefa/Anotação é definida só na criação (`initialType`) e exibida como badge (`TextBadge`) em ambos os modos; trocar Tarefa↔Anotação de um item já existente exige a Config Screen (guardrail com confirmação + reset total, ver `config/` abaixo). `dueDate`/`dueTime`/`recurrence`/`reminderWarning` deixaram de ser exclusivos de Tarefa — `completedAt`/conclusão continua sendo a única diferença estrutural real entre os dois tipos, reforçada em runtime por `CompleteItemUseCase`.
+
+**Tela de Detalhe reestruturada (#162).** `ItemFormBody` mostra o badge de tipo + `TitleDescriptionFields` rolável, e — só quando `state.isEditing` (item já persistido) — dois `NavCard` (`:uds`, com chevron) pra "Configurações" e "Histórico" (cada um com resumo próprio) mais o `ItemFormFooter` (conclusão), fixados fora da área de scroll. Pra item novo ainda não salvo (auto-save ainda não rodou), esse bloco inteiro fica oculto — não só desabilitado — já que `Configurações`/`Histórico`/conclusão não fazem sentido sem um `itemId` real. A antiga seção inline "Mais opções" (`ItemFormOptionsSection`/`ItemFormCommonOptions`/`ItemFormTaskOptions`) foi removida — os campos que ela continha (data/hora, recorrência, aviso, seção, tags) migraram pra Config Screen no #160.
+
 ```
 feature/items/
 ├── navigation/
 │   ├── ItemsNavGraph.kt
-│   └── ItemsRoute.kt              — @Serializable: Detail(itemId: Long? = null, initialType: ItemType = TASK) | List
+│   └── ItemsRoute.kt              — @Serializable: Detail(itemId: Long? = null, initialType: ItemType = TASK) |
+│                                     History(itemId: Long) (#101/C) | Config(itemId: Long) (#160) | List
 ├── di/
 │   └── FeatureModule.kt           — val itemsModule
 └── ui/
     ├── components/
     │   ├── ItemActions.kt, DueDateRow.kt
     │   ├── fields/       — CompletionField, DueDateField, DueTimeField, ReminderWarningField, SectionField,
-    │   │                    TagsField, TitleDescriptionFields (+preview), TypeSelectorField
+    │   │                    TagsField, TitleDescriptionFields (+preview) — DueDate/DueTime/ReminderWarning/Section/Tags
+    │   │                    são consumidos pela Config Screen (#160), não mais pelo form principal
     │   │   ├── markdown/     — MarkdownFormat/PreviewToggle/SelectionContextMenu/SyntaxHighlight/SyntaxInserter/Toolbar (#93)
     │   │   ├── model/        — ItemFormFields.kt
     │   │   └── recurrence/   — RecurrenceBottomSheet (picker principal, sobre SelectionBottomSheet do :uds),
     │   │                        EveryNDaysBottomSheet, WeekdayBottomSheet, DayOfMonthBottomSheet (sobre GridSelectionBottomSheet) (#130)
-    │   └── form/         — ItemFormBody, ItemFormCommonOptions, ItemFormFooter, ItemFormOptionsSection, ItemFormTaskOptions
+    │   └── form/         — ItemFormBody (badge de tipo + TitleDescriptionFields + NavCards Config/Histórico + footer,
+    │                        só quando state.isEditing — #162), ItemFormFooter (conclusão),
+    │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     └── screens/
-        ├── detail/    — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt + ItemHistoryBottomSheet.kt (lista o
-        │                ItemCompletionHistory do item — data/status/nota por ocorrência, #126)
-        │                viewmodel/ — ItemDetailUiState.kt / ItemDetailUiAction.kt / ItemDetailEvent.kt /
-        │                             ItemDetailViewModel.kt / ItemDetailDialogState.kt
+        ├── detail/
+        │   ├── itemdetail/     — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt (formulário: título, descrição,
+        │   │                      seção, tags, data/recorrência) + viewmodel/ (ItemDetailUiState/UiAction/Event/
+        │   │                      ViewModel/DialogState)
+        │   └── itemoccurrence/ — ciclo de vida da ocorrência (concluir/concluir atrasado/ignorar/aumentar prazo),
+        │                          separado do form desde #101/B: NoteConfirmDialog (nota obrigatória em atraso/ignorar),
+        │                          ExtendDeadlineDatePickerDialog + viewmodel/ (ItemOccurrenceUiState/UiAction/Event/
+        │                          ViewModel/DialogState). `ItemDetailScreen` hoisteia os dois ViewModels lado a lado,
+        │                          com uma ponte de sincronização (`OnItemUpdatedExternally`) — sem ela, uma escrita
+        │                          de um lado podia sobrescrever silenciosamente uma mudança recém-feita do outro
+        │                          (race condition real, achada e corrigida em #101/B — ver docs/QA_MANUAL_TESTING.md)
+        ├── history/    — ItemHistoryScreen.kt (tela própria, substituiu o ItemHistoryBottomSheet — #101/C): resumo
+        │                 (% no prazo, contagem por status, sequência atual), filtros (Todas/No prazo/Atrasadas/Com
+        │                 nota), ItemHistoryCard por ocorrência (hora, dias de atraso, nota, trilha de extensão) —
+        │                 CRUD completo desde o #169: FAB adiciona entrada retroativa, menu por card (`MoreVert`/
+        │                 `DropdownMenu`, mirando `EntityListItemWithMenu`) edita/exclui uma entrada existente
+        │                 + ItemHistoryPreviewProvider.kt + viewmodel/ (ItemHistoryUiState/Event/UiAction/ViewModel/
+        │                 DialogState — `dialogState` fora do `combine`, exceção 3 do MVI) + ui/components/
+        │                 AddEditHistoryEntryBottomSheet.kt (outer + `*Content`, reused create/edit, date picker com
+        │                 `SelectableDates` bloqueando data futura e datas já usadas, toggle concluído/perdido, nota)
+        ├── config/     — ItemConfigScreen.kt (tela própria, #160): edição de seção/tags/lembrete/recorrência/
+        │                 data/horário/aviso de um item já existente, mais o fluxo guardado de troca de tipo
+        │                 (dialog de confirmação + reset total dos campos "pesados" — `switchedType()`/
+        │                 `ItemConfigDialogState.TypeSwitchConfirm`, escondido quando `isNewItem == true` — #165
+        │                 batch) + viewmodel/ (ItemConfigUiState/Event/UiAction/ViewModel/DialogState). Reaproveita
+        │                 só `ItemFormUseCase`. Acessada via `NavCard` "Configurações" no `ItemFormBody`
+        │                 (`state.isEditing`) — substituiu o ícone de engrenagem no toolbar do #160; a seção
+        │                 "Mais opções" inline foi removida no #162
+        │                 viewmodel/sectionstags/ — SectionsTagsViewModel (#170), ViewModel dedicado à listagem de
+        │                 sections/tags da Config Screen (hoisteado ao lado do ItemConfigViewModel) + criação rápida
+        │                 (create-only; CRUD completo continua em Settings) via `QuickCreateBottomSheet`
+        │                 (`ui/components/fields/sectionstags/`); injeta só `SectionsAndTagsUseCase`
         └── list/      — ItemsListScreen.kt + ItemsListPreviewProvider.kt   — listagem dev-only (#62), sem abas/filtro/seleção;
                           acessível via seção "Debug" do Settings, mantida mesmo com a Home (D2/#11) já existindo
                           viewmodel/ — ItemsListUiState.kt / ItemsListUiAction.kt / ItemsListEvent.kt / ItemsListViewModel.kt
@@ -221,6 +284,10 @@ feature/home/
     │   └── viewmodel/ — HomeUiState.kt / HomeUiAction.kt / HomeEvent.kt / HomeViewModel.kt / ItemSectionGroupMapper.kt
     │                    — HomeUiState.HomeMode: Normal | Selection(selectedItemIds) — seleção múltipla + exclusão
     │                      em lote vive aqui (long-press no item), não em feature/items (#140)
+    │                    — `isRefreshing: StateFlow<Boolean>` próprio (evento-driven, fora do `combine` de `uiState` —
+    │                      exceção 3 do padrão MVI) alimenta o `PullToRefreshBox` da Home; dispara
+    │                      `HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger`, gatilho manual do motor de
+    │                      reavaliação de ocorrências (#101/D, ver seção de persistência)
     ├── priority/
     │   ├── screen/    — PriorityBottomSheet.kt + PriorityPreviewProvider.kt   — painel de prioridades, hoje um
     │   │                Bottom Sheet mostrado a partir da HomeScreen (state local, não rota própria), não mais
@@ -254,6 +321,11 @@ completedAt: Long?                 epoch millis; != null = concluída (item não
 lastCompletedScheduledDate: Long?  epoch millis; ocorrência recorrente mais recente marcada como concluída (#133) —
                                     isCompleted de um item recorrente compara isso contra dueDate, em vez de completedAt
 isPinned: Boolean                  fixado manualmente no painel de prioridades, independente do cálculo de urgência (#127)
+pendingExtensionOriginalDueDate: Long?  epoch millis, opcional — dueDate anterior à 1ª extensão desde a última resolução
+                                    da ocorrência (#101/A); null = nunca adiada desde então
+pendingExtensionCount: Int         quantas vezes "aumentar prazo" empurrou dueDate desde a última resolução (#101/A);
+                                    ambos limpos (null/0) quando a ocorrência resolve (concluída/ignorada) ou é
+                                    processada como perdida — carregados pro item_completion_history antes de zerar
 createdAt: Long                    epoch millis, preenchido na criação
 ```
 
@@ -263,7 +335,10 @@ id: Long           PK autoincrement
 itemId: Long        FK → items.id (CASCADE on delete)
 scheduledDate: Long  epoch millis — a ocorrência (dueDate) a que este registro se refere
 completedAt: Long?   epoch millis; nulo = ocorrência não feita ("missed")
-note: String?        opcional — justificativa livre (ex: "sem internet")
+note: String?        opcional — justificativa livre (ex: "sem internet"); obrigatória ao concluir atrasado ou ignorar (#101/A)
+originalScheduledDate: Long?  epoch millis, opcional — dueDate antes de ser adiada, se a ocorrência foi estendida
+                                antes de resolver (#101/D); null = nunca foi adiada
+extensionCount: Int  quantas vezes foi adiada antes de resolver (#101/D); 0 = nunca
 ```
 Índice único em `(itemId, scheduledDate)` — uma ocorrência só pode ter um registro de histórico (#133).
 
@@ -288,7 +363,13 @@ PK composta (itemId, tagId)
 
 ### Regras de integridade na camada de domínio (não no FK)
 - **Excluir `Section`/`Tag` com itens vinculados é BLOQUEADO** — o use case (`DeleteSectionUseCase`/`DeleteTagUseCase`) conta os vínculos e retorna `DeletionStatus.BlockedByLinkedItems(count)` **antes** de delegar ao repositório. Não é uma constraint de FK que falha silenciosamente; o usuário vê quantos itens estão vinculados.
-- **Recorrência: uma linha só por série, `dueDate` avança, não "renasce" (rearquitetado em #126).** Um item recorrente **nunca** gera uma nova linha em `items`. `CompleteItemUseCase` só grava um registro em `item_completion_history` pra ocorrência atual (`scheduledDate = dueDate`) e marca `lastCompletedScheduledDate = dueDate` — `dueDate` em si não muda. Quem avança `dueDate` de fato é `ProcessMissedOccurrencesUseCase`, chamado pelo `ReminderCheckWorker` (`:core:notifications`) a cada varredura periódica: pra todo item recorrente cujo `dueDate` já passou, ele anda `dueDate` pra frente via `recurrence.nextDueDate(...)`, gravando um registro `completedAt = null` (não feito) em `item_completion_history` pra cada ciclo pulado, até `dueDate >= hoje`. Ou seja, o avanço de ciclo é **lazy** (só acontece quando alguém abre o app ou o worker roda), não disparado pela ação de concluir.
+- **Recorrência: uma linha só por série, `dueDate` avança, não "renasce" (rearquitetado em #126).** Um item recorrente **nunca** gera uma nova linha em `items`. `CompleteItemUseCase` só grava um registro em `item_completion_history` pra ocorrência atual (`scheduledDate = dueDate`) e marca `lastCompletedScheduledDate = dueDate` — `dueDate` em si não muda. Quem avança `dueDate` de fato é `ProcessMissedOccurrencesUseCase`, chamado pelo `ReminderCheckWorker` (`:core:notifications`) a cada varredura periódica: pra todo item recorrente cujo `dueDate` já passou, ele anda `dueDate` pra frente via `recurrence.nextDueDate(...)`, gravando um registro `completedAt = null` (não feito) em `item_completion_history` pra cada ciclo pulado, até `dueDate >= hoje`. Ou seja, o avanço de ciclo é **lazy** (só acontece quando alguém abre o app ou o worker roda), não disparado pela ação de concluir. `IgnoreOccurrenceUseCase` é a exceção — "ignorar" avança `dueDate` imediatamente (não espera o worker), já que é uma decisão explícita do usuário sobre a ocorrência atual.
+- **Motor de reavaliação de ocorrências (#101/D) — não re-notificar/duplicar o que já foi resolvido.** Três gaps que o `ReminderCheckWorker`/`ProcessMissedOccurrencesUseCase` fecham, todos girando em torno do mesmo problema: a conclusão de uma ocorrência recorrente é rastreada fora de banda (`lastCompletedScheduledDate`), sem mover `dueDate` — então o resto do pipeline precisa saber ignorar esse estado.
+  1. `ReminderCheckWorker` filtra `item.isCompleted` **depois** de rodar `processMissedOccurrences`, antes de calcular `ReminderTier` — não dá pra fazer isso via query SQL no `ItemDao` (`WHERE completedAt IS NULL` não pega item recorrente, que nunca seta `completedAt`), porque isso escondereia o item do `ProcessMissedOccurrencesUseCase` também, e ele precisa continuar vendo o item pra avançar `dueDate` quando ele ficar atrasado de verdade.
+  2. `ProcessMissedOccurrencesUseCase` não grava um `MISSED` pra um `scheduledDate` que já é o `lastCompletedScheduledDate` do item — evita duplicar um registro `COMPLETED` que já existe pra aquele ciclo.
+  3. `ProcessMissedOccurrencesUseCase` carrega `pendingExtensionOriginalDueDate`/`pendingExtensionCount` pro registro `MISSED` do primeiro ciclo pulado (mesmo padrão de `CompleteItemUseCase`/`IgnoreOccurrenceUseCase`) e limpa os dois campos do `Item` ao avançar — uma extensão pendente nunca resolvida não fica órfã.
+
+  Gatilhos: `ReminderCheckWorker` (`PeriodicWorkRequest`, `:core:notifications`) e pull-to-refresh manual na Home (`HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger.refreshNow()`, mesmo mecanismo que já disparava o worker fora do ciclo após concluir um item).
 - **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável). `isPinned` (item fixado manualmente) entra na priorização independente desse cálculo.
 
 ### Migrations (histórico, `data/local/database/migration/`)
@@ -299,6 +380,8 @@ MIGRATION_5_6   dedup de (itemId, scheduledDate) duplicados (mantém o id maior)
                 índice ÚNICO (itemId, scheduledDate) — completar 2x vira no-op no nível do banco (#133)
 MIGRATION_6_7   adiciona items.lastCompletedScheduledDate (#133)
 MIGRATION_7_8   adiciona items.isPinned, default 0 (#127)
+MIGRATION_8_9   adiciona items.pendingExtensionOriginalDueDate/pendingExtensionCount e
+                item_completion_history.originalScheduledDate/extensionCount (#101/C)
 ```
 Sem `fallbackToDestructiveMigration` — migration faltando falha alto, nunca perde dados silenciosamente (app pré-MVP, mas a regra vale mesmo assim).
 
@@ -310,7 +393,9 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single, incl. ItemCompletionHistoryDao),
                                  Repositories (singleOf().bind(), incl. ItemCompletionHistoryRepositoryImpl) — confirmado em #21/#22/#126
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66),
-                                 SetItemPinnedUseCase (#127), GetItemCompletionHistoryUseCase e ProcessMissedOccurrencesUseCase (#126)
+                                 SetItemPinnedUseCase (#127), ItemCompletionHistoryUseCase (#126, CRUD completo desde #169) e
+                                 ProcessMissedOccurrencesUseCase (#126), IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase e
+                                 ItemOccurrenceUseCase (#101/A/B)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl

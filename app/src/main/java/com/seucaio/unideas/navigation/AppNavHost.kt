@@ -1,9 +1,11 @@
 package com.seucaio.unideas.navigation
 
+import android.content.Intent
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -21,7 +23,7 @@ import com.seucaio.unideas.feature.tags.navigation.TagsRoute
 import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 @Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier: Modifier = Modifier) {
     AppScaffold(modifier = modifier) { padding ->
         NavHost(
             navController = navController,
@@ -62,7 +64,19 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 onNavigateToAddItem = { type ->
                     navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
                 },
+                onNavigateToHistory = { itemId ->
+                    navController.navigate(ItemsRoute.History(itemId))
+                },
+                onNavigateToConfig = { itemId, isNewItem ->
+                    navController.navigate(ItemsRoute.Config(itemId, isNewItem))
+                },
             )
         }
+
+        // Scaffold subcomposes this content slot separately from the outer composition, so the
+        // graph NavHost just attached above is only guaranteed to exist for code that runs in this
+        // same slot — handling the deep link from the caller's composition instead races with it
+        // and can hit NavController with no graph set yet.
+        LaunchedEffect(Unit) { navController.handleDeepLink(initialIntent) }
     }
 }

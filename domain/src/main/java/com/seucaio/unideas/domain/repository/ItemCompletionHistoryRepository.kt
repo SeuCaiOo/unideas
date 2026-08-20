@@ -13,6 +13,12 @@ interface ItemCompletionHistoryRepository {
     /** Inserts [record] and returns the generated id. */
     suspend fun insert(record: ItemCompletionHistory): Long
 
+    /** Updates an existing [record] (matched by [ItemCompletionHistory.id]). */
+    suspend fun update(record: ItemCompletionHistory)
+
     /** Removes the occurrence recorded for [itemId] at [scheduledDate], if any — undoes a completion. */
     suspend fun deleteOccurrence(itemId: Long, scheduledDate: LocalDate)
+
+    /** Removes the entry identified by [id]. */
+    suspend fun deleteById(id: Long)
 }

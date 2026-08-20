@@ -134,20 +134,8 @@ private fun DescriptionField(
     }
 
     Column(modifier = modifier) {
-        if (isPreviewMode) {
-            SelectionContainer {
-                Markdown(
-                    content = descriptionField.text,
-                    annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
-                    // Library default is 2.dp between blocks (paragraph/list/checklist), far tighter
-                    // than a blank line's line-height in the raw edit text — bumped so toggling
-                    // edit<->preview doesn't visibly jump in height.
-                    padding = markdownPadding(block = 0.dp),
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-        } else {
-            BorderlessTextField(
+        when {
+            !isPreviewMode -> BorderlessTextField(
                 value = descriptionField,
                 onValueChange = onDescriptionFieldChanged,
                 placeholder = stringResource(R.string.item_form_description_label),
@@ -159,14 +147,37 @@ private fun DescriptionField(
                     .markdownFormatContextMenuItems(onFormatClick),
                 visualTransformation = rememberMarkdownSyntaxHighlightTransformation(),
             )
+            descriptionField.text.isBlank() -> Text(
+                text = stringResource(R.string.item_form_description_empty),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            )
+            else -> SelectionContainer {
+                Markdown(
+                    content = descriptionField.text,
+                    annotator = markdownAnnotator(config = markdownAnnotatorConfig(eolAsNewLine = true)),
+                    // Library default is 2.dp between blocks (paragraph/list/checklist), far tighter
+                    // than a blank line's line-height in the raw edit text — bumped so toggling
+                    // edit<->preview doesn't visibly jump in height.
+                    padding = markdownPadding(block = 0.dp),
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            MarkdownPreviewToggle(isPreviewMode = isPreviewMode, onClick = onPreviewModeToggled)
+            MarkdownPreviewToggle(
+                isPreviewMode = isPreviewMode,
+                onClick = onPreviewModeToggled,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
             if (!isPreviewMode) {
                 MarkdownToolbar(onFormatClick = onFormatClick)
             }

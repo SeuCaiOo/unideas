@@ -8,6 +8,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +64,7 @@ fun HomeScreen(
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val homeMode by viewModel.homeMode.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
@@ -85,6 +87,7 @@ fun HomeScreen(
         itemsState = itemsState,
         homeMode = homeMode,
         dialogState = dialogState,
+        isRefreshing = isRefreshing,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
@@ -101,6 +104,7 @@ private fun HomeContent(
     itemsState: HomeItemsState,
     homeMode: HomeMode,
     dialogState: HomeDialogState,
+    isRefreshing: Boolean,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
@@ -112,8 +116,9 @@ private fun HomeContent(
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        if (!ColdStartPriorityPrompt.shown) {
+    LaunchedEffect(uiState) {
+        val state = uiState
+        if (!ColdStartPriorityPrompt.shown && state is HomeUiState.Success && state.hasAnyPriorityItem) {
             ColdStartPriorityPrompt.shown = true
             showPriorityBottomSheet = true
         }
@@ -133,6 +138,7 @@ private fun HomeContent(
             HomeTopBar(
                 homeMode = homeMode,
                 itemsState = itemsState,
+                hasAnyPriorityItem = (uiState as? HomeUiState.Success)?.hasAnyPriorityItem == true,
                 onNavigateBack = updatedOnNavigateBack,
                 onShowPriorities = { showPriorityBottomSheet = true },
                 onNavigateToSettings = onNavigateToSettings,
@@ -155,6 +161,7 @@ private fun HomeContent(
             filterState = filterState,
             itemsState = itemsState,
             homeMode = homeMode,
+            isRefreshing = isRefreshing,
             padding = padding,
             onEvent = onEvent,
         )
@@ -167,6 +174,7 @@ private fun HomeBody(
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
+    isRefreshing: Boolean,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
 ) {
@@ -179,14 +187,19 @@ private fun HomeBody(
                 modifier = Modifier.padding(padding),
             )
         is HomeUiState.Success ->
-            HomeSuccessBody(
-                hasAnyItem = uiState.hasAnyItem,
-                filterState = filterState,
-                itemsState = itemsState,
-                homeMode = homeMode,
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { onEvent(HomeEvent.OnRefreshRequested) },
                 modifier = Modifier.padding(padding),
-                onEvent = onEvent,
-            )
+            ) {
+                HomeSuccessBody(
+                    hasAnyItem = uiState.hasAnyItem,
+                    filterState = filterState,
+                    itemsState = itemsState,
+                    homeMode = homeMode,
+                    onEvent = onEvent,
+                )
+            }
     }
 }
 
@@ -230,11 +243,12 @@ private fun HomeScreenPreview(
 ) {
     UdsTheme {
         HomeContent(
-            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem, hasAnyPriorityItem = true),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Normal,
             dialogState = HomeDialogState.None,
+            isRefreshing = false,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
@@ -252,11 +266,12 @@ private fun HomeScreenSelectionModePreview(
 ) {
     UdsTheme {
         HomeContent(
-            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem),
+            uiState = HomeUiState.Success(hasAnyItem = fixture.hasAnyItem, hasAnyPriorityItem = true),
             filterState = fixture.filterState,
             itemsState = fixture.itemsState,
             homeMode = HomeMode.Selection(fixture.itemsState.tabItems.take(2).map { it.id }.toSet()),
             dialogState = HomeDialogState.None,
+            isRefreshing = false,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},

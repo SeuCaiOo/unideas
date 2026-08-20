@@ -9,7 +9,7 @@ import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 @Composable
 internal fun Item.toListItemUi(
     checkContentDescription: String,
-    homeMode: HomeMode = HomeMode.Normal
+    homeMode: HomeMode = HomeMode.Normal,
 ): ListItemUi = ListItemUi(
     id = id,
     title = title,
@@ -25,4 +25,5 @@ internal fun Item.toListItemUi(
         HomeMode.Normal -> null
     },
     isPinned = isPinned,
+    description = description,
 )

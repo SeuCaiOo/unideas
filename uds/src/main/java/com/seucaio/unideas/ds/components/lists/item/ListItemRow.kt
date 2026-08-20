@@ -12,11 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +39,9 @@ import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.leftAccentBorder
+
+private const val DESCRIPTION_COLLAPSED_LINES = 1
+private const val DESCRIPTION_EXPANDED_LINES = 5
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -50,6 +60,7 @@ fun ListItemRow(
         ui.badgeLabel != null -> ui.badgeColor
         else -> Color.Transparent
     }
+    var descriptionExpanded by remember { mutableStateOf(false) }
     Column(
         modifier
             .fillMaxWidth()
@@ -74,7 +85,12 @@ fun ListItemRow(
             }
         }
         if (!ui.description.isNullOrBlank()) {
-            ListItemDescription(ui.description, modifier = Modifier.padding(top = 10.dp))
+            ListItemDescription(
+                description = ui.description,
+                expanded = descriptionExpanded,
+                onToggleExpanded = { descriptionExpanded = !descriptionExpanded },
+                modifier = Modifier.padding(top = 10.dp),
+            )
         }
     }
 }
@@ -118,21 +134,43 @@ private fun ListItemTitleAndMeta(ui: ListItemUi, modifier: Modifier = Modifier) 
     }
 }
 
-/** Full width of the card — never shares a line with the checkbox/badge/pin trailing content. */
 @Composable
-private fun ListItemDescription(description: String, modifier: Modifier = Modifier) {
-    Text(
-        description,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 3,
-        overflow = TextOverflow.Ellipsis,
+private fun ListItemDescription(
+    description: String,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var canExpand by remember { mutableStateOf(false) }
+    Row(
         modifier = modifier.fillMaxWidth(),
-    )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = if (expanded) DESCRIPTION_EXPANDED_LINES else DESCRIPTION_COLLAPSED_LINES,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { result -> if (!expanded) canExpand = result.hasVisualOverflow },
+            modifier = Modifier.weight(1f),
+        )
+        if (canExpand) {
+            IconButton(onClick = onToggleExpanded, modifier = Modifier.size(20.dp)) {
+                Icon(
+                    if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+    }
 }
 
 private enum class ListItemRowPreviewScenario {
-    Default, Pinned, WithDescription, SelectedInSelectionMode, UnselectedInSelectionMode
+    Default, Pinned, WithShortDescription, WithLongDescription, SelectedInSelectionMode, UnselectedInSelectionMode
 }
 
 private class ListItemRowPreviewProvider : PreviewParameterProvider<ListItemRowPreviewScenario> {
@@ -140,7 +178,7 @@ private class ListItemRowPreviewProvider : PreviewParameterProvider<ListItemRowP
 }
 
 @Composable
-private fun overdueBillRow(
+private fun OverdueBillRow(
     isPinned: Boolean = false,
     description: String? = null,
     isSelected: Boolean? = null,
@@ -165,15 +203,24 @@ private fun ListItemRowPreview(
     @PreviewParameter(ListItemRowPreviewProvider::class) scenario: ListItemRowPreviewScenario,
 ) {
     UdsTheme {
-        Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+        Box(
+            Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp)
+        ) {
             when (scenario) {
-                ListItemRowPreviewScenario.Default -> overdueBillRow()
-                ListItemRowPreviewScenario.Pinned -> overdueBillRow(isPinned = true)
-                ListItemRowPreviewScenario.WithDescription -> overdueBillRow(
-                    description = "Check the meter reading before paying — last month's bill looked off.",
+                ListItemRowPreviewScenario.Default -> OverdueBillRow()
+                ListItemRowPreviewScenario.Pinned -> OverdueBillRow(isPinned = true)
+                ListItemRowPreviewScenario.WithShortDescription ->
+                    OverdueBillRow(description = "Pay before the due date to avoid a late fee.")
+                ListItemRowPreviewScenario.WithLongDescription -> OverdueBillRow(
+                    description = "Check the meter reading before paying — last month's bill looked " +
+                        "unusually high compared to the last six months, so it might be worth calling " +
+                        "the provider to confirm there wasn't a billing error before just paying it off " +
+                        "without asking any questions.",
                 )
-                ListItemRowPreviewScenario.SelectedInSelectionMode -> overdueBillRow(isSelected = true)
-                ListItemRowPreviewScenario.UnselectedInSelectionMode -> overdueBillRow(isSelected = false)
+                ListItemRowPreviewScenario.SelectedInSelectionMode -> OverdueBillRow(isSelected = true)
+                ListItemRowPreviewScenario.UnselectedInSelectionMode -> OverdueBillRow(isSelected = false)
             }
         }
     }

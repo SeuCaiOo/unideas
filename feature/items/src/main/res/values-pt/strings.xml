@@ -129,6 +129,8 @@
     <string name="item_config_type_switch_title">Trocar o tipo do item?</string>
     <string name="item_config_type_switch_message">Isso reseta recorrência, data de vencimento, horário e aviso — não dá pra recuperar. Seção, tags, título e descrição continuam como estão. Histórico já registrado não é apagado, só deixa de receber novas entradas.</string>
     <string name="item_config_card_subtitle_empty">Toque para configurar</string>
+    <string name="item_config_section_name_required">O nome da seção é obrigatório</string>
+    <string name="item_config_tag_name_required">O nome da tag é obrigatório</string>
     <plurals name="item_config_card_tags">
         <item quantity="one">%d tag</item>
         <item quantity="other">%d tags</item>

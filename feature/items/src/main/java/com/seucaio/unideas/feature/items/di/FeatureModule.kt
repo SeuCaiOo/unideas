@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.di
 
+import com.seucaio.unideas.feature.items.ui.screens.config.sectionstags.viewmodel.SectionsTagsViewModel
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceViewModel
@@ -42,4 +43,5 @@ val itemsModule = module {
         )
     }
     viewModelOf(::ItemsListViewModel)
+    viewModelOf(::SectionsTagsViewModel)
 }

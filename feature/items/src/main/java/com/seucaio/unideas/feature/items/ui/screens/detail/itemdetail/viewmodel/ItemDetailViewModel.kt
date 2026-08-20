@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.Job
@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,7 +26,7 @@ import kotlinx.coroutines.runBlocking
 class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
-    private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
     private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
@@ -68,12 +70,12 @@ class ItemDetailViewModel(
     val dialogState: StateFlow<ItemDetailDialogState> = _dialogState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-                updateUiState { it.setReferenceData(referenceData.sections, referenceData.tags) }
+        sectionsAndTagsUseCase.getAll()
+            .onEach { (sections, tags) ->
+                updateUiState { it.setReferenceData(sections, tags) }
             }
-            if (itemId != null) loadItem(itemId)
-        }
+            .launchIn(viewModelScope)
+        if (itemId != null) viewModelScope.launch { loadItem(itemId) }
     }
 
     private suspend fun loadItem(id: Long) {

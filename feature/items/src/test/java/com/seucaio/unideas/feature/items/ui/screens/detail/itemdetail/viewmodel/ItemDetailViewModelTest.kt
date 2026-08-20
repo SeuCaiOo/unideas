@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
+import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.SectionsAndTags
+import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
@@ -19,6 +21,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -27,7 +30,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalTime
@@ -39,7 +41,7 @@ class ItemDetailViewModelTest {
     private lateinit var itemFormUseCase: ItemFormUseCase
 
     @MockK
-    private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
+    private lateinit var sectionsAndTagsUseCase: SectionsAndTagsUseCase
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -47,10 +49,8 @@ class ItemDetailViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(
-            SectionStub.sections(),
-            TagStub.tags()
-        )
+        every { sectionsAndTagsUseCase.getAll() } returns
+            flowOf(SectionsAndTags(SectionStub.sections(), TagStub.tags()))
     }
 
     @After
@@ -65,7 +65,7 @@ class ItemDetailViewModelTest {
         ItemDetailViewModel(
             itemId = itemId,
             itemFormUseCase = itemFormUseCase,
-            getSectionsAndTags = getSectionsAndTags,
+            sectionsAndTagsUseCase = sectionsAndTagsUseCase,
             savedStateHandle = savedStateHandle
         )
 
@@ -170,17 +170,20 @@ class ItemDetailViewModelTest {
     }
 
     @Test
-    fun `when GetSectionsAndTagsUseCase throws the form still renders with empty reference lists`() =
+    fun `when a section or tag is created elsewhere should reflect in availableSections and availableTags live`() =
         runTest {
-            coEvery { getSectionsAndTags() } throws IllegalStateException("boom")
+            val referenceDataFlow = MutableStateFlow(SectionsAndTags(SectionStub.sections(), TagStub.tags()))
+            every { sectionsAndTagsUseCase.getAll() } returns referenceDataFlow
             val vm = viewModel()
+            assertEquals(SectionStub.sections(), vm.uiState.value.availableSections)
+            assertEquals(TagStub.tags(), vm.uiState.value.availableTags)
 
-            vm.uiState.test {
-                val state = awaitItem()
-                assertEquals(false, state.isEditing)
-                assertTrue(state.availableSections.isEmpty())
-                assertTrue(state.availableTags.isEmpty())
-            }
+            val newSection = Section(id = 99L, name = "New")
+            val newTag = Tag(id = 98L, name = "New Tag")
+            referenceDataFlow.value = SectionsAndTags(SectionStub.sections() + newSection, TagStub.tags() + newTag)
+
+            assertEquals(SectionStub.sections() + newSection, vm.uiState.value.availableSections)
+            assertEquals(TagStub.tags() + newTag, vm.uiState.value.availableTags)
         }
 
     @Test

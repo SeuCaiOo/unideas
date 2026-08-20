@@ -17,7 +17,7 @@ val itemsModule = module {
         ItemDetailViewModel(
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
-            getSectionsAndTags = get(),
+            sectionsAndTagsUseCase = get(),
             savedStateHandle = get(),
             initialType = params.get(),
         )

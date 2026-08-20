@@ -1,10 +1,10 @@
 package com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags
 
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
-import com.seucaio.unideas.domain.usecase.section.SectionUseCase
-import com.seucaio.unideas.domain.usecase.tag.TagUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -27,17 +27,14 @@ import org.junit.Test
 class SectionsTagsViewModelTest {
 
     @MockK
-    private lateinit var sectionUseCase: SectionUseCase
-
-    @MockK
-    private lateinit var tagUseCase: TagUseCase
+    private lateinit var sectionsAndTagsUseCase: SectionsAndTagsUseCase
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        every { sectionUseCase.getAll() } returns flowOf(SectionStub.sections())
-        every { tagUseCase.getAll() } returns flowOf(TagStub.tags())
+        every { sectionsAndTagsUseCase.getAll() } returns
+            flowOf(SectionsAndTags(SectionStub.sections(), TagStub.tags()))
     }
 
     @After
@@ -45,10 +42,10 @@ class SectionsTagsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = SectionsTagsViewModel(sectionUseCase, tagUseCase)
+    private fun viewModel() = SectionsTagsViewModel(sectionsAndTagsUseCase)
 
     @Test
-    fun `when the flows emit should combine sections and tags into uiState`() = runTest {
+    fun `when the flow emits should combine sections and tags into uiState`() = runTest {
         val vm = viewModel()
 
         vm.uiState.test {
@@ -77,19 +74,20 @@ class SectionsTagsViewModelTest {
     @Test
     fun `when OnSectionCreateRequested succeeds should call the use case and dismiss the dialog`() = runTest {
         val vm = viewModel()
-        coEvery { sectionUseCase.add("Trabalho") } returns Result.success(1L)
+        coEvery { sectionsAndTagsUseCase.addSection("Trabalho") } returns Result.success(1L)
 
         vm.onEvent(SectionsTagsEvent.OnAddSectionClicked)
         vm.onEvent(SectionsTagsEvent.OnSectionCreateRequested("Trabalho"))
 
-        coVerify(exactly = 1) { sectionUseCase.add("Trabalho") }
+        coVerify(exactly = 1) { sectionsAndTagsUseCase.addSection("Trabalho") }
         assertEquals(SectionsTagsDialogState.None, vm.dialogState.value)
     }
 
     @Test
     fun `when OnSectionCreateRequested fails with a blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
-        coEvery { sectionUseCase.add("") } returns Result.failure(IllegalArgumentException("Name is required"))
+        coEvery { sectionsAndTagsUseCase.addSection("") } returns
+            Result.failure(IllegalArgumentException("Name is required"))
 
         vm.uiAction.test {
             vm.onEvent(SectionsTagsEvent.OnSectionCreateRequested(""))
@@ -103,19 +101,20 @@ class SectionsTagsViewModelTest {
     @Test
     fun `when OnTagCreateRequested succeeds should call the use case and dismiss the dialog`() = runTest {
         val vm = viewModel()
-        coEvery { tagUseCase.add("urgente") } returns Result.success(1L)
+        coEvery { sectionsAndTagsUseCase.addTag("urgente") } returns Result.success(1L)
 
         vm.onEvent(SectionsTagsEvent.OnAddTagClicked)
         vm.onEvent(SectionsTagsEvent.OnTagCreateRequested("urgente"))
 
-        coVerify(exactly = 1) { tagUseCase.add("urgente") }
+        coVerify(exactly = 1) { sectionsAndTagsUseCase.addTag("urgente") }
         assertEquals(SectionsTagsDialogState.None, vm.dialogState.value)
     }
 
     @Test
     fun `when OnTagCreateRequested fails with a blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
-        coEvery { tagUseCase.add("") } returns Result.failure(IllegalArgumentException("Name is required"))
+        coEvery { sectionsAndTagsUseCase.addTag("") } returns
+            Result.failure(IllegalArgumentException("Name is required"))
 
         vm.uiAction.test {
             vm.onEvent(SectionsTagsEvent.OnTagCreateRequested(""))
@@ -126,7 +125,8 @@ class SectionsTagsViewModelTest {
     @Test
     fun `when the use case fails unexpectedly should emit ShowError with the exception message`() = runTest {
         val vm = viewModel()
-        coEvery { sectionUseCase.add("Trabalho") } returns Result.failure(IllegalStateException("boom"))
+        coEvery { sectionsAndTagsUseCase.addSection("Trabalho") } returns
+            Result.failure(IllegalStateException("boom"))
 
         vm.uiAction.test {
             vm.onEvent(SectionsTagsEvent.OnSectionCreateRequested("Trabalho"))

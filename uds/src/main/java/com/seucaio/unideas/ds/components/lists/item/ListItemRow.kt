@@ -88,7 +88,7 @@ fun ListItemRow(
             ListItemDescription(
                 description = ui.description,
                 expanded = descriptionExpanded,
-                onToggleExpanded = { descriptionExpanded = !descriptionExpanded },
+                onToggleExpand = { descriptionExpanded = !descriptionExpanded },
                 modifier = Modifier.padding(top = 10.dp),
             )
         }
@@ -138,7 +138,7 @@ private fun ListItemTitleAndMeta(ui: ListItemUi, modifier: Modifier = Modifier) 
 private fun ListItemDescription(
     description: String,
     expanded: Boolean,
-    onToggleExpanded: () -> Unit,
+    onToggleExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var canExpand by remember { mutableStateOf(false) }
@@ -157,7 +157,7 @@ private fun ListItemDescription(
             modifier = Modifier.weight(1f),
         )
         if (canExpand) {
-            IconButton(onClick = onToggleExpanded, modifier = Modifier.size(20.dp)) {
+            IconButton(onClick = onToggleExpand, modifier = Modifier.size(20.dp)) {
                 Icon(
                     if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                     contentDescription = null,

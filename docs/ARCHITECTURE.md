@@ -91,7 +91,9 @@ domain/
 │       └── CompletionResult.kt — Completed | Uncompleted (toggle simples; não gera item novo — ver seção de persistência)
 ├── repository/       — interfaces (contratos), sem implementação
 │   ├── ItemRepository.kt
-│   ├── ItemCompletionHistoryRepository.kt — CRUD do histórico de ocorrência, implementado em :data (#126)
+│   ├── ItemCompletionHistoryRepository.kt — CRUD do histórico de ocorrência, implementado em :data (#126;
+│   │                                          update/deleteById(id) adicionados no #169 — delete por id, distinto de
+│   │                                          deleteOccurrence(itemId, scheduledDate), que já existia pro toggle de desmarcar)
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
@@ -114,7 +116,13 @@ domain/
     │   ├── ExtendItemDueDateUseCase.kt — "aumentar prazo" de ocorrência vencida: empurra dueDate sem fechar a ocorrência,
     │   │                                  seta Item.pendingExtensionOriginalDueDate/pendingExtensionCount (#101/A)
     │   ├── SetItemPinnedUseCase.kt          — fixa/desafixa item no painel de prioridades (#127, mesmo padrão do pin de Section)
-    │   ├── GetItemCompletionHistoryUseCase.kt — lista o histórico de ocorrência de um item recorrente (#126)
+    │   ├── ItemCompletionHistoryUseCase.kt — getHistory (Flow, lista o histórico de ocorrência de um item recorrente, #126)
+    │   │                                      + save/delete (#169, CRUD completo sobre uma entrada — cria via `id == 0L`,
+    │   │                                      edita senão; unicidade (itemId, scheduledDate) validada explicitamente em vez
+    │   │                                      de delegar ao `OnConflictStrategy` do Room; scheduledDate não pode ser futura;
+    │   │                                      nota obrigatória se a conclusão registrada for atrasada). Renomeado de
+    │   │                                      `GetItemCompletionHistoryUseCase` — não passa por `CompleteItemUseCase`/
+    │   │                                      `toggleOccurrence()`, que também mexeriam no estado de agendamento ao vivo do `Item`
     │   └── ProcessMissedOccurrencesUseCase.kt — avança dueDate de item recorrente vencido, gravando histórico "não feito"
     │                                             (pulando o ciclo já coberto por um COMPLETED, dedup — #101/D), carrega
     │                                             extensão pendente pro registro MISSED gerado; único ponto de chamada é o
@@ -234,8 +242,13 @@ feature/items/
         │                          (race condition real, achada e corrigida em #101/B — ver docs/QA_MANUAL_TESTING.md)
         ├── history/    — ItemHistoryScreen.kt (tela própria, substituiu o ItemHistoryBottomSheet — #101/C): resumo
         │                 (% no prazo, contagem por status, sequência atual), filtros (Todas/No prazo/Atrasadas/Com
-        │                 nota), ItemHistoryCard por ocorrência (hora, dias de atraso, nota, trilha de extensão)
-        │                 + ItemHistoryPreviewProvider.kt + viewmodel/ (ItemHistoryUiState/Event/ViewModel)
+        │                 nota), ItemHistoryCard por ocorrência (hora, dias de atraso, nota, trilha de extensão) —
+        │                 CRUD completo desde o #169: FAB adiciona entrada retroativa, menu por card (`MoreVert`/
+        │                 `DropdownMenu`, mirando `EntityListItemWithMenu`) edita/exclui uma entrada existente
+        │                 + ItemHistoryPreviewProvider.kt + viewmodel/ (ItemHistoryUiState/Event/UiAction/ViewModel/
+        │                 DialogState — `dialogState` fora do `combine`, exceção 3 do MVI) + ui/components/
+        │                 AddEditHistoryEntryBottomSheet.kt (outer + `*Content`, reused create/edit, date picker com
+        │                 `SelectableDates` bloqueando data futura e datas já usadas, toggle concluído/perdido, nota)
         ├── config/     — ItemConfigScreen.kt (tela própria, #160): edição de seção/tags/lembrete/recorrência/
         │                 data/horário/aviso de um item já existente, mais o fluxo guardado de troca de tipo
         │                 (dialog de confirmação + reset total dos campos "pesados" — `switchedType()`/
@@ -380,8 +393,9 @@ Cada módulo registra seu próprio Koin module — DI é **local ao módulo**, n
 data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single, incl. ItemCompletionHistoryDao),
                                  Repositories (singleOf().bind(), incl. ItemCompletionHistoryRepositoryImpl) — confirmado em #21/#22/#126
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66),
-                                 SetItemPinnedUseCase (#127), GetItemCompletionHistoryUseCase e ProcessMissedOccurrencesUseCase (#126),
-                                 IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase e ItemOccurrenceUseCase (#101/A/B)
+                                 SetItemPinnedUseCase (#127), ItemCompletionHistoryUseCase (#126, CRUD completo desde #169) e
+                                 ProcessMissedOccurrencesUseCase (#126), IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase e
+                                 ItemOccurrenceUseCase (#101/A/B)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl

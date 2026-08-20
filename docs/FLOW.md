@@ -117,7 +117,12 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
        [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home (sempre visível)
        [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
                              pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
-                             por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C)
+                             por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C).
+                             CRUD completo desde o #169: FAB → AddEditHistoryEntryBottomSheet (data
+                             retroativa, não-futura e ainda não usada; nota obrigatória se marcar
+                             concluída com atraso) cria uma entrada; menu por card (editar/excluir) reabre
+                             o mesmo sheet ou DeleteConfirmationDialog. Diferente de completar/desmarcar o
+                             item ao vivo (#101/B) — não mexe em `Item.lastCompletedScheduledDate`
   → "←" → volta
 ```
 

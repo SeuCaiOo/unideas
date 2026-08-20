@@ -5,7 +5,6 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
-import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 import java.time.LocalTime
@@ -21,8 +20,6 @@ data class ItemConfigUiState(
     val dueTime: LocalTime? = null,
     val recurrence: Recurrence = Recurrence.None,
     val reminderWarning: ReminderWarning = ReminderWarning.None,
-    val availableSections: List<Section> = emptyList(),
-    val availableTags: List<Tag> = emptyList(),
 ) {
 
     val persistableDueDate: LocalDate? get() = if (hasReminder) dueDate else null
@@ -64,14 +61,11 @@ data class ItemConfigUiState(
         reminderWarning = item.reminderWarning,
     )
 
-    fun setReferenceData(sections: List<Section>, tags: List<Tag>): ItemConfigUiState =
-        copy(availableSections = sections, availableTags = tags)
-
     fun startLoading(): ItemConfigUiState = copy(isLoading = true, loadFailed = false)
 
     fun markLoadFailed(): ItemConfigUiState = copy(isLoading = false, loadFailed = true)
 
-    fun toItem(original: Item): Item = original.copy(
+    fun toItem(original: Item, availableTags: List<Tag>): Item = original.copy(
         sectionId = sectionId,
         dueDate = persistableDueDate,
         dueTime = persistableDueTime,

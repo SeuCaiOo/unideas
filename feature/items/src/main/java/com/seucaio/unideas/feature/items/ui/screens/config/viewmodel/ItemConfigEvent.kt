@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.ui.screens.config.viewmodel
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
+import com.seucaio.unideas.domain.model.Tag
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -22,4 +23,6 @@ sealed interface ItemConfigEvent {
     data object OnTypeSwitchConfirmClicked : ItemConfigEvent
     data object OnDialogDismissed : ItemConfigEvent
     data object OnRetryClicked : ItemConfigEvent
+
+    data class OnAvailableTagsSynced(val tags: List<Tag>) : ItemConfigEvent
 }

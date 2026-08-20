@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.feature.home.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,13 +32,15 @@ import java.time.LocalDateTime
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
     private val homeUseCase: HomeUseCase,
-    private val getSectionsAndTags: GetSectionsAndTagsUseCase,
+    private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
 ) : ViewModel() {
 
     //region filterState
 
     private val _filterState = MutableStateFlow(FilterState())
     internal val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
+
+    private val referenceDataFlow = sectionsAndTagsUseCase.getAll()
 
     //endregion
 
@@ -121,7 +123,9 @@ class HomeViewModel(
     //endregion
 
     init {
-        viewModelScope.launch { loadReferenceData() }
+        referenceDataFlow
+            .onEach { (sections, tags) -> _filterState.update { it.setFilters(sections, tags) } }
+            .launchIn(viewModelScope)
         itemsState
             .onEach { state -> currentItems = state.tabItems }
             .launchIn(viewModelScope)
@@ -188,18 +192,8 @@ class HomeViewModel(
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
-    private suspend fun loadReferenceData() {
-        // Failure just leaves availableSections/availableTags empty.
-        runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-            _filterState.update {
-                it.setFilters(sections = referenceData.sections, tags = referenceData.tags)
-            }
-        }
-    }
-
     private fun handleSectionPinToggle(sectionId: Long, isPinned: Boolean) = viewModelScope.launch {
         homeUseCase.setSectionPinned(sectionId, isPinned)
-            .onSuccess { loadReferenceData() }
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 

@@ -40,7 +40,7 @@ fun AppIconButton(
     containerColor: Color = Color.Transparent,
     shape: Shape = CircleShape,
     buttonSize: Dp = 44.dp,
-    iconSize: Dp = 23.dp
+    iconSize: Dp = 24.dp
 ) {
     IconButton(
         onClick = onClick,

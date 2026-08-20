@@ -5,11 +5,9 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
-import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -38,16 +36,12 @@ class ItemConfigViewModelTest {
     @MockK
     private lateinit var itemFormUseCase: ItemFormUseCase
 
-    @MockK
-    private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
-
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(SectionStub.sections(), TagStub.tags())
         coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
     }
 
@@ -57,7 +51,7 @@ class ItemConfigViewModelTest {
     }
 
     private fun viewModel(itemId: Long = 1L) =
-        ItemConfigViewModel(itemId = itemId, itemFormUseCase = itemFormUseCase, getSectionsAndTags = getSectionsAndTags)
+        ItemConfigViewModel(itemId = itemId, itemFormUseCase = itemFormUseCase)
 
     @Test
     fun `when loading a task should expose its recurrence and reminder fields`() = runTest {
@@ -207,6 +201,20 @@ class ItemConfigViewModelTest {
                 assertEquals(ItemConfigDialogState.None, awaitItem())
             }
         }
+
+    @Test
+    fun `toggling a tag persists it only after OnAvailableTagsSynced resolved the full Tag list`() = runTest {
+        val task = ItemStub.task(id = 1L, tags = emptyList())
+        every { itemFormUseCase.get(1L) } returns flowOf(task)
+        val vm = viewModel()
+        vm.uiState.test { awaitItem() }
+
+        val tag = TagStub.tags().first()
+        vm.onEvent(ItemConfigEvent.OnAvailableTagsSynced(TagStub.tags()))
+        vm.onEvent(ItemConfigEvent.OnTagToggled(tag.id))
+
+        coVerify { itemFormUseCase.edit(match { it.tags == listOf(tag) }) }
+    }
 
     @Test
     fun `type switch never touches an item's completion history — no such dependency exists to call`() = runTest {

@@ -1,5 +1,6 @@
 package com.seucaio.unideas.feature.items.ui.screens.config
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -33,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.Section
+import com.seucaio.unideas.domain.model.Tag
+import com.seucaio.unideas.ds.components.buttons.AppIconButton
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
 import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -46,11 +52,17 @@ import com.seucaio.unideas.feature.items.ui.components.fields.ReminderWarningFie
 import com.seucaio.unideas.feature.items.ui.components.fields.SectionField
 import com.seucaio.unideas.feature.items.ui.components.fields.TagsField
 import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.RecurrenceField
+import com.seucaio.unideas.feature.items.ui.components.fields.sectionstags.QuickCreateBottomSheet
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigDialogState
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigEvent
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigUiAction
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigUiState
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigViewModel
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsDialogState
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsEvent
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsUiAction
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsUiState
+import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -60,11 +72,20 @@ fun ItemConfigScreen(
     onNavigateBack: (() -> Unit)?,
     isNewItem: Boolean = false,
     viewModel: ItemConfigViewModel = koinViewModel { parametersOf(itemId) },
+    sectionsTagsViewModel: SectionsTagsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
+    val sectionsTagsState by sectionsTagsViewModel.uiState.collectAsStateWithLifecycle()
+    val sectionsTagsDialogState by sectionsTagsViewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
+
+    // Config Screen never creates a Tag itself — it only needs the current full list to resolve
+    // selectedTagIds into the domain model's List<Tag> when persisting.
+    LaunchedEffect(sectionsTagsState.tags) {
+        viewModel.onEvent(ItemConfigEvent.OnAvailableTagsSynced(sectionsTagsState.tags))
+    }
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -77,11 +98,25 @@ fun ItemConfigScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        sectionsTagsViewModel.uiAction.collect { action ->
+            when (action) {
+                is SectionsTagsUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
+                    resources.getString(action.messageRes)
+                )
+                is SectionsTagsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
+
     ItemConfigScreenContent(
         uiState = uiState,
         dialogState = dialogState,
+        sectionsTagsState = sectionsTagsState,
+        sectionsTagsDialogState = sectionsTagsDialogState,
         isNewItem = isNewItem,
         onEvent = viewModel::onEvent,
+        onSectionsTagsEvent = sectionsTagsViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
     )
@@ -92,8 +127,11 @@ fun ItemConfigScreen(
 private fun ItemConfigScreenContent(
     uiState: ItemConfigUiState,
     dialogState: ItemConfigDialogState,
+    sectionsTagsState: SectionsTagsUiState,
+    sectionsTagsDialogState: SectionsTagsDialogState,
     isNewItem: Boolean,
     onEvent: (ItemConfigEvent) -> Unit,
+    onSectionsTagsEvent: (SectionsTagsEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -115,8 +153,10 @@ private fun ItemConfigScreenContent(
             )
             else -> ItemConfigFields(
                 uiState = uiState,
+                sectionsTagsState = sectionsTagsState,
                 isNewItem = isNewItem,
                 onEvent = onEvent,
+                onSectionsTagsEvent = onSectionsTagsEvent,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -130,13 +170,30 @@ private fun ItemConfigScreenContent(
             onConfirm = { onEvent(ItemConfigEvent.OnTypeSwitchConfirmClicked) },
         )
     }
+
+    if (sectionsTagsDialogState != SectionsTagsDialogState.None) {
+        QuickCreateBottomSheet(
+            target = sectionsTagsDialogState,
+            onDismiss = { onSectionsTagsEvent(SectionsTagsEvent.OnDialogDismissed) },
+            onConfirm = { name ->
+                val event = if (sectionsTagsDialogState is SectionsTagsDialogState.AddSection) {
+                    SectionsTagsEvent.OnSectionCreateRequested(name)
+                } else {
+                    SectionsTagsEvent.OnTagCreateRequested(name)
+                }
+                onSectionsTagsEvent(event)
+            },
+        )
+    }
 }
 
 @Composable
 private fun ItemConfigFields(
     uiState: ItemConfigUiState,
+    sectionsTagsState: SectionsTagsUiState,
     isNewItem: Boolean,
     onEvent: (ItemConfigEvent) -> Unit,
+    onSectionsTagsEvent: (SectionsTagsEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -145,20 +202,28 @@ private fun ItemConfigFields(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        SectionLabel(stringResource(R.string.item_config_section_organization), Modifier.padding(top = 16.dp))
-        OrganizationFields(uiState, onEvent)
+        SectionLabel(
+            stringResource(R.string.item_config_section_organization),
+            Modifier.padding(top = 16.dp)
+        )
+        OrganizationFields(uiState, sectionsTagsState, onEvent, onSectionsTagsEvent)
 
-        SectionLabel(stringResource(R.string.item_config_section_recurrence), Modifier.padding(top = 24.dp))
+        SectionLabel(
+            stringResource(R.string.item_config_section_recurrence),
+            Modifier.padding(top = 24.dp)
+        )
         RecurrenceAndReminderFields(uiState, onEvent, Modifier.padding(top = 8.dp))
 
-        // Type only becomes a "danger" change once other data (occurrences, history) exists on top
-        // of it — a brand-new item has none of that yet, so there's nothing risky to warn about.
         if (!isNewItem) {
-            SectionLabel(stringResource(R.string.item_config_section_danger_zone), Modifier.padding(top = 24.dp))
+            SectionLabel(
+                stringResource(R.string.item_config_section_danger_zone),
+                Modifier.padding(top = 24.dp)
+            )
             TypeDangerZone(
                 type = uiState.type,
                 onChangeTypeClicked = {
-                    val newType = if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
+                    val newType =
+                        if (uiState.type == ItemType.TASK) ItemType.NOTE else ItemType.TASK
                     onEvent(ItemConfigEvent.OnChangeTypeClicked(newType))
                 },
                 modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
@@ -168,25 +233,57 @@ private fun ItemConfigFields(
 }
 
 @Composable
-private fun OrganizationFields(uiState: ItemConfigUiState, onEvent: (ItemConfigEvent) -> Unit) {
-    Column {
-        if (uiState.availableSections.isNotEmpty()) {
+private fun OrganizationFields(
+    uiState: ItemConfigUiState,
+    sectionsTagsState: SectionsTagsUiState,
+    onEvent: (ItemConfigEvent) -> Unit,
+    onSectionsTagsEvent: (SectionsTagsEvent) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.padding(vertical = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             SectionField(
-                availableSections = uiState.availableSections,
+                availableSections = sectionsTagsState.sections,
                 sectionId = uiState.sectionId,
                 onSectionChanged = { onEvent(ItemConfigEvent.OnSectionChanged(it)) },
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.weight(1f),
+            )
+            AddEntryTrigger(
+                labelRes = R.string.item_config_add_section,
+                onClick = { onSectionsTagsEvent(SectionsTagsEvent.OnAddSectionClicked) },
             )
         }
-        if (uiState.availableTags.isNotEmpty()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             TagsField(
-                availableTags = uiState.availableTags,
+                availableTags = sectionsTagsState.tags,
                 selectedTagIds = uiState.selectedTagIds,
                 onTagToggled = { onEvent(ItemConfigEvent.OnTagToggled(it)) },
-                modifier = Modifier.padding(top = 16.dp),
+                modifier = Modifier.weight(1f),
+            )
+            AddEntryTrigger(
+                labelRes = R.string.item_config_add_tag,
+                onClick = { onSectionsTagsEvent(SectionsTagsEvent.OnAddTagClicked) },
             )
         }
     }
+}
+
+@Composable
+private fun AddEntryTrigger(@StringRes labelRes: Int, onClick: () -> Unit) {
+    AppIconButton(
+        icon = Icons.Outlined.Add,
+        contentDescription = stringResource(labelRes),
+        onClick = onClick,
+        tint = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable
@@ -237,7 +334,11 @@ private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TypeDangerZone(type: ItemType, onChangeTypeClicked: () -> Unit, modifier: Modifier = Modifier) {
+private fun TypeDangerZone(
+    type: ItemType,
+    onChangeTypeClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Surface(
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.18f),
@@ -275,7 +376,11 @@ private fun TypeDangerZone(type: ItemType, onChangeTypeClicked: () -> Unit, modi
     }
 }
 
-private data class ItemConfigPreviewScenario(val uiState: ItemConfigUiState, val isNewItem: Boolean = false)
+private data class ItemConfigPreviewScenario(
+    val uiState: ItemConfigUiState,
+    val isNewItem: Boolean = false,
+    val sectionsTagsDialogState: SectionsTagsDialogState = SectionsTagsDialogState.None,
+)
 
 private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigPreviewScenario> {
     override val values: Sequence<ItemConfigPreviewScenario> = sequenceOf(
@@ -284,6 +389,11 @@ private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigPre
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK), isNewItem = true),
     )
 }
+
+private val previewSectionsTagsState = SectionsTagsUiState(
+    sections = listOf(Section(id = 1L, name = "Home"), Section(id = 2L, name = "Work")),
+    tags = listOf(Tag(id = 1L, name = "urgent"), Tag(id = 2L, name = "personal")),
+)
 
 @PreviewLightDark
 @Composable
@@ -294,8 +404,11 @@ private fun ItemConfigScreenPreview(
         ItemConfigScreenContent(
             uiState = scenario.uiState,
             dialogState = ItemConfigDialogState.None,
+            sectionsTagsState = previewSectionsTagsState,
+            sectionsTagsDialogState = scenario.sectionsTagsDialogState,
             isNewItem = scenario.isNewItem,
             onEvent = {},
+            onSectionsTagsEvent = {},
             onNavigateBack = {},
             snackbarHostState = remember { SnackbarHostState() },
         )

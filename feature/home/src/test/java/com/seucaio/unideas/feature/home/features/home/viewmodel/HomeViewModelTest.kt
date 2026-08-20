@@ -7,7 +7,7 @@ import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.feature.home.R
 import io.mockk.MockKAnnotations
@@ -18,6 +18,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -37,13 +38,13 @@ class HomeViewModelTest {
     private lateinit var homeUseCase: HomeUseCase
 
     @MockK
-    private lateinit var getSectionsAndTags: GetSectionsAndTagsUseCase
+    private lateinit var sectionsAndTagsUseCase: SectionsAndTagsUseCase
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(emptyList(), emptyList())
+        every { sectionsAndTagsUseCase.getAll() } returns flowOf(SectionsAndTags(emptyList(), emptyList()))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
         every { homeUseCase.hasAnyItem() } returns flowOf(true)
         every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(emptyList())
@@ -54,7 +55,7 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = HomeViewModel(homeUseCase, getSectionsAndTags)
+    private fun viewModel() = HomeViewModel(homeUseCase, sectionsAndTagsUseCase)
 
     @Test
     fun `when OnTabChanged should switch the active tab and reload the tab list`() = runTest {
@@ -126,7 +127,7 @@ class HomeViewModelTest {
     fun `when loading reference data succeeds should surface available sections and tags`() = runTest {
         val sections = listOf(Section(id = 1L, name = "Casa"))
         val tags = listOf(Tag(id = 1L, name = "Urgente"))
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(sections, tags)
+        every { sectionsAndTagsUseCase.getAll() } returns flowOf(SectionsAndTags(sections, tags))
         val vm = viewModel()
 
         assertEquals(sections, vm.filterState.value.availableSections)
@@ -134,13 +135,27 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when a section or tag is created elsewhere should reflect in availableSections and availableTags live`() =
+        runTest {
+            val referenceDataFlow = MutableStateFlow(SectionsAndTags(emptyList(), emptyList()))
+            every { sectionsAndTagsUseCase.getAll() } returns referenceDataFlow
+            val vm = viewModel()
+            assertEquals(emptyList<Section>(), vm.filterState.value.availableSections)
+            assertEquals(emptyList<Tag>(), vm.filterState.value.availableTags)
+
+            val newSection = Section(id = 5L, name = "New")
+            val newTag = Tag(id = 9L, name = "New Tag")
+            referenceDataFlow.value = SectionsAndTags(listOf(newSection), listOf(newTag))
+
+            assertEquals(listOf(newSection), vm.filterState.value.availableSections)
+            assertEquals(listOf(newTag), vm.filterState.value.availableTags)
+        }
+
+    @Test
     fun `when OnSectionPinToggled succeeds should reload sections reflecting the new pin state`() = runTest {
         val section = Section(id = 1L, name = "Work", isPinned = false)
         val pinnedSection = section.copy(isPinned = true)
-        coEvery { getSectionsAndTags() } returnsMany listOf(
-            SectionsAndTags(listOf(section), emptyList()),
-            SectionsAndTags(listOf(pinnedSection), emptyList()),
-        )
+        every { sectionsAndTagsUseCase.getAll() } returns flowOf(SectionsAndTags(listOf(pinnedSection), emptyList()))
         coEvery { homeUseCase.setSectionPinned(section.id, true) } returns Result.success(Unit)
         val vm = viewModel()
 
@@ -213,7 +228,7 @@ class HomeViewModelTest {
     fun `when tab items span multiple sections should group them in section order with unsectioned last`() = runTest {
         val work = Section(id = 1L, name = "Work")
         val personal = Section(id = 2L, name = "Personal")
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work, personal), emptyList())
+        every { sectionsAndTagsUseCase.getAll() } returns flowOf(SectionsAndTags(listOf(work, personal), emptyList()))
         val personalItem = ItemStub.task(id = 1L, sectionId = personal.id)
         val workItem = ItemStub.task(id = 2L, sectionId = work.id)
         val unsectionedItem = ItemStub.task(id = 3L, sectionId = null)
@@ -237,7 +252,7 @@ class HomeViewModelTest {
     @Test
     fun `when a section filter is active should still expose groupedTabItems for that section only`() = runTest {
         val work = Section(id = 7L, name = "Work")
-        coEvery { getSectionsAndTags() } returns SectionsAndTags(listOf(work), emptyList())
+        every { sectionsAndTagsUseCase.getAll() } returns flowOf(SectionsAndTags(listOf(work), emptyList()))
         val item = ItemStub.task(id = 1L, sectionId = work.id)
         every { homeUseCase.getItems(ItemType.TASK, 7L, emptyList()) } returns flowOf(listOf(item))
         val vm = viewModel()

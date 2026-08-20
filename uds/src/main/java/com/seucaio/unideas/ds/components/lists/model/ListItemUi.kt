@@ -14,4 +14,5 @@ data class ListItemUi(
     val checkContentDescription: String,
     val isSelected: Boolean? = null,
     val isPinned: Boolean = false,
+    val description: String? = null,
 )

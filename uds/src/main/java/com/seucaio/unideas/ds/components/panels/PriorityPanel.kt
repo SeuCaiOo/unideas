@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
@@ -29,11 +27,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.ds.theme.leftAccentBorder
 
 data class PriorityRowUi(
     val id: Long,
@@ -96,20 +98,17 @@ fun PriorityPanel(
             )
         } else {
             rows.forEach { row ->
+                val borderColor = if (row.badgeLabel != null) row.badgeColor else Color.Transparent
                 Row(
                     Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(Radii.Card))
+                        .leftAccentBorder(3.dp, borderColor)
                         .clickable { onRowClick(row.id) }
-                        .padding(vertical = 9.dp, horizontal = 2.dp),
+                        .padding(vertical = 9.dp, horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(row.badgeColor)
-                    )
                     Text(
                         row.title,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -120,7 +119,7 @@ fun PriorityPanel(
                         modifier = Modifier.weight(1f)
                     )
                     if (row.badgeLabel != null) {
-                        Text(row.badgeLabel, style = MaterialTheme.typography.bodyMedium, color = row.badgeColor)
+                        DueBadge(label = row.badgeLabel, color = row.badgeColor)
                     }
                 }
             }
@@ -140,13 +139,21 @@ fun PriorityPanel(
     }
 }
 
+private enum class PriorityPanelPreviewScenario { WithRows, Empty }
+
+private class PriorityPanelPreviewProvider : PreviewParameterProvider<PriorityPanelPreviewScenario> {
+    override val values = PriorityPanelPreviewScenario.entries.asSequence()
+}
+
 @PreviewLightDark
 @Composable
-private fun PriorityPanelPreview() {
+private fun PriorityPanelPreview(
+    @PreviewParameter(PriorityPanelPreviewProvider::class) scenario: PriorityPanelPreviewScenario,
+) {
     UdsTheme {
         Surface {
-            Column {
-                PriorityPanel(
+            when (scenario) {
+                PriorityPanelPreviewScenario.WithRows -> PriorityPanel(
                     title = "Priorities",
                     icon = Icons.Outlined.Flag,
                     rows = listOf(
@@ -161,13 +168,19 @@ private fun PriorityPanelPreview() {
                             title = "Morning stretch",
                             badgeLabel = "due today",
                             badgeColor = LocalUdsExtendedColors.current.warning
+                        ),
+                        PriorityRowUi(
+                            id = 3L,
+                            title = "Renew streaming subscription",
+                            badgeLabel = "due in 12 days",
+                            badgeColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     ),
                     footerLabel = "view all (6)",
                     onFooterClick = {},
                     onRowClick = {}
                 )
-                PriorityPanel(
+                PriorityPanelPreviewScenario.Empty -> PriorityPanel(
                     title = "Priorities",
                     icon = Icons.Outlined.Flag,
                     rows = emptyList(),

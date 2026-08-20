@@ -117,6 +117,16 @@
         <item quantity="one">Late by %d day</item>
         <item quantity="other">Late by %d days</item>
     </plurals>
+    <string name="item_history_add_entry">Add entry</string>
+    <string name="item_history_edit_entry">Edit entry</string>
+    <string name="item_history_delete_entry">Delete entry</string>
+    <string name="item_history_menu_content_description">Options</string>
+    <string name="item_history_date_label">Date</string>
+    <string name="item_history_completed_toggle">Completed</string>
+    <string name="item_history_save">Save</string>
+    <string name="item_history_delete_confirm_title">Remove this entry?</string>
+    <string name="item_history_delete_confirm_message">This can\'t be undone.</string>
+    <string name="item_history_entry_invalid">Check the date and note and try again</string>
 
     <!-- Item Config Screen -->
     <string name="item_config_title">Configuration</string>

@@ -18,12 +18,12 @@ import java.time.LocalDateTime
 class ItemOccurrenceUseCaseTest {
 
     private val completeItem: CompleteItemUseCase = mockk()
-    private val getItemCompletionHistory: GetItemCompletionHistoryUseCase = mockk()
+    private val itemCompletionHistoryUseCase: ItemCompletionHistoryUseCase = mockk()
     private val ignoreOccurrenceUseCase: IgnoreOccurrenceUseCase = mockk()
     private val extendItemDueDateUseCase: ExtendItemDueDateUseCase = mockk()
     private val useCase = ItemOccurrenceUseCase(
         completeItem,
-        getItemCompletionHistory,
+        itemCompletionHistoryUseCase,
         ignoreOccurrenceUseCase,
         extendItemDueDateUseCase,
     )
@@ -66,16 +66,16 @@ class ItemOccurrenceUseCaseTest {
     }
 
     @Test
-    fun `getHistory delegates to GetItemCompletionHistoryUseCase`() = runTest {
+    fun `getHistory delegates to ItemCompletionHistoryUseCase`() = runTest {
         val history = listOf(
             ItemCompletionHistory(itemId = 1L, scheduledDate = ItemStub.TODAY, completedAt = null),
         )
-        every { getItemCompletionHistory(1L) } returns flowOf(history)
+        every { itemCompletionHistoryUseCase.getHistory(1L) } returns flowOf(history)
 
         val result = useCase.getHistory(1L).first()
 
         assertEquals(history, result)
-        verify(exactly = 1) { getItemCompletionHistory(1L) }
+        verify(exactly = 1) { itemCompletionHistoryUseCase.getHistory(1L) }
     }
 
     @Test
@@ -110,5 +110,26 @@ class ItemOccurrenceUseCaseTest {
 
         assertEquals(Result.success(extended), result)
         coVerify(exactly = 1) { extendItemDueDateUseCase(item, newDueDate, ItemStub.TODAY) }
+    }
+
+    @Test
+    fun `saveHistoryEntry delegates to ItemCompletionHistoryUseCase`() = runTest {
+        val record = ItemCompletionHistory(itemId = 1L, scheduledDate = ItemStub.TODAY, completedAt = null)
+        coEvery { itemCompletionHistoryUseCase.save(record) } returns Result.success(Unit)
+
+        val result = useCase.saveHistoryEntry(record)
+
+        assertEquals(Result.success(Unit), result)
+        coVerify(exactly = 1) { itemCompletionHistoryUseCase.save(record) }
+    }
+
+    @Test
+    fun `deleteHistoryEntry delegates to ItemCompletionHistoryUseCase`() = runTest {
+        coEvery { itemCompletionHistoryUseCase.delete(5L) } returns Result.success(Unit)
+
+        val result = useCase.deleteHistoryEntry(5L)
+
+        assertEquals(Result.success(Unit), result)
+        coVerify(exactly = 1) { itemCompletionHistoryUseCase.delete(5L) }
     }
 }

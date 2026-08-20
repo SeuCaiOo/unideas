@@ -50,71 +50,85 @@ fun ListItemRow(
         ui.badgeLabel != null -> ui.badgeColor
         else -> Color.Transparent
     }
-    Row(
+    Column(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Radii.Card))
             .background(containerColor)
-            .leftAccentBorder(3.dp, accentColor)
+            .leftAccentBorder(4.dp, accentColor)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(start = 13.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(16.dp),
     ) {
-        if (ui.showCheckbox) {
-            ListItemCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
-        }
-        Column(Modifier.weight(1f)) {
-            Text(
-                ui.title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = if (ui.checked) {
-                    LocalUdsExtendedColors.current.textTertiary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                textDecoration = if (ui.checked) TextDecoration.LineThrough else TextDecoration.None,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (!ui.description.isNullOrBlank()) {
-                Text(
-                    ui.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (ui.showCheckbox) {
+                ListItemCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
             }
-            Row(
-                Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!ui.meta.isNullOrEmpty()) {
-                    Text(
-                        ui.meta,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = LocalUdsExtendedColors.current.textTertiary
-                    )
-                }
-                if (ui.showRepeatIcon) {
-                    Icon(
-                        Icons.Outlined.Repeat,
-                        contentDescription = null,
-                        tint = LocalUdsExtendedColors.current.textTertiary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
+            ListItemTitleAndMeta(ui, modifier = Modifier.weight(1f))
+            if (ui.isSelected != null) {
+                SelectionIndicator(ui.isSelected, onToggle = { onToggleSelection?.invoke() })
+            } else {
+                NormalTrailingContent(ui, onTogglePin)
             }
         }
-        if (ui.isSelected != null) {
-            SelectionIndicator(ui.isSelected, onToggle = { onToggleSelection?.invoke() })
-        } else {
-            NormalTrailingContent(ui, onTogglePin)
+        if (!ui.description.isNullOrBlank()) {
+            ListItemDescription(ui.description, modifier = Modifier.padding(top = 10.dp))
         }
     }
+}
+
+@Composable
+private fun ListItemTitleAndMeta(ui: ListItemUi, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        Text(
+            ui.title,
+            style = MaterialTheme.typography.headlineMedium,
+            color = if (ui.checked) {
+                LocalUdsExtendedColors.current.textTertiary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            textDecoration = if (ui.checked) TextDecoration.LineThrough else TextDecoration.None,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(
+            Modifier.padding(top = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!ui.meta.isNullOrEmpty()) {
+                Text(
+                    ui.meta,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = LocalUdsExtendedColors.current.textTertiary
+                )
+            }
+            if (ui.showRepeatIcon) {
+                Icon(
+                    Icons.Outlined.Repeat,
+                    contentDescription = null,
+                    tint = LocalUdsExtendedColors.current.textTertiary,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+/** Full width of the card — never shares a line with the checkbox/badge/pin trailing content. */
+@Composable
+private fun ListItemDescription(description: String, modifier: Modifier = Modifier) {
+    Text(
+        description,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 private enum class ListItemRowPreviewScenario {

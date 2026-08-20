@@ -103,9 +103,9 @@ fun PriorityPanel(
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(Radii.Card))
-                        .leftAccentBorder(3.dp, borderColor)
+                        .leftAccentBorder(4.dp, borderColor)
                         .clickable { onRowClick(row.id) }
-                        .padding(vertical = 9.dp, horizontal = 10.dp),
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {

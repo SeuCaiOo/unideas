@@ -3,7 +3,7 @@ package com.seucaio.unideas.feature.items.ui.screens.config.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.usecase.GetSectionsAndTagsUseCase
+import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.channels.Channel
@@ -19,10 +19,10 @@ import kotlinx.coroutines.launch
 class ItemConfigViewModel(
     private val itemId: Long,
     private val itemFormUseCase: ItemFormUseCase,
-    private val getSectionsAndTags: GetSectionsAndTagsUseCase,
 ) : ViewModel() {
 
     private var originalItem: Item? = null
+    private var availableTags: List<Tag> = emptyList()
 
     private val _uiState = MutableStateFlow(ItemConfigUiState())
     val uiState: StateFlow<ItemConfigUiState> = _uiState.asStateFlow()
@@ -34,12 +34,7 @@ class ItemConfigViewModel(
     val uiAction: Flow<ItemConfigUiAction> = _uiAction.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            runCatching { getSectionsAndTags() }.onSuccess { referenceData ->
-                _uiState.update { it.setReferenceData(referenceData.sections, referenceData.tags) }
-            }
-            loadItem()
-        }
+        viewModelScope.launch { loadItem() }
     }
 
     private suspend fun loadItem() {
@@ -62,6 +57,7 @@ class ItemConfigViewModel(
             is ItemConfigEvent.OnDialogDismissed -> _dialogState.update { ItemConfigDialogState.None }
             is ItemConfigEvent.OnTypeSwitchConfirmClicked -> handleTypeSwitchConfirmed()
             is ItemConfigEvent.OnRetryClicked -> retryLoad()
+            is ItemConfigEvent.OnAvailableTagsSynced -> availableTags = event.tags
         }
     }
 
@@ -98,7 +94,7 @@ class ItemConfigViewModel(
 
     private suspend fun persist() {
         val original = originalItem ?: return
-        val updated = uiState.value.toItem(original)
+        val updated = uiState.value.toItem(original, availableTags)
         itemFormUseCase.edit(updated)
             .onSuccess { originalItem = updated }
             .onFailure { sendUiAction(ItemConfigUiAction.ShowError(it.message.orEmpty())) }

@@ -39,7 +39,6 @@ val itemsModule = module {
         ItemConfigViewModel(
             itemId = params.get(),
             itemFormUseCase = get(),
-            getSectionsAndTags = get(),
         )
     }
     viewModelOf(::ItemsListViewModel)

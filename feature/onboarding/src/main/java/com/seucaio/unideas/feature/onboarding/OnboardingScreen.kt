@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -86,9 +87,10 @@ private fun OnboardingContent(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(
                     onClick = onSkipClick,
-                    modifier = Modifier.padding(top = 12.dp, end = 8.dp)
+                    modifier = Modifier.padding(top = 12.dp, end = 8.dp),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
                 ) {
-                    Text(text = stringResource(R.string.onboarding_skip))
+                    Text(text = stringResource(R.string.onboarding_skip_top))
                 }
             }
         },
@@ -103,6 +105,13 @@ private fun OnboardingContent(
             ) {
                 Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
                     Text(text = stringResource(R.string.onboarding_connect))
+                }
+
+                TextButton(
+                    onClick = onSkipClick,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                ) {
+                    Text(text = stringResource(R.string.onboarding_skip))
                 }
 
                 Text(

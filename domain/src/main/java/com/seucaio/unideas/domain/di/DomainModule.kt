@@ -22,6 +22,8 @@ import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
+import com.seucaio.unideas.domain.usecase.onboarding.GetOnboardingSeenUseCase
+import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
@@ -78,4 +80,7 @@ val domainModule = module {
     factoryOf(::ProcessMissedOccurrencesUseCase)
     factoryOf(::IgnoreOccurrenceUseCase)
     factoryOf(::ExtendItemDueDateUseCase)
+
+    factoryOf(::GetOnboardingSeenUseCase)
+    factoryOf(::SetOnboardingSeenUseCase)
 }

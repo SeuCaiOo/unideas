@@ -11,7 +11,8 @@
     <string name="home_tab_tasks">Tarefas</string>
     <string name="home_tab_notes">Anotações</string>
     <string name="home_tab_empty">Nenhum item aqui ainda.</string>
-    <string name="home_empty_onboarding">Nada por aqui ainda — toque no botão + abaixo para criar sua primeira tarefa ou anotação.</string>
+    <string name="home_empty_onboarding_title">Nada por aqui ainda</string>
+    <string name="home_empty_onboarding">Toque no botão + abaixo para criar sua primeira tarefa ou anotação.</string>
     <string name="home_section_filter_none">Todas as seções</string>
     <string name="home_group_no_section">Sem seção</string>
     <string name="home_group_pinned">Fixadas</string>

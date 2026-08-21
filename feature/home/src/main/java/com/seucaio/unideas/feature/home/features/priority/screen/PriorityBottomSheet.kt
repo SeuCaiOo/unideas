@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,10 +64,7 @@ fun PriorityBottomSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-    ) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         PriorityBottomSheetContent(
             uiState = uiState,
             itemsState = itemsState,
@@ -125,10 +120,9 @@ private fun PriorityBottomSheetContent(
             }
 
         is PriorityUiState.Success ->
-            Column(modifier = modifier.fillMaxWidth()) {
+            Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 PriorityPanel(
                     title = stringResource(R.string.priority_panel_title),
-                    icon = Icons.Outlined.Flag,
                     rows = itemsState.priorityItems.map { it.toPriorityRowUi() },
                     footerLabel = if (itemsState.showSeeAllButton) stringResource(R.string.priority_see_all) else null,
                     onFooterClick = { onEvent(PriorityEvent.OnSeeAllClicked) },

@@ -78,6 +78,7 @@ class DatabaseSeeder(
         seedFullExtraTasks(today, sections, tags)
         seedFullReevaluationScenarios(today, sections)
         seedFullNotes(today, sections, tags)
+        seedFullDescriptionScenarios(today, sections)
     }
 
     // Enough overdue/due-soon tasks to exceed Constants.PRIORITY_PANEL_LIMIT and show "See all".
@@ -233,6 +234,28 @@ class DatabaseSeeder(
         )
     }
 
+    // Long/Markdown descriptions — visual coverage for #165's list-item description preview
+    // (1-line collapsed / 5-line expanded chevron, and markdown source shown as plain text).
+    private suspend fun seedFullDescriptionScenarios(today: LocalDate, sections: FullSections) {
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Planejar mudança de apartamento",
+                description = LONG_EXAMPLE_DESCRIPTION,
+                dueDate = today.minusDays(LONG_DESCRIPTION_OVERDUE_DAYS),
+                sectionId = sections.homeId,
+            ),
+        )
+        insertItem(
+            SeedItem(
+                ItemType.NOTE,
+                "Notas da reunião",
+                description = MARKDOWN_EXAMPLE_DESCRIPTION,
+                sectionId = sections.workId,
+            ),
+        )
+    }
+
     private suspend fun insertItem(spec: SeedItem) {
         val entity = ItemEntity(
             type = spec.type,
@@ -276,6 +299,20 @@ class DatabaseSeeder(
         const val NOTE_DUE_DAYS = 10L
         const val RENT_DAY_OF_MONTH = 5
         const val EVERY_N_DAYS_EXAMPLE = 15L
+        const val LONG_DESCRIPTION_OVERDUE_DAYS = 3L
+
+        /**
+         * Overflows past 5 lines even expanded — exercises the collapsed/expanded chevron in
+         * `ListItemRow`. Also mixes in bold/italic markdown syntax to check how the list-item
+         * description preview handles it (rendered vs. shown as raw `**`/`_` characters).
+         */
+        val LONG_EXAMPLE_DESCRIPTION = """
+            Confirmar com a operadora se o pacote de dados internacional **já foi ativado** antes
+            de embarcar, porque da última vez a confirmação chegou só depois do voo e ficamos sem
+            internet por dois dias inteiros na chegada, o que atrapalhou bastante pra achar o hotel
+            e pedir um carro. Também vale revisar o _seguro viagem_ e imprimir os vouchers, porque
+            o wi-fi do aeroporto de conexão costuma ser instável.
+        """.trimIndent().replace("\n", " ")
 
         /** Exercises every Markdown syntax the toolbar inserts (`MarkdownSyntaxInserter`), for manual visual checks. */
         val MARKDOWN_EXAMPLE_DESCRIPTION = """

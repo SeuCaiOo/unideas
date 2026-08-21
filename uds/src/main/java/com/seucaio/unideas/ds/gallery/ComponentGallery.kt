@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.Settings
@@ -386,7 +385,6 @@ fun ComponentGallery(modifier: Modifier = Modifier) {
             Labeled("PriorityPanel (+ PriorityRowUi)") {
                 PriorityPanel(
                     title = "Priorities",
-                    icon = Icons.Outlined.Flag,
                     rows = listOf(
                         PriorityRowUi(
                             id = 1L,

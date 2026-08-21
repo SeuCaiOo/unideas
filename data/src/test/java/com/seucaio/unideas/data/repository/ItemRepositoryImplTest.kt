@@ -8,6 +8,7 @@ import com.seucaio.unideas.data.local.relation.ItemWithTags
 import com.seucaio.unideas.data.local.relation.ItemWithTagsAndSection
 import com.seucaio.unideas.data.mapper.toEntity
 import com.seucaio.unideas.domain.model.ItemDetail
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.stub.TagStub
@@ -153,5 +154,27 @@ class ItemRepositoryImplTest {
         repository.deleteItem(id = 7L)
 
         coVerify(exactly = 1) { itemDao.deleteById(7L) }
+    }
+
+    @Test
+    fun `getArchivedItems delegates to the dao and maps rows`() = runTest {
+        val item = ItemStub.task(status = ItemStatus.ARCHIVED)
+        every { itemDao.getArchivedItems() } returns flowOf(
+            listOf(ItemWithTags(item = item.toEntity(), tags = emptyList())),
+        )
+
+        val result = repository.getArchivedItems().first()
+
+        assertEquals(listOf(item), result)
+        verify(exactly = 1) { itemDao.getArchivedItems() }
+    }
+
+    @Test
+    fun `setItemStatus delegates the id and status to the dao`() = runTest {
+        coEvery { itemDao.setStatus(7L, ItemStatus.ARCHIVED) } returns Unit
+
+        repository.setItemStatus(id = 7L, status = ItemStatus.ARCHIVED)
+
+        coVerify(exactly = 1) { itemDao.setStatus(7L, ItemStatus.ARCHIVED) }
     }
 }

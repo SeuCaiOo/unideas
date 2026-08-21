@@ -1,6 +1,8 @@
 package com.seucaio.unideas.feature.items.ui.components.form
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.chips.TextBadge
 import com.seucaio.unideas.ds.components.lists.NavCard
@@ -45,6 +48,7 @@ fun ItemFormBody(
     onNavigateToConfig: () -> Unit,
     onNavigateToHistory: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    isArchived: Boolean = false,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Column(
@@ -53,14 +57,7 @@ fun ItemFormBody(
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
         ) {
-            TextBadge(
-                text = stringResource(
-                    if (state.type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
-                ),
-                background = MaterialTheme.colorScheme.primaryContainer,
-                content = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
-            )
+            ItemFormBadges(type = state.type, isArchived = isArchived)
 
             TitleDescriptionFields(
                 title = state.title,
@@ -105,6 +102,28 @@ fun ItemFormBody(
 }
 
 @Composable
+private fun ItemFormBadges(type: ItemType, isArchived: Boolean) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+    ) {
+        val typeLabelRes = if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+        TextBadge(
+            text = stringResource(typeLabelRes),
+            background = MaterialTheme.colorScheme.primaryContainer,
+            content = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        if (isArchived) {
+            TextBadge(
+                text = stringResource(R.string.item_detail_archived_badge),
+                background = MaterialTheme.colorScheme.surfaceVariant,
+                content = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun configCardSubtitle(state: ItemFormFieldsState): String {
     val parts = buildList {
         state.recurrence.label(state.dueDate)?.let(::add)
@@ -137,6 +156,7 @@ private fun ItemFormBodyPreview(
                     onDescriptionChanged = {},
                 ),
                 occurrenceState = ItemOccurrenceUiState(),
+                isArchived = previewState.status == ItemStatus.ARCHIVED,
                 onCompleteClicked = {},
                 onIgnoreClicked = {},
                 onExtendDeadlineClicked = {},

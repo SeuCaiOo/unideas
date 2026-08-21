@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
@@ -38,6 +39,11 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
         ItemDetailUiState(
             itemId = 2L,
             title = "Renew subscription",
+        ),
+        ItemDetailUiState(
+            itemId = 3L,
+            title = "Old project",
+            status = ItemStatus.ARCHIVED,
         ),
     )
 }

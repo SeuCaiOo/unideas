@@ -45,6 +45,7 @@
     <string name="home_selection_clear">Limpar seleção</string>
     <string name="home_selection_delete">Excluir</string>
     <string name="home_selection_archive">Arquivar</string>
+    <string name="home_selection_actions">Mais ações</string>
     <string name="home_selection_select_all">Selecionar todos</string>
     <plurals name="home_selection_count">
         <item quantity="one">%d item selecionado</item>

@@ -174,6 +174,8 @@ core/common/
 ```
 uds/
 ├── theme/                 — UdsTheme, Color, Type, Dimens (Material 3, light + dark, acento teal)
+│                            — PinnedTint.kt / LeftAccentBorder.kt (#165) — tinta/borda de acento reaproveitadas
+│                              por ListItemRow e PriorityPanel (urgência/fixado)
 ├── components/            — organizado por papel (buttons/, chips/, inputs/, lists/, navigation/,
 │                            panels/, feedback/), catálogo completo no README do módulo
 │                            — inputs/ ganhou SelectionBottomSheet, GridSelectionBottomSheet e SwitchSection (#130)
@@ -185,7 +187,8 @@ uds/
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
     ├── UnideasErrorContent.kt
-    ├── UnideasEmptyContent.kt          — estado vazio com texto orientador
+    ├── UnideasEmptyContent.kt          — estado vazio: ícone (TaskAlt) + texto; `titleRes` opcional (#165)
+    │                                      adiciona um título (usado só no onboarding real da Home)
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
     ├── DeleteConfirmationDialog.kt
     ├── ConditionalFab.kt

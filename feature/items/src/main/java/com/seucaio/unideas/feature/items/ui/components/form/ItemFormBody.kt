@@ -26,8 +26,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.chips.TextBadge
 import com.seucaio.unideas.ds.components.lists.NavCard
 import com.seucaio.unideas.ds.theme.UdsTheme
@@ -35,6 +37,9 @@ import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFields
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsEvents
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueDate
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableDueTime
+import com.seucaio.unideas.feature.items.ui.components.fields.model.persistableRecurrence
 import com.seucaio.unideas.feature.items.ui.components.fields.recurrence.label
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
@@ -151,8 +156,14 @@ private fun ItemFormBadges(
 @Composable
 private fun configCardSubtitle(state: ItemFormFieldsState): String {
     val parts = buildList {
-        state.recurrence.label(state.dueDate)?.let(::add)
-        state.dueTime?.let { add(it.format(cardTimeFormatter)) }
+        val recurrence = state.persistableRecurrence
+        val dueDate = state.persistableDueDate
+        if (recurrence != Recurrence.None) {
+            recurrence.label(dueDate)?.let(::add)
+        } else {
+            dueDate?.let { add(it.toFormattedDateString()) }
+        }
+        state.persistableDueTime?.let { add(it.format(cardTimeFormatter)) }
         state.availableSections.firstOrNull { it.id == state.sectionId }?.let { add(it.name) }
         if (state.selectedTagIds.isNotEmpty()) {
             add(

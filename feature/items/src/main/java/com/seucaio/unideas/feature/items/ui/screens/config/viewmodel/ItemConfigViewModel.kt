@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class ItemConfigViewModel(
     private val itemId: Long,
@@ -23,6 +24,7 @@ class ItemConfigViewModel(
 
     private var originalItem: Item? = null
     private var availableTags: List<Tag> = emptyList()
+    private var hasPendingSave = false
 
     private val _uiState = MutableStateFlow(ItemConfigUiState())
     val uiState: StateFlow<ItemConfigUiState> = _uiState.asStateFlow()
@@ -73,7 +75,18 @@ class ItemConfigViewModel(
                 is ItemConfigEvent.OnReminderWarningChanged -> state.copy(reminderWarning = event.reminderWarning)
             }
         }
-        viewModelScope.launch { persist() }
+        hasPendingSave = true
+        viewModelScope.launch {
+            persist()
+            hasPendingSave = false
+        }
+    }
+
+    override fun onCleared() {
+        if (hasPendingSave) {
+            runBlocking { persist() }
+        }
+        super.onCleared()
     }
 
     private fun handleTypeSwitchConfirmed() = viewModelScope.launch {

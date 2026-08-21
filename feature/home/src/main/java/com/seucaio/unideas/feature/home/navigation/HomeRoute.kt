@@ -8,5 +8,8 @@ sealed interface HomeRoute {
     data object AllPriorities : HomeRoute
 
     @Serializable
+    data object ArchivedItems : HomeRoute
+
+    @Serializable
     data object Home : HomeRoute
 }

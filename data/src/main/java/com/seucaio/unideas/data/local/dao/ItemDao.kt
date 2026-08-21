@@ -10,6 +10,7 @@ import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
 import com.seucaio.unideas.data.local.relation.ItemWithTags
 import com.seucaio.unideas.data.local.relation.ItemWithTagsAndSection
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import kotlinx.coroutines.flow.Flow
 
@@ -21,7 +22,8 @@ import kotlinx.coroutines.flow.Flow
 interface ItemDao {
 
     /**
-     * Observes items of [type], optionally filtered by section and/or tags.
+     * Observes items of [type], optionally filtered by section and/or tags — excludes archived
+     * items (see [getArchivedItems]).
      *
      * @param sectionId `null` = no section filter.
      * @param tagCount pass `tagIds.size`; `0` disables the tag filter
@@ -32,6 +34,7 @@ interface ItemDao {
         """
         SELECT * FROM items
         WHERE type = :type
+          AND status = 'ACTIVE'
           AND (:sectionId IS NULL OR sectionId = :sectionId)
           AND (:tagCount = 0 OR id IN (SELECT itemId FROM item_tag WHERE tagId IN (:tagIds)))
         ORDER BY createdAt DESC
@@ -44,6 +47,11 @@ interface ItemDao {
         tagCount: Int,
     ): Flow<List<ItemWithTags>>
 
+    /** Observes every archived item, most recently created first. */
+    @Transaction
+    @Query("SELECT * FROM items WHERE status = 'ARCHIVED' ORDER BY createdAt DESC")
+    fun getArchivedItems(): Flow<List<ItemWithTags>>
+
     @Transaction
     @Query("SELECT * FROM items WHERE id = :id")
     fun getItemById(id: Long): Flow<ItemWithTags?>
@@ -54,15 +62,17 @@ interface ItemDao {
     fun getItemDetailById(id: Long): Flow<ItemWithTagsAndSection?>
 
     /**
-     * Observes non-completed items due on or before [dueOnOrBefore] (epoch millis), plus every
-     * pinned item regardless of due date — pinned items always surface in the priority panel.
-     * Ordered pinned-first, then by due date (items without a due date sort last within each group).
+     * Observes non-completed, non-archived items due on or before [dueOnOrBefore] (epoch millis),
+     * plus every pinned item regardless of due date — pinned items always surface in the priority
+     * panel. Ordered pinned-first, then by due date (items without a due date sort last within
+     * each group).
      */
     @Transaction
     @Query(
         """
         SELECT * FROM items
         WHERE completedAt IS NULL
+          AND status = 'ACTIVE'
           AND (isPinned = 1 OR (dueDate IS NOT NULL AND dueDate <= :dueOnOrBefore))
         ORDER BY isPinned DESC, dueDate IS NULL, dueDate ASC
         """,
@@ -70,12 +80,13 @@ interface ItemDao {
     fun getPriorityItems(dueOnOrBefore: Long): Flow<List<ItemWithTags>>
 
     /**
-     * Observes every non-completed item with a due date, regardless of how far out — unlike
-     * [getPriorityItems], not bounded by the "due soon" window. Used by the reminder check
-     * worker (#115), since a configured warning can be further out than that window.
+     * Observes every non-completed, non-archived item with a due date, regardless of how far
+     * out — unlike [getPriorityItems], not bounded by the "due soon" window. Used by the
+     * reminder check worker (#115), since a configured warning can be further out than that
+     * window; excluding archived items is what pauses their reminders/occurrence processing (#168).
      */
     @Transaction
-    @Query("SELECT * FROM items WHERE dueDate IS NOT NULL AND completedAt IS NULL")
+    @Query("SELECT * FROM items WHERE dueDate IS NOT NULL AND completedAt IS NULL AND status = 'ACTIVE'")
     fun getItemsWithDueDate(): Flow<List<ItemWithTags>>
 
     /** Cheap existence check — no items in the entire table, regardless of type/section/tags. */
@@ -93,6 +104,9 @@ interface ItemDao {
 
     @Query("UPDATE items SET isPinned = :isPinned WHERE id = :id")
     suspend fun setPinned(id: Long, isPinned: Boolean)
+
+    @Query("UPDATE items SET status = :status WHERE id = :id")
+    suspend fun setStatus(id: Long, status: ItemStatus)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTagCrossRefs(refs: List<ItemTagCrossRef>)

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -46,4 +47,5 @@ data class ItemEntity(
     val isPinned: Boolean = false,
     val pendingExtensionOriginalDueDate: Long? = null,
     val pendingExtensionCount: Int = 0,
+    val status: ItemStatus = ItemStatus.ACTIVE,
 )

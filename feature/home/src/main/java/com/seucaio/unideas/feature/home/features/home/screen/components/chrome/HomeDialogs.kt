@@ -1,7 +1,7 @@
 package com.seucaio.unideas.feature.home.features.home.screen.components.chrome
 
 import androidx.compose.runtime.Composable
-import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeDialogState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent
@@ -25,7 +25,7 @@ internal fun HomeDialogs(
     }
 
     if (dialogState is HomeDialogState.DeleteSelectedConfirm) {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = R.string.home_delete_selected_title,
             messageRes = R.string.home_delete_selected_message,
             onDismiss = { onEvent(HomeEvent.OnDeleteDialogDismissed) },

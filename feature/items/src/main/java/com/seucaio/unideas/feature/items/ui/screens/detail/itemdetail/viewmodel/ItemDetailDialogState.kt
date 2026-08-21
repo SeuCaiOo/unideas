@@ -12,4 +12,6 @@ sealed interface ItemDetailDialogState {
         @param:StringRes val titleRes: Int,
         @param:StringRes val messageRes: Int
     ) : ItemDetailDialogState
+
+    data object UnarchiveConfirm : ItemDetailDialogState
 }

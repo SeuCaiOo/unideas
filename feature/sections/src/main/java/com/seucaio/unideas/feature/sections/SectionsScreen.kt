@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
 import com.seucaio.unideas.ds.components.inputs.InlineEditRow
-import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -187,7 +187,7 @@ private fun SectionsDialogs(
     when (dialogState) {
         is SectionsDialogState.None, is SectionsDialogState.Add, is SectionsDialogState.Rename -> Unit
         is SectionsDialogState.Delete ->
-            DeleteConfirmationDialog(
+            ConfirmationDialog(
                 titleRes = R.string.section_delete_confirm_title,
                 messageRes = R.string.section_delete_confirm_message,
                 onDismiss = { onEvent(SectionsEvent.OnDialogDismissed) },

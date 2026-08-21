@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.ds.components.chips.SelectableChipRow
 import com.seucaio.unideas.ds.components.chips.SelectableChipUi
-import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
@@ -118,7 +118,7 @@ private fun ItemHistoryScreenContent(
                 currentOnEvent(ItemHistoryEvent.OnEntrySubmitted(scheduledDate, completedAt, note))
             },
         )
-        is ItemHistoryDialogState.DeleteConfirm -> DeleteConfirmationDialog(
+        is ItemHistoryDialogState.DeleteConfirm -> ConfirmationDialog(
             titleRes = R.string.item_history_delete_confirm_title,
             messageRes = R.string.item_history_delete_confirm_message,
             onDismiss = { currentOnEvent(ItemHistoryEvent.OnDialogDismissed) },

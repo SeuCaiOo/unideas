@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -33,6 +34,7 @@ data class ItemDetailUiState(
     override val availableTags: List<Tag> = emptyList(),
     val loadFailed: Boolean = false,
     override val titleError: Boolean = false,
+    val status: ItemStatus = ItemStatus.ACTIVE,
 ) : ItemFormFieldsState, Serializable {
 
     override val isEditing: Boolean get() = itemId != null
@@ -65,6 +67,7 @@ data class ItemDetailUiState(
         recurrence = item.recurrence,
         reminderWarning = item.reminderWarning,
         loadFailed = false,
+        status = item.status,
     )
 
     fun applyExternalOccurrenceUpdate(item: Item): ItemDetailUiState = copy(

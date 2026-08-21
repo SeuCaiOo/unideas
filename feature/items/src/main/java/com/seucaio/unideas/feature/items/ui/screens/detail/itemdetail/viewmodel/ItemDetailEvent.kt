@@ -27,4 +27,8 @@ sealed interface ItemDetailEvent {
     data class OnItemUpdatedExternally(val item: Item) : ItemDetailEvent
 
     data object OnScreenResumed : ItemDetailEvent
+
+    data object OnUnarchiveChipClicked : ItemDetailEvent
+
+    data object OnUnarchiveConfirmClicked : ItemDetailEvent
 }

@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.Section
@@ -13,6 +14,7 @@ import com.seucaio.unideas.domain.stub.SectionStub
 import com.seucaio.unideas.domain.stub.TagStub
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.feature.items.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -43,6 +45,9 @@ class ItemDetailViewModelTest {
     @MockK
     private lateinit var sectionsAndTagsUseCase: SectionsAndTagsUseCase
 
+    @MockK
+    private lateinit var setItemArchivedUseCase: SetItemArchivedUseCase
+
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
@@ -66,6 +71,7 @@ class ItemDetailViewModelTest {
             itemId = itemId,
             itemFormUseCase = itemFormUseCase,
             sectionsAndTagsUseCase = sectionsAndTagsUseCase,
+            setItemArchivedUseCase = setItemArchivedUseCase,
             savedStateHandle = savedStateHandle
         )
 
@@ -496,4 +502,67 @@ class ItemDetailViewModelTest {
 
             assertEquals("Rascunho", secondVm.uiState.value.title)
         }
+
+    @Test
+    fun `when OnUnarchiveChipClicked should open the unarchive confirmation dialog without unarchiving`() = runTest {
+        val item = ItemStub.task(id = 1L, status = ItemStatus.ARCHIVED)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemDetailEvent.OnUnarchiveChipClicked)
+
+        assertEquals(ItemDetailDialogState.UnarchiveConfirm, vm.dialogState.value)
+        coVerify(exactly = 0) { setItemArchivedUseCase(any(), any()) }
+    }
+
+    @Test
+    fun `when OnDialogDismissed after OnUnarchiveChipClicked should close the dialog and keep the item archived`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, status = ItemStatus.ARCHIVED)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnUnarchiveChipClicked)
+
+            vm.onEvent(ItemDetailEvent.OnDialogDismissed)
+
+            assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+            assertEquals(ItemStatus.ARCHIVED, vm.uiState.value.status)
+        }
+
+    @Test
+    fun `when OnUnarchiveConfirmClicked succeeds should update status to ACTIVE, close the dialog and show a snackbar`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, status = ItemStatus.ARCHIVED)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { setItemArchivedUseCase(1L, false) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnUnarchiveChipClicked)
+
+            vm.uiAction.test {
+                vm.onEvent(ItemDetailEvent.OnUnarchiveConfirmClicked)
+                assertEquals(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_unarchived_snackbar), awaitItem())
+            }
+            assertEquals(ItemStatus.ACTIVE, vm.uiState.value.status)
+            assertEquals(ItemDetailDialogState.None, vm.dialogState.value)
+            coVerify(exactly = 1) { setItemArchivedUseCase(1L, false) }
+        }
+
+    @Test
+    fun `when OnUnarchiveConfirmClicked fails should emit ShowError and keep status ARCHIVED`() = runTest {
+        val item = ItemStub.task(id = 1L, status = ItemStatus.ARCHIVED)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { setItemArchivedUseCase(1L, false) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+        vm.onEvent(ItemDetailEvent.OnUnarchiveChipClicked)
+
+        vm.uiAction.test {
+            vm.onEvent(ItemDetailEvent.OnUnarchiveConfirmClicked)
+            assertEquals(ItemDetailUiAction.ShowError("boom"), awaitItem())
+        }
+        assertEquals(ItemStatus.ARCHIVED, vm.uiState.value.status)
+    }
 }

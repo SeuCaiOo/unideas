@@ -46,6 +46,8 @@ sealed interface HomeEvent {
 
     data object OnDeleteDialogDismissed : SelectionEvent
 
+    data object OnArchiveSelectedClicked : SelectionEvent
+
     data object OnSelectAllClicked : SelectionEvent
 
     data class OnGroupSelectAllClicked(val sectionId: Long?) : SelectionEvent

@@ -2,8 +2,6 @@ package com.seucaio.unideas.feature.items.ui.components.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -121,22 +119,13 @@ private fun ItemFormBadges(
     isArchived: Boolean,
     onArchivedChipClicked: (() -> Unit)?
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
-        val typeLabelRes =
-            if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
-        TextBadge(
-            text = stringResource(typeLabelRes),
-            background = MaterialTheme.colorScheme.primaryContainer,
-            content = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
         if (isArchived && onArchivedChipClicked != null) {
-            Spacer(Modifier.weight(1f))
             FilterChip(
                 selected = true,
                 onClick = onArchivedChipClicked,
@@ -149,6 +138,13 @@ private fun ItemFormBadges(
                 ),
             )
         }
+        val typeLabelRes =
+            if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+        TextBadge(
+            text = stringResource(typeLabelRes),
+            background = MaterialTheme.colorScheme.primaryContainer,
+            content = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 

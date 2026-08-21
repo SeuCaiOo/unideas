@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">Continue de qualquer lugar</string>
+    <string name="onboarding_body">Conecte sua conta Google pra fazer backup automático na nuvem. Se preferir, pule e use o app 100% offline — dá pra conectar depois, quando quiser.</string>
+    <string name="onboarding_connect">Continuar com Google</string>
+    <string name="onboarding_skip">Usar sem login por enquanto</string>
+    <string name="onboarding_footnote">Você pode ativar o backup a qualquer momento em Configurações.</string>
+    <string name="onboarding_signin_failed">Não deu pra fazer login — tente de novo</string>
+</resources>

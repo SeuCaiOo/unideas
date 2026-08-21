@@ -109,8 +109,18 @@ private fun ItemsOrEmptyContent(
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         if (itemsState.tabItems.isEmpty()) {
-            val emptyMessageRes = if (hasAnyItem) R.string.home_tab_empty else R.string.home_empty_onboarding
-            UnideasEmptyContent(messageRes = emptyMessageRes, modifier = Modifier.fillMaxSize())
+            if (hasAnyItem) {
+                UnideasEmptyContent(
+                    messageRes = R.string.home_tab_empty,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                UnideasEmptyContent(
+                    titleRes = R.string.home_empty_onboarding_title,
+                    messageRes = R.string.home_empty_onboarding,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         } else {
             content()
         }

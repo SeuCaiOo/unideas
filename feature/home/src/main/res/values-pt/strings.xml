@@ -29,6 +29,9 @@
     <string name="all_priorities_title">Todas as prioridades</string>
     <string name="all_priorities_empty">Nada vencido ou a vencer.</string>
     <string name="all_priorities_load_error">Não foi possível carregar suas prioridades</string>
+    <string name="archived_items_title">Itens arquivados</string>
+    <string name="archived_items_empty">Nenhum item arquivado.</string>
+    <string name="archived_items_load_error">Não foi possível carregar seus itens arquivados</string>
     <string name="home_title">Todos os itens</string>
     <string name="home_due_today">Vence hoje</string>
     <plurals name="home_due_in_days">
@@ -41,6 +44,7 @@
     </plurals>
     <string name="home_selection_clear">Limpar seleção</string>
     <string name="home_selection_delete">Excluir</string>
+    <string name="home_selection_archive">Arquivar</string>
     <string name="home_selection_select_all">Selecionar todos</string>
     <plurals name="home_selection_count">
         <item quantity="one">%d item selecionado</item>
@@ -48,4 +52,5 @@
     </plurals>
     <string name="home_delete_selected_title">Excluir itens</string>
     <string name="home_delete_selected_message">Esta ação não pode ser desfeita.</string>
+    <string name="home_archived_items_action">Itens arquivados</string>
 </resources>

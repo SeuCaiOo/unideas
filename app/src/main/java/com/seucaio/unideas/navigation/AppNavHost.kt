@@ -42,6 +42,7 @@ fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier
                     navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
                 },
                 onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
+                onNavigateToArchivedItems = { navController.navigate(HomeRoute.ArchivedItems) },
                 onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
             )
             settingsNavGraph(

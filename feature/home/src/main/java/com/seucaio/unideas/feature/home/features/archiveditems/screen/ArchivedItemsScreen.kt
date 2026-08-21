@@ -1,0 +1,142 @@
+package com.seucaio.unideas.feature.home.features.archiveditems.screen
+
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
+import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
+import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
+import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
+import com.seucaio.unideas.ds.components.lists.item.ListItemRow
+import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.home.R
+import com.seucaio.unideas.feature.home.features.archiveditems.viewmodel.ArchivedItemsEvent
+import com.seucaio.unideas.feature.home.features.archiveditems.viewmodel.ArchivedItemsUiAction
+import com.seucaio.unideas.feature.home.features.archiveditems.viewmodel.ArchivedItemsUiState
+import com.seucaio.unideas.feature.home.features.archiveditems.viewmodel.ArchivedItemsViewModel
+import com.seucaio.unideas.feature.home.features.home.screen.components.items.toListItemUi
+import org.koin.androidx.compose.koinViewModel
+
+@Composable
+fun ArchivedItemsScreen(
+    onNavigateBack: (() -> Unit)?,
+    onNavigateToDetail: (Long) -> Unit,
+    viewModel: ArchivedItemsViewModel = koinViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
+
+    LaunchedEffect(Unit) {
+        viewModel.uiAction.collect { action ->
+            when (action) {
+                is ArchivedItemsUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
+                is ArchivedItemsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
+
+    ArchivedItemsContent(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
+    )
+}
+
+@Composable
+private fun ArchivedItemsContent(
+    uiState: ArchivedItemsUiState,
+    onEvent: (ArchivedItemsEvent) -> Unit,
+    onNavigateBack: (() -> Unit)?,
+    snackbarHostState: SnackbarHostState,
+) {
+    val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+
+    Scaffold(
+        topBar = {
+            UnideasTopBar(
+                title = stringResource(R.string.archived_items_title),
+                onNavigateBack = updatedOnNavigateBack,
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
+        ArchivedItemsBody(uiState = uiState, padding = padding, onEvent = onEvent)
+    }
+}
+
+@Composable
+private fun ArchivedItemsBody(
+    uiState: ArchivedItemsUiState,
+    padding: PaddingValues,
+    onEvent: (ArchivedItemsEvent) -> Unit,
+) {
+    when (uiState) {
+        is ArchivedItemsUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
+        is ArchivedItemsUiState.Error ->
+            UnideasErrorContent(
+                messageRes = uiState.messageRes,
+                onRetry = { onEvent(ArchivedItemsEvent.OnRetryClicked) },
+                modifier = Modifier.padding(padding),
+            )
+
+        is ArchivedItemsUiState.Success ->
+            if (uiState.items.isEmpty()) {
+                UnideasEmptyContent(
+                    messageRes = R.string.archived_items_empty,
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize(),
+                )
+            } else {
+                val checkContentDescription =
+                    stringResource(R.string.home_item_recurring_content_description)
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize()
+                ) {
+                    items(uiState.items, key = { it.id }) { item ->
+                        ListItemRow(
+                            ui = item.toListItemUi(checkContentDescription),
+                            onClick = { onEvent(ArchivedItemsEvent.OnItemClicked(item.id)) },
+                            onToggleCheck = { onEvent(ArchivedItemsEvent.OnItemClicked(item.id)) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                }
+            }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ArchivedItemsScreenPreview(
+    @PreviewParameter(ArchivedItemsPreviewProvider::class) uiState: ArchivedItemsUiState,
+) {
+    UdsTheme {
+        ArchivedItemsContent(
+            uiState = uiState,
+            onEvent = {},
+            onNavigateBack = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}

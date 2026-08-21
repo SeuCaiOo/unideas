@@ -29,6 +29,9 @@
     <string name="all_priorities_title">All priorities</string>
     <string name="all_priorities_empty">Nothing overdue or due soon.</string>
     <string name="all_priorities_load_error">Couldn\'t load your priorities</string>
+    <string name="archived_items_title">Archived items</string>
+    <string name="archived_items_empty">No archived items.</string>
+    <string name="archived_items_load_error">Couldn\'t load your archived items</string>
     <string name="home_title">All items</string>
     <string name="home_due_today">Due today</string>
     <plurals name="home_due_in_days">
@@ -41,6 +44,7 @@
     </plurals>
     <string name="home_selection_clear">Clear selection</string>
     <string name="home_selection_delete">Delete</string>
+    <string name="home_selection_archive">Archive</string>
     <string name="home_selection_select_all">Select all</string>
     <plurals name="home_selection_count">
         <item quantity="one">%d item selected</item>
@@ -48,4 +52,5 @@
     </plurals>
     <string name="home_delete_selected_title">Delete items</string>
     <string name="home_delete_selected_message">This action cannot be undone.</string>
+    <string name="home_archived_items_action">Archived items</string>
 </resources>

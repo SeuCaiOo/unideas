@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
+    implementation(libs.markdown.renderer.m3)
 
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 

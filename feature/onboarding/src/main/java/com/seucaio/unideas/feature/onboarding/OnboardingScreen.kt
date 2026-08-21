@@ -19,14 +19,13 @@ import androidx.compose.material.icons.outlined.Label
 import androidx.compose.material.icons.outlined.LowPriority
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -92,16 +91,14 @@ fun OnboardingScreen(
 private fun OnboardingContent(
     snackbarHostState: SnackbarHostState,
     onConnectClick: () -> Unit,
-    onSkipClick: () -> Unit,
-    body: @Composable (Modifier) -> Unit = { modifier -> OnboardingBody(modifier) },
+    onSkipClick: () -> Unit
 ) {
     Scaffold(
         bottomBar = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 28.dp),
+                    .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -109,10 +106,7 @@ private fun OnboardingContent(
                     Text(text = stringResource(R.string.onboarding_connect))
                 }
 
-                TextButton(
-                    onClick = onSkipClick,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
-                ) {
+                OutlinedButton(onClick = onSkipClick) {
                     Text(
                         text = stringResource(R.string.onboarding_skip),
                         textAlign = TextAlign.Center,
@@ -123,15 +117,16 @@ private fun OnboardingContent(
                 Text(
                     text = stringResource(R.string.onboarding_footnote),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        body(
-            Modifier
+        OnboardingBody(
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding),

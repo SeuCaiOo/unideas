@@ -14,6 +14,8 @@ import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
 import com.seucaio.unideas.feature.items.navigation.ItemsRoute
 import com.seucaio.unideas.feature.items.navigation.itemsNavGraph
+import com.seucaio.unideas.feature.onboarding.navigation.OnboardingRoute
+import com.seucaio.unideas.feature.onboarding.navigation.onboardingNavGraph
 import com.seucaio.unideas.feature.sections.navigation.SectionsRoute
 import com.seucaio.unideas.feature.sections.navigation.sectionsNavGraph
 import com.seucaio.unideas.feature.settings.navigation.SettingsRoute
@@ -23,7 +25,12 @@ import com.seucaio.unideas.feature.tags.navigation.TagsRoute
 import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 
 @Composable
-fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier: Modifier = Modifier) {
+fun AppNavHost(
+    navController: NavHostController,
+    initialIntent: Intent,
+    needsOnboarding: Boolean,
+    modifier: Modifier = Modifier
+) {
     AppScaffold(modifier = modifier) { padding ->
         NavHost(
             navController = navController,
@@ -33,6 +40,13 @@ fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
+            onboardingNavGraph(
+                onOnboardingComplete = {
+                    navController.navigate(HomeRoute.Home) {
+                        popUpTo(OnboardingRoute.Login) { inclusive = true }
+                    }
+                },
+            )
             homeNavGraph(
                 onNavigateBack = navController::popBackStack,
                 onNavigateToDetail = { itemId ->
@@ -72,6 +86,10 @@ fun AppNavHost(navController: NavHostController, initialIntent: Intent, modifier
                     navController.navigate(ItemsRoute.Config(itemId, isNewItem))
                 },
             )
+        }
+
+        if (needsOnboarding) {
+            LaunchedEffect(Unit) { navController.navigate(OnboardingRoute.Login) }
         }
 
         // Scaffold subcomposes this content slot separately from the outer composition, so the

@@ -5,11 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.navigation.AppNavHost
+import com.seucaio.unideas.viewmodel.MainActivityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -18,15 +23,21 @@ class MainActivity : ComponentActivity() {
     // NavController instead of only working on a cold start.
     private var navController: NavHostController? = null
 
+    private val viewModel: MainActivityViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setKeepOnScreenCondition { viewModel.needsOnboarding.value == null }
         enableEdgeToEdge()
         setContent {
-            UdsTheme {
-                val navController = rememberNavController()
-                this.navController = navController
-                AppNavHost(navController, initialIntent = intent)
+            val needsOnboarding by viewModel.needsOnboarding.collectAsStateWithLifecycle()
+            needsOnboarding?.let { resolvedNeedsOnboarding ->
+                AppRoot(
+                    needsOnboarding = resolvedNeedsOnboarding,
+                    initialIntent = intent,
+                    onNavControllerReady = { navController = it },
+                )
             }
         }
     }
@@ -35,5 +46,18 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         navController?.handleDeepLink(intent)
+    }
+}
+
+@Composable
+private fun AppRoot(
+    needsOnboarding: Boolean,
+    initialIntent: Intent,
+    onNavControllerReady: (NavHostController) -> Unit,
+) {
+    UdsTheme {
+        val navController = rememberNavController()
+        onNavControllerReady(navController)
+        AppNavHost(navController, initialIntent = initialIntent, needsOnboarding = needsOnboarding)
     }
 }

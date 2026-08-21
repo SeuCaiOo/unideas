@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.seucaio.unideas.ds.components.chips.DueBadge
+import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.Radii
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.ds.theme.leftAccentBorder
@@ -72,15 +74,11 @@ fun PriorityPanel(
                     )
                 }
                 if (footerLabel != null) {
-                    Text(
-                        "$footerLabel →",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onFooterClick)
-                            .padding(top = 14.dp),
+                    NavRow(
+                        icon = Icons.AutoMirrored.Outlined.List,
+                        label = footerLabel,
+                        onClick = onFooterClick,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }

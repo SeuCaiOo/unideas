@@ -120,7 +120,7 @@ private fun PriorityBottomSheetContent(
             }
 
         is PriorityUiState.Success ->
-            Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 PriorityPanel(
                     title = stringResource(R.string.priority_panel_title),
                     rows = itemsState.priorityItems.map { it.toPriorityRowUi() },

@@ -25,18 +25,28 @@ import org.koin.dsl.module
  * implementations. Included by `appModule` in `:app`.
  */
 val dataModule = module {
+    //region Database & DAOs
     single { UnideasDatabase.getInstance(androidApplication()) }
     single { get<UnideasDatabase>().itemDao() }
     single { get<UnideasDatabase>().sectionDao() }
     single { get<UnideasDatabase>().tagDao() }
     single { get<UnideasDatabase>().itemCompletionHistoryDao() }
+    //endregion
+
+    //region Repositories
     singleOf(::ItemRepositoryImpl).bind<ItemRepository>()
     singleOf(::ItemCompletionHistoryRepositoryImpl).bind<ItemCompletionHistoryRepository>()
     singleOf(::SectionRepositoryImpl).bind<SectionRepository>()
     singleOf(::TagRepositoryImpl).bind<TagRepository>()
+    //endregion
+
+    //region Settings (debug database maintenance)
     singleOf(::DatabaseSeeder)
     singleOf(::DatabaseRepositoryImpl).bind<DatabaseRepository>()
+    //endregion
 
+    //region Onboarding
     single { OnboardingPreferences(androidApplication()) }
     singleOf(::OnboardingRepositoryImpl).bind<OnboardingRepository>()
+    //endregion
 }

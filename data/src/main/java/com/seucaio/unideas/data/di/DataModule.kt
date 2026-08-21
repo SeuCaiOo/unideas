@@ -2,14 +2,17 @@ package com.seucaio.unideas.data.di
 
 import com.seucaio.unideas.data.local.database.DatabaseSeeder
 import com.seucaio.unideas.data.local.database.UnideasDatabase
+import com.seucaio.unideas.data.local.datastore.OnboardingPreferences
 import com.seucaio.unideas.data.repository.DatabaseRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemCompletionHistoryRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemRepositoryImpl
+import com.seucaio.unideas.data.repository.OnboardingRepositoryImpl
 import com.seucaio.unideas.data.repository.SectionRepositoryImpl
 import com.seucaio.unideas.data.repository.TagRepositoryImpl
 import com.seucaio.unideas.domain.repository.DatabaseRepository
 import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
+import com.seucaio.unideas.domain.repository.OnboardingRepository
 import com.seucaio.unideas.domain.repository.SectionRepository
 import com.seucaio.unideas.domain.repository.TagRepository
 import org.koin.android.ext.koin.androidApplication
@@ -33,4 +36,7 @@ val dataModule = module {
     singleOf(::TagRepositoryImpl).bind<TagRepository>()
     singleOf(::DatabaseSeeder)
     singleOf(::DatabaseRepositoryImpl).bind<DatabaseRepository>()
+
+    single { OnboardingPreferences(androidApplication()) }
+    singleOf(::OnboardingRepositoryImpl).bind<OnboardingRepository>()
 }

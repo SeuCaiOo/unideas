@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onboarding_title">Continue from anywhere</string>
-    <string name="onboarding_body">Connect your Google account to back up automatically to the cloud. If you\'d rather not, skip and use the app fully offline — you can connect later, whenever you want.</string>
+    <string name="onboarding_title">unideas</string>
+    <string name="onboarding_intro">Organize your tasks and ideas by priority, right on your device.</string>
+    <string name="onboarding_feature_priorities">Clear priorities</string>
+    <string name="onboarding_feature_sections_tags">Sections and tags your way</string>
+    <string name="onboarding_feature_reminders">Reminders right on time</string>
+    <string name="onboarding_feature_backup">Backup to Drive, if you want to connect</string>
     <string name="onboarding_connect">Continue with Google</string>
-    <string name="onboarding_skip_top">Skip</string>
     <string name="onboarding_skip">Use without logging in for now</string>
     <string name="onboarding_footnote">You can enable backup anytime from Settings.</string>
     <string name="onboarding_signin_failed">Couldn\'t sign in — try again</string>

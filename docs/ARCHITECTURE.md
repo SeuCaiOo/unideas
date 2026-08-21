@@ -116,6 +116,11 @@ domain/
     │   ├── ExtendItemDueDateUseCase.kt — "aumentar prazo" de ocorrência vencida: empurra dueDate sem fechar a ocorrência,
     │   │                                  seta Item.pendingExtensionOriginalDueDate/pendingExtensionCount (#101/A)
     │   ├── SetItemPinnedUseCase.kt          — fixa/desafixa item no painel de prioridades (#127, mesmo padrão do pin de Section)
+    │   ├── SetItemArchivedUseCase.kt        — arquiva/desarquiva item (#168)
+    │   ├── GetArchivedItemsUseCase.kt       — lista itens arquivados (Flow), consumida pela tela "Itens arquivados" (#168)
+    │   ├── ItemArchiveUseCase.kt            — facade sobre os dois acima (archiveItems bulk + getArchivedItems), separada
+    │   │                                       do HomeUseCase pra não estourar o limite de parâmetros do Detekt (#168,
+    │   │                                       mesmo padrão do split BackupUseCase→GoogleAuthUseCase do #16)
     │   ├── ItemCompletionHistoryUseCase.kt — getHistory (Flow, lista o histórico de ocorrência de um item recorrente, #126)
     │   │                                      + save/delete (#169, CRUD completo sobre uma entrada — cria via `id == 0L`,
     │   │                                      edita senão; unicidade (itemId, scheduledDate) validada explicitamente em vez
@@ -148,8 +153,8 @@ data/
 │   │   ├── TagEntity.kt
 │   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
 │   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao (retornam Flow)
-│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 9
-│   │                    migration/ — MIGRATION_2_3 até MIGRATION_8_9 (ver seção de persistência)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 10
+│   │                    migration/ — MIGRATION_2_3 até MIGRATION_9_10 (ver seção de persistência)
 │   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
@@ -174,6 +179,8 @@ core/common/
 ```
 uds/
 ├── theme/                 — UdsTheme, Color, Type, Dimens (Material 3, light + dark, acento teal)
+│                            — PinnedTint.kt / LeftAccentBorder.kt (#165) — tinta/borda de acento reaproveitadas
+│                              por ListItemRow e PriorityPanel (urgência/fixado)
 ├── components/            — organizado por papel (buttons/, chips/, inputs/, lists/, navigation/,
 │                            panels/, feedback/), catálogo completo no README do módulo
 │                            — inputs/ ganhou SelectionBottomSheet, GridSelectionBottomSheet e SwitchSection (#130)
@@ -185,9 +192,10 @@ uds/
     ├── UnideasTopBar.kt
     ├── UnideasLoadingContent.kt
     ├── UnideasErrorContent.kt
-    ├── UnideasEmptyContent.kt          — estado vazio com texto orientador
+    ├── UnideasEmptyContent.kt          — estado vazio: ícone (TaskAlt) + texto; `titleRes` opcional (#165)
+    │                                      adiciona um título (usado só no onboarding real da Home)
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
-    ├── DeleteConfirmationDialog.kt
+    ├── ConfirmationDialog.kt
     ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```
@@ -228,6 +236,9 @@ feature/items/
     │   └── form/         — ItemFormBody (badge de tipo + TitleDescriptionFields + NavCards Config/Histórico + footer,
     │                        só quando state.isEditing — #162), ItemFormFooter (conclusão),
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
+    │                        — item arquivado (`status == ARCHIVED`) troca o badge de tipo por uma `Column` com um
+    │                        `FilterChip` "Arquivado" (ícone `Archive`, empilhado acima do badge) clicável → abre
+    │                        `ConfirmationDialog` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
     └── screens/
         ├── detail/
         │   ├── itemdetail/     — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt (formulário: título, descrição,
@@ -293,10 +304,17 @@ feature/home/
     │   │                Bottom Sheet mostrado a partir da HomeScreen (state local, não rota própria), não mais
     │   │                painel fixo no topo (#138)
     │   └── viewmodel/ — PriorityEvent.kt / PriorityUiAction.kt / PriorityUiState.kt / PriorityViewModel.kt
-    └── allpriorities/
-        ├── screen/    — AllPrioritiesScreen.kt + AllPrioritiesPreviewProvider.kt
-        └── viewmodel/ — AllPrioritiesUiState.kt / AllPrioritiesUiAction.kt / AllPrioritiesEvent.kt / AllPrioritiesViewModel.kt
+    ├── allpriorities/
+    │   ├── screen/    — AllPrioritiesScreen.kt + AllPrioritiesPreviewProvider.kt
+    │   └── viewmodel/ — AllPrioritiesUiState.kt / AllPrioritiesUiAction.kt / AllPrioritiesEvent.kt / AllPrioritiesViewModel.kt
+    └── archiveditems/  — tela "Itens arquivados" (#168), mesmo padrão do allpriorities/ (listagem simples, sem seções/
+                           filtros, reaproveitando ListItemRow); sem ação de desarquivar inline por item — ListItemRow
+                           não tem slot de ação genérico pra isso, desarquivar vive só na tela de Detalhe (ver feature/items)
+        ├── screen/    — ArchivedItemsScreen.kt + ArchivedItemsPreviewProvider.kt
+        └── viewmodel/ — ArchivedItemsUiState.kt / ArchivedItemsUiAction.kt / ArchivedItemsEvent.kt / ArchivedItemsViewModel.kt
 ```
+
+**Modo de seleção da Home ganhou "arquivar" (#168).** O FAB de seleção (`HomeFab`) virou expansível (mesmo padrão do `AddItemFab`), com "Excluir"/"Arquivar" como mini-ações — arquivar não pede confirmação (reversível, ao contrário de excluir). Botão "Itens arquivados" no final da lista de itens (`ItemsContent`'s `footer`, antes existente mas não usado), condicional a `hasAnyArchivedItem`.
 
 `feature/sections/` e `feature/tags/` continuam flat (uma tela só cada) — o padrão `features/<tela>/` só se aplica quando o módulo tem mais de uma tela.
 
@@ -321,6 +339,10 @@ completedAt: Long?                 epoch millis; != null = concluída (item não
 lastCompletedScheduledDate: Long?  epoch millis; ocorrência recorrente mais recente marcada como concluída (#133) —
                                     isCompleted de um item recorrente compara isso contra dueDate, em vez de completedAt
 isPinned: Boolean                  fixado manualmente no painel de prioridades, independente do cálculo de urgência (#127)
+status: String                     ACTIVE | ARCHIVED (enum via TypeConverter, default ACTIVE) — item arquivado some das
+                                    queries normais (getItems/getPriorityItems/getItemsWithDueDate); pausa lembretes/
+                                    geração de ocorrências de graça, já que getItemsWithDueDate é a única query que o
+                                    ReminderCheckWorker usa, sem mudança nenhuma no worker em si (#168)
 pendingExtensionOriginalDueDate: Long?  epoch millis, opcional — dueDate anterior à 1ª extensão desde a última resolução
                                     da ocorrência (#101/A); null = nunca adiada desde então
 pendingExtensionCount: Int         quantas vezes "aumentar prazo" empurrou dueDate desde a última resolução (#101/A);
@@ -382,6 +404,7 @@ MIGRATION_6_7   adiciona items.lastCompletedScheduledDate (#133)
 MIGRATION_7_8   adiciona items.isPinned, default 0 (#127)
 MIGRATION_8_9   adiciona items.pendingExtensionOriginalDueDate/pendingExtensionCount e
                 item_completion_history.originalScheduledDate/extensionCount (#101/C)
+MIGRATION_9_10  adiciona items.status, default 'ACTIVE' (#168)
 ```
 Sem `fallbackToDestructiveMigration` — migration faltando falha alto, nunca perde dados silenciosamente (app pré-MVP, mas a regra vale mesmo assim).
 
@@ -394,8 +417,9 @@ data/di/DataModule.kt         — UnideasDatabase (single), DAOs (single, incl. 
                                  Repositories (singleOf().bind(), incl. ItemCompletionHistoryRepositoryImpl) — confirmado em #21/#22/#126
 domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Tag e Item já registrados, incl. HomeUseCase (#66),
                                  SetItemPinnedUseCase (#127), ItemCompletionHistoryUseCase (#126, CRUD completo desde #169) e
-                                 ProcessMissedOccurrencesUseCase (#126), IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase e
-                                 ItemOccurrenceUseCase (#101/A/B)
+                                 ProcessMissedOccurrencesUseCase (#126), IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase,
+                                 ItemOccurrenceUseCase (#101/A/B), SetItemArchivedUseCase/GetArchivedItemsUseCase/
+                                 ItemArchiveUseCase (#168)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl

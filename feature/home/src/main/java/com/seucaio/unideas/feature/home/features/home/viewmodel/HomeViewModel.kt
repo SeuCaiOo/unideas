@@ -6,6 +6,7 @@ import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.feature.home.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -33,6 +34,7 @@ import java.time.LocalDateTime
 class HomeViewModel(
     private val homeUseCase: HomeUseCase,
     private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
+    private val itemArchiveUseCase: ItemArchiveUseCase,
 ) : ViewModel() {
 
     //region filterState
@@ -87,17 +89,24 @@ class HomeViewModel(
             .map { it.isNotEmpty() }
             .catch { emit(false) }
 
+    private val hasAnyArchivedItemFlow: Flow<Boolean> =
+        itemArchiveUseCase.getArchivedItems()
+            .map { it.isNotEmpty() }
+            .catch { emit(false) }
+
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
             combine(
                 homeUseCase.hasAnyItem(),
                 hasAnyPriorityItemFlow,
+                hasAnyArchivedItemFlow,
                 itemsState
-            ) { hasAnyItem, hasAnyPriorityItem, items ->
+            ) { hasAnyItem, hasAnyPriorityItem, hasAnyArchivedItem, items ->
                 if (items.isLoaded) {
                     HomeUiState.Success(
                         hasAnyItem = hasAnyItem,
-                        hasAnyPriorityItem = hasAnyPriorityItem
+                        hasAnyPriorityItem = hasAnyPriorityItem,
+                        hasAnyArchivedItem = hasAnyArchivedItem,
                     )
                 } else {
                     HomeUiState.Loading
@@ -156,9 +165,11 @@ class HomeViewModel(
             is HomeEvent.OnDeleteSelectedClicked -> _dialogState.value = HomeDialogState.DeleteSelectedConfirm
             is HomeEvent.OnDeleteSelectedConfirmClicked -> {
                 _dialogState.value = HomeDialogState.None
-                handleDeleteSelected()
+                handleBulkSelectionAction(homeUseCase::deleteItems)
             }
             is HomeEvent.OnDeleteDialogDismissed -> _dialogState.value = HomeDialogState.None
+            is HomeEvent.OnArchiveSelectedClicked ->
+                handleBulkSelectionAction { ids -> itemArchiveUseCase.archiveItems(ids, archived = true) }
             is HomeEvent.OnSelectAllClicked -> toggleSelectAll(currentItems.map { it.id }.toSet())
             is HomeEvent.OnGroupSelectAllClicked -> toggleSelectAll(
                 currentItems.filter { it.sectionId == event.sectionId }.map { it.id }.toSet()
@@ -185,9 +196,9 @@ class HomeViewModel(
         _homeMode.value = HomeMode.Selection(if (allSelected) current - ids else current + ids)
     }
 
-    private fun handleDeleteSelected() = viewModelScope.launch {
+    private fun handleBulkSelectionAction(action: suspend (List<Long>) -> Result<Unit>) = viewModelScope.launch {
         val mode = _homeMode.value as? HomeMode.Selection ?: return@launch
-        homeUseCase.deleteItems(mode.selectedItemIds.toList())
+        action(mode.selectedItemIds.toList())
             .onSuccess { _homeMode.value = HomeMode.Normal }
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }

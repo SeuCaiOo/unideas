@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.home.features.home.viewmodel
 
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.SectionsAndTags
@@ -9,6 +10,7 @@ import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.feature.home.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -40,6 +42,9 @@ class HomeViewModelTest {
     @MockK
     private lateinit var sectionsAndTagsUseCase: SectionsAndTagsUseCase
 
+    @MockK
+    private lateinit var itemArchiveUseCase: ItemArchiveUseCase
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
@@ -48,6 +53,7 @@ class HomeViewModelTest {
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(emptyList())
         every { homeUseCase.hasAnyItem() } returns flowOf(true)
         every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(emptyList())
+        every { itemArchiveUseCase.getArchivedItems() } returns flowOf(emptyList())
     }
 
     @After
@@ -55,7 +61,7 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = HomeViewModel(homeUseCase, sectionsAndTagsUseCase)
+    private fun viewModel() = HomeViewModel(homeUseCase, sectionsAndTagsUseCase, itemArchiveUseCase)
 
     @Test
     fun `when OnTabChanged should switch the active tab and reload the tab list`() = runTest {
@@ -547,5 +553,52 @@ class HomeViewModelTest {
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
         assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnArchiveSelectedClicked succeeds should archive the selected items and exit selection mode`() = runTest {
+        coEvery { itemArchiveUseCase.archiveItems(listOf(1L, 2L), true) } returns Result.success(Unit)
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+        vm.onEvent(HomeEvent.OnItemSelectionToggled(2L))
+
+        vm.onEvent(HomeEvent.OnArchiveSelectedClicked)
+
+        coVerify(exactly = 1) { itemArchiveUseCase.archiveItems(listOf(1L, 2L), true) }
+        assertEquals(HomeMode.Normal, vm.homeMode.value)
+    }
+
+    @Test
+    fun `when OnArchiveSelectedClicked fails should emit ShowError and keep the selection`() = runTest {
+        coEvery { itemArchiveUseCase.archiveItems(listOf(1L), true) } returns Result.failure(IllegalStateException("boom"))
+        val vm = viewModel()
+        vm.onEvent(HomeEvent.OnItemLongPressed(1L))
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnArchiveSelectedClicked)
+            assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
+        }
+        assertEquals(HomeMode.Selection(setOf(1L)), vm.homeMode.value)
+    }
+
+    @Test
+    fun `when there are archived items should expose hasAnyArchivedItem as true`() = runTest {
+        every { itemArchiveUseCase.getArchivedItems() } returns flowOf(listOf(ItemStub.task(status = ItemStatus.ARCHIVED)))
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(true, state.hasAnyArchivedItem)
+        }
+    }
+
+    @Test
+    fun `when there are no archived items should expose hasAnyArchivedItem as false`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            val state = awaitItem() as HomeUiState.Success
+            assertEquals(false, state.hasAnyArchivedItem)
+        }
     }
 }

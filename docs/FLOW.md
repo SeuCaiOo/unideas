@@ -5,17 +5,18 @@
 
 ---
 
-## Telas do MVP (7 + 1 dev-only)
+## Telas do MVP (8 + 1 dev-only)
 
 | # | Tela | Módulo | Rota (type-safe) |
 |---|---|---|---|
 | 1 | **Home** (lista Tarefas/Anotações + painel de prioridades como Bottom Sheet) | `:feature:home` | `HomeRoute.Home` |
 | 2 | **Todas as Prioridades** | `:feature:home` | `HomeRoute.AllPriorities` |
-| 3 | **Criar/Editar/Detalhar Item** (tela única — ver "Detalhe do Item" abaixo) | `:feature:items` | `ItemsRoute.Detail(itemId: Long? = null, initialType: ItemType = TASK)` |
-| 4 | **Configurações do Item** (seção/tags/recorrência/aviso + troca de tipo guardada — #160) | `:feature:items` | `ItemsRoute.Config(itemId: Long)` |
-| 5 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
-| 6 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
-| 7 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
+| 3 | **Itens arquivados** (listagem simples, sem seções/filtros — #168) | `:feature:home` | `HomeRoute.ArchivedItems` |
+| 4 | **Criar/Editar/Detalhar Item** (tela única — ver "Detalhe do Item" abaixo) | `:feature:items` | `ItemsRoute.Detail(itemId: Long? = null, initialType: ItemType = TASK)` |
+| 5 | **Configurações do Item** (seção/tags/recorrência/aviso + troca de tipo guardada — #160) | `:feature:items` | `ItemsRoute.Config(itemId: Long)` |
+| 6 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
+| 7 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
+| 8 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
 | — | *(dev-only)* Todos os Itens (sem abas/seleção) | `:feature:items` | `ItemsRoute.List` |
 
 Ponto de entrada do app: `HomeRoute.Home` (`startDestination` do `AppNavHost`, em `:app/navigation/`). **Não há bottom navigation bar** (existiu brevemente durante o #138, removida na mesma issue) — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `AppNavHost` central vive no `:app` (`app/src/main/java/com/seucaio/unideas/navigation/`), cada feature expõe seu `*NavGraph` + `*Route`.
@@ -44,9 +45,11 @@ HomeScreen
   │           → checkbox (Tarefas) → marca a ocorrência atual como concluída (não gera item novo —
   │              ver ARCHITECTURE.md); se atrasada/recorrente com histórico, mais nuance fica em ItemDetailScreen
   │           → toque longo → entra em modo Seleção (HomeMode.Selection)
-  │     → [modo Seleção] selecionar itens (inclusive "selecionar todos" por seção) → excluir em lote,
-  │        com dialog de confirmação (#140)
+  │     → [modo Seleção] selecionar itens (inclusive "selecionar todos" por seção) → FAB expansível
+  │        (mesmo padrão do AddItemFab) → [Excluir] (dialog de confirmação — #140) ou [Arquivar]
+  │        (sem confirmação, reversível — #168)
   │     → [estado vazio] texto orientando como começar (sem tela de onboarding)
+  │     → [footer, só quando há ≥1 item arquivado] "Itens arquivados" → ArchivedItemsScreen (#168)
   │
   ├── AddItemFab
   │     → escolher tipo (Tarefa / Anotação)
@@ -83,6 +86,23 @@ AllPrioritiesScreen
 
 ---
 
+## Itens arquivados
+
+**Acesso:** Home → footer "Itens arquivados" (só aparece com ≥1 item arquivado — #168).
+
+```
+ArchivedItemsScreen  (HomeRoute.ArchivedItems)
+  → lista simples dos itens arquivados (sem seções/filtros, mesmo padrão do AllPrioritiesScreen)
+  → toca num item → ItemDetailScreen
+  → "←" → volta pra Home
+```
+
+**Regras:**
+- Sem ação de desarquivar inline por item na lista — `ListItemRow` não tem slot de ação genérico pra isso. Desarquivar acontece só na tela de Detalhe (ver chip "Arquivado" abaixo).
+- `ArchivedItemsViewModel` deriva `uiState` direto do `ItemArchiveUseCase.getArchivedItems()` (exceção 1 do padrão MVI — sem `combine`/`InternalState`, mesmo padrão do `AllPrioritiesViewModel`).
+
+---
+
 ## Criar / Editar / Detalhar Item
 
 **Acesso:** Home `AddItemFab` (criar) · Home/Todas as Prioridades → toca num item (ver/editar/concluir). Tela única (`ItemDetailScreen`) reutilizada pros dois tipos e pros três modos — não existe mais uma tela de formulário separada (#134).
@@ -102,6 +122,9 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
      preview do Markdown mostra "Sem descrição" quando vazia, em vez de nada — #162)
   → (todo o resto — Seção, Tags, Data de vencimento, Recorrência, Horário, Aviso — vive só na
      Config Screen desde o #162; não aparece mais inline aqui, ver seção abaixo)
+  → item arquivado (`status == ARCHIVED`) → badge de tipo vira `FilterChip` "Arquivado" (ícone
+     Archive), empilhado acima do badge de tipo Tarefa/Anotação → toca → ConfirmationDialog →
+     confirma → desarquiva (#168)
   → ações (Tarefa, ocorrência dentro do prazo):
        [Concluir]      → nota opcional; ItemOccurrenceViewModel (#101/B), separado do form
   → ações (Tarefa, ocorrência vencida — OverdueOccurrenceActions):
@@ -114,14 +137,14 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
        [Compartilhar]     → share sheet do sistema (sempre visível, mesmo em criação)
        [Configurações]    → NavCard "Configurações" → ItemConfigScreen (ItemsRoute.Config(itemId,
                              isNewItem)) — substituiu o ícone de engrenagem no toolbar do #160 (#162)
-       [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home (sempre visível)
+       [Excluir]          → ConfirmationDialog → confirma → volta pra Home (sempre visível)
        [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
                              pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
                              por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C).
                              CRUD completo desde o #169: FAB → AddEditHistoryEntryBottomSheet (data
                              retroativa, não-futura e ainda não usada; nota obrigatória se marcar
                              concluída com atraso) cria uma entrada; menu por card (editar/excluir) reabre
-                             o mesmo sheet ou DeleteConfirmationDialog. Diferente de completar/desmarcar o
+                             o mesmo sheet ou ConfirmationDialog. Diferente de completar/desmarcar o
                              item ao vivo (#101/B) — não mexe em `Item.lastCompletedScheduledDate`
   → "←" → volta
 ```
@@ -145,7 +168,7 @@ ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
      — mesmos campos/componentes do form principal, disponíveis pros dois tipos (#160)
   → Zona de risco: tipo atual do item + botão [Alterar] — só aparece quando isNewItem == false
        (item recém-criado, sem histórico/ocorrência acumulada, não tem risco a avisar — #165 batch)
-       → DeleteConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
+       → ConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
        → confirma → reset total: dueDate/dueTime/recurrence/reminderWarning voltam a
          nulo/None, mesmo que o novo tipo também suportasse esses campos — nunca seletivo.
          Título/descrição/seção/tags NUNCA são tocados. Histórico (`ItemCompletionHistory`)
@@ -174,7 +197,7 @@ SectionsListScreen  (SectionsRoute.List)
        [se há itens vinculados]
        → BLOQUEADO: dialog informando quantos itens estão vinculados (sem exclusão)
        [se não há]
-       → DeleteConfirmationDialog → confirma → remove
+       → ConfirmationDialog → confirma → remove
 ```
 
 ---

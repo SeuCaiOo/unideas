@@ -3,6 +3,7 @@ package com.seucaio.unideas.data.mapper
 import com.seucaio.unideas.core.common.extensions.toEpochMilli
 import com.seucaio.unideas.data.local.entity.TagEntity
 import com.seucaio.unideas.data.local.relation.ItemWithTags
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -110,6 +111,15 @@ class ItemMapperTest {
         val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
 
         assertEquals(true, row.toDomain().isPinned)
+    }
+
+    @Test
+    fun `toEntity and toDomain round-trip preserves status`() {
+        val original = ItemStub.task(status = ItemStatus.ARCHIVED)
+
+        val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
+
+        assertEquals(ItemStatus.ARCHIVED, row.toDomain().status)
     }
 
     @Test

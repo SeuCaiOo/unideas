@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -18,13 +20,16 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
+import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.screen.components.chrome.HomeDialogs
 import com.seucaio.unideas.feature.home.features.home.screen.components.chrome.HomeFab
 import com.seucaio.unideas.feature.home.features.home.screen.components.chrome.HomeTopBar
@@ -57,6 +62,7 @@ fun HomeScreen(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToArchivedItems: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,6 +76,7 @@ fun HomeScreen(
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
+    val updatedOnNavigateToArchivedItems by rememberUpdatedState(onNavigateToArchivedItems)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -93,6 +100,7 @@ fun HomeScreen(
         onNavigateToDetail = updatedOnNavigateToDetail,
         onNavigateToAllPriorities = updatedOnNavigateToAllPriorities,
         onNavigateToSettings = updatedOnNavigateToSettings,
+        onNavigateToArchivedItems = updatedOnNavigateToArchivedItems,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -110,6 +118,7 @@ private fun HomeContent(
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToArchivedItems: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -164,6 +173,7 @@ private fun HomeContent(
             isRefreshing = isRefreshing,
             padding = padding,
             onEvent = onEvent,
+            onNavigateToArchivedItems = onNavigateToArchivedItems,
         )
     }
 }
@@ -177,6 +187,7 @@ private fun HomeBody(
     isRefreshing: Boolean,
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
+    onNavigateToArchivedItems: () -> Unit,
 ) {
     when (uiState) {
         is HomeUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
@@ -194,10 +205,12 @@ private fun HomeBody(
             ) {
                 HomeSuccessBody(
                     hasAnyItem = uiState.hasAnyItem,
+                    hasAnyArchivedItem = uiState.hasAnyArchivedItem,
                     filterState = filterState,
                     itemsState = itemsState,
                     homeMode = homeMode,
                     onEvent = onEvent,
+                    onNavigateToArchivedItems = onNavigateToArchivedItems,
                 )
             }
     }
@@ -206,10 +219,12 @@ private fun HomeBody(
 @Composable
 private fun HomeSuccessBody(
     hasAnyItem: Boolean,
+    hasAnyArchivedItem: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
     onEvent: (HomeEvent) -> Unit,
+    onNavigateToArchivedItems: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -232,6 +247,17 @@ private fun HomeSuccessBody(
             hasAnyItem = hasAnyItem,
             onEvent = onEvent,
             homeMode = homeMode,
+            footer = if (hasAnyArchivedItem) {
+                {
+                    NavRow(
+                        icon = Icons.Outlined.Archive,
+                        label = stringResource(R.string.home_archived_items_action),
+                        onClick = onNavigateToArchivedItems,
+                    )
+                }
+            } else {
+                null
+            },
         )
     }
 }
@@ -254,6 +280,35 @@ private fun HomeScreenPreview(
             onNavigateToDetail = {},
             onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
+            onNavigateToArchivedItems = {},
+            snackbarHostState = remember { SnackbarHostState() },
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeScreenArchivedFooterPreview(
+    @PreviewParameter(HomePreviewProvider::class) fixture: HomePreviewFixture,
+) {
+    UdsTheme {
+        HomeContent(
+            uiState = HomeUiState.Success(
+                hasAnyItem = fixture.hasAnyItem,
+                hasAnyPriorityItem = true,
+                hasAnyArchivedItem = true,
+            ),
+            filterState = fixture.filterState,
+            itemsState = fixture.itemsState,
+            homeMode = HomeMode.Normal,
+            dialogState = HomeDialogState.None,
+            isRefreshing = false,
+            onEvent = {},
+            onNavigateBack = {},
+            onNavigateToDetail = {},
+            onNavigateToAllPriorities = {},
+            onNavigateToSettings = {},
+            onNavigateToArchivedItems = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }
@@ -277,6 +332,7 @@ private fun HomeScreenSelectionModePreview(
             onNavigateToDetail = {},
             onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
+            onNavigateToArchivedItems = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

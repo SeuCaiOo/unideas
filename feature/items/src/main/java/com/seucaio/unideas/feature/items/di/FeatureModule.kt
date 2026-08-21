@@ -18,6 +18,7 @@ val itemsModule = module {
             itemId = params.getOrNull(),
             itemFormUseCase = get(),
             sectionsAndTagsUseCase = get(),
+            setItemArchivedUseCase = get(),
             savedStateHandle = get(),
             initialType = params.get(),
         )

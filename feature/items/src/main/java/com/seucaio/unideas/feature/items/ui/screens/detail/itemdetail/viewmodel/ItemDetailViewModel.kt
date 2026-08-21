@@ -4,9 +4,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.feature.items.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -27,6 +29,7 @@ class ItemDetailViewModel(
     private val itemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
+    private val setItemArchivedUseCase: SetItemArchivedUseCase,
     private val savedStateHandle: SavedStateHandle,
     initialType: ItemType = ItemType.TASK,
 ) : ViewModel() {
@@ -101,7 +104,23 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
             is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
             is ItemDetailEvent.OnScreenResumed -> itemId?.let { id -> viewModelScope.launch { loadItem(id) } }
+            is ItemDetailEvent.OnUnarchiveChipClicked -> _dialogState.update { ItemDetailDialogState.UnarchiveConfirm }
+            is ItemDetailEvent.OnUnarchiveConfirmClicked -> {
+                _dialogState.update { ItemDetailDialogState.None }
+                handleUnarchive()
+            }
         }
+    }
+
+    private fun handleUnarchive() = viewModelScope.launch {
+        val id = currentItemId ?: return@launch
+        setItemArchivedUseCase(id, archived = false)
+            .onSuccess {
+                originalItem = originalItem?.copy(status = ItemStatus.ACTIVE)
+                updateUiState { it.copy(status = ItemStatus.ACTIVE) }
+                sendUiAction(ItemDetailUiAction.ShowSnackbar(R.string.item_detail_unarchived_snackbar))
+            }
+            .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 
     private fun handleItemUpdatedExternally(item: Item) {
@@ -133,9 +152,6 @@ class ItemDetailViewModel(
         }
     }
 
-    /** Safety save: a pending text debounce shouldn't be lost just because the user left the
-     * screen before it fired. [viewModelScope] is already cancelled by the time this runs, so the
-     * flush can't ride on it — a short, local Room write is an acceptable synchronous cost here. */
     override fun onCleared() {
         if (hasPendingTextSave && uiState.value.isTitleValid) {
             runBlocking { persist() }

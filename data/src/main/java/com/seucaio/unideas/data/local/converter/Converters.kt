@@ -1,6 +1,7 @@
 package com.seucaio.unideas.data.local.converter
 
 import androidx.room.TypeConverter
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -18,6 +19,12 @@ class Converters {
 
     @TypeConverter
     fun toItemType(value: String): ItemType = ItemType.valueOf(value)
+
+    @TypeConverter
+    fun fromItemStatus(value: ItemStatus): String = value.name
+
+    @TypeConverter
+    fun toItemStatus(value: String): ItemStatus = ItemStatus.valueOf(value)
 
     @TypeConverter
     fun fromRecurrence(value: Recurrence): String = when (value) {

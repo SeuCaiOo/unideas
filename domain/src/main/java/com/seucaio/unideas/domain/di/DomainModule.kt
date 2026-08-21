@@ -6,6 +6,7 @@ import com.seucaio.unideas.domain.usecase.item.CreateItemUseCase
 import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.ExtendItemDueDateUseCase
+import com.seucaio.unideas.domain.usecase.item.GetArchivedItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
@@ -14,10 +15,12 @@ import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
+import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
@@ -63,11 +66,14 @@ val domainModule = module {
     factoryOf(::CompleteItemUseCase)
     factoryOf(::GetPriorityItemsUseCase)
     factoryOf(::SetItemPinnedUseCase)
+    factoryOf(::SetItemArchivedUseCase)
+    factoryOf(::GetArchivedItemsUseCase)
     factoryOf(::GetItemsWithDueDateUseCase)
     factoryOf(::HasAnyItemUseCase)
     factoryOf(::ItemFormUseCase)
     factoryOf(::ItemOccurrenceUseCase)
     factoryOf(::HomeUseCase)
+    factoryOf(::ItemArchiveUseCase)
     factoryOf(::ItemCompletionHistoryUseCase)
     factoryOf(::ProcessMissedOccurrencesUseCase)
     factoryOf(::IgnoreOccurrenceUseCase)

@@ -10,7 +10,11 @@ sealed interface HomeUiState {
 
     data object Loading : HomeUiState
 
-    data class Success(val hasAnyItem: Boolean, val hasAnyPriorityItem: Boolean) : HomeUiState
+    data class Success(
+        val hasAnyItem: Boolean,
+        val hasAnyPriorityItem: Boolean,
+        val hasAnyArchivedItem: Boolean = false,
+    ) : HomeUiState
 
     data class Error(@param:StringRes val messageRes: Int) : HomeUiState
 }

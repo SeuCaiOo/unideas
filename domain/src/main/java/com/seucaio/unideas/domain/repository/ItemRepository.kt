@@ -2,6 +2,7 @@ package com.seucaio.unideas.domain.repository
 
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemDetail
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -15,8 +16,8 @@ import java.time.LocalDate
 interface ItemRepository {
 
     /**
-     * Observes items of a Home tab ([type]), optionally filtered by section
-     * and/or tags.
+     * Observes items of a Home tab ([type]), optionally filtered by section and/or tags —
+     * excludes [ItemStatus.ARCHIVED] items (see [getArchivedItems]).
      *
      * @param sectionId `null` = no section filter.
      * @param tagIds empty = no tag filter; otherwise items linked to any of the ids.
@@ -33,21 +34,26 @@ interface ItemRepository {
     fun getItemDetail(id: Long): Flow<ItemDetail?>
 
     /**
-     * Observes non-completed items due on or before [dueOnOrBefore] (overdue +
+     * Observes non-completed, non-archived items due on or before [dueOnOrBefore] (overdue +
      * due soon), ordered by due date. The caller computes the threshold date
      * (today + N) and applies any panel limit.
      */
     fun getPriorityItems(dueOnOrBefore: LocalDate): Flow<List<Item>>
 
     /**
-     * Observes every non-completed item with a due date, regardless of how far out — unlike
-     * [getPriorityItems], not bounded by the "due soon" window. Used by the reminder check
-     * worker (#115), since a configured warning can be further out than that window.
+     * Observes every non-completed, non-archived item with a due date, regardless of how far
+     * out — unlike [getPriorityItems], not bounded by the "due soon" window. Used by the
+     * reminder check worker (#115), since a configured warning can be further out than that
+     * window; excluding archived items here is what pauses their reminders/occurrence
+     * processing (#168).
      */
     fun getItemsWithDueDate(): Flow<List<Item>>
 
     /** Observes whether the item table has any row at all, regardless of type/section/tags. */
     fun hasAnyItem(): Flow<Boolean>
+
+    /** Observes every archived item ([ItemStatus.ARCHIVED]), most recently created first. */
+    fun getArchivedItems(): Flow<List<Item>>
 
     /** Inserts [item] (and its tag links) and returns the generated id. */
     suspend fun insertItem(item: Item): Long
@@ -60,4 +66,7 @@ interface ItemRepository {
 
     /** Sets [Item.isPinned] for the item with [id] — pinned items appear in the priority panel regardless of urgency. */
     suspend fun setItemPinned(id: Long, isPinned: Boolean)
+
+    /** Sets [Item.status] for the item with [id]. */
+    suspend fun setItemStatus(id: Long, status: ItemStatus)
 }

@@ -9,19 +9,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.seucaio.unideas.ds.theme.UdsTheme
 
-/**
- * Confirmation dialog for deletion. Pass `onConfirm = null` when deletion is
- * blocked (e.g. linked items exist) — the caller formats [messageRes] with
- * whatever count/detail it needs via [formatArgs] (same pattern as
- * `UiAction.ShowSnackbar`); the dialog only shows Dismiss in that case.
- *
- * Exception to `:uds`'s "no `R.*` references" portability rule (see module README) —
- * `legacy/` only exists to receive `:core:ui` components verbatim while `:core:ui` is
- * being emptied out, and gets deleted once that's done, so it doesn't need to hold to
- * the portable-module contract the rest of `:uds` does.
- */
 @Composable
-fun DeleteConfirmationDialog(
+fun ConfirmationDialog(
     @StringRes titleRes: Int,
     @StringRes messageRes: Int,
     onDismiss: () -> Unit,
@@ -49,9 +38,9 @@ fun DeleteConfirmationDialog(
 
 @PreviewLightDark
 @Composable
-private fun DeleteConfirmationDialogPreview() {
+private fun ConfirmationDialogPreview() {
     UdsTheme {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = android.R.string.ok,
             messageRes = android.R.string.ok,
             onDismiss = {},
@@ -62,9 +51,9 @@ private fun DeleteConfirmationDialogPreview() {
 
 @PreviewLightDark
 @Composable
-private fun DeleteConfirmationDialogBlockedPreview() {
+private fun ConfirmationDialogBlockedPreview() {
     UdsTheme {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = android.R.string.ok,
             messageRes = android.R.string.ok,
             onDismiss = {},

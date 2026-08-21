@@ -6,6 +6,7 @@ import com.seucaio.unideas.data.mapper.toDomain
 import com.seucaio.unideas.data.mapper.toEntity
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemDetail
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.repository.ItemRepository
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +41,9 @@ class ItemRepositoryImpl(
 
     override fun hasAnyItem(): Flow<Boolean> = itemDao.hasAnyItem()
 
+    override fun getArchivedItems(): Flow<List<Item>> =
+        itemDao.getArchivedItems().map { rows -> rows.map { it.toDomain() } }
+
     override suspend fun insertItem(item: Item): Long =
         itemDao.insertItemWithTags(item.toEntity(), item.tags.map { it.id })
 
@@ -49,4 +53,6 @@ class ItemRepositoryImpl(
     override suspend fun deleteItem(id: Long) = itemDao.deleteById(id)
 
     override suspend fun setItemPinned(id: Long, isPinned: Boolean) = itemDao.setPinned(id, isPinned)
+
+    override suspend fun setItemStatus(id: Long, status: ItemStatus) = itemDao.setStatus(id, status)
 }

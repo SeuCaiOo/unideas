@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.seucaio.unideas.data.local.database.UnideasDatabase
 import com.seucaio.unideas.data.local.entity.ItemEntity
 import com.seucaio.unideas.data.local.entity.ItemTagCrossRef
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import kotlinx.coroutines.flow.first
@@ -217,6 +218,58 @@ class ItemDaoTest {
     }
 
     @Test
+    fun getItemsExcludesArchivedItems() = runTest {
+        dao.insert(task(title = "ativa"))
+        dao.insert(task(title = "arquivada", status = ItemStatus.ARCHIVED))
+
+        val items = dao.getItems(ItemType.TASK, null, emptyList(), 0).first()
+
+        assertEquals(listOf("ativa"), items.map { it.item.title })
+    }
+
+    @Test
+    fun getPriorityItemsExcludesArchivedItemsEvenWhenPinned() = runTest {
+        dao.insert(task(title = "vencida", dueDate = 1_000L))
+        dao.insert(task(title = "arquivada fixada", dueDate = 1_000L, isPinned = true, status = ItemStatus.ARCHIVED))
+
+        val priorities = dao.getPriorityItems(dueOnOrBefore = 3_000L).first()
+
+        assertEquals(listOf("vencida"), priorities.map { it.item.title })
+    }
+
+    @Test
+    fun getItemsWithDueDateExcludesArchivedItems() = runTest {
+        dao.insert(task(title = "ativa", dueDate = 1_000L))
+        dao.insert(task(title = "arquivada", dueDate = 1_000L, status = ItemStatus.ARCHIVED))
+
+        val items = dao.getItemsWithDueDate().first()
+
+        assertEquals(listOf("ativa"), items.map { it.item.title })
+    }
+
+    @Test
+    fun getArchivedItemsReturnsOnlyArchivedItemsMostRecentFirst() = runTest {
+        dao.insert(task(title = "ativa"))
+        dao.insert(task(title = "arquivada antiga", createdAt = 1_000L, status = ItemStatus.ARCHIVED))
+        dao.insert(task(title = "arquivada recente", createdAt = 2_000L, status = ItemStatus.ARCHIVED))
+
+        val archived = dao.getArchivedItems().first()
+
+        assertEquals(listOf("arquivada recente", "arquivada antiga"), archived.map { it.item.title })
+    }
+
+    @Test
+    fun setStatusUpdatesOnlyTheTargetItem() = runTest {
+        val archivedId = dao.insert(task(title = "alvo"))
+        val otherId = dao.insert(task(title = "outro"))
+
+        dao.setStatus(archivedId, ItemStatus.ARCHIVED)
+
+        assertEquals(ItemStatus.ARCHIVED, dao.getItemById(archivedId).first()!!.item.status)
+        assertEquals(ItemStatus.ACTIVE, dao.getItemById(otherId).first()!!.item.status)
+    }
+
+    @Test
     fun deleteByIdRemovesItemAndCascadesTagLinks() = runTest {
         seedTags(1L to "urgente")
         val id = dao.insertItemWithTags(task(title = "para excluir"), listOf(1L))
@@ -234,6 +287,7 @@ class ItemDaoTest {
         completedAt: Long? = null,
         createdAt: Long = 1_000L,
         isPinned: Boolean = false,
+        status: ItemStatus = ItemStatus.ACTIVE,
     ): ItemEntity = ItemEntity(
         type = ItemType.TASK,
         title = title,
@@ -243,13 +297,19 @@ class ItemDaoTest {
         completedAt = completedAt,
         createdAt = createdAt,
         isPinned = isPinned,
+        status = status,
     )
 
-    private fun note(title: String, dueDate: Long? = null): ItemEntity = ItemEntity(
+    private fun note(
+        title: String,
+        dueDate: Long? = null,
+        status: ItemStatus = ItemStatus.ACTIVE,
+    ): ItemEntity = ItemEntity(
         type = ItemType.NOTE,
         title = title,
         dueDate = dueDate,
         createdAt = 1_000L,
+        status = status,
     )
 
     private fun seedTags(vararg tags: Pair<Long, String>) {

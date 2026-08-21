@@ -1,6 +1,7 @@
 package com.seucaio.unideas.domain.stub
 
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.ReminderWarning
@@ -35,6 +36,7 @@ object ItemStub {
         isPinned: Boolean = false,
         pendingExtensionOriginalDueDate: LocalDate? = null,
         pendingExtensionCount: Int = 0,
+        status: ItemStatus = ItemStatus.ACTIVE,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -52,6 +54,7 @@ object ItemStub {
         isPinned = isPinned,
         pendingExtensionOriginalDueDate = pendingExtensionOriginalDueDate,
         pendingExtensionCount = pendingExtensionCount,
+        status = status,
         tags = tags,
     )
 
@@ -65,6 +68,7 @@ object ItemStub {
         recurrence: Recurrence = Recurrence.None,
         reminderWarning: ReminderWarning = ReminderWarning.None,
         createdAt: LocalDateTime = CREATED_AT,
+        status: ItemStatus = ItemStatus.ACTIVE,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -77,6 +81,7 @@ object ItemStub {
         recurrence = recurrence,
         reminderWarning = reminderWarning,
         createdAt = createdAt,
+        status = status,
         tags = tags,
     )
 

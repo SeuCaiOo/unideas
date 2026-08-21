@@ -25,5 +25,5 @@ internal fun Item.toListItemUi(
         HomeMode.Normal -> null
     },
     isPinned = isPinned,
-    description = description,
+    description = markdownDescriptionAnnotatedString(description),
 )

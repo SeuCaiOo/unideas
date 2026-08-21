@@ -1,6 +1,7 @@
 package com.seucaio.unideas.ds.components.lists.model
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 
 data class ListItemUi(
     val id: Long,
@@ -14,5 +15,5 @@ data class ListItemUi(
     val checkContentDescription: String,
     val isSelected: Boolean? = null,
     val isPinned: Boolean = false,
-    val description: String? = null,
+    val description: AnnotatedString? = null,
 )

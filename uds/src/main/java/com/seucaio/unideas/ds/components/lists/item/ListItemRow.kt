@@ -28,8 +28,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -84,9 +90,10 @@ fun ListItemRow(
                 NormalTrailingContent(ui, onTogglePin)
             }
         }
-        if (!ui.description.isNullOrBlank()) {
+        val description = ui.description
+        if (description != null && description.text.isNotBlank()) {
             ListItemDescription(
-                description = ui.description,
+                description = description,
                 expanded = descriptionExpanded,
                 onToggleExpand = { descriptionExpanded = !descriptionExpanded },
                 modifier = Modifier.padding(top = 10.dp),
@@ -136,7 +143,7 @@ private fun ListItemTitleAndMeta(ui: ListItemUi, modifier: Modifier = Modifier) 
 
 @Composable
 private fun ListItemDescription(
-    description: String,
+    description: AnnotatedString,
     expanded: Boolean,
     onToggleExpand: () -> Unit,
     modifier: Modifier = Modifier,
@@ -170,7 +177,13 @@ private fun ListItemDescription(
 }
 
 private enum class ListItemRowPreviewScenario {
-    Default, Pinned, WithShortDescription, WithLongDescription, SelectedInSelectionMode, UnselectedInSelectionMode
+    Default,
+    Pinned,
+    WithShortDescription,
+    WithLongDescription,
+    WithFormattedDescription,
+    SelectedInSelectionMode,
+    UnselectedInSelectionMode,
 }
 
 private class ListItemRowPreviewProvider : PreviewParameterProvider<ListItemRowPreviewScenario> {
@@ -180,7 +193,7 @@ private class ListItemRowPreviewProvider : PreviewParameterProvider<ListItemRowP
 @Composable
 private fun OverdueBillRow(
     isPinned: Boolean = false,
-    description: String? = null,
+    description: AnnotatedString? = null,
     isSelected: Boolean? = null,
 ) {
     ListItemRow(
@@ -212,12 +225,23 @@ private fun ListItemRowPreview(
                 ListItemRowPreviewScenario.Default -> OverdueBillRow()
                 ListItemRowPreviewScenario.Pinned -> OverdueBillRow(isPinned = true)
                 ListItemRowPreviewScenario.WithShortDescription ->
-                    OverdueBillRow(description = "Pay before the due date to avoid a late fee.")
+                    OverdueBillRow(description = AnnotatedString("Pay before the due date to avoid a late fee."))
                 ListItemRowPreviewScenario.WithLongDescription -> OverdueBillRow(
-                    description = "Check the meter reading before paying — last month's bill looked " +
-                        "unusually high compared to the last six months, so it might be worth calling " +
-                        "the provider to confirm there wasn't a billing error before just paying it off " +
-                        "without asking any questions.",
+                    description = AnnotatedString(
+                        "Check the meter reading before paying — last month's bill looked unusually " +
+                            "high compared to the last six months, so it might be worth calling the " +
+                            "provider to confirm there wasn't a billing error before just paying it off " +
+                            "without asking any questions.",
+                    ),
+                )
+                ListItemRowPreviewScenario.WithFormattedDescription -> OverdueBillRow(
+                    description = buildAnnotatedString {
+                        append("Check the meter reading ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("before paying") }
+                        append(" — last month's bill looked ")
+                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append("unusually high") }
+                        append(".")
+                    },
                 )
                 ListItemRowPreviewScenario.SelectedInSelectionMode -> OverdueBillRow(isSelected = true)
                 ListItemRowPreviewScenario.UnselectedInSelectionMode -> OverdueBillRow(isSelected = false)

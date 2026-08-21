@@ -111,7 +111,11 @@ private fun OnboardingContent(
                     onClick = onSkipClick,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
                 ) {
-                    Text(text = stringResource(R.string.onboarding_skip))
+                    Text(
+                        text = stringResource(R.string.onboarding_skip),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 Text(

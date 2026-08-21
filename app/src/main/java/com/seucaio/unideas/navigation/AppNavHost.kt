@@ -34,7 +34,7 @@ fun AppNavHost(
     AppScaffold(modifier = modifier) { padding ->
         NavHost(
             navController = navController,
-            startDestination = HomeRoute.Home,
+            startDestination = if (needsOnboarding) OnboardingRoute.Login else HomeRoute.Home,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -86,10 +86,6 @@ fun AppNavHost(
                     navController.navigate(ItemsRoute.Config(itemId, isNewItem))
                 },
             )
-        }
-
-        if (needsOnboarding) {
-            LaunchedEffect(Unit) { navController.navigate(OnboardingRoute.Login) }
         }
 
         // Scaffold subcomposes this content slot separately from the outer composition, so the

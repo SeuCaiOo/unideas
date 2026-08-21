@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.seucaio.unideas.BuildConfig
@@ -40,52 +41,7 @@ fun AppNavHost(
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
-            onboardingNavGraph(
-                onOnboardingComplete = {
-                    navController.navigate(HomeRoute.Home) {
-                        popUpTo(OnboardingRoute.Login) { inclusive = true }
-                    }
-                },
-            )
-            homeNavGraph(
-                onNavigateBack = navController::popBackStack,
-                onNavigateToDetail = { itemId ->
-                    navController.navigate(ItemsRoute.Detail(itemId))
-                },
-                onNavigateToAddItem = { type ->
-                    navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
-                },
-                onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
-                onNavigateToArchivedItems = { navController.navigate(HomeRoute.ArchivedItems) },
-                onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
-            )
-            settingsNavGraph(
-                config = SettingsScreenConfig(
-                    versionName = BuildConfig.VERSION_NAME,
-                    showDebugSection = BuildConfig.DEBUG,
-                ),
-                onNavigateBack = navController::popBackStack,
-                onNavigateToSections = { navController.navigate(SectionsRoute.List) },
-                onNavigateToTags = { navController.navigate(TagsRoute.List) },
-                onNavigateToItems = { navController.navigate(ItemsRoute.List) },
-            )
-            sectionsNavGraph(onNavigateBack = navController::popBackStack)
-            tagsNavGraph(onNavigateBack = navController::popBackStack)
-            itemsNavGraph(
-                onNavigateBack = navController::popBackStack,
-                onNavigateToDetail = { itemId ->
-                    navController.navigate(ItemsRoute.Detail(itemId))
-                },
-                onNavigateToAddItem = { type ->
-                    navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
-                },
-                onNavigateToHistory = { itemId ->
-                    navController.navigate(ItemsRoute.History(itemId))
-                },
-                onNavigateToConfig = { itemId, isNewItem ->
-                    navController.navigate(ItemsRoute.Config(itemId, isNewItem))
-                },
-            )
+            appDestinations(navController)
         }
 
         // Scaffold subcomposes this content slot separately from the outer composition, so the
@@ -94,4 +50,53 @@ fun AppNavHost(
         // and can hit NavController with no graph set yet.
         LaunchedEffect(Unit) { navController.handleDeepLink(initialIntent) }
     }
+}
+
+private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
+    onboardingNavGraph(
+        onOnboardingComplete = {
+            navController.navigate(HomeRoute.Home) {
+                popUpTo(OnboardingRoute.Login) { inclusive = true }
+            }
+        },
+    )
+    homeNavGraph(
+        onNavigateBack = navController::popBackStack,
+        onNavigateToDetail = { itemId ->
+            navController.navigate(ItemsRoute.Detail(itemId))
+        },
+        onNavigateToAddItem = { type ->
+            navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
+        },
+        onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
+        onNavigateToArchivedItems = { navController.navigate(HomeRoute.ArchivedItems) },
+        onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
+    )
+    settingsNavGraph(
+        config = SettingsScreenConfig(
+            versionName = BuildConfig.VERSION_NAME,
+            showDebugSection = BuildConfig.DEBUG,
+        ),
+        onNavigateBack = navController::popBackStack,
+        onNavigateToSections = { navController.navigate(SectionsRoute.List) },
+        onNavigateToTags = { navController.navigate(TagsRoute.List) },
+        onNavigateToItems = { navController.navigate(ItemsRoute.List) },
+    )
+    sectionsNavGraph(onNavigateBack = navController::popBackStack)
+    tagsNavGraph(onNavigateBack = navController::popBackStack)
+    itemsNavGraph(
+        onNavigateBack = navController::popBackStack,
+        onNavigateToDetail = { itemId ->
+            navController.navigate(ItemsRoute.Detail(itemId))
+        },
+        onNavigateToAddItem = { type ->
+            navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
+        },
+        onNavigateToHistory = { itemId ->
+            navController.navigate(ItemsRoute.History(itemId))
+        },
+        onNavigateToConfig = { itemId, isNewItem ->
+            navController.navigate(ItemsRoute.Config(itemId, isNewItem))
+        },
+    )
 }

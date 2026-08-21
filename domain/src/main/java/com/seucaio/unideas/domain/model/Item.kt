@@ -17,6 +17,8 @@ import java.time.LocalTime
  * @property lastCompletedScheduledDate the `dueDate` of a recurring task's most recently
  *   completed occurrence — only meaningful when [isRecurring]; see [isCompleted].
  * @property isPinned when true, appears in the priority panel regardless of [urgency].
+ * @property status [ItemStatus.ARCHIVED] hides the item from the normal listing and pauses its
+ *   reminders/occurrence generation (see [ItemStatus]).
  * @property pendingExtensionOriginalDueDate the `dueDate` this occurrence had *before* the first
  *   "extend deadline" action, if any — cleared once the occurrence resolves (completed/ignored).
  *   `null` means this occurrence has never been extended since its last resolution.
@@ -39,6 +41,7 @@ data class Item(
     val isPinned: Boolean = false,
     val pendingExtensionOriginalDueDate: LocalDate? = null,
     val pendingExtensionCount: Int = 0,
+    val status: ItemStatus = ItemStatus.ACTIVE,
     val tags: List<Tag> = emptyList(),
 ) {
     /**

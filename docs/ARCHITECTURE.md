@@ -190,7 +190,7 @@ uds/
     ├── UnideasEmptyContent.kt          — estado vazio: ícone (TaskAlt) + texto; `titleRes` opcional (#165)
     │                                      adiciona um título (usado só no onboarding real da Home)
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
-    ├── DeleteConfirmationDialog.kt
+    ├── ConfirmationDialog.kt
     ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```

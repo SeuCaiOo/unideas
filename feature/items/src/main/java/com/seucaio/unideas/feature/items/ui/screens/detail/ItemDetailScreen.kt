@@ -24,7 +24,7 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.ds.components.legacy.DeleteConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -171,6 +171,7 @@ private fun ItemDetailScreenContent(
                 events = fieldsEvents,
                 occurrenceState = occurrenceState,
                 isArchived = uiState.status == ItemStatus.ARCHIVED,
+                onUnarchiveClicked = { onEvent(ItemDetailEvent.OnUnarchiveChipClicked) },
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
@@ -212,7 +213,7 @@ private fun ItemDetailDialogs(
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = R.string.item_detail_delete_title,
             messageRes = R.string.item_detail_delete_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -221,11 +222,20 @@ private fun ItemDetailDialogs(
     }
 
     if (dialogState is ItemDetailDialogState.DiscardConfirm) {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = dialogState.titleRes,
             messageRes = dialogState.messageRes,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
             onConfirm = { onEvent(ItemDetailEvent.OnDiscardConfirmed) },
+        )
+    }
+
+    if (dialogState is ItemDetailDialogState.UnarchiveConfirm) {
+        ConfirmationDialog(
+            titleRes = R.string.item_detail_unarchive_confirm_title,
+            messageRes = R.string.item_detail_unarchive_confirm_message,
+            onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
+            onConfirm = { onEvent(ItemDetailEvent.OnUnarchiveConfirmClicked) },
         )
     }
 }
@@ -236,7 +246,7 @@ private fun ItemOccurrenceDialogs(
     onEvent: (ItemOccurrenceEvent) -> Unit,
 ) {
     if (dialogState is ItemOccurrenceDialogState.ReopenConfirm) {
-        DeleteConfirmationDialog(
+        ConfirmationDialog(
             titleRes = R.string.item_detail_reopen_title,
             messageRes = R.string.item_detail_reopen_message,
             onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },

@@ -3,7 +3,9 @@ package com.seucaio.unideas.feature.items.ui.components.form
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -11,8 +13,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -49,6 +57,7 @@ fun ItemFormBody(
     onNavigateToHistory: (() -> Unit)?,
     modifier: Modifier = Modifier,
     isArchived: Boolean = false,
+    onUnarchiveClicked: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Column(
@@ -57,7 +66,11 @@ fun ItemFormBody(
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
         ) {
-            ItemFormBadges(type = state.type, isArchived = isArchived)
+            ItemFormBadges(
+                type = state.type,
+                isArchived = isArchived,
+                onArchivedChipClicked = onUnarchiveClicked
+            )
 
             TitleDescriptionFields(
                 title = state.title,
@@ -101,23 +114,39 @@ fun ItemFormBody(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemFormBadges(type: ItemType, isArchived: Boolean) {
+private fun ItemFormBadges(
+    type: ItemType,
+    isArchived: Boolean,
+    onArchivedChipClicked: (() -> Unit)?
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
-        val typeLabelRes = if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
+        val typeLabelRes =
+            if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
         TextBadge(
             text = stringResource(typeLabelRes),
             background = MaterialTheme.colorScheme.primaryContainer,
             content = MaterialTheme.colorScheme.onPrimaryContainer,
         )
-        if (isArchived) {
-            TextBadge(
-                text = stringResource(R.string.item_detail_archived_badge),
-                background = MaterialTheme.colorScheme.surfaceVariant,
-                content = MaterialTheme.colorScheme.onSurfaceVariant,
+        if (isArchived && onArchivedChipClicked != null) {
+            Spacer(Modifier.weight(1f))
+            FilterChip(
+                selected = true,
+                onClick = onArchivedChipClicked,
+                label = { Text(stringResource(R.string.item_detail_archived_badge)) },
+                leadingIcon = { Icon(Icons.Outlined.Archive, contentDescription = null) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             )
         }
     }
@@ -139,7 +168,8 @@ private fun configCardSubtitle(state: ItemFormFieldsState): String {
             )
         }
     }
-    return parts.ifEmpty { null }?.joinToString(" · ") ?: stringResource(R.string.item_config_card_subtitle_empty)
+    return parts.ifEmpty { null }?.joinToString(" · ")
+        ?: stringResource(R.string.item_config_card_subtitle_empty)
 }
 
 @PreviewLightDark
@@ -157,6 +187,7 @@ private fun ItemFormBodyPreview(
                 ),
                 occurrenceState = ItemOccurrenceUiState(),
                 isArchived = previewState.status == ItemStatus.ARCHIVED,
+                onUnarchiveClicked = {},
                 onCompleteClicked = {},
                 onIgnoreClicked = {},
                 onExtendDeadlineClicked = {},

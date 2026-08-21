@@ -114,14 +114,14 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
        [Compartilhar]     → share sheet do sistema (sempre visível, mesmo em criação)
        [Configurações]    → NavCard "Configurações" → ItemConfigScreen (ItemsRoute.Config(itemId,
                              isNewItem)) — substituiu o ícone de engrenagem no toolbar do #160 (#162)
-       [Excluir]          → DeleteConfirmationDialog → confirma → volta pra Home (sempre visível)
+       [Excluir]          → ConfirmationDialog → confirma → volta pra Home (sempre visível)
        [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
                              pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
                              por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C).
                              CRUD completo desde o #169: FAB → AddEditHistoryEntryBottomSheet (data
                              retroativa, não-futura e ainda não usada; nota obrigatória se marcar
                              concluída com atraso) cria uma entrada; menu por card (editar/excluir) reabre
-                             o mesmo sheet ou DeleteConfirmationDialog. Diferente de completar/desmarcar o
+                             o mesmo sheet ou ConfirmationDialog. Diferente de completar/desmarcar o
                              item ao vivo (#101/B) — não mexe em `Item.lastCompletedScheduledDate`
   → "←" → volta
 ```
@@ -145,7 +145,7 @@ ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
      — mesmos campos/componentes do form principal, disponíveis pros dois tipos (#160)
   → Zona de risco: tipo atual do item + botão [Alterar] — só aparece quando isNewItem == false
        (item recém-criado, sem histórico/ocorrência acumulada, não tem risco a avisar — #165 batch)
-       → DeleteConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
+       → ConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
        → confirma → reset total: dueDate/dueTime/recurrence/reminderWarning voltam a
          nulo/None, mesmo que o novo tipo também suportasse esses campos — nunca seletivo.
          Título/descrição/seção/tags NUNCA são tocados. Histórico (`ItemCompletionHistory`)
@@ -174,7 +174,7 @@ SectionsListScreen  (SectionsRoute.List)
        [se há itens vinculados]
        → BLOQUEADO: dialog informando quantos itens estão vinculados (sem exclusão)
        [se não há]
-       → DeleteConfirmationDialog → confirma → remove
+       → ConfirmationDialog → confirma → remove
 ```
 
 ---

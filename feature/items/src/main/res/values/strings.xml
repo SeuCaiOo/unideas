@@ -72,6 +72,9 @@
     </plurals>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_archived_badge">Archived</string>
+    <string name="item_detail_unarchived_snackbar">Item unarchived</string>
+    <string name="item_detail_unarchive_confirm_title">Unarchive item</string>
+    <string name="item_detail_unarchive_confirm_message">The item goes back to your normal listing and its reminders resume.</string>
     <string name="item_detail_delete_message">This action cannot be undone.</string>
     <string name="item_detail_reopen_title">Reopen task?</string>
     <string name="item_detail_reopen_message">This will mark the task as pending again and clear its completion date.</string>

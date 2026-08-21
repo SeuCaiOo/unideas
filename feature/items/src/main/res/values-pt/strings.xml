@@ -72,6 +72,9 @@
     </plurals>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_archived_badge">Arquivado</string>
+    <string name="item_detail_unarchived_snackbar">Item desarquivado</string>
+    <string name="item_detail_unarchive_confirm_title">Desarquivar item</string>
+    <string name="item_detail_unarchive_confirm_message">O item volta pra sua listagem normal e os lembretes voltam a valer.</string>
     <string name="item_detail_delete_message">Esta ação não pode ser desfeita.</string>
     <string name="item_detail_reopen_title">Reabrir tarefa?</string>
     <string name="item_detail_reopen_message">Isso vai marcar a tarefa como pendente novamente e limpar a data de conclusão.</string>

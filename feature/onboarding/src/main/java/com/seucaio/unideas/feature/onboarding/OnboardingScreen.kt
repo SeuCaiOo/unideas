@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -68,55 +68,62 @@ fun OnboardingScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        OnboardingContent(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .consumeWindowInsets(padding),
-            onConnectClick = { viewModel.onEvent(OnboardingEvent.OnConnectClicked) },
-            onSkipClick = { viewModel.onEvent(OnboardingEvent.OnSkipClicked) },
-        )
-    }
+    OnboardingContent(
+        snackbarHostState = snackbarHostState,
+        onConnectClick = { viewModel.onEvent(OnboardingEvent.OnConnectClicked) },
+        onSkipClick = { viewModel.onEvent(OnboardingEvent.OnSkipClicked) },
+    )
 }
 
 @Composable
 private fun OnboardingContent(
+    snackbarHostState: SnackbarHostState,
     onConnectClick: () -> Unit,
     onSkipClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        TextButton(onClick = onSkipClick, modifier = Modifier.align(Alignment.End)) {
-            Text(text = stringResource(R.string.onboarding_skip))
-        }
+    Scaffold(
+        topBar = {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(
+                    onClick = onSkipClick,
+                    modifier = Modifier.padding(top = 12.dp, end = 8.dp)
+                ) {
+                    Text(text = stringResource(R.string.onboarding_skip))
+                }
+            }
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = stringResource(R.string.onboarding_connect))
+                }
 
+                Text(
+                    text = stringResource(R.string.onboarding_footnote),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         UnideasEmptyContent(
             titleRes = R.string.onboarding_title,
             messageRes = R.string.onboarding_body,
             icon = Icons.Outlined.CloudSync,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-        )
-
-        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = stringResource(R.string.onboarding_connect))
-            }
-
-            Text(
-                text = stringResource(R.string.onboarding_footnote),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
+                .fillMaxSize()
+                .padding(padding)
+                .consumeWindowInsets(padding),
+        )
     }
 }
 
@@ -124,12 +131,10 @@ private fun OnboardingContent(
 @Composable
 private fun OnboardingContentPreview() {
     UdsTheme {
-        Surface {
-            OnboardingContent(
-                onConnectClick = {},
-                onSkipClick = {},
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        OnboardingContent(
+            snackbarHostState = remember { SnackbarHostState() },
+            onConnectClick = {},
+            onSkipClick = {},
+        )
     }
 }

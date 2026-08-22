@@ -92,6 +92,13 @@ class BackupRepositoryImpl(
             }
         }
 
+    override suspend fun deleteBackup(driveService: Drive, fileId: String): Result<Unit> =
+        runCatching {
+            withContext(ioDispatcher) {
+                driveService.files().delete(fileId).execute()
+            }
+        }
+
     companion object {
         private const val APP_DATA_FOLDER = "appDataFolder"
         private const val MIME_SQLITE = "application/x-sqlite3"

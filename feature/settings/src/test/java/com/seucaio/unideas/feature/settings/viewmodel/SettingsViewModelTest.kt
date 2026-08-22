@@ -221,6 +221,28 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `when refreshAccountState is called after a sign-in should expose the newly connected identity`() =
+        runTest {
+            every { googleAuthUseCase.getSignedInAccount() } returns null
+            val vm = viewModel()
+            assertEquals(SettingsAccountUiState(isConnected = false), vm.accountUiState.value)
+
+            every { googleAuthUseCase.getSignedInAccount() } returns account
+            every { account.displayName } returns "Caio Pimentel"
+            every { account.email } returns "caio@example.com"
+            vm.refreshAccountState()
+
+            assertEquals(
+                SettingsAccountUiState(
+                    isConnected = true,
+                    accountName = "Caio Pimentel",
+                    accountEmail = "caio@example.com",
+                ),
+                vm.accountUiState.value,
+            )
+        }
+
+    @Test
     fun `when OnLogoutConfirmed should clear the database, sign out, reset onboarding and complete logout`() =
         runTest {
             coEvery { clearDatabase() } returns Unit

@@ -21,12 +21,14 @@ class BackupUseCaseTest {
     private val listBackupsUseCase: ListBackupsUseCase = mockk()
     private val restoreBackupUseCase: RestoreBackupUseCase = mockk()
     private val getLastBackupInfoUseCase: GetLastBackupInfoUseCase = mockk()
+    private val deleteBackupUseCase: DeleteBackupUseCase = mockk()
     private val useCase = BackupUseCase(
         buildDriveServiceUseCase,
         uploadBackupUseCase,
         listBackupsUseCase,
         restoreBackupUseCase,
         getLastBackupInfoUseCase,
+        deleteBackupUseCase,
     )
 
     private val account: GoogleSignInAccount = mockk()
@@ -78,5 +80,15 @@ class BackupUseCaseTest {
 
         assertEquals(info, result.getOrNull())
         coVerify(exactly = 1) { getLastBackupInfoUseCase(driveService) }
+    }
+
+    @Test
+    fun `delete builds the Drive service and delegates to DeleteBackupUseCase`() = runTest {
+        coEvery { deleteBackupUseCase(driveService, "file-1") } returns Result.success(Unit)
+
+        val result = useCase.delete(account, "file-1")
+
+        assertEquals(Result.success(Unit), result)
+        coVerify(exactly = 1) { deleteBackupUseCase(driveService, "file-1") }
     }
 }

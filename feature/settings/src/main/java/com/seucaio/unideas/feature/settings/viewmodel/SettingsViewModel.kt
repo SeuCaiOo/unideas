@@ -83,6 +83,13 @@ class SettingsViewModel(
         _uiAction.send(SettingsUiAction.LogoutCompleted)
     }
 
+    // accountUiState is resolved once at construction, not query-derived — a sign-in completed
+    // by a differently-scoped ViewModel never updates it on its own, so callers re-resolve it
+    // explicitly once they observe that connection succeeding.
+    fun refreshAccountState() {
+        _accountUiState.update { resolveAccountState() }
+    }
+
     private fun resolveAccountState(): SettingsAccountUiState {
         val account = googleAuthUseCase.getSignedInAccount()
         return SettingsAccountUiState(

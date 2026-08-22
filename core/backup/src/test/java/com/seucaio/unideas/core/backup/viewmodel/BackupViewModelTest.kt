@@ -194,13 +194,23 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when sync finds no backups should show the not-found snackbar`() = runTest {
+    fun `when sync finds no backups should reveal the empty inline state`() = runTest {
         coEvery { backupUseCase.list(account) } returns Result.success(emptyList())
         val vm = viewModel()
 
-        vm.action.test {
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
             vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
-            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_no_backups_found), awaitItem())
+
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Empty,
+                ),
+                awaitItem(),
+            )
         }
     }
 
@@ -216,7 +226,11 @@ class BackupViewModelTest {
             vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
 
             assertEquals(
-                BackupUiState.Ready(isConnected = true, isBackupListVisible = true, availableBackups = backups),
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Loaded(backups),
+                ),
                 awaitItem(),
             )
         }
@@ -240,20 +254,38 @@ class BackupViewModelTest {
             vm.onEvent(BackupEvent.OnToggleBackupListClick)
 
             assertEquals(
-                BackupUiState.Ready(isConnected = true, availableBackups = backups),
+                BackupUiState.Ready(isConnected = true, backupListStatus = BackupListStatus.Loaded(backups)),
                 awaitItem(),
             )
         }
     }
 
     @Test
-    fun `when sync fails should show the error snackbar`() = runTest {
+    fun `when sync fails should reveal the error inline state`() = runTest {
         coEvery { backupUseCase.list(account) } returns Result.failure(RuntimeException("error"))
         val vm = viewModel()
 
-        vm.action.test {
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
             vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
-            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+
+            assertEquals(
+                BackupUiState.Ready(isBackupListVisible = true, backupListStatus = BackupListStatus.Error),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `when OnRetryBackupListClick should launch sign-in for the sync action`() = runTest {
+        val intent: Intent = mockk()
+        every { googleAuthUseCase.getSignInIntent() } returns intent
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnRetryBackupListClick)
+            assertEquals(BackupUiAction.LaunchGoogleSignIn(intent, BackupAction.Sync), awaitItem())
         }
     }
 
@@ -348,7 +380,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    availableBackups = backups,
+                    backupListStatus = BackupListStatus.Loaded(backups),
                     selectedBackupFileId = "file-2",
                 ),
                 awaitItem(),
@@ -363,8 +395,41 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    availableBackups = listOf(backups[0]),
+                    backupListStatus = BackupListStatus.Loaded(listOf(backups[0])),
                     selectedBackupFileId = null,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmed removes the last remaining backup should reveal the empty state`() = runTest {
+        val backups = listOf(BackupInfo("file-1", LocalDateTime.now(), 1024L))
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
+        coEvery { backupUseCase.delete(account, "file-1") } returns Result.success(Unit)
+        val vm = viewModel()
+        vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
+
+        vm.uiState.test {
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Loaded(backups),
+                ),
+                awaitItem(),
+            )
+
+            vm.onEvent(BackupEvent.OnDeleteConfirmed("file-1"))
+
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Empty,
                 ),
                 awaitItem(),
             )

@@ -24,6 +24,8 @@
     <string name="backup_delete_success">Backup deleted</string>
     <string name="backup_delete_error">Couldn\'t delete the backup.</string>
     <string name="backup_no_backups_found">No backups found on Drive</string>
+    <string name="backup_list_load_error">Couldn\'t load your backups.</string>
+    <string name="backup_list_retry">Retry</string>
     <string name="backup_sign_in_failed">Connection failed. Make sure your app is registered in the Google Cloud Console.</string>
     <string name="backup_error">Couldn\'t reach Google Drive. Check your connection or account permissions.</string>
 

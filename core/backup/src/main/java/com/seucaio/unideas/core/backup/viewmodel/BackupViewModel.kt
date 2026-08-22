@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
-import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import kotlinx.coroutines.channels.Channel
@@ -35,8 +34,8 @@ class BackupViewModel(
                 BackupUiState.Ready(
                     isConnected = state.isConnected,
                     lastBackupAt = state.lastBackupAt,
-                    availableBackups = state.availableBackups,
                     isBackupListVisible = state.isBackupListVisible,
+                    backupListStatus = state.backupListStatus,
                     selectedBackupFileId = state.selectedBackupFileId,
                 )
             }
@@ -64,6 +63,7 @@ class BackupViewModel(
             } else {
                 launchSignIn(BackupAction.Sync)
             }
+            BackupEvent.OnRetryBackupListClick -> launchSignIn(BackupAction.Sync)
             is BackupEvent.OnGoogleSignInResult -> handleSignInResult(event.account, event.pendingAction)
             is BackupEvent.OnBackupSelected -> _internalState.update { it.selectBackup(event.fileId) }
             BackupEvent.OnRestoreClick -> {
@@ -136,16 +136,12 @@ class BackupViewModel(
             _internalState.update { it.copy(isLoading = true) }
             backupUseCase.list(account)
                 .onSuccess { backups ->
-                    _internalState.update { it.copy(isLoading = false, isConnected = true) }
-                    if (backups.isEmpty()) {
-                        showSnackbar(R.string.backup_no_backups_found)
-                    } else {
-                        _internalState.update { it.showBackupList(backups) }
-                    }
+                    val status = if (backups.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(backups)
+                    _internalState.update { it.copy(isLoading = false, isConnected = true).showBackupList(status) }
                 }
                 .onFailure {
                     Timber.e(it, "Backup: List failed")
-                    handleFailure()
+                    _internalState.update { it.copy(isLoading = false).showBackupList(BackupListStatus.Error) }
                 }
         }
     }
@@ -193,22 +189,28 @@ class BackupViewModel(
         val isLoading: Boolean = false,
         val isConnected: Boolean = false,
         val lastBackupAt: LocalDateTime? = null,
-        val availableBackups: List<BackupInfo> = emptyList(),
         val isBackupListVisible: Boolean = false,
+        val backupListStatus: BackupListStatus = BackupListStatus.Empty,
         val selectedBackupFileId: String? = null,
     ) {
-        fun showBackupList(backups: List<BackupInfo>): InternalState =
-            copy(isBackupListVisible = true, availableBackups = backups)
+        fun showBackupList(status: BackupListStatus): InternalState =
+            copy(isBackupListVisible = true, backupListStatus = status)
 
         fun hideBackupList(): InternalState =
             copy(isBackupListVisible = false, selectedBackupFileId = null)
 
         fun selectBackup(fileId: String): InternalState = copy(selectedBackupFileId = fileId)
 
-        fun removeBackup(fileId: String): InternalState = copy(
-            availableBackups = availableBackups.filterNot { it.fileId == fileId },
-            selectedBackupFileId = selectedBackupFileId.takeUnless { it == fileId },
-        )
+        fun removeBackup(fileId: String): InternalState {
+            val status = backupListStatus
+            if (status !is BackupListStatus.Loaded) return this
+            val remaining = status.backups.filterNot { it.fileId == fileId }
+            val newStatus = if (remaining.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(remaining)
+            return copy(
+                backupListStatus = newStatus,
+                selectedBackupFileId = selectedBackupFileId.takeUnless { it == fileId },
+            )
+        }
     }
 
     private companion object {

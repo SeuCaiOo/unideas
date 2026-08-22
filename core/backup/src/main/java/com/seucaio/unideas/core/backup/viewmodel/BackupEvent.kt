@@ -6,6 +6,7 @@ sealed interface BackupEvent {
     data object OnConnectClick : BackupEvent
     data object OnBackupClick : BackupEvent
     data object OnToggleBackupListClick : BackupEvent
+    data object OnRetryBackupListClick : BackupEvent
     data class OnGoogleSignInResult(
         val account: GoogleSignInAccount?,
         val pendingAction: BackupAction,

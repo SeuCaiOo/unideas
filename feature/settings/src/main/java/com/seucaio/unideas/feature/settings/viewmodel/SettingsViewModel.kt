@@ -2,8 +2,6 @@ package com.seucaio.unideas.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
 import com.seucaio.unideas.domain.usecase.settings.SeedDatabaseUseCase
@@ -20,7 +18,6 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val seedDatabase: SeedDatabaseUseCase,
     private val clearDatabase: ClearDatabaseUseCase,
-    private val backupUseCase: BackupUseCase,
     private val setOnboardingSeenUseCase: SetOnboardingSeenUseCase,
 ) : ViewModel() {
 
@@ -46,7 +43,7 @@ class SettingsViewModel(
             SettingsEvent.OnSeedConfirmClicked -> handleSeedConfirm()
             SettingsEvent.OnSeedDialogDismissed -> _dialogState.update { SettingsDialogState.None }
             SettingsEvent.OnClearDatabaseClicked -> handleClearDatabase()
-            is SettingsEvent.OnLogoutConfirmed -> handleLogoutConfirmed(event.account)
+            SettingsEvent.OnLogoutConfirmed -> handleLogoutConfirmed()
             SettingsEvent.OnAccountSignedOut -> handleAccountSignedOut()
         }
     }
@@ -74,8 +71,7 @@ class SettingsViewModel(
             .onFailure { _uiAction.send(SettingsUiAction.ShowError(it.message.orEmpty())) }
     }
 
-    private fun handleLogoutConfirmed(account: GoogleSignInAccount) = viewModelScope.launch {
-        backupUseCase.upload(account)
+    private fun handleLogoutConfirmed() = viewModelScope.launch {
         clearDatabase()
         _uiAction.send(SettingsUiAction.SignOutRequested)
     }

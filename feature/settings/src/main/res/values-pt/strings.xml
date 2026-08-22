@@ -5,6 +5,7 @@
     <string name="settings_organize_sections">Seções</string>
     <string name="settings_organize_tags">Tags</string>
     <string name="settings_backup_section">Backup</string>
+    <string name="settings_account_logout">Sair da conta</string>
     <string name="settings_debug_section">Depuração</string>
     <string name="settings_debug_items">Itens</string>
     <string name="settings_debug_seed">Popular banco de dados</string>

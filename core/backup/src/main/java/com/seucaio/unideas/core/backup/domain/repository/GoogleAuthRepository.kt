@@ -18,4 +18,7 @@ interface GoogleAuthRepository {
 
     /** Builds a [Drive] client authenticated as [account], scoped to the app data folder. */
     fun buildDriveService(account: GoogleSignInAccount): Drive
+
+    /** Signs out of the scoped Google Sign-In session. */
+    suspend fun signOut()
 }

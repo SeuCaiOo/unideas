@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
+import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import kotlinx.coroutines.channels.Channel
@@ -31,7 +32,13 @@ class BackupViewModel(
             if (state.isLoading) {
                 BackupUiState.Loading
             } else {
-                BackupUiState.Ready(isConnected = state.isConnected, lastBackupAt = state.lastBackupAt)
+                BackupUiState.Ready(
+                    isConnected = state.isConnected,
+                    lastBackupAt = state.lastBackupAt,
+                    availableBackups = state.availableBackups,
+                    isBackupListVisible = state.isBackupListVisible,
+                    selectedBackupFileId = state.selectedBackupFileId,
+                )
             }
         }
         .stateIn(
@@ -52,9 +59,21 @@ class BackupViewModel(
         when (event) {
             BackupEvent.OnConnectClick -> launchSignIn(BackupAction.Connect)
             BackupEvent.OnBackupClick -> launchSignIn(BackupAction.Upload)
-            BackupEvent.OnSyncClick -> launchSignIn(BackupAction.Sync)
+            BackupEvent.OnToggleBackupListClick -> if (_internalState.value.isBackupListVisible) {
+                _internalState.update { it.hideBackupList() }
+            } else {
+                launchSignIn(BackupAction.Sync)
+            }
             is BackupEvent.OnGoogleSignInResult -> handleSignInResult(event.account, event.pendingAction)
-            is BackupEvent.OnRestoreConfirmed -> restore(event.account, event.fileId)
+            is BackupEvent.OnBackupSelected -> _internalState.update { it.selectBackup(event.fileId) }
+            BackupEvent.OnRestoreClick -> {
+                val fileId = _internalState.value.selectedBackupFileId
+                val account = googleAuthUseCase.getSignedInAccount()
+                if (fileId != null && account != null) restore(account, fileId)
+            }
+            is BackupEvent.OnDeleteBackupClick ->
+                viewModelScope.launch { _action.send(BackupUiAction.ShowDeleteConfirm(event.fileId)) }
+            is BackupEvent.OnDeleteConfirmed -> delete(event.fileId)
         }
     }
 
@@ -121,7 +140,7 @@ class BackupViewModel(
                     if (backups.isEmpty()) {
                         showSnackbar(R.string.backup_no_backups_found)
                     } else {
-                        _action.send(BackupUiAction.ShowRestoreDialog(backups))
+                        _internalState.update { it.showBackupList(backups) }
                     }
                 }
                 .onFailure {
@@ -147,6 +166,21 @@ class BackupViewModel(
         }
     }
 
+    private fun delete(fileId: String) {
+        val account = googleAuthUseCase.getSignedInAccount() ?: return
+        viewModelScope.launch {
+            backupUseCase.delete(account, fileId)
+                .onSuccess {
+                    _internalState.update { it.removeBackup(fileId) }
+                    showSnackbar(R.string.backup_delete_success)
+                }
+                .onFailure {
+                    Timber.e(it, "Backup: Delete failed")
+                    showSnackbar(R.string.backup_delete_error)
+                }
+        }
+    }
+
     private suspend fun handleFailure() {
         _internalState.update { it.copy(isLoading = false) }
         showSnackbar(R.string.backup_error)
@@ -159,7 +193,23 @@ class BackupViewModel(
         val isLoading: Boolean = false,
         val isConnected: Boolean = false,
         val lastBackupAt: LocalDateTime? = null,
-    )
+        val availableBackups: List<BackupInfo> = emptyList(),
+        val isBackupListVisible: Boolean = false,
+        val selectedBackupFileId: String? = null,
+    ) {
+        fun showBackupList(backups: List<BackupInfo>): InternalState =
+            copy(isBackupListVisible = true, availableBackups = backups)
+
+        fun hideBackupList(): InternalState =
+            copy(isBackupListVisible = false, selectedBackupFileId = null)
+
+        fun selectBackup(fileId: String): InternalState = copy(selectedBackupFileId = fileId)
+
+        fun removeBackup(fileId: String): InternalState = copy(
+            availableBackups = availableBackups.filterNot { it.fileId == fileId },
+            selectedBackupFileId = selectedBackupFileId.takeUnless { it == fileId },
+        )
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5000L

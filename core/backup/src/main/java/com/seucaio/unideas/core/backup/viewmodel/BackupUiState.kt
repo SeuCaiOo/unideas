@@ -9,5 +9,7 @@ sealed interface BackupUiState {
         val isConnected: Boolean = false,
         val lastBackupAt: LocalDateTime? = null,
         val availableBackups: List<BackupInfo> = emptyList(),
+        val isBackupListVisible: Boolean = false,
+        val selectedBackupFileId: String? = null,
     ) : BackupUiState
 }

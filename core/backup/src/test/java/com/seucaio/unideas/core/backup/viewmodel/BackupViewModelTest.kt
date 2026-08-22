@@ -142,13 +142,13 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when OnSyncClick should launch sign-in for the sync action`() = runTest {
+    fun `when OnToggleBackupListClick with the list hidden should launch sign-in for the sync action`() = runTest {
         val intent: Intent = mockk()
         every { googleAuthUseCase.getSignInIntent() } returns intent
         val vm = viewModel()
 
         vm.action.test {
-            vm.onEvent(BackupEvent.OnSyncClick)
+            vm.onEvent(BackupEvent.OnToggleBackupListClick)
             assertEquals(BackupUiAction.LaunchGoogleSignIn(intent, BackupAction.Sync), awaitItem())
         }
     }
@@ -205,14 +205,44 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when sync finds backups should show the restore dialog`() = runTest {
+    fun `when sync finds backups should reveal the inline backup list`() = runTest {
         val backups = listOf(BackupInfo("file-1", LocalDateTime.now(), 1024L))
         coEvery { backupUseCase.list(account) } returns Result.success(backups)
         val vm = viewModel()
 
-        vm.action.test {
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
             vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
-            assertEquals(BackupUiAction.ShowRestoreDialog(backups), awaitItem())
+
+            assertEquals(
+                BackupUiState.Ready(isConnected = true, isBackupListVisible = true, availableBackups = backups),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `when OnToggleBackupListClick with the list visible should hide it and clear the selection`() = runTest {
+        val backups = listOf(BackupInfo("file-1", LocalDateTime.now(), 1024L))
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
+            awaitItem()
+
+            vm.onEvent(BackupEvent.OnBackupSelected("file-1"))
+            awaitItem()
+
+            vm.onEvent(BackupEvent.OnToggleBackupListClick)
+
+            assertEquals(
+                BackupUiState.Ready(isConnected = true, availableBackups = backups),
+                awaitItem(),
+            )
         }
     }
 
@@ -228,25 +258,130 @@ class BackupViewModelTest {
     }
 
     @Test
-    fun `when restore succeeds should emit RestoreCompleted`() = runTest {
-        coEvery { backupUseCase.restore(account, "file-1") } returns Result.success(Unit)
+    fun `when OnBackupSelected should update the selected backup id`() = runTest {
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnBackupSelected("file-1"))
+
+            assertEquals(BackupUiState.Ready(selectedBackupFileId = "file-1"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnRestoreClick with no selection should do nothing`() = runTest {
         val vm = viewModel()
 
         vm.action.test {
-            vm.onEvent(BackupEvent.OnRestoreConfirmed(account, "file-1"))
+            vm.onEvent(BackupEvent.OnRestoreClick)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `when OnRestoreClick with a selection succeeds should emit RestoreCompleted`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+        coEvery { backupUseCase.restore(account, "file-1") } returns Result.success(Unit)
+        val vm = viewModel()
+        vm.onEvent(BackupEvent.OnBackupSelected("file-1"))
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnRestoreClick)
             assertEquals(BackupUiAction.RestoreCompleted, awaitItem())
         }
     }
 
     @Test
-    fun `when restore fails should show the error snackbar`() = runTest {
+    fun `when OnRestoreClick with a selection fails should show the error snackbar`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
         coEvery { backupUseCase.restore(account, "file-1") } returns
+            Result.failure(RuntimeException("error"))
+        val vm = viewModel()
+        vm.onEvent(BackupEvent.OnBackupSelected("file-1"))
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnRestoreClick)
+            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnDeleteBackupClick should ask for confirmation`() = runTest {
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnDeleteBackupClick("file-1"))
+            assertEquals(BackupUiAction.ShowDeleteConfirm("file-1"), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmed with no signed-in account should do nothing`() = runTest {
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnDeleteConfirmed("file-1"))
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmed succeeds should remove the backup and show the success snackbar`() = runTest {
+        val backups = listOf(
+            BackupInfo("file-1", LocalDateTime.now(), 1024L),
+            BackupInfo("file-2", LocalDateTime.now(), 1024L)
+        )
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
+        coEvery { backupUseCase.delete(account, "file-2") } returns Result.success(Unit)
+        val vm = viewModel()
+        vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
+        vm.onEvent(BackupEvent.OnBackupSelected("file-2"))
+
+        vm.uiState.test {
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    availableBackups = backups,
+                    selectedBackupFileId = "file-2",
+                ),
+                awaitItem(),
+            )
+
+            vm.action.test {
+                vm.onEvent(BackupEvent.OnDeleteConfirmed("file-2"))
+                assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_delete_success), awaitItem())
+            }
+
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    availableBackups = listOf(backups[0]),
+                    selectedBackupFileId = null,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `when OnDeleteConfirmed fails should show the error snackbar`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+        coEvery { backupUseCase.delete(account, "file-1") } returns
             Result.failure(RuntimeException("error"))
         val vm = viewModel()
 
         vm.action.test {
-            vm.onEvent(BackupEvent.OnRestoreConfirmed(account, "file-1"))
-            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+            vm.onEvent(BackupEvent.OnDeleteConfirmed("file-1"))
+            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_delete_error), awaitItem())
         }
     }
 }

@@ -20,7 +20,7 @@
     <!-- Logout -->
     <string name="logout_confirm_title">Sign out?</string>
     <string name="logout_confirm_message_prefix">You\'re signed in as </string>
-    <string name="logout_confirm_message_suffix">. Signing out backs up your data one last time, then disconnects this account from the app — you\'ll need to sign in again to keep using backup and sync.</string>
+    <string name="logout_confirm_message_suffix">. Signing out disconnects this account and clears your local data — you\'ll need to sign in again to use backup and sync.</string>
     <string name="logout_confirm_warning">Anything not backed up yet will be lost.</string>
-    <string name="logout_confirm_confirm">Back up and sign out</string>
+    <string name="logout_confirm_confirm">Sign out</string>
 </resources>

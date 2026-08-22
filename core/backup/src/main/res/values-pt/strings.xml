@@ -20,7 +20,7 @@
     <!-- Logout -->
     <string name="logout_confirm_title">Sair da conta?</string>
     <string name="logout_confirm_message_prefix">Você está conectado como </string>
-    <string name="logout_confirm_message_suffix">. Sair faz um último backup dos seus dados e desconecta essa conta do app — você vai precisar entrar de novo pra continuar usando backup e sincronização.</string>
+    <string name="logout_confirm_message_suffix">. Sair desconecta essa conta e limpa os dados locais — você vai precisar entrar de novo pra usar backup e sincronização.</string>
     <string name="logout_confirm_warning">Tudo que ainda não foi salvo será perdido.</string>
-    <string name="logout_confirm_confirm">Fazer backup e sair</string>
+    <string name="logout_confirm_confirm">Sair</string>
 </resources>

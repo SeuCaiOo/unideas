@@ -1,9 +1,16 @@
 package com.seucaio.unideas.core.backup.viewmodel
 
-sealed interface AccountUiState {
-    data class Ready(
-        val isConnected: Boolean = false,
-        val accountName: String? = null,
-        val accountEmail: String? = null,
-    ) : AccountUiState
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+
+data class AccountUiState(
+    val isConnected: Boolean = false,
+    val accountName: String? = null,
+    val accountEmail: String? = null,
+) {
+
+    fun withAccount(account: GoogleSignInAccount?): AccountUiState = copy(
+        isConnected = account != null,
+        accountName = account?.displayName,
+        accountEmail = account?.email,
+    )
 }

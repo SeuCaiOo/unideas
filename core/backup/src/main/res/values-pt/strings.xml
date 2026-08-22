@@ -16,4 +16,11 @@
     <string name="backup_no_backups_found">Nenhum backup encontrado no Drive</string>
     <string name="backup_sign_in_failed">Falha na conexão. Verifique se o app está registrado no Google Cloud Console.</string>
     <string name="backup_error">Não foi possível acessar o Google Drive. Verifique sua conexão ou as permissões da conta.</string>
+
+    <!-- Logout -->
+    <string name="logout_confirm_title">Sair da conta?</string>
+    <string name="logout_confirm_message_prefix">Você está conectado como </string>
+    <string name="logout_confirm_message_suffix">. Sair faz um último backup dos seus dados e desconecta essa conta do app — você vai precisar entrar de novo pra continuar usando backup e sincronização.</string>
+    <string name="logout_confirm_warning">Tudo que ainda não foi salvo será perdido.</string>
+    <string name="logout_confirm_confirm">Fazer backup e sair</string>
 </resources>

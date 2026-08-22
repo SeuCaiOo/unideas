@@ -10,4 +10,10 @@
     <string name="onboarding_skip">Use without logging in for now</string>
     <string name="onboarding_footnote">You can enable backup anytime from Settings.</string>
     <string name="onboarding_signin_failed">Couldn\'t sign in — try again</string>
+    <string name="onboarding_restore_failed">Couldn\'t restore the backup — try again</string>
+    <string name="restore_sheet_title">Google account connected</string>
+    <string name="restore_sheet_backup_available">Backup from %1$s available</string>
+    <string name="restore_sheet_question">Want to restore this backup?</string>
+    <string name="restore_sheet_restore">Restore backup</string>
+    <string name="restore_sheet_start_fresh">Start fresh</string>
 </resources>

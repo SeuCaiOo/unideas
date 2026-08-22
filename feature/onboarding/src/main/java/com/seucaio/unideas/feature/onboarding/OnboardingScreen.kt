@@ -65,7 +65,7 @@ fun OnboardingScreen(
     val resources by rememberUpdatedState(LocalResources.current)
     val context = LocalContext.current
 
-    var restoreSheetData by remember { mutableStateOf<Pair<String?, BackupInfo>?>(null) }
+    var restoreBackupInfo by remember { mutableStateOf<BackupInfo?>(null) }
 
     val signInLauncher =
         rememberLauncherForActivityResult(
@@ -87,7 +87,7 @@ fun OnboardingScreen(
                 OnboardingUiAction.OnboardingComplete -> onOnboardingComplete()
 
                 is OnboardingUiAction.ShowRestoreBackupSheet ->
-                    restoreSheetData = action.account.email to action.backupInfo
+                    restoreBackupInfo = action.backupInfo
 
                 OnboardingUiAction.RestoreCompleted -> context.restartApplication()
             }
@@ -100,16 +100,15 @@ fun OnboardingScreen(
         onSkipClick = { viewModel.onEvent(OnboardingEvent.OnSkipClicked) },
     )
 
-    restoreSheetData?.let { (accountEmail, backupInfo) ->
+    restoreBackupInfo?.let { backupInfo ->
         RestoreBackupBottomSheet(
-            accountEmail = accountEmail,
             backupCreatedAt = backupInfo.createdAt.toFormattedDateTimeString(),
             onRestoreClick = {
-                restoreSheetData = null
+                restoreBackupInfo = null
                 viewModel.onEvent(OnboardingEvent.OnRestoreBackupConfirmed(backupInfo.fileId))
             },
             onStartFreshClick = {
-                restoreSheetData = null
+                restoreBackupInfo = null
                 viewModel.onEvent(OnboardingEvent.OnStartFreshClicked)
             },
         )
@@ -129,7 +128,7 @@ private fun OnboardingContent(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Button(onClick = onConnectClick, modifier = Modifier.fillMaxWidth()) {
                     Text(text = stringResource(R.string.onboarding_connect))

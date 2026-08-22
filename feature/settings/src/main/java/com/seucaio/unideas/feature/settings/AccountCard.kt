@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.ds.theme.UdsTheme
 
@@ -89,13 +91,28 @@ private fun AccountAvatar(accountName: String?, modifier: Modifier = Modifier) {
     }
 }
 
+private data class AccountCardPreviewScenario(
+    val accountName: String?,
+    val accountEmail: String?,
+)
+
+private class AccountCardPreviewProvider : PreviewParameterProvider<AccountCardPreviewScenario> {
+    override val values: Sequence<AccountCardPreviewScenario> = sequenceOf(
+        AccountCardPreviewScenario(accountName = "Caio Pimentel", accountEmail = "caio@example.com"),
+        AccountCardPreviewScenario(accountName = "Ana", accountEmail = "ana@example.com"),
+        AccountCardPreviewScenario(accountName = null, accountEmail = "sem-nome@example.com"),
+    )
+}
+
 @PreviewLightDark
 @Composable
-private fun AccountCardPreview() {
+private fun AccountCardPreview(
+    @PreviewParameter(AccountCardPreviewProvider::class) scenario: AccountCardPreviewScenario,
+) {
     UdsTheme {
         AccountCard(
-            accountName = "Caio Pimentel",
-            accountEmail = "caio@example.com",
+            accountName = scenario.accountName,
+            accountEmail = scenario.accountEmail,
             onLogoutClick = {},
             modifier = Modifier.padding(16.dp),
         )

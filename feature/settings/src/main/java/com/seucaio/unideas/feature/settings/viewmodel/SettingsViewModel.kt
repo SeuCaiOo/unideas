@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
 import com.seucaio.unideas.domain.usecase.settings.SeedDatabaseUseCase
@@ -19,6 +20,7 @@ class SettingsViewModel(
     private val seedDatabase: SeedDatabaseUseCase,
     private val clearDatabase: ClearDatabaseUseCase,
     private val setOnboardingSeenUseCase: SetOnboardingSeenUseCase,
+    private val googleAuthUseCase: GoogleAuthUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> =
@@ -28,6 +30,9 @@ class SettingsViewModel(
     // uiState) so previews can simulate the seed-scope sheet, same pattern as SectionsViewModel.
     private val _dialogState = MutableStateFlow<SettingsDialogState>(SettingsDialogState.None)
     val dialogState: StateFlow<SettingsDialogState> = _dialogState.asStateFlow()
+
+    private val _accountUiState = MutableStateFlow(resolveAccountState())
+    val accountUiState: StateFlow<SettingsAccountUiState> = _accountUiState.asStateFlow()
 
     private val _uiAction = Channel<SettingsUiAction>(Channel.BUFFERED)
     val uiAction: Flow<SettingsUiAction> = _uiAction.receiveAsFlow()
@@ -44,7 +49,6 @@ class SettingsViewModel(
             SettingsEvent.OnSeedDialogDismissed -> _dialogState.update { SettingsDialogState.None }
             SettingsEvent.OnClearDatabaseClicked -> handleClearDatabase()
             SettingsEvent.OnLogoutConfirmed -> handleLogoutConfirmed()
-            SettingsEvent.OnAccountSignedOut -> handleAccountSignedOut()
         }
     }
 
@@ -73,12 +77,19 @@ class SettingsViewModel(
 
     private fun handleLogoutConfirmed() = viewModelScope.launch {
         clearDatabase()
-        _uiAction.send(SettingsUiAction.SignOutRequested)
-    }
-
-    private fun handleAccountSignedOut() = viewModelScope.launch {
+        googleAuthUseCase.signOut()
+        _accountUiState.update { SettingsAccountUiState() }
         setOnboardingSeenUseCase(false)
         _uiAction.send(SettingsUiAction.LogoutCompleted)
+    }
+
+    private fun resolveAccountState(): SettingsAccountUiState {
+        val account = googleAuthUseCase.getSignedInAccount()
+        return SettingsAccountUiState(
+            isConnected = account != null,
+            accountName = account?.displayName,
+            accountEmail = account?.email,
+        )
     }
 
     private fun sendUiAction(action: SettingsUiAction) = viewModelScope.launch {

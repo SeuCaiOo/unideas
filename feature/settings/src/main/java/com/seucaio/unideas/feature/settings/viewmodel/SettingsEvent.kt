@@ -23,6 +23,4 @@ sealed interface SettingsEvent {
     data object OnClearDatabaseClicked : SettingsEvent
 
     data object OnLogoutConfirmed : SettingsEvent
-
-    data object OnAccountSignedOut : SettingsEvent
 }

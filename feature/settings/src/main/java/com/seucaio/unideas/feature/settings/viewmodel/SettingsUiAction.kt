@@ -21,9 +21,6 @@ sealed interface SettingsUiAction {
     /** Unexpected failure — raw exception message, not localized. */
     data class ShowError(val message: String) : SettingsUiAction
 
-    /** Backup + local data cleanup done — tells the Screen to sign out via `AccountViewModel`. */
-    data object SignOutRequested : SettingsUiAction
-
-    /** Sign-out finished and onboarding was reset — tells the Screen to navigate to Login. */
+    /** Logout finished (local data cleared, signed out, onboarding reset) — navigate to Login. */
     data object LogoutCompleted : SettingsUiAction
 }

@@ -14,7 +14,6 @@ import com.seucaio.unideas.core.backup.domain.usecase.ListBackupsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.RestoreBackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.SignOutUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
-import com.seucaio.unideas.core.backup.viewmodel.AccountViewModel
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
@@ -38,5 +37,4 @@ val backupDataModule = module {
     factoryOf(::GoogleAuthUseCase)
     factoryOf(::BackupUseCase)
     viewModelOf(::BackupViewModel)
-    viewModelOf(::AccountViewModel)
 }

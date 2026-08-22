@@ -34,10 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet
-import com.seucaio.unideas.core.backup.viewmodel.AccountEvent
-import com.seucaio.unideas.core.backup.viewmodel.AccountUiAction
-import com.seucaio.unideas.core.backup.viewmodel.AccountUiState
-import com.seucaio.unideas.core.backup.viewmodel.AccountViewModel
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
@@ -49,6 +45,7 @@ import com.seucaio.unideas.ds.components.lists.ListSection
 import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.gallery.ComponentGallery
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.settings.viewmodel.SettingsAccountUiState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
@@ -69,12 +66,11 @@ fun SettingsScreen(
     onLogoutComplete: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
     backupViewModel: BackupViewModel = koinViewModel(),
-    accountViewModel: AccountViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val backupUiState by backupViewModel.uiState.collectAsStateWithLifecycle()
-    val accountUiState by accountViewModel.uiState.collectAsStateWithLifecycle()
+    val accountUiState by viewModel.accountUiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -101,21 +97,7 @@ fun SettingsScreen(
                 )
                 is SettingsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
 
-                SettingsUiAction.SignOutRequested -> accountViewModel.onEvent(AccountEvent.OnSignOutClick)
                 SettingsUiAction.LogoutCompleted -> updatedOnLogoutComplete()
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        accountViewModel.uiAction.collect { action ->
-            when (action) {
-                is AccountUiAction.LaunchGoogleSignIn -> Unit
-                AccountUiAction.SignInCompleted -> Unit
-                AccountUiAction.SignedOut -> viewModel.onEvent(SettingsEvent.OnAccountSignedOut)
-                is AccountUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
-                    resources.getString(action.message),
-                )
             }
         }
     }
@@ -199,7 +181,7 @@ private fun SettingsContent(
     uiState: SettingsUiState,
     dialogState: SettingsDialogState,
     backupUiState: BackupUiState,
-    accountUiState: AccountUiState,
+    accountUiState: SettingsAccountUiState,
     versionName: String,
     showDebugSection: Boolean,
     onEvent: (SettingsEvent) -> Unit,
@@ -256,7 +238,7 @@ private fun SettingsContent(
 private fun SettingsBody(
     onEvent: (SettingsEvent) -> Unit,
     backupUiState: BackupUiState,
-    accountUiState: AccountUiState,
+    accountUiState: SettingsAccountUiState,
     onBackupClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onDesignSystemGalleryClick: () -> Unit,

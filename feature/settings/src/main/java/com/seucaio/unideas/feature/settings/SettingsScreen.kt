@@ -85,6 +85,11 @@ fun SettingsScreen(
     var showTestNotificationSheet by remember { mutableStateOf(false) }
     var showLogoutSheet by remember { mutableStateOf(false) }
 
+    val isBackupConnected = (backupUiState as? BackupUiState.Ready)?.isConnected == true
+    LaunchedEffect(isBackupConnected) {
+        if (isBackupConnected) viewModel.refreshAccountState()
+    }
+
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
@@ -138,13 +143,12 @@ fun SettingsScreen(
         snackbarHostState = snackbarHostState,
     )
 
-    if (showBackupSheet) {
-        BackupBottomSheet(
-            snackbarHostState = snackbarHostState,
-            onDismiss = { showBackupSheet = false },
-            viewModel = backupViewModel,
-        )
-    }
+    BackupBottomSheet(
+        visible = showBackupSheet,
+        snackbarHostState = snackbarHostState,
+        onDismiss = { showBackupSheet = false },
+        viewModel = backupViewModel,
+    )
 
     if (showLogoutSheet) {
         val accountEmail = accountUiState.accountEmail

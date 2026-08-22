@@ -62,7 +62,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `when OnConnectClicked should launch the Google sign-in intent`() = runTest {
+    fun `when OnConnectClicked should launch the Google sign-in intent and expose Connecting`() = runTest {
         every { getSignInIntent() } returns intent
         val vm = viewModel()
 
@@ -70,6 +70,7 @@ class OnboardingViewModelTest {
             vm.onEvent(OnboardingEvent.OnConnectClicked)
             assertEquals(OnboardingUiAction.LaunchGoogleSignIn(intent), awaitItem())
         }
+        assertEquals(OnboardingUiState.Connecting, vm.uiState.value)
     }
 
     @Test
@@ -85,32 +86,36 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `when OnGoogleSignInResult with an account and no backup should mark onboarding seen and complete`() = runTest {
-        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
-        coEvery { setOnboardingSeen(true) } returns Result.success(Unit)
-        val vm = viewModel()
+    fun `when OnGoogleSignInResult with an account and no backup should mark onboarding seen, complete and reset to Ready`() =
+        runTest {
+            coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+            coEvery { setOnboardingSeen(true) } returns Result.success(Unit)
+            val vm = viewModel()
 
-        vm.uiAction.test {
-            vm.onEvent(OnboardingEvent.OnGoogleSignInResult(account))
-            assertEquals(OnboardingUiAction.OnboardingComplete, awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(OnboardingEvent.OnGoogleSignInResult(account))
+                assertEquals(OnboardingUiAction.OnboardingComplete, awaitItem())
+            }
+            coVerify(exactly = 1) { setOnboardingSeen(true) }
+            assertEquals(OnboardingUiState.Ready, vm.uiState.value)
         }
-        coVerify(exactly = 1) { setOnboardingSeen(true) }
-    }
 
     @Test
-    fun `when OnGoogleSignInResult with an account and a backup should show the restore sheet`() = runTest {
-        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(backupInfo)
-        val vm = viewModel()
+    fun `when OnGoogleSignInResult with an account and a backup should show the restore sheet and reset to Ready`() =
+        runTest {
+            coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(backupInfo)
+            val vm = viewModel()
 
-        vm.uiAction.test {
-            vm.onEvent(OnboardingEvent.OnGoogleSignInResult(account))
-            assertEquals(OnboardingUiAction.ShowRestoreBackupSheet(account, backupInfo), awaitItem())
+            vm.uiAction.test {
+                vm.onEvent(OnboardingEvent.OnGoogleSignInResult(account))
+                assertEquals(OnboardingUiAction.ShowRestoreBackupSheet(account, backupInfo), awaitItem())
+            }
+            coVerify(exactly = 0) { setOnboardingSeen(any()) }
+            assertEquals(OnboardingUiState.Ready, vm.uiState.value)
         }
-        coVerify(exactly = 0) { setOnboardingSeen(any()) }
-    }
 
     @Test
-    fun `when OnGoogleSignInResult with no account should show an error and not complete`() = runTest {
+    fun `when OnGoogleSignInResult with no account should show an error, not complete and reset to Ready`() = runTest {
         val vm = viewModel()
 
         vm.uiAction.test {
@@ -118,6 +123,7 @@ class OnboardingViewModelTest {
             assertEquals(OnboardingUiAction.ShowSnackbar(R.string.onboarding_signin_failed), awaitItem())
         }
         coVerify(exactly = 0) { setOnboardingSeen(any()) }
+        assertEquals(OnboardingUiState.Ready, vm.uiState.value)
     }
 
     @Test

@@ -21,8 +21,8 @@ class OnboardingViewModel(
     private val backupUseCase: BackupUseCase,
 ) : ViewModel() {
 
-    val uiState: StateFlow<OnboardingUiState> =
-        MutableStateFlow(OnboardingUiState.Ready).asStateFlow()
+    private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Ready)
+    val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     private val _uiAction = Channel<OnboardingUiAction>(Channel.BUFFERED)
     val uiAction: Flow<OnboardingUiAction> = _uiAction.receiveAsFlow()
@@ -31,8 +31,10 @@ class OnboardingViewModel(
 
     fun onEvent(event: OnboardingEvent) {
         when (event) {
-            OnboardingEvent.OnConnectClicked ->
+            OnboardingEvent.OnConnectClicked -> {
+                _uiState.value = OnboardingUiState.Connecting
                 sendUiAction(OnboardingUiAction.LaunchGoogleSignIn(getSignInIntent()))
+            }
 
             OnboardingEvent.OnSkipClicked -> completeOnboarding()
             is OnboardingEvent.OnGoogleSignInResult -> handleSignInResult(event.account)
@@ -44,6 +46,7 @@ class OnboardingViewModel(
     private fun handleSignInResult(account: GoogleSignInAccount?) {
         if (account == null) {
             sendUiAction(OnboardingUiAction.ShowSnackbar(R.string.onboarding_signin_failed))
+            setReadyState()
             return
         }
         signedInAccount = account
@@ -57,6 +60,7 @@ class OnboardingViewModel(
                 _uiAction.send(OnboardingUiAction.ShowRestoreBackupSheet(account, backupInfo))
             } else {
                 completeOnboardingSuspend()
+                setReadyState()
             }
         }
     }
@@ -72,6 +76,10 @@ class OnboardingViewModel(
                 sendUiAction(OnboardingUiAction.ShowSnackbar(R.string.onboarding_restore_failed))
             }
         }
+    }
+
+    private fun setReadyState() {
+        _uiState.value = OnboardingUiState.Ready
     }
 
     private fun completeOnboarding() = viewModelScope.launch { completeOnboardingSuspend() }

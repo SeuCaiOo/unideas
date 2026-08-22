@@ -58,19 +58,18 @@ fun LogoutConfirmSheetContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(text = stringResource(R.string.logout_confirm_title), style = MaterialTheme.typography.titleLarge)
             Text(
                 text = buildAnnotatedString {
                     append(stringResource(R.string.logout_confirm_message_prefix))
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(accountEmail) }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(" $accountEmail") }
                     append(stringResource(R.string.logout_confirm_message_suffix))
                 },
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

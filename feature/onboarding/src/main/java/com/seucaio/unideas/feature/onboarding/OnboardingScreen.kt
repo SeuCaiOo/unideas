@@ -29,12 +29,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -42,6 +45,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.seucaio.unideas.core.backup.domain.model.BackupInfo
+import com.seucaio.unideas.core.common.extensions.restartApplication
+import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.onboarding.viewmodel.OnboardingEvent
 import com.seucaio.unideas.feature.onboarding.viewmodel.OnboardingUiAction
@@ -57,6 +63,9 @@ fun OnboardingScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources by rememberUpdatedState(LocalResources.current)
+    val context = LocalContext.current
+
+    var restoreSheetData by remember { mutableStateOf<Pair<String?, BackupInfo>?>(null) }
 
     val signInLauncher =
         rememberLauncherForActivityResult(
@@ -76,6 +85,11 @@ fun OnboardingScreen(
                     snackbarHostState.showSnackbar(resources.getString(action.messageRes))
 
                 OnboardingUiAction.OnboardingComplete -> onOnboardingComplete()
+
+                is OnboardingUiAction.ShowRestoreBackupSheet ->
+                    restoreSheetData = action.account.email to action.backupInfo
+
+                OnboardingUiAction.RestoreCompleted -> context.restartApplication()
             }
         }
     }
@@ -85,6 +99,21 @@ fun OnboardingScreen(
         onConnectClick = { viewModel.onEvent(OnboardingEvent.OnConnectClicked) },
         onSkipClick = { viewModel.onEvent(OnboardingEvent.OnSkipClicked) },
     )
+
+    restoreSheetData?.let { (accountEmail, backupInfo) ->
+        RestoreBackupBottomSheet(
+            accountEmail = accountEmail,
+            backupCreatedAt = backupInfo.createdAt.toFormattedDateTimeString(),
+            onRestoreClick = {
+                restoreSheetData = null
+                viewModel.onEvent(OnboardingEvent.OnRestoreBackupConfirmed(backupInfo.fileId))
+            },
+            onStartFreshClick = {
+                restoreSheetData = null
+                viewModel.onEvent(OnboardingEvent.OnStartFreshClicked)
+            },
+        )
+    }
 }
 
 @Composable

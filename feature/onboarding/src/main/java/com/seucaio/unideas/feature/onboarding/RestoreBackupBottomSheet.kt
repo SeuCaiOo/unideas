@@ -1,0 +1,133 @@
+package com.seucaio.unideas.feature.onboarding
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.theme.UdsTheme
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RestoreBackupBottomSheet(
+    accountEmail: String?,
+    backupCreatedAt: String,
+    onRestoreClick: () -> Unit,
+    onStartFreshClick: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onStartFreshClick,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        RestoreBackupSheetContent(
+            accountEmail = accountEmail,
+            backupCreatedAt = backupCreatedAt,
+            onRestoreClick = onRestoreClick,
+            onStartFreshClick = onStartFreshClick,
+        )
+    }
+}
+
+@Composable
+fun RestoreBackupSheetContent(
+    accountEmail: String?,
+    backupCreatedAt: String,
+    onRestoreClick: () -> Unit,
+    onStartFreshClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AccountCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp),
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.restore_sheet_title),
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
+
+        if (accountEmail != null) {
+            Text(
+                text = accountEmail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.restore_sheet_backup_available, backupCreatedAt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.restore_sheet_question),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
+
+        Button(onClick = onRestoreClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.restore_sheet_restore))
+        }
+        OutlinedButton(onClick = onStartFreshClick, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.restore_sheet_start_fresh))
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun RestoreBackupSheetContentPreview() {
+    UdsTheme {
+        Surface {
+            RestoreBackupSheetContent(
+                accountEmail = "usuario@gmail.com",
+                backupCreatedAt = "12/08/2026 09:30",
+                onRestoreClick = {},
+                onStartFreshClick = {},
+            )
+        }
+    }
+}

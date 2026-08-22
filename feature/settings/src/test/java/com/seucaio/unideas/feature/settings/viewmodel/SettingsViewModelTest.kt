@@ -1,7 +1,10 @@
 package com.seucaio.unideas.feature.settings.viewmodel
 
 import app.cash.turbine.test
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.domain.model.SeedScope
+import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
 import com.seucaio.unideas.domain.usecase.settings.SeedDatabaseUseCase
 import com.seucaio.unideas.feature.settings.R
@@ -9,6 +12,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -29,10 +33,19 @@ class SettingsViewModelTest {
     @MockK
     private lateinit var clearDatabase: ClearDatabaseUseCase
 
+    @MockK
+    private lateinit var backupUseCase: BackupUseCase
+
+    @MockK
+    private lateinit var setOnboardingSeenUseCase: SetOnboardingSeenUseCase
+
+    private val account: GoogleSignInAccount = mockk()
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        coEvery { setOnboardingSeenUseCase(any()) } returns Result.success(Unit)
     }
 
     @After
@@ -40,7 +53,7 @@ class SettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = SettingsViewModel(seedDatabase, clearDatabase)
+    private fun viewModel() = SettingsViewModel(seedDatabase, clearDatabase, backupUseCase, setOnboardingSeenUseCase)
 
     @Test
     fun `when created should expose Success`() = runTest {
@@ -177,5 +190,43 @@ class SettingsViewModelTest {
             vm.onEvent(SettingsEvent.OnClearDatabaseClicked)
             assertEquals(SettingsUiAction.ShowError("boom"), awaitItem())
         }
+    }
+
+    @Test
+    fun `when OnLogoutConfirmed should upload, clear the database and request sign-out`() = runTest {
+        coEvery { backupUseCase.upload(account) } returns Result.success(mockk())
+        coEvery { clearDatabase() } returns Unit
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(SettingsEvent.OnLogoutConfirmed(account))
+            assertEquals(SettingsUiAction.SignOutRequested, awaitItem())
+        }
+        coVerify(exactly = 1) { backupUseCase.upload(account) }
+        coVerify(exactly = 1) { clearDatabase() }
+    }
+
+    @Test
+    fun `when OnLogoutConfirmed upload fails should still clear the database and request sign-out`() = runTest {
+        coEvery { backupUseCase.upload(account) } returns Result.failure(RuntimeException("error"))
+        coEvery { clearDatabase() } returns Unit
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(SettingsEvent.OnLogoutConfirmed(account))
+            assertEquals(SettingsUiAction.SignOutRequested, awaitItem())
+        }
+        coVerify(exactly = 1) { clearDatabase() }
+    }
+
+    @Test
+    fun `when OnAccountSignedOut should reset onboarding and complete logout`() = runTest {
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(SettingsEvent.OnAccountSignedOut)
+            assertEquals(SettingsUiAction.LogoutCompleted, awaitItem())
+        }
+        coVerify(exactly = 1) { setOnboardingSeenUseCase(false) }
     }
 }

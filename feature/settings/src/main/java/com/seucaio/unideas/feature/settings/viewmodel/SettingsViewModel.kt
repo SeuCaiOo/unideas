@@ -2,6 +2,9 @@ package com.seucaio.unideas.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
 import com.seucaio.unideas.domain.usecase.settings.SeedDatabaseUseCase
 import com.seucaio.unideas.feature.settings.R
@@ -14,15 +17,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * No use cases yet for the real screen state — the shell only navigates to Sections/Tags; Backup
- * connection state is collected directly from `BackupViewModel` by the Screen, not through here.
- * [SeedDatabaseUseCase]/[ClearDatabaseUseCase] are debug-only tooling (#19), triggered from
- * buttons the Screen only renders when `BuildConfig.DEBUG`.
- */
 class SettingsViewModel(
     private val seedDatabase: SeedDatabaseUseCase,
     private val clearDatabase: ClearDatabaseUseCase,
+    private val backupUseCase: BackupUseCase,
+    private val setOnboardingSeenUseCase: SetOnboardingSeenUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> =
@@ -47,6 +46,8 @@ class SettingsViewModel(
             SettingsEvent.OnSeedConfirmClicked -> handleSeedConfirm()
             SettingsEvent.OnSeedDialogDismissed -> _dialogState.update { SettingsDialogState.None }
             SettingsEvent.OnClearDatabaseClicked -> handleClearDatabase()
+            is SettingsEvent.OnLogoutConfirmed -> handleLogoutConfirmed(event.account)
+            SettingsEvent.OnAccountSignedOut -> handleAccountSignedOut()
         }
     }
 
@@ -71,6 +72,17 @@ class SettingsViewModel(
                 _uiAction.send(SettingsUiAction.NavigateBack)
             }
             .onFailure { _uiAction.send(SettingsUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleLogoutConfirmed(account: GoogleSignInAccount) = viewModelScope.launch {
+        backupUseCase.upload(account)
+        clearDatabase()
+        _uiAction.send(SettingsUiAction.SignOutRequested)
+    }
+
+    private fun handleAccountSignedOut() = viewModelScope.launch {
+        setOnboardingSeenUseCase(false)
+        _uiAction.send(SettingsUiAction.LogoutCompleted)
     }
 
     private fun sendUiAction(action: SettingsUiAction) = viewModelScope.launch {

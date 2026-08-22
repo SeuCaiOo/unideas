@@ -90,6 +90,8 @@ fun SettingsScreen(
                     resources.getString(action.messageRes),
                 )
                 is SettingsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+
+                SettingsUiAction.SignOutRequested, SettingsUiAction.LogoutCompleted -> Unit
             }
         }
     }

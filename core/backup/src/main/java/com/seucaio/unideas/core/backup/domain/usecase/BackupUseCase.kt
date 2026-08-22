@@ -15,6 +15,7 @@ class BackupUseCase(
     private val listBackupsUseCase: ListBackupsUseCase,
     private val restoreBackupUseCase: RestoreBackupUseCase,
     private val getLastBackupInfoUseCase: GetLastBackupInfoUseCase,
+    private val deleteBackupUseCase: DeleteBackupUseCase,
 ) {
 
     suspend fun upload(account: GoogleSignInAccount): Result<BackupInfo> =
@@ -28,4 +29,7 @@ class BackupUseCase(
 
     suspend fun getLastBackupInfo(account: GoogleSignInAccount): Result<BackupInfo?> =
         getLastBackupInfoUseCase(buildDriveServiceUseCase(account))
+
+    suspend fun delete(account: GoogleSignInAccount, fileId: String): Result<Unit> =
+        deleteBackupUseCase(buildDriveServiceUseCase(account), fileId)
 }

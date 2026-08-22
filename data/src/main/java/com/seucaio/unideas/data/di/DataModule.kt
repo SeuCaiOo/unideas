@@ -2,14 +2,17 @@ package com.seucaio.unideas.data.di
 
 import com.seucaio.unideas.data.local.database.DatabaseSeeder
 import com.seucaio.unideas.data.local.database.UnideasDatabase
+import com.seucaio.unideas.data.local.datastore.OnboardingPreferences
 import com.seucaio.unideas.data.repository.DatabaseRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemCompletionHistoryRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemRepositoryImpl
+import com.seucaio.unideas.data.repository.OnboardingRepositoryImpl
 import com.seucaio.unideas.data.repository.SectionRepositoryImpl
 import com.seucaio.unideas.data.repository.TagRepositoryImpl
 import com.seucaio.unideas.domain.repository.DatabaseRepository
 import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
+import com.seucaio.unideas.domain.repository.OnboardingRepository
 import com.seucaio.unideas.domain.repository.SectionRepository
 import com.seucaio.unideas.domain.repository.TagRepository
 import org.koin.android.ext.koin.androidApplication
@@ -22,15 +25,28 @@ import org.koin.dsl.module
  * implementations. Included by `appModule` in `:app`.
  */
 val dataModule = module {
+    //region Database & DAOs
     single { UnideasDatabase.getInstance(androidApplication()) }
     single { get<UnideasDatabase>().itemDao() }
     single { get<UnideasDatabase>().sectionDao() }
     single { get<UnideasDatabase>().tagDao() }
     single { get<UnideasDatabase>().itemCompletionHistoryDao() }
+    //endregion
+
+    //region Repositories
     singleOf(::ItemRepositoryImpl).bind<ItemRepository>()
     singleOf(::ItemCompletionHistoryRepositoryImpl).bind<ItemCompletionHistoryRepository>()
     singleOf(::SectionRepositoryImpl).bind<SectionRepository>()
     singleOf(::TagRepositoryImpl).bind<TagRepository>()
+    //endregion
+
+    //region Settings (debug database maintenance)
     singleOf(::DatabaseSeeder)
     singleOf(::DatabaseRepositoryImpl).bind<DatabaseRepository>()
+    //endregion
+
+    //region Onboarding
+    single { OnboardingPreferences(androidApplication()) }
+    singleOf(::OnboardingRepositoryImpl).bind<OnboardingRepository>()
+    //endregion
 }

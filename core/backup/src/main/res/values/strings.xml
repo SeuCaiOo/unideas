@@ -10,10 +10,29 @@
     <string name="backup_none">No backup yet</string>
     <string name="backup_last_at">Last backup: %s</string>
     <string name="backup_action_upload">Back up now</string>
-    <string name="backup_action_sync">Restore backup</string>
-    <string name="backup_restore_title">Choose a backup to restore</string>
+    <string name="backup_action_view_backups">View backups</string>
+    <string name="backup_action_hide_backups">Hide backups</string>
+    <string name="backup_action_restore">Restore backup</string>
+    <string name="backup_backups_saved_title">Saved backups</string>
+    <string name="backup_most_recent">Most recent</string>
+    <string name="backup_date_today">Today, %s</string>
+    <string name="backup_date_yesterday">Yesterday, %s</string>
+    <string name="backup_delete_confirm_title">Delete backup?</string>
+    <string name="backup_delete_confirm_message">This can\'t be undone.</string>
+    <string name="backup_delete_confirm_action">Delete</string>
     <string name="backup_upload_success">Backup completed</string>
+    <string name="backup_delete_success">Backup deleted</string>
+    <string name="backup_delete_error">Couldn\'t delete the backup.</string>
     <string name="backup_no_backups_found">No backups found on Drive</string>
+    <string name="backup_list_load_error">Couldn\'t load your backups.</string>
+    <string name="backup_list_retry">Retry</string>
     <string name="backup_sign_in_failed">Connection failed. Make sure your app is registered in the Google Cloud Console.</string>
     <string name="backup_error">Couldn\'t reach Google Drive. Check your connection or account permissions.</string>
+
+    <!-- Logout -->
+    <string name="logout_confirm_title">Sign out?</string>
+    <string name="logout_confirm_message_prefix">You\'re signed in as </string>
+    <string name="logout_confirm_message_suffix">. Signing out disconnects this account and clears your local data — you\'ll need to sign in again to use backup and sync.</string>
+    <string name="logout_confirm_warning">Anything not backed up yet will be lost.</string>
+    <string name="logout_confirm_confirm">Sign out</string>
 </resources>

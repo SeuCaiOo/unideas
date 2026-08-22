@@ -12,9 +12,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 class GoogleAuthUseCase(
     private val getSignInIntentUseCase: GetSignInIntentUseCase,
     private val getSignedInAccountUseCase: GetSignedInAccountUseCase,
+    private val signOutUseCase: SignOutUseCase,
 ) {
 
     fun getSignInIntent(): Intent = getSignInIntentUseCase()
 
     fun getSignedInAccount(): GoogleSignInAccount? = getSignedInAccountUseCase()
+
+    suspend fun signOut() = signOutUseCase()
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_title">unideas</string>
+    <string name="onboarding_intro">Organize your tasks and ideas by priority, right on your device.</string>
+    <string name="onboarding_feature_priorities">Clear priorities</string>
+    <string name="onboarding_feature_sections_tags">Sections and tags your way</string>
+    <string name="onboarding_feature_reminders">Reminders right on time</string>
+    <string name="onboarding_feature_backup">Backup to Drive, if you want to connect</string>
+    <string name="onboarding_connect">Continue with Google</string>
+    <string name="onboarding_skip">Use without logging in for now</string>
+    <string name="onboarding_footnote">You can enable backup anytime from Settings.</string>
+    <string name="onboarding_signin_failed">Couldn\'t sign in — try again</string>
+    <string name="onboarding_restore_failed">Couldn\'t restore the backup — try again</string>
+    <string name="restore_sheet_question">Backup found</string>
+    <string name="restore_sheet_backup_available">We can restore the data saved in your Google account before you start.</string>
+    <string name="restore_sheet_backup_date">Backup from %1$s</string>
+    <string name="restore_sheet_backup_location">Latest backup saved to this Google Drive</string>
+    <string name="restore_sheet_restore">Restore backup</string>
+    <string name="restore_sheet_start_fresh">Start fresh</string>
+</resources>

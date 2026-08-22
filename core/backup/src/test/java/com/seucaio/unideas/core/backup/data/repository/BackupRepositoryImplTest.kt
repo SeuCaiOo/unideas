@@ -134,4 +134,32 @@ class BackupRepositoryImplTest {
         }
         assertTrue(result.isSuccess)
     }
+
+    @Test
+    fun `deleteBackup executes the delete request for the given file id`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val deleteRequest = mockk<Drive.Files.Delete>(relaxed = true)
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.delete("file-id-1") } returns deleteRequest
+
+        val result = repository.deleteBackup(driveService, "file-id-1")
+
+        verify(exactly = 1) { deleteRequest.execute() }
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `deleteBackup returns failure when drive throws`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val deleteRequest = mockk<Drive.Files.Delete>(relaxed = true)
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.delete("file-id-1") } returns deleteRequest
+        every { deleteRequest.execute() } throws RuntimeException("Network error")
+
+        val result = repository.deleteBackup(driveService, "file-id-1")
+
+        assertTrue(result.isFailure)
+    }
 }

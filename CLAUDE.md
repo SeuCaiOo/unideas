@@ -4,7 +4,7 @@ Guidance for Claude Code in this repository. Kept lean on purpose — this file 
 
 ## Project
 
-Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:backup`, `:core:notifications`, `:uds`, `:feature:{home,items,sections,tags,settings}`.
+Native Android app, package `com.seucaio.unideas`. UI 100% Jetpack Compose (no XML, no Fragments). **Multi-module** Gradle (Kotlin DSL): `:app` + `:domain`, `:data`, `:core:common`, `:core:backup`, `:core:notifications`, `:uds`, `:feature:{home,items,sections,tags,settings,onboarding}`.
 
 - minSdk 24 · targetSdk/compileSdk 37 · Kotlin 2.2.10 · AGP 9.2.1 · Compose BOM 2026.02.01 · JVM 11
 - Pre-MVP (`0.0.x` alpha). Dependency versions centralized in `gradle/libs.versions.toml` (`libs.*`) — add new deps there, not hardcoded.
@@ -38,9 +38,10 @@ Multi-module, MVI, no KMP. Full breakdown (package structure, dependency directi
 - `:data` — Room, DataStore, repository implementations.
 - `:core:common` — shared utilities (no Compose).
 - `:uds` — design system ported from another project (package `com.seucaio.unideas.ds`, #87), domain-agnostic (no `:domain`/`:core:common` dependency), Compose exposed via `api`. Replaced `:core:ui` entirely (#82 redesign epic) — all shared UI work goes here now. `uds/components/legacy/` holds components ported verbatim from the old `:core:ui` (some carry a documented exception to the module's "no `R.*` references" portability rule, since `legacy/` is transitional and will eventually be folded into the rest of `:uds` or removed) — see the module's README.
-- `:core:backup` — Google Drive backup/restore, self-contained (scoped `GoogleSignIn` + Drive API, not Firebase Auth).
+- `:core:backup` — Google Drive backup/restore, self-contained (scoped `GoogleSignIn` + Drive API, not Firebase Auth). `GoogleAuthUseCase`/`GoogleAuthRepository` also expose `signOut()` (#183) — session-only, no Firebase Auth involved.
+- `:feature:onboarding` (#94/#181/#182) — optional Google sign-in screen shown before Home on first use (`needsOnboarding` from `MainActivityViewModel`/`OnboardingRepository`); Skip goes straight to Home with local-only storage. Connecting an account checks for an existing Drive backup and offers restore-or-start-fresh (`RestoreBackupBottomSheet`, lives here, not `:core:backup`) — restoring restarts the process (same reason as `:core:backup`'s restore flow below).
 - `:core:notifications` (#95) — reminder notifications: `PeriodicWorkRequest` 4x/day (`ReminderCheckWorker`/`ReminderScheduler`), per-item notifications grouped by urgency tier (`ReminderNotifier`, 2 channels: dismissible normal / non-dismissible urgent), deep link to `ItemsRoute.Detail` on tap (`unideas://item/{id}`, handled in `:app`'s `MainActivity`). Since #96, each scan also runs `ProcessMissedOccurrencesUseCase` — advances `dueDate` for overdue recurring items and logs missed occurrences, not just notification-only anymore. Since #101/D, the worker also filters out an item already completed for its current cycle before computing tier (dedup — a recurring item never sets `completedAt`, so the DAO query alone can't exclude it), and manual pull-to-refresh on Home is a second trigger alongside the periodic scan.
-- `:feature:*` — one per screen area; depend on `:domain` + `:uds` only, **never `:data`** (implementations Koin-injected from `:app`).
+- `:feature:*` — one per screen area; depend on `:domain` + `:uds` only, **never `:data`** (implementations Koin-injected from `:app`). `:feature:settings` (#183) also depends on `:core:backup`'s `GoogleAuthUseCase` directly — connected-account identity and logout live in `SettingsViewModel` itself (`accountUiState: StateFlow<SettingsAccountUiState>`, resolved from `getSignedInAccount()`), not a separate `AccountViewModel`; one was tried and removed — only 2 of its actions ended up used from Settings (sign-in is never triggered from there, only from onboarding), not enough to justify a whole extra ViewModel. There's also no "switch account" as its own action — switching **is** logout, the user reconnects from the Login/Onboarding screen same as the first time.
 
 ## Code quality
 

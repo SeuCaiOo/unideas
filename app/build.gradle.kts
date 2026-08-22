@@ -169,6 +169,7 @@ dependencies {
     kover(project(":feature:settings"))
     kover(project(":feature:items"))
     kover(project(":feature:home"))
+    kover(project(":feature:onboarding"))
     kover(project(":core:backup"))
     kover(project(":core:notifications"))
 
@@ -183,6 +184,7 @@ dependencies {
     implementation(project(":feature:settings"))
     implementation(project(":feature:items"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:onboarding"))
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     // Compose BOM — aligns versions for every Compose artifact below
@@ -193,6 +195,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
 
@@ -216,6 +219,8 @@ dependencies {
 
     // Unit tests (JVM)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
 
     // Instrumented tests (device/emulator)
     androidTestImplementation(libs.bundles.androidTest)

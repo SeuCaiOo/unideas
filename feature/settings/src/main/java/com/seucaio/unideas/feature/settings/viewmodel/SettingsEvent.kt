@@ -21,4 +21,6 @@ sealed interface SettingsEvent {
     data object OnSeedDialogDismissed : SettingsEvent
 
     data object OnClearDatabaseClicked : SettingsEvent
+
+    data object OnLogoutConfirmed : SettingsEvent
 }

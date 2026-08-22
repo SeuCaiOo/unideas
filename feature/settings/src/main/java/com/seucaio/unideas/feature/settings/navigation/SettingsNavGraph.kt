@@ -10,6 +10,7 @@ fun NavGraphBuilder.settingsNavGraph(
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
     onNavigateToItems: () -> Unit,
+    onLogoutComplete: () -> Unit,
 ) {
     composable<SettingsRoute.Settings> {
         SettingsScreen(
@@ -19,6 +20,7 @@ fun NavGraphBuilder.settingsNavGraph(
             onNavigateToSections = onNavigateToSections,
             onNavigateToTags = onNavigateToTags,
             onNavigateToItems = onNavigateToItems,
+            onLogoutComplete = onLogoutComplete,
         )
     }
 }

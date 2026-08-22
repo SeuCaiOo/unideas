@@ -12,6 +12,7 @@ import com.seucaio.unideas.core.backup.domain.usecase.GetSignedInAccountUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.ListBackupsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.RestoreBackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.SignOutUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import org.koin.android.ext.koin.androidApplication
@@ -27,6 +28,7 @@ val backupDataModule = module {
     single { BackupRepositoryImpl(database = get(), context = androidContext()) }.bind<BackupRepository>()
     factoryOf(::GetSignInIntentUseCase)
     factoryOf(::GetSignedInAccountUseCase)
+    factoryOf(::SignOutUseCase)
     factoryOf(::BuildDriveServiceUseCase)
     factoryOf(::UploadBackupUseCase)
     factoryOf(::ListBackupsUseCase)

@@ -16,4 +16,11 @@
     <string name="backup_no_backups_found">No backups found on Drive</string>
     <string name="backup_sign_in_failed">Connection failed. Make sure your app is registered in the Google Cloud Console.</string>
     <string name="backup_error">Couldn\'t reach Google Drive. Check your connection or account permissions.</string>
+
+    <!-- Logout -->
+    <string name="logout_confirm_title">Sign out?</string>
+    <string name="logout_confirm_message_prefix">You\'re signed in as </string>
+    <string name="logout_confirm_message_suffix">. Signing out disconnects this account and clears your local data — you\'ll need to sign in again to use backup and sync.</string>
+    <string name="logout_confirm_warning">Anything not backed up yet will be lost.</string>
+    <string name="logout_confirm_confirm">Sign out</string>
 </resources>

@@ -81,6 +81,9 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         onNavigateToSections = { navController.navigate(SectionsRoute.List) },
         onNavigateToTags = { navController.navigate(TagsRoute.List) },
         onNavigateToItems = { navController.navigate(ItemsRoute.List) },
+        onLogoutComplete = {
+            navController.navigate(OnboardingRoute.Login) { popUpTo(0) }
+        },
     )
     sectionsNavGraph(onNavigateBack = navController::popBackStack)
     tagsNavGraph(onNavigateBack = navController::popBackStack)

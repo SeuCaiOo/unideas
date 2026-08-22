@@ -20,4 +20,7 @@ sealed interface SettingsUiAction {
 
     /** Unexpected failure — raw exception message, not localized. */
     data class ShowError(val message: String) : SettingsUiAction
+
+    /** Logout finished (local data cleared, signed out, onboarding reset) — navigate to Login. */
+    data object LogoutCompleted : SettingsUiAction
 }

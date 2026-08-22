@@ -13,19 +13,24 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.repository.GoogleAuthRepository
+import kotlinx.coroutines.tasks.await
 
 class GoogleAuthRepositoryImpl(private val application: Application) : GoogleAuthRepository {
 
-    override fun getSignInIntent(): Intent {
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
-            .build()
-        return GoogleSignIn.getClient(application, options).signInIntent
-    }
+    private val signInOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+        .build()
+
+    override fun getSignInIntent(): Intent =
+        GoogleSignIn.getClient(application, signInOptions).signInIntent
 
     override fun getSignedInAccount(): GoogleSignInAccount? =
         GoogleSignIn.getLastSignedInAccount(application)
+
+    override suspend fun signOut() {
+        GoogleSignIn.getClient(application, signInOptions).signOut().await()
+    }
 
     override fun buildDriveService(account: GoogleSignInAccount): Drive {
         val credential = GoogleAccountCredential

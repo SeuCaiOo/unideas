@@ -22,6 +22,8 @@ import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
+import com.seucaio.unideas.domain.usecase.onboarding.GetOnboardingSeenUseCase
+import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.DeleteSectionUseCase
 import com.seucaio.unideas.domain.usecase.section.GetSectionsUseCase
@@ -39,24 +41,31 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
 val domainModule = module {
+    //region Sections
     factoryOf(::GetSectionsUseCase)
     factoryOf(::AddSectionUseCase)
     factoryOf(::RenameSectionUseCase)
     factoryOf(::DeleteSectionUseCase)
     factoryOf(::SetSectionPinnedUseCase)
     factoryOf(::SectionUseCase)
+    //endregion
 
+    //region Tags
     factoryOf(::GetTagsUseCase)
     factoryOf(::AddTagUseCase)
     factoryOf(::RenameTagUseCase)
     factoryOf(::DeleteTagUseCase)
     factoryOf(::TagUseCase)
+    //endregion
 
     factoryOf(::SectionsAndTagsUseCase)
 
+    //region Settings
     factoryOf(::SeedDatabaseUseCase)
     factoryOf(::ClearDatabaseUseCase)
+    //endregion
 
+    //region Items
     factoryOf(::GetItemUseCase)
     factoryOf(::GetItemDetailUseCase)
     factoryOf(::GetItemsUseCase)
@@ -78,4 +87,10 @@ val domainModule = module {
     factoryOf(::ProcessMissedOccurrencesUseCase)
     factoryOf(::IgnoreOccurrenceUseCase)
     factoryOf(::ExtendItemDueDateUseCase)
+    //endregion
+
+    //region Onboarding
+    factoryOf(::GetOnboardingSeenUseCase)
+    factoryOf(::SetOnboardingSeenUseCase)
+    //endregion
 }

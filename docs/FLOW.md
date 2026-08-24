@@ -16,10 +16,11 @@
 | 5 | **Configurações do Item** (seção/tags/recorrência/aviso + troca de tipo guardada — #160) | `:feature:items` | `ItemsRoute.Config(itemId: Long)` |
 | 6 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
 | 7 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
-| 8 | **Configurações / Backup** | `:feature:settings` | `SettingsRoute.Settings` |
+| 8 | **Configurações / Backup / Conta** | `:feature:settings` | `SettingsRoute.Settings` |
+| 9 | **Login / Onboarding** (opcional, primeiro uso — #181/#182) | `:feature:onboarding` | `OnboardingRoute.Login` |
 | — | *(dev-only)* Todos os Itens (sem abas/seleção) | `:feature:items` | `ItemsRoute.List` |
 
-Ponto de entrada do app: `HomeRoute.Home` (`startDestination` do `AppNavHost`, em `:app/navigation/`). **Não há bottom navigation bar** (existiu brevemente durante o #138, removida na mesma issue) — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `AppNavHost` central vive no `:app` (`app/src/main/java/com/seucaio/unideas/navigation/`), cada feature expõe seu `*NavGraph` + `*Route`.
+Ponto de entrada do app: **condicional** desde o #181 — `OnboardingRoute.Login` se `needsOnboarding` (nunca visto a tela de login/onboarding), senão `HomeRoute.Home`. `needsOnboarding` vem do `MainActivityViewModel` (`OnboardingRepository`/DataStore), checado antes do splash sumir. Depois do primeiro uso (Skip ou conectar), a flag fica `true` pra sempre — só volta a `false` no logout (Settings → Sair da conta, #183), que devolve o usuário pra `OnboardingRoute.Login` no próximo uso. **Não há bottom navigation bar** (existiu brevemente durante o #138, removida na mesma issue) — a Home é o centro; Configurações/Seções/Tags são acessadas a partir dela. Rotas são `@Serializable` (Navigation Compose type-safe); `AppNavHost` central vive no `:app` (`app/src/main/java/com/seucaio/unideas/navigation/`), cada feature expõe seu `*NavGraph` + `*Route`.
 
 **`ItemsRoute.Form` não existe mais (#134).** Criar e editar item deixaram de ser telas separadas — `ItemDetailScreen`/`ItemDetailViewModel` fazem os dois papéis: `itemId == null` entra em modo criação (com `initialType` definindo Tarefa/Anotação inicial), `itemId != null` carrega o item pra edição/visualização.
 
@@ -48,7 +49,7 @@ HomeScreen
   │     → [modo Seleção] selecionar itens (inclusive "selecionar todos" por seção) → FAB expansível
   │        (mesmo padrão do AddItemFab) → [Excluir] (dialog de confirmação — #140) ou [Arquivar]
   │        (sem confirmação, reversível — #168)
-  │     → [estado vazio] texto orientando como começar (sem tela de onboarding)
+  │     → [estado vazio] texto orientando como começar
   │     → [footer, só quando há ≥1 item arquivado] "Itens arquivados" → ArchivedItemsScreen (#168)
   │
   ├── AddItemFab
@@ -216,13 +217,46 @@ TagsListScreen  (TagsRoute.List)
 
 ---
 
-## Configurações / Backup
+## Login / Onboarding
+
+**Acesso:** ponto de entrada condicional do app (`needsOnboarding == true`, ver acima) — só na primeira vez, ou de novo depois de um logout (Settings → Sair da conta).
+
+```
+OnboardingScreen  (OnboardingRoute.Login)
+  → "Conectar" → GoogleSignIn (escopo Drive) → estado "conectando" enquanto aguarda o resultado
+       → achou backup existente no Drive → RestoreBackupBottomSheet (#182)
+             → "Restaurar" → RestoreBackupUseCase → restart do processo (Context.restartApplication(),
+               mesmo motivo do restore em Settings — troca o arquivo físico do Room, ver ARCHITECTURE.md)
+             → "Começar do zero" → segue sem restaurar, sem restart (nada no disco foi trocado)
+       → não achou backup → segue direto, sem restaurar
+  → "Pular" → segue sem conectar (storage local-only, sem conta associada)
+  → (qualquer caminho) → seta needsOnboarding = false (SetOnboardingSeenUseCase) → HomeScreen
+```
+
+**Regras:**
+- Skip não é "adiar" — a flag fica marcada, não volta a aparecer sozinha. Só reaparece via logout.
+- Sign-in falho (cancelado, erro) volta pro estado inicial da tela, sem navegar.
+
+---
+
+## Configurações / Backup / Conta
 
 **Acesso:** Home → ícone Configurações.
 
 ```
 SettingsScreen  (SettingsRoute.Settings)
-  ├── Backup (Google Drive)
+  ├── AccountCard (topo da tela, antes de "Organizar" — só quando há conta conectada)
+  │     → avatar (iniciais) + nome + e-mail
+  │     → ação de logout (ícone) → LogoutConfirmBottomSheet (:core:backup)
+  │           → "Sair" → limpa banco local (ClearDatabaseUseCase) → signOut() (GoogleAuthUseCase)
+  │             → reseta onboarding (SetOnboardingSeenUseCase(false)) → volta pra OnboardingRoute.Login
+  │             no próximo uso — sem restart de processo (não trocou arquivo de banco, só limpou linhas);
+  │             sem backup automático (decisão consciente — ver ARCHITECTURE.md)
+  │           → "Cancelar" → fecha a sheet, nada muda
+  │     Não existe "Trocar de conta" — pra trocar, o usuário sai e reconecta pela tela de Login,
+  │     igual da primeira vez.
+  │
+  ├── Backup (Google Drive) — inalterado desde antes do #183, gatilho de conexão inicial
   │     → status de conexão (conectado / desconectado) + botão Conectar
   │           → GoogleSignIn (escopo Drive) → volta com conta conectada
   │     → "Fazer backup agora" → UploadBackupUseCase → atualiza data/hora do último backup

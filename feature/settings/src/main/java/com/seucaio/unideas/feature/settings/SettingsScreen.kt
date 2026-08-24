@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
+import com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
@@ -44,6 +45,7 @@ import com.seucaio.unideas.ds.components.lists.ListSection
 import com.seucaio.unideas.ds.components.lists.NavRow
 import com.seucaio.unideas.ds.gallery.ComponentGallery
 import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.feature.settings.viewmodel.SettingsAccountUiState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsDialogState
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsEvent
 import com.seucaio.unideas.feature.settings.viewmodel.SettingsUiAction
@@ -61,12 +63,14 @@ fun SettingsScreen(
     onNavigateToSections: () -> Unit,
     onNavigateToTags: () -> Unit,
     onNavigateToItems: () -> Unit,
+    onLogoutComplete: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel(),
     backupViewModel: BackupViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val backupUiState by backupViewModel.uiState.collectAsStateWithLifecycle()
+    val accountUiState by viewModel.accountUiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -75,9 +79,16 @@ fun SettingsScreen(
     val updatedOnNavigateToSections by rememberUpdatedState(onNavigateToSections)
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
     val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
+    val updatedOnLogoutComplete by rememberUpdatedState(onLogoutComplete)
     var showBackupSheet by remember { mutableStateOf(false) }
     var showDesignSystemGallery by remember { mutableStateOf(false) }
     var showTestNotificationSheet by remember { mutableStateOf(false) }
+    var showLogoutSheet by remember { mutableStateOf(false) }
+
+    val isBackupConnected = (backupUiState as? BackupUiState.Ready)?.isConnected == true
+    LaunchedEffect(isBackupConnected) {
+        if (isBackupConnected) viewModel.refreshAccountState()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -90,6 +101,8 @@ fun SettingsScreen(
                     resources.getString(action.messageRes),
                 )
                 is SettingsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+
+                SettingsUiAction.LogoutCompleted -> updatedOnLogoutComplete()
             }
         }
     }
@@ -112,10 +125,12 @@ fun SettingsScreen(
         uiState = uiState,
         dialogState = dialogState,
         backupUiState = backupUiState,
+        accountUiState = accountUiState,
         versionName = versionName,
         showDebugSection = showDebugSection,
         onEvent = viewModel::onEvent,
         onBackupClick = { showBackupSheet = true },
+        onLogoutClick = { showLogoutSheet = true },
         onDesignSystemGalleryClick = { showDesignSystemGallery = true },
         onRunReminderCheckClicked = {
             ReminderScheduler.refreshNow(context, silent = false)
@@ -128,12 +143,25 @@ fun SettingsScreen(
         snackbarHostState = snackbarHostState,
     )
 
-    if (showBackupSheet) {
-        BackupBottomSheet(
-            snackbarHostState = snackbarHostState,
-            onDismiss = { showBackupSheet = false },
-            viewModel = backupViewModel,
-        )
+    BackupBottomSheet(
+        visible = showBackupSheet,
+        snackbarHostState = snackbarHostState,
+        onDismiss = { showBackupSheet = false },
+        viewModel = backupViewModel,
+    )
+
+    if (showLogoutSheet) {
+        val accountEmail = accountUiState.accountEmail
+        if (accountEmail != null) {
+            LogoutConfirmBottomSheet(
+                accountEmail = accountEmail,
+                onDismiss = { showLogoutSheet = false },
+                onConfirm = {
+                    showLogoutSheet = false
+                    viewModel.onEvent(SettingsEvent.OnLogoutConfirmed)
+                },
+            )
+        }
     }
 
     if (showTestNotificationSheet) {
@@ -157,10 +185,12 @@ private fun SettingsContent(
     uiState: SettingsUiState,
     dialogState: SettingsDialogState,
     backupUiState: BackupUiState,
+    accountUiState: SettingsAccountUiState,
     versionName: String,
     showDebugSection: Boolean,
     onEvent: (SettingsEvent) -> Unit,
     onBackupClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     onDesignSystemGalleryClick: () -> Unit,
     onRunReminderCheckClicked: () -> Unit,
     onTestNotificationClicked: () -> Unit,
@@ -186,7 +216,9 @@ private fun SettingsContent(
                 SettingsBody(
                     onEvent = onEvent,
                     backupUiState = backupUiState,
+                    accountUiState = accountUiState,
                     onBackupClick = onBackupClick,
+                    onLogoutClick = onLogoutClick,
                     onDesignSystemGalleryClick = onDesignSystemGalleryClick,
                     onRunReminderCheckClicked = onRunReminderCheckClicked,
                     onTestNotificationClicked = onTestNotificationClicked,
@@ -210,7 +242,9 @@ private fun SettingsContent(
 private fun SettingsBody(
     onEvent: (SettingsEvent) -> Unit,
     backupUiState: BackupUiState,
+    accountUiState: SettingsAccountUiState,
     onBackupClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     onDesignSystemGalleryClick: () -> Unit,
     onRunReminderCheckClicked: () -> Unit,
     onTestNotificationClicked: () -> Unit,
@@ -218,6 +252,15 @@ private fun SettingsBody(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
+        if (accountUiState.isConnected) {
+            AccountCard(
+                accountName = accountUiState.accountName,
+                accountEmail = accountUiState.accountEmail,
+                onLogoutClick = onLogoutClick,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+
         ListSection(title = stringResource(R.string.settings_organize_section)) {
             NavRow(
                 icon = Icons.Outlined.Folder,
@@ -293,17 +336,19 @@ private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (b
 @PreviewLightDark
 @Composable
 private fun SettingsScreenPreview(
-    @PreviewParameter(SettingsPreviewProvider::class) uiState: SettingsUiState,
+    @PreviewParameter(SettingsPreviewProvider::class) scenario: SettingsScreenPreviewScenario,
 ) {
     UdsTheme {
         SettingsContent(
-            uiState = uiState,
+            uiState = scenario.uiState,
             dialogState = SettingsDialogState.None,
             backupUiState = BackupUiState.Ready(isConnected = false),
+            accountUiState = scenario.accountUiState,
             versionName = "0.0.2",
             showDebugSection = true,
             onEvent = {},
             onBackupClick = {},
+            onLogoutClick = {},
             onDesignSystemGalleryClick = {},
             onRunReminderCheckClicked = {},
             onTestNotificationClicked = {},

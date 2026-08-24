@@ -2,9 +2,12 @@ package com.seucaio.unideas.core.backup.domain.usecase
 
 import android.content.Intent
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -13,7 +16,8 @@ class GoogleAuthUseCaseTest {
 
     private val getSignInIntentUseCase: GetSignInIntentUseCase = mockk()
     private val getSignedInAccountUseCase: GetSignedInAccountUseCase = mockk()
-    private val useCase = GoogleAuthUseCase(getSignInIntentUseCase, getSignedInAccountUseCase)
+    private val signOutUseCase: SignOutUseCase = mockk()
+    private val useCase = GoogleAuthUseCase(getSignInIntentUseCase, getSignedInAccountUseCase, signOutUseCase)
 
     private val account: GoogleSignInAccount = mockk()
 
@@ -36,5 +40,14 @@ class GoogleAuthUseCaseTest {
 
         assertEquals(account, result)
         verify(exactly = 1) { getSignedInAccountUseCase() }
+    }
+
+    @Test
+    fun `signOut delegates to SignOutUseCase`() = runTest {
+        coEvery { signOutUseCase() } returns Unit
+
+        useCase.signOut()
+
+        coVerify(exactly = 1) { signOutUseCase() }
     }
 }

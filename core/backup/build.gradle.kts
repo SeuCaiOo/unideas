@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
+    implementation(libs.coroutines.play.services)
     implementation(libs.timber)
 
     // Google Drive backup (scoped GoogleSignIn + Drive API, not Firebase Auth)

@@ -39,6 +39,10 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :feature:sections    — Gerenciar Seções
 :feature:tags        — Gerenciar Tags
 :feature:settings    — Configurações (usa :core:backup)
+:feature:onboarding  — tela opcional de login Google antes da Home (#94/#181/#182), primeiro uso só
+                        (needsOnboarding via OnboardingRepository/DataStore); Skip vai direto pra Home
+                        local-only; conectar checa backup existente no Drive e oferece restaurar-ou-
+                        começar-do-zero
 ```
 
 ### Direção de dependência
@@ -49,7 +53,8 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :domain       ←  :data
 :domain       ←  :feature:*  (só interfaces/use cases, nunca :data)
 :domain, :core:common, :uds, :data  ←  :core:backup
-:feature:settings  →  :core:backup
+:feature:settings  →  :core:backup  (GoogleAuthUseCase — identidade de conta + logout, direto no SettingsViewModel)
+:feature:onboarding  →  :core:backup, :domain  (GoogleAuthUseCase, BackupUseCase, OnboardingRepository)
 :domain, :core:common  ←  :core:notifications
 :feature:settings  →  :core:notifications  (botões de debug "Testar notificação"/"Rodar verificação agora")
 tudo  ←  :app  (faz o wiring de DI e navegação)
@@ -318,6 +323,34 @@ feature/home/
 
 `feature/sections/` e `feature/tags/` continuam flat (uma tela só cada) — o padrão `features/<tela>/` só se aplica quando o módulo tem mais de uma tela.
 
+```
+feature/onboarding/   — flat (uma tela só), mesmo padrão de sections/tags
+├── navigation/
+│   ├── OnboardingNavGraph.kt
+│   └── OnboardingRoute.kt         — @Serializable: Login (única rota do módulo)
+├── di/
+│   └── FeatureModule.kt           — val onboardingModule
+├── viewmodel/                     — OnboardingUiState/UiAction/Event/ViewModel — usa
+│                                     GetSignInIntentUseCase/BackupUseCase (:core:backup) +
+│                                     SetOnboardingSeenUseCase (:domain)
+├── OnboardingScreen.kt            — Conectar (Google Sign-In) ou Pular; estado "conectando" enquanto
+│                                     aguarda o resultado do sign-in
+└── RestoreBackupBottomSheet.kt    — restaurar-ou-começar-do-zero (#182); fica aqui, não em :core:backup,
+                                      porque só o onboarding usa (troca de conta não reaproveita — #183)
+```
+
+`:feature:settings/` — flat (uma tela só), ganhou identidade de conta + logout no #183:
+- `AccountCard.kt` — arquivo próprio (fora de `SettingsScreen.kt`), avatar com iniciais + nome + e-mail +
+  ação de logout; renderizado no topo da tela só quando `accountUiState.isConnected`
+- `viewmodel/SettingsUiState.kt` — além do `SettingsUiState` da tela, expõe `SettingsAccountUiState`
+  (isConnected/accountName/accountEmail)
+- `SettingsViewModel` — ganhou `GoogleAuthUseCase` (identidade + `signOut()`) e `SetOnboardingSeenUseCase`
+  (reset ao sair); `accountUiState: StateFlow<SettingsAccountUiState>` resolvido direto de
+  `getSignedInAccount()`, StateFlow paralelo ao `uiState`/`dialogState`, não aninhado — mesmo padrão do
+  `dialogState`. **Sem** `AccountViewModel` separado (ver `CLAUDE.md`)
+- `com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet` (`:core:backup`, não `:feature:settings`) —
+  bottom sheet de confirmação de logout, sem lógica de negócio, só UI + callbacks
+
 O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no artifact "unideas — Improvements" e no board do GitHub Project).
 
 ## Persistência (Room) — schema
@@ -427,11 +460,12 @@ core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNo
                                       depende de ProcessMissedOccurrencesUseCase desde #96 — cada varredura periódica também
                                       avança dueDate de itens recorrentes vencidos, não só notifica) — #95/#115/#96
 feature/*/di/FeatureModule.kt — ViewModels de cada :feature:* (viewModelOf/viewModel{}); um módulo por :feature:*
-                                 (items/sections/tags/settings/home já existem)
+                                 (items/sections/tags/settings/home/onboarding já existem)
 
 :app/di/AppModule.kt — includes(dataModule, domainModule, backupDataModule, notificationsModule, sectionsModule,
-                        tagsModule, settingsModule, itemsModule, homeModule); backupDataModule entrou em #30, ainda sem
-                        tela consumindo (E2/#16); startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
+                        tagsModule, settingsModule, itemsModule, homeModule, onboardingModule); backupDataModule
+                        entrou em #30 (E2/#16 conectou a primeira tela); onboardingModule entrou no #181;
+                        startKoin roda em UnideasApplication (#42, primeiro bootstrap do projeto)
 ```
 
 | Tipo | Escopo | DSL |
@@ -454,7 +488,7 @@ Estrutura em `:core:backup`:
 - `GoogleAuthRepository` / `BackupRepository` (interfaces + impl auto-contidas no módulo)
 - Use cases de sessão (sem `Drive` como parâmetro de entrada): `GetSignInIntentUseCase`, `GetSignedInAccountUseCase`, `BuildDriveServiceUseCase`
 - Use cases de dados (recebem uma conta/`Drive`): `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
-- `GoogleAuthUseCase` — facade sobre os 3 use cases de sessão (`getSignInIntent`/`getSignedInAccount`/`buildDriveService`)
+- `GoogleAuthUseCase` — facade sobre os use cases de sessão (`getSignInIntent`/`getSignedInAccount`/`buildDriveService`/`signOut`, #183). `signOut()` delega a `SignOutUseCase` → `GoogleAuthRepository.signOut()` → `GoogleSignIn.getClient(...).signOut()` via `.await()` (`kotlinx-coroutines-play-services`)
 - `BackupUseCase` — facade sobre os 4 use cases de dados; recebe `GoogleSignInAccount` direto e constrói o `Drive` internamente (compõe `BuildDriveServiceUseCase`), então o `BackupViewModel` nunca lida com o tipo `Drive` (#16)
 - `BackupViewModel` — checa conexão (`GoogleAuthUseCase.getSignedInAccount()`) no `init` e pré-carrega o último backup se já conectado; `isConnected` explícito em `BackupUiState.Ready`, evento `OnConnectClick` dedicado (não dispara sign-in implícito no primeiro clique de backup/restore)
 - `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables). `BackupBottomSheet` é o **único** coletor de `BackupUiAction` (recebe `snackbarHostState` direto do `SettingsScreen`) — `Channel` não faz broadcast, então dois coletores do mesmo canal perdiam ações um pro outro de forma não-determinística (bug real, corrigido junto de #76).
@@ -462,6 +496,8 @@ Estrutura em `:core:backup`:
 - Restore troca o arquivo físico do Room no disco; qualquer singleton Room/Koin já resolvido no processo (DAOs, repositórios) continua com o file handle antigo. Em vez de rastrear cada referência, `BackupUiAction.RestoreCompleted` reage reiniciando o processo inteiro via `Context.restartApplication()` (`:core:common`, ver seção abaixo) — só matar o processo garante que tudo seja reconstruído contra os dados restaurados; `finishAffinity()` sozinho não é suficiente (confirmado em device: processo sobrevive com o mesmo pid).
 
 Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+
+**Identidade de conta + logout (#183) não vivem no `BackupViewModel`.** `BackupViewModel` continua só upload/sync/restore de arquivo (sheet "Backup e Sincronização" na Settings). Ver qual conta está conectada, e sair dela, é responsabilidade do `SettingsViewModel` (`:feature:settings`), que usa `GoogleAuthUseCase` diretamente — sem `AccountViewModel` intermediário (ver `CLAUDE.md`). Logout **não** faz upload/backup automático (decisão consciente: o usuário pode estar saindo justamente pra descartar mudanças locais indesejadas) — só limpa o banco local (`ClearDatabaseUseCase`), desconecta (`signOut()`) e reseta a flag de onboarding (`SetOnboardingSeenUseCase(false)`). Também não existe "trocar de conta" como ação própria — trocar é sair e reconectar pela tela de Login/Onboarding, mesmo fluxo da primeira vez (o `RestoreBackupBottomSheet` de restaurar-ou-começar-do-zero só existe ali, em `:feature:onboarding`, não é reaproveitado pelo logout).
 
 ### Setup externo (Google Cloud Console / Firebase)
 

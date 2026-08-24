@@ -1,14 +1,19 @@
 package com.seucaio.unideas.feature.settings.viewmodel
 
 import app.cash.turbine.test
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.domain.model.SeedScope
+import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
 import com.seucaio.unideas.domain.usecase.settings.SeedDatabaseUseCase
 import com.seucaio.unideas.feature.settings.R
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -29,10 +34,21 @@ class SettingsViewModelTest {
     @MockK
     private lateinit var clearDatabase: ClearDatabaseUseCase
 
+    @MockK
+    private lateinit var setOnboardingSeenUseCase: SetOnboardingSeenUseCase
+
+    @MockK
+    private lateinit var googleAuthUseCase: GoogleAuthUseCase
+
+    private val account: GoogleSignInAccount = mockk(relaxed = true)
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        coEvery { setOnboardingSeenUseCase(any()) } returns Result.success(Unit)
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { googleAuthUseCase.signOut() } returns Unit
     }
 
     @After
@@ -40,7 +56,8 @@ class SettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = SettingsViewModel(seedDatabase, clearDatabase)
+    private fun viewModel() =
+        SettingsViewModel(seedDatabase, clearDatabase, setOnboardingSeenUseCase, googleAuthUseCase)
 
     @Test
     fun `when created should expose Success`() = runTest {
@@ -178,4 +195,66 @@ class SettingsViewModelTest {
             assertEquals(SettingsUiAction.ShowError("boom"), awaitItem())
         }
     }
+
+    @Test
+    fun `when created with a signed-in account should expose connected identity`() = runTest {
+        every { account.displayName } returns "Caio Pimentel"
+        every { account.email } returns "caio@example.com"
+        val vm = viewModel()
+
+        assertEquals(
+            SettingsAccountUiState(
+                isConnected = true,
+                accountName = "Caio Pimentel",
+                accountEmail = "caio@example.com",
+            ),
+            vm.accountUiState.value,
+        )
+    }
+
+    @Test
+    fun `when created with no signed-in account should expose disconnected identity`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns null
+        val vm = viewModel()
+
+        assertEquals(SettingsAccountUiState(isConnected = false), vm.accountUiState.value)
+    }
+
+    @Test
+    fun `when refreshAccountState is called after a sign-in should expose the newly connected identity`() =
+        runTest {
+            every { googleAuthUseCase.getSignedInAccount() } returns null
+            val vm = viewModel()
+            assertEquals(SettingsAccountUiState(isConnected = false), vm.accountUiState.value)
+
+            every { googleAuthUseCase.getSignedInAccount() } returns account
+            every { account.displayName } returns "Caio Pimentel"
+            every { account.email } returns "caio@example.com"
+            vm.refreshAccountState()
+
+            assertEquals(
+                SettingsAccountUiState(
+                    isConnected = true,
+                    accountName = "Caio Pimentel",
+                    accountEmail = "caio@example.com",
+                ),
+                vm.accountUiState.value,
+            )
+        }
+
+    @Test
+    fun `when OnLogoutConfirmed should clear the database, sign out, reset onboarding and complete logout`() =
+        runTest {
+            coEvery { clearDatabase() } returns Unit
+            val vm = viewModel()
+
+            vm.uiAction.test {
+                vm.onEvent(SettingsEvent.OnLogoutConfirmed)
+                assertEquals(SettingsUiAction.LogoutCompleted, awaitItem())
+            }
+            coVerify(exactly = 1) { clearDatabase() }
+            coVerify(exactly = 1) { googleAuthUseCase.signOut() }
+            coVerify(exactly = 1) { setOnboardingSeenUseCase(false) }
+            assertEquals(SettingsAccountUiState(isConnected = false), vm.accountUiState.value)
+        }
 }

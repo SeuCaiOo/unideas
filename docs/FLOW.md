@@ -256,11 +256,15 @@ SettingsScreen  (SettingsRoute.Settings)
   │     Não existe "Trocar de conta" — pra trocar, o usuário sai e reconecta pela tela de Login,
   │     igual da primeira vez.
   │
-  ├── Backup (Google Drive) — inalterado desde antes do #183, gatilho de conexão inicial
+  ├── Backup (Google Drive) — gatilho de conexão inicial, gestão inline da lista desde #184
   │     → status de conexão (conectado / desconectado) + botão Conectar
   │           → GoogleSignIn (escopo Drive) → volta com conta conectada
   │     → "Fazer backup agora" → UploadBackupUseCase → atualiza data/hora do último backup
-  │     → "Restaurar backup" → ListBackups → escolhe → RestoreBackupUseCase
+  │     → toggle "ver backups" → expande lista inline (Loading/Empty/Error/Loaded, BackupListStatus)
+  │           → Error → "Tentar novamente" → refaz a busca
+  │           → seleciona um backup → "Restaurar" → RestoreBackupUseCase → restart do processo
+  │           → ícone de excluir num backup → confirmação → DeleteBackupUseCase → lista reavalia
+  │                 (vira Empty se era o último backup)
   │     → texto de status: data/hora do último backup
   │
   └── Organizar

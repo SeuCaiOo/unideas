@@ -230,17 +230,9 @@ class ReminderNotifier(private val context: Context) {
         notificationManager.notify(notificationId, notification)
     }
 
-    /**
-     * [itemId] non-null (an individual item's own notification) deep-links straight to that item
-     * (`unideas://item/{id}`, matching the `navDeepLink` on `ItemsRoute.Detail`) via an explicit
-     * `ACTION_VIEW` + `setPackage` — explicit so it resolves directly to this app without an
-     * intent chooser, same self-contained spirit as not referencing `MainActivity` by class. A
-     * summary notification (no single item to open) falls back to just launching the app, via the
-     * launcher intent resolved by package name.
-     */
     private fun contentIntent(notificationId: Int, itemId: Long?): PendingIntent? {
         val intent = if (itemId != null) {
-            Intent(Intent.ACTION_VIEW, "unideas://item/$itemId".toUri())
+            Intent(Intent.ACTION_VIEW, "unideas://item?itemId=$itemId".toUri())
                 .setPackage(context.packageName)
         } else {
             context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null

@@ -6,12 +6,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.seucaio.unideas.core.common.extensions.hasPermission
+import com.seucaio.unideas.core.common.extensions.stripMarkdownPreview
 import com.seucaio.unideas.core.notifications.BuildConfig
 import com.seucaio.unideas.core.notifications.R
 import com.seucaio.unideas.domain.model.Item
@@ -173,7 +173,7 @@ class ReminderNotifier(private val context: Context) {
                 notificationId = ITEM_NOTIFICATION_ID_OFFSET + item.id.toInt(),
                 channelId = channelId,
                 title = titlePrefix + item.title,
-                body = item.description?.let(::notificationPreview).orEmpty(),
+                body = item.description?.stripMarkdownPreview(PREVIEW_MAX_LENGTH).orEmpty(),
                 ongoing = ongoing,
                 silent = silent,
                 groupKey = channelId,
@@ -184,19 +184,6 @@ class ReminderNotifier(private val context: Context) {
         }
 
         setLastIds(ids)
-    }
-
-    /** Strips common inline Markdown markers and collapses whitespace — a plain-text preview, not a full renderer. */
-    private fun notificationPreview(description: String): String {
-        val plain = description
-            .replace(MARKDOWN_MARKER_REGEX, "")
-            .replace(WHITESPACE_REGEX, " ")
-            .trim()
-        return if (plain.length > PREVIEW_MAX_LENGTH) {
-            plain.take(PREVIEW_MAX_LENGTH).trimEnd() + "…"
-        } else {
-            plain
-        }
     }
 
     private fun postNotification(
@@ -211,7 +198,7 @@ class ReminderNotifier(private val context: Context) {
         itemId: Long? = null,
         accentColor: Int? = null,
     ) {
-        if (!hasPostNotificationsPermission()) return
+        if (!context.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) return
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -245,10 +232,6 @@ class ReminderNotifier(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
-
-    private fun hasPostNotificationsPermission(): Boolean =
-        ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
 
     private fun createChannels() {
         val normal = NotificationChannel(
@@ -284,8 +267,6 @@ class ReminderNotifier(private val context: Context) {
         private const val ITEM_NOTIFICATION_ID_OFFSET = 10_000
         private const val PREVIEW_MAX_LENGTH = 120
         private const val URGENT_TITLE_EMOJI = "⚠️"
-        private val MARKDOWN_MARKER_REGEX = Regex("[*_~`#]")
-        private val WHITESPACE_REGEX = Regex("\\s+")
 
         /**
          * Long-short-long pattern (ms: wait, long, pause, short, pause, short, pause, long) designed to be distinct

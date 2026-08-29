@@ -34,6 +34,7 @@ private const val CARD_TINT_ALPHA = 0.08f
 fun CompletionField(
     isCompleted: Boolean,
     isLate: Boolean,
+    completedLate: Boolean,
     completedAt: LocalDateTime?,
     overdueDays: Int?,
     onCompleteClicked: () -> Unit,
@@ -42,11 +43,13 @@ fun CompletionField(
     onIgnoreClicked: (() -> Unit)? = null,
 ) {
     val borderColor = when {
+        completedLate -> LocalUdsExtendedColors.current.warning
         isCompleted -> MaterialTheme.colorScheme.primary
         isLate -> LocalUdsExtendedColors.current.warning
         else -> MaterialTheme.colorScheme.outlineVariant
     }
     val containerColor = when {
+        completedLate -> LocalUdsExtendedColors.current.warning.copy(alpha = CARD_TINT_ALPHA)
         isCompleted -> MaterialTheme.colorScheme.primary.copy(alpha = CARD_TINT_ALPHA)
         isLate -> LocalUdsExtendedColors.current.warning.copy(alpha = CARD_TINT_ALPHA)
         else -> MaterialTheme.colorScheme.surfaceVariant
@@ -73,6 +76,7 @@ fun CompletionField(
                 CompletionFieldLabels(
                     isCompleted = isCompleted,
                     isLate = isLate,
+                    completedLate = completedLate,
                     completedAt = completedAt,
                     overdueDays = overdueDays,
                     modifier = Modifier.weight(1f),
@@ -98,6 +102,7 @@ fun CompletionField(
 private fun CompletionFieldLabels(
     isCompleted: Boolean,
     isLate: Boolean,
+    completedLate: Boolean,
     completedAt: LocalDateTime?,
     overdueDays: Int?,
     modifier: Modifier = Modifier,
@@ -106,6 +111,7 @@ private fun CompletionFieldLabels(
         Text(
             text = stringResource(
                 when {
+                    completedLate -> R.string.item_detail_completed_late_status
                     isCompleted -> R.string.item_detail_completed_status
                     isLate -> R.string.item_detail_complete_late
                     else -> R.string.item_detail_complete
@@ -113,6 +119,7 @@ private fun CompletionFieldLabels(
             ),
             style = MaterialTheme.typography.bodyLarge,
             color = when {
+                completedLate -> LocalUdsExtendedColors.current.warning
                 isCompleted -> LocalUdsExtendedColors.current.textTertiary
                 isLate -> LocalUdsExtendedColors.current.warning
                 else -> MaterialTheme.colorScheme.onSurface
@@ -139,6 +146,7 @@ private fun CompletionFieldLabels(
 private data class CompletionFieldPreviewData(
     val isCompleted: Boolean,
     val isLate: Boolean,
+    val completedLate: Boolean = false,
     val completedAt: LocalDateTime? = null,
     val overdueDays: Int? = null,
     val canIgnore: Boolean = false,
@@ -155,6 +163,12 @@ private class CompletionFieldPreviewProvider : PreviewParameterProvider<Completi
             isLate = false,
             completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
         ),
+        CompletionFieldPreviewData(
+            isCompleted = true,
+            isLate = false,
+            completedLate = true,
+            completedAt = LocalDateTime.of(2026, 7, 20, 14, 30),
+        ),
     )
 }
 
@@ -168,6 +182,7 @@ private fun CompletionFieldPreview(
             CompletionField(
                 isCompleted = previewData.isCompleted,
                 isLate = previewData.isLate,
+                completedLate = previewData.completedLate,
                 completedAt = previewData.completedAt,
                 overdueDays = previewData.overdueDays,
                 onCompleteClicked = {},

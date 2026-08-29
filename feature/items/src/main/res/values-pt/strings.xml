@@ -65,6 +65,7 @@
     <string name="item_detail_complete_late">Concluir atrasado</string>
     <string name="item_detail_reopen">Reabrir tarefa</string>
     <string name="item_detail_completed_status">Concluída</string>
+    <string name="item_detail_completed_late_status">Concluída com atraso</string>
     <string name="item_detail_completed_on">Concluída em %1$s</string>
     <plurals name="item_detail_overdue_days">
         <item quantity="one">Venceu há %d dia</item>

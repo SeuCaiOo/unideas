@@ -40,7 +40,7 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.ExtendDeadlineDatePickerDialog
-import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.NoteConfirmDialog
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.NoteConfirmBottomSheet
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceDialogState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceEvent
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiAction
@@ -64,7 +64,9 @@ fun ItemDetailScreen(
     initialType: ItemType = ItemType.TASK,
     promptCompleteOnEntry: Boolean = false,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
-    occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
+    occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel {
+        parametersOf(itemId, promptCompleteOnEntry)
+    },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -73,9 +75,6 @@ fun ItemDetailScreen(
         onPauseOrDispose { }
     }
 
-    LaunchedEffect(Unit) {
-        if (promptCompleteOnEntry) occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
-    }
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
@@ -261,7 +260,7 @@ private fun ItemOccurrenceDialogs(
     }
 
     if (dialogState is ItemOccurrenceDialogState.CompleteConfirm) {
-        NoteConfirmDialog(
+        NoteConfirmBottomSheet(
             titleRes = if (dialogState.isLate) {
                 R.string.item_detail_complete_late_confirm_title
             } else {
@@ -279,7 +278,7 @@ private fun ItemOccurrenceDialogs(
     }
 
     if (dialogState is ItemOccurrenceDialogState.IgnoreConfirm) {
-        NoteConfirmDialog(
+        NoteConfirmBottomSheet(
             titleRes = R.string.item_detail_ignore_confirm_title,
             messageRes = R.string.item_detail_ignore_confirm_message,
             noteRequired = true,

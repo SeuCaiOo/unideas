@@ -4,7 +4,6 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
-import com.seucaio.unideas.domain.repository.AutoBackupTrigger
 import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
@@ -17,7 +16,6 @@ class CompleteItemUseCase(
     private val repository: ItemRepository,
     private val historyRepository: ItemCompletionHistoryRepository,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
-    private val autoBackupTrigger: AutoBackupTrigger,
 ) : UseCase {
 
     suspend operator fun invoke(
@@ -43,7 +41,6 @@ class CompleteItemUseCase(
                 }
             }
             reminderRefreshTrigger.refreshNow()
-            autoBackupTrigger.triggerNow()
             result
         }
 

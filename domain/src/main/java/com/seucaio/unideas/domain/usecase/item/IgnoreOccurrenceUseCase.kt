@@ -2,7 +2,6 @@ package com.seucaio.unideas.domain.usecase.item
 
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemCompletionHistory
-import com.seucaio.unideas.domain.repository.AutoBackupTrigger
 import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
@@ -14,7 +13,6 @@ class IgnoreOccurrenceUseCase(
     private val repository: ItemRepository,
     private val historyRepository: ItemCompletionHistoryRepository,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
-    private val autoBackupTrigger: AutoBackupTrigger,
 ) : UseCase {
 
     suspend operator fun invoke(item: Item, note: String, today: LocalDate): Result<Item> =
@@ -42,7 +40,6 @@ class IgnoreOccurrenceUseCase(
             )
             repository.updateItem(advanced)
             reminderRefreshTrigger.refreshNow()
-            autoBackupTrigger.triggerNow()
             advanced
         }
 }

@@ -1,7 +1,6 @@
 package com.seucaio.unideas.domain.usecase.item
 
 import com.seucaio.unideas.domain.model.Item
-import com.seucaio.unideas.domain.repository.AutoBackupTrigger
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.usecase.UseCase
@@ -11,7 +10,6 @@ import java.time.LocalDate
 class ExtendItemDueDateUseCase(
     private val repository: ItemRepository,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
-    private val autoBackupTrigger: AutoBackupTrigger,
 ) : UseCase {
 
     suspend operator fun invoke(item: Item, newDueDate: LocalDate, today: LocalDate): Result<Item> =
@@ -27,7 +25,6 @@ class ExtendItemDueDateUseCase(
             )
             repository.updateItem(extended)
             reminderRefreshTrigger.refreshNow()
-            autoBackupTrigger.triggerNow()
             extended
         }
 }

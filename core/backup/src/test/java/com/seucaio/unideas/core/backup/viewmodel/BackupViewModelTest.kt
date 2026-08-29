@@ -5,10 +5,12 @@ import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
@@ -33,6 +35,9 @@ class BackupViewModelTest {
     @MockK
     private lateinit var backupUseCase: BackupUseCase
 
+    @MockK
+    private lateinit var autoBackupSettingsUseCase: AutoBackupSettingsUseCase
+
     private val account: GoogleSignInAccount = mockk()
 
     @Before
@@ -40,6 +45,7 @@ class BackupViewModelTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { googleAuthUseCase.getSignedInAccount() } returns null
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
     }
 
     @After
@@ -47,7 +53,7 @@ class BackupViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase)
+    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase, autoBackupSettingsUseCase)
 
     @Test
     fun `when created with no signed-in account should expose disconnected state`() = runTest {
@@ -434,6 +440,31 @@ class BackupViewModelTest {
                 awaitItem(),
             )
         }
+    }
+
+    @Test
+    fun `when created should expose the current auto-backup preference`() = runTest {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns true
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnAutoBackupToggled should persist the preference and update the state`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setEnabled(true) } returns Unit
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnAutoBackupToggled(true))
+
+            assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
+        }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(true) }
     }
 
     @Test

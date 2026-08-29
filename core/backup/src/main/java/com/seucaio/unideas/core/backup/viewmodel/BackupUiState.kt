@@ -11,6 +11,7 @@ sealed interface BackupUiState {
         val isBackupListVisible: Boolean = false,
         val backupListStatus: BackupListStatus = BackupListStatus.Empty,
         val selectedBackupFileId: String? = null,
+        val isAutoBackupEnabled: Boolean = false,
     ) : BackupUiState
 }
 

@@ -10,6 +10,7 @@ import com.seucaio.unideas.data.local.entity.SectionEntity
 import com.seucaio.unideas.data.local.entity.TagEntity
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.domain.model.SeedScope
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -77,11 +78,14 @@ class DatabaseSeeder(
         seedFullPriorityTasks(today, sections, tags)
         seedFullExtraTasks(today, sections, tags)
         seedFullReevaluationScenarios(today, sections)
+        seedFullReminderMuteScenarios(today, sections)
         seedFullNotes(today, sections, tags)
         seedFullDescriptionScenarios(today, sections)
     }
 
     // Enough overdue/due-soon tasks to exceed Constants.PRIORITY_PANEL_LIMIT and show "See all".
+    // Also varies reminderWarning/remindersMuted per item instead of leaving them all identical,
+    // so this loop doubles as extra manual-check coverage without needing dedicated items.
     private suspend fun seedFullPriorityTasks(today: LocalDate, sections: FullSections, tags: FullTags) {
         for (i in 1..Constants.PRIORITY_PANEL_LIMIT) {
             insertItem(
@@ -92,6 +96,7 @@ class DatabaseSeeder(
                     dueDate = today.minusDays(i.toLong()),
                     sectionId = if (i % 2 == 0) sections.workId else sections.homeId,
                     tagIds = if (i == 1) listOf(tags.urgentId) else emptyList(),
+                    reminderWarning = ReminderWarning.DaysBefore(i),
                 ),
             )
         }
@@ -212,6 +217,35 @@ class DatabaseSeeder(
         )
     }
 
+    // Pending items with a reminderWarning window already open, one muted and one not — lets
+    // opening the item in the Detail screen show the "Parar de avisar"/"Retomar avisos" toggle
+    // right away (#196). Titles double as the expected outcome, same pattern as the reevaluation
+    // scenarios above.
+    private suspend fun seedFullReminderMuteScenarios(today: LocalDate, sections: FullSections) {
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Lembrete silenciado (não deve notificar até o prazo)",
+                description = "dueDate em ${REMINDER_MUTE_DUE_DAYS} dias, aviso de ${REMINDER_MUTE_WARNING_DAYS} " +
+                    "dias antes, remindersMuted = true — tier NORMAL deve ficar suprimido até o prazo",
+                dueDate = today.plusDays(REMINDER_MUTE_DUE_DAYS),
+                sectionId = sections.workId,
+                reminderWarning = ReminderWarning.DaysBefore(REMINDER_MUTE_WARNING_DAYS.toInt()),
+                remindersMuted = true,
+            ),
+        )
+        insertItem(
+            SeedItem(
+                ItemType.TASK,
+                "Lembrete normal, não silenciado (deve notificar)",
+                description = "Mesma janela do item acima, mas sem silenciar — pra comparar lado a lado",
+                dueDate = today.plusDays(REMINDER_MUTE_DUE_DAYS),
+                sectionId = sections.workId,
+                reminderWarning = ReminderWarning.DaysBefore(REMINDER_MUTE_WARNING_DAYS.toInt()),
+            ),
+        )
+    }
+
     private suspend fun seedFullNotes(today: LocalDate, sections: FullSections, tags: FullTags) {
         insertItem(
             SeedItem(
@@ -269,6 +303,8 @@ class DatabaseSeeder(
             lastCompletedScheduledDate = spec.lastCompletedScheduledDate?.toEpochMilli(),
             pendingExtensionOriginalDueDate = spec.pendingExtensionOriginalDueDate?.toEpochMilli(),
             pendingExtensionCount = spec.pendingExtensionCount,
+            reminderWarning = spec.reminderWarning,
+            remindersMuted = spec.remindersMuted,
         )
         itemDao.insertItemWithTags(entity, spec.tagIds)
     }
@@ -290,6 +326,8 @@ class DatabaseSeeder(
         val lastCompletedScheduledDate: LocalDate? = null,
         val pendingExtensionOriginalDueDate: LocalDate? = null,
         val pendingExtensionCount: Int = 0,
+        val reminderWarning: ReminderWarning = ReminderWarning.None,
+        val remindersMuted: Boolean = false,
     )
 
     private companion object {
@@ -300,6 +338,8 @@ class DatabaseSeeder(
         const val RENT_DAY_OF_MONTH = 5
         const val EVERY_N_DAYS_EXAMPLE = 15L
         const val LONG_DESCRIPTION_OVERDUE_DAYS = 3L
+        const val REMINDER_MUTE_DUE_DAYS = 4L
+        const val REMINDER_MUTE_WARNING_DAYS = 5L
 
         /**
          * Overflows past 5 lines even expanded — exercises the collapsed/expanded chevron in

@@ -13,6 +13,9 @@
     <string name="backup_action_view_backups">Ver backups</string>
     <string name="backup_action_hide_backups">Esconder backups</string>
     <string name="backup_action_restore">Restaurar backup</string>
+    <string name="backup_auto_backup_title">Backup automático</string>
+    <string name="backup_auto_backup_subtitle">Faz backup automaticamente após uma sincronização (ex.: pull-to-refresh)</string>
+    <string name="backup_auto_backup_enabled_tag">Automático</string>
     <string name="backup_backups_saved_title">Backups salvos</string>
     <string name="backup_most_recent">Mais recente</string>
     <string name="backup_date_today">Hoje, %s</string>

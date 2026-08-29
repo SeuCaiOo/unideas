@@ -325,9 +325,14 @@ private fun SettingsBody(
 private fun backupStatusSubtitle(backupUiState: BackupUiState): String = when (backupUiState) {
     is BackupUiState.Loading -> stringResource(BackupR.string.backup_not_connected)
     is BackupUiState.Ready -> if (backupUiState.isConnected) {
-        backupUiState.lastBackupAt
+        val lastBackup = backupUiState.lastBackupAt
             ?.let { stringResource(BackupR.string.backup_last_at, it.toFormattedDateTimeString()) }
             ?: stringResource(BackupR.string.backup_none)
+        if (backupUiState.isAutoBackupEnabled) {
+            "$lastBackup · ${stringResource(BackupR.string.backup_auto_backup_enabled_tag)}"
+        } else {
+            lastBackup
+        }
     } else {
         stringResource(BackupR.string.backup_not_connected)
     }

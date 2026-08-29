@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +23,7 @@ import java.time.LocalDateTime
 class BackupViewModel(
     private val googleAuthUseCase: GoogleAuthUseCase,
     private val backupUseCase: BackupUseCase,
+    private val autoBackupSettingsUseCase: AutoBackupSettingsUseCase,
 ) : ViewModel() {
 
     private val _internalState = MutableStateFlow(InternalState())
@@ -37,6 +39,7 @@ class BackupViewModel(
                     isBackupListVisible = state.isBackupListVisible,
                     backupListStatus = state.backupListStatus,
                     selectedBackupFileId = state.selectedBackupFileId,
+                    isAutoBackupEnabled = state.isAutoBackupEnabled,
                 )
             }
         }
@@ -52,6 +55,10 @@ class BackupViewModel(
     init {
         val account = googleAuthUseCase.getSignedInAccount()
         if (account != null) refreshConnectionState(account, isInitialCheck = true)
+        viewModelScope.launch {
+            val enabled = autoBackupSettingsUseCase.isEnabled()
+            _internalState.update { it.copy(isAutoBackupEnabled = enabled) }
+        }
     }
 
     fun onEvent(event: BackupEvent) {
@@ -74,6 +81,10 @@ class BackupViewModel(
             is BackupEvent.OnDeleteBackupClick ->
                 viewModelScope.launch { _action.send(BackupUiAction.ShowDeleteConfirm(event.fileId)) }
             is BackupEvent.OnDeleteConfirmed -> delete(event.fileId)
+            is BackupEvent.OnAutoBackupToggled -> viewModelScope.launch {
+                autoBackupSettingsUseCase.setEnabled(event.enabled)
+                _internalState.update { it.copy(isAutoBackupEnabled = event.enabled) }
+            }
         }
     }
 
@@ -136,7 +147,9 @@ class BackupViewModel(
             _internalState.update { it.copy(isLoading = true) }
             backupUseCase.list(account)
                 .onSuccess { backups ->
-                    val status = if (backups.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(backups)
+                    val autoFileId = autoBackupSettingsUseCase.getTrackedFileId()
+                    val entries = backups.map { BackupListEntry(it, isAutomatic = it.fileId == autoFileId) }
+                    val status = if (entries.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(entries)
                     _internalState.update { it.copy(isLoading = false, isConnected = true).showBackupList(status) }
                 }
                 .onFailure {
@@ -192,6 +205,7 @@ class BackupViewModel(
         val isBackupListVisible: Boolean = false,
         val backupListStatus: BackupListStatus = BackupListStatus.Empty,
         val selectedBackupFileId: String? = null,
+        val isAutoBackupEnabled: Boolean = false,
     ) {
         fun showBackupList(status: BackupListStatus): InternalState =
             copy(isBackupListVisible = true, backupListStatus = status)
@@ -204,7 +218,7 @@ class BackupViewModel(
         fun removeBackup(fileId: String): InternalState {
             val status = backupListStatus
             if (status !is BackupListStatus.Loaded) return this
-            val remaining = status.backups.filterNot { it.fileId == fileId }
+            val remaining = status.backups.filterNot { it.info.fileId == fileId }
             val newStatus = if (remaining.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(remaining)
             return copy(
                 backupListStatus = newStatus,

@@ -53,9 +53,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.viewmodel.BackupAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
+import com.seucaio.unideas.core.backup.viewmodel.BackupListEntry
 import com.seucaio.unideas.core.backup.viewmodel.BackupListStatus
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
@@ -362,13 +362,13 @@ private fun BackupListSection(
                         .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(status.backups, key = { _, backup -> backup.fileId }) { index, backup ->
+                    itemsIndexed(status.backups, key = { _, entry -> entry.info.fileId }) { index, entry ->
                         BackupListItemRow(
-                            backup = backup,
-                            selected = backup.fileId == selectedFileId,
+                            entry = entry,
+                            selected = entry.info.fileId == selectedFileId,
                             isMostRecent = index == 0,
-                            onSelect = { onBackupSelect(backup.fileId) },
-                            onDelete = { onDeleteBackupClick(backup.fileId) },
+                            onSelect = { onBackupSelect(entry.info.fileId) },
+                            onDelete = { onDeleteBackupClick(entry.info.fileId) },
                         )
                     }
                 }
@@ -414,12 +414,13 @@ private fun BackupListMessage(
 
 @Composable
 private fun BackupListItemRow(
-    backup: BackupInfo,
+    entry: BackupListEntry,
     selected: Boolean,
     isMostRecent: Boolean,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val backup = entry.info
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -445,9 +446,12 @@ private fun BackupListItemRow(
                     else -> backup.createdAt.toFormattedDateTimeString()
                 }
                 Text(text = dateLabel, style = MaterialTheme.typography.bodyMedium)
-                if (isMostRecent) {
+                if (isMostRecent || entry.isAutomatic) {
                     Text(
-                        text = stringResource(R.string.backup_most_recent),
+                        text = listOfNotNull(
+                            stringResource(R.string.backup_most_recent).takeIf { isMostRecent },
+                            stringResource(R.string.backup_auto_backup_enabled_tag).takeIf { entry.isAutomatic },
+                        ).joinToString(separator = " · "),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

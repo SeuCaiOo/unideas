@@ -11,7 +11,12 @@ class AutoBackupSettingsUseCaseTest {
 
     private val getAutoBackupEnabledUseCase: GetAutoBackupEnabledUseCase = mockk()
     private val setAutoBackupEnabledUseCase: SetAutoBackupEnabledUseCase = mockk()
-    private val useCase = AutoBackupSettingsUseCase(getAutoBackupEnabledUseCase, setAutoBackupEnabledUseCase)
+    private val getAutoBackupTrackedFileIdUseCase: GetAutoBackupTrackedFileIdUseCase = mockk()
+    private val useCase = AutoBackupSettingsUseCase(
+        getAutoBackupEnabledUseCase,
+        setAutoBackupEnabledUseCase,
+        getAutoBackupTrackedFileIdUseCase,
+    )
 
     @Test
     fun `isEnabled delegates to GetAutoBackupEnabledUseCase`() = runTest {
@@ -30,5 +35,15 @@ class AutoBackupSettingsUseCaseTest {
         useCase.setEnabled(true)
 
         coVerify(exactly = 1) { setAutoBackupEnabledUseCase(true) }
+    }
+
+    @Test
+    fun `getTrackedFileId delegates to GetAutoBackupTrackedFileIdUseCase`() = runTest {
+        coEvery { getAutoBackupTrackedFileIdUseCase() } returns "file-1"
+
+        val result = useCase.getTrackedFileId()
+
+        assertEquals("file-1", result)
+        coVerify(exactly = 1) { getAutoBackupTrackedFileIdUseCase() }
     }
 }

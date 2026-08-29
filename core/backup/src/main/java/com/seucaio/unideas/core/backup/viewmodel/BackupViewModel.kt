@@ -147,7 +147,9 @@ class BackupViewModel(
             _internalState.update { it.copy(isLoading = true) }
             backupUseCase.list(account)
                 .onSuccess { backups ->
-                    val status = if (backups.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(backups)
+                    val autoFileId = autoBackupSettingsUseCase.getTrackedFileId()
+                    val entries = backups.map { BackupListEntry(it, isAutomatic = it.fileId == autoFileId) }
+                    val status = if (entries.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(entries)
                     _internalState.update { it.copy(isLoading = false, isConnected = true).showBackupList(status) }
                 }
                 .onFailure {
@@ -216,7 +218,7 @@ class BackupViewModel(
         fun removeBackup(fileId: String): InternalState {
             val status = backupListStatus
             if (status !is BackupListStatus.Loaded) return this
-            val remaining = status.backups.filterNot { it.fileId == fileId }
+            val remaining = status.backups.filterNot { it.info.fileId == fileId }
             val newStatus = if (remaining.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(remaining)
             return copy(
                 backupListStatus = newStatus,

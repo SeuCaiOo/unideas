@@ -18,5 +18,7 @@ sealed interface BackupUiState {
 sealed interface BackupListStatus {
     data object Empty : BackupListStatus
     data object Error : BackupListStatus
-    data class Loaded(val backups: List<BackupInfo>) : BackupListStatus
+    data class Loaded(val backups: List<BackupListEntry>) : BackupListStatus
 }
+
+data class BackupListEntry(val info: BackupInfo, val isAutomatic: Boolean = false)

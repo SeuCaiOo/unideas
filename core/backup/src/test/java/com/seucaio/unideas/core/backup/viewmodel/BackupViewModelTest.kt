@@ -46,6 +46,7 @@ class BackupViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { googleAuthUseCase.getSignedInAccount() } returns null
         coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
+        coEvery { autoBackupSettingsUseCase.getTrackedFileId() } returns null
     }
 
     @After
@@ -235,7 +236,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                 ),
                 awaitItem(),
             )
@@ -260,7 +261,10 @@ class BackupViewModelTest {
             vm.onEvent(BackupEvent.OnToggleBackupListClick)
 
             assertEquals(
-                BackupUiState.Ready(isConnected = true, backupListStatus = BackupListStatus.Loaded(backups)),
+                BackupUiState.Ready(
+                    isConnected = true,
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
+                ),
                 awaitItem(),
             )
         }
@@ -386,7 +390,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                     selectedBackupFileId = "file-2",
                 ),
                 awaitItem(),
@@ -401,7 +405,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(listOf(backups[0])),
+                    backupListStatus = BackupListStatus.Loaded(listOf(BackupListEntry(backups[0]))),
                     selectedBackupFileId = null,
                 ),
                 awaitItem(),
@@ -424,7 +428,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                 ),
                 awaitItem(),
             )
@@ -465,6 +469,37 @@ class BackupViewModelTest {
             assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
         }
         coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(true) }
+    }
+
+    @Test
+    fun `when sync finds a tracked auto-backup should mark the matching entry as automatic`() = runTest {
+        val backups = listOf(
+            BackupInfo("file-1", LocalDateTime.now(), 1024L),
+            BackupInfo("file-2", LocalDateTime.now(), 1024L),
+        )
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
+        coEvery { autoBackupSettingsUseCase.getTrackedFileId() } returns "file-2"
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
+
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Loaded(
+                        listOf(
+                            BackupListEntry(backups[0], isAutomatic = false),
+                            BackupListEntry(backups[1], isAutomatic = true),
+                        ),
+                    ),
+                ),
+                awaitItem(),
+            )
+        }
     }
 
     @Test

@@ -212,7 +212,8 @@ uds/
     ├── UnideasEmptyContent.kt          — estado vazio: ícone (TaskAlt) + texto; `titleRes` opcional (#165)
     │                                      adiciona um título (usado só no onboarding real da Home)
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
-    ├── ConfirmationDialog.kt
+    ├── ConfirmationBottomSheet.kt      — `ModalBottomSheet` (era `AlertDialog`/`ConfirmationDialog` até #192 —
+    │                                      texto pequeno demais, mesmo padrão outer+`*SheetContent` de `mvi.md`)
     ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```
@@ -255,14 +256,18 @@ feature/items/
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     │                        — item arquivado (`status == ARCHIVED`) troca o badge de tipo por uma `Column` com um
     │                        `FilterChip` "Arquivado" (ícone `Archive`, empilhado acima do badge) clicável → abre
-    │                        `ConfirmationDialog` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
+    │                        `ConfirmationBottomSheet` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
     └── screens/
         ├── detail/
         │   ├── itemdetail/     — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt (formulário: título, descrição,
         │   │                      seção, tags, data/recorrência) + viewmodel/ (ItemDetailUiState/UiAction/Event/
         │   │                      ViewModel/DialogState)
         │   └── itemoccurrence/ — ciclo de vida da ocorrência (concluir/concluir atrasado/ignorar/aumentar prazo),
-        │                          separado do form desde #101/B: NoteConfirmDialog (nota obrigatória em atraso/ignorar),
+        │                          separado do form desde #101/B: NoteConfirmBottomSheet (`ModalBottomSheet` desde
+        │                          #192, era dialog — nota obrigatória em atraso/ignorar; atraso só pede nota pra
+        │                          item **recorrente** — não-recorrente completa direto, sem histórico pra mostrar
+        │                          a nota depois; `CompletionField` ganhou um estado visual "concluído com atraso"
+        │                          pra cobrir esse caso, #192),
         │                          ExtendDeadlineDatePickerDialog + viewmodel/ (ItemOccurrenceUiState/UiAction/Event/
         │                          ViewModel/DialogState). `ItemDetailScreen` hoisteia os dois ViewModels lado a lado,
         │                          com uma ponte de sincronização (`OnItemUpdatedExternally`) — sem ela, uma escrita
@@ -438,7 +443,7 @@ PK composta (itemId, tagId)
   2. `ProcessMissedOccurrencesUseCase` não grava um `MISSED` pra um `scheduledDate` que já é o `lastCompletedScheduledDate` do item — evita duplicar um registro `COMPLETED` que já existe pra aquele ciclo.
   3. `ProcessMissedOccurrencesUseCase` carrega `pendingExtensionOriginalDueDate`/`pendingExtensionCount` pro registro `MISSED` do primeiro ciclo pulado (mesmo padrão de `CompleteItemUseCase`/`IgnoreOccurrenceUseCase`) e limpa os dois campos do `Item` ao avançar — uma extensão pendente nunca resolvida não fica órfã.
 
-  Gatilhos: `ReminderCheckWorker` (`PeriodicWorkRequest`, `:core:notifications`) e pull-to-refresh manual na Home (`HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger.refreshNow()`, mesmo mecanismo que já disparava o worker fora do ciclo após concluir um item).
+  Gatilhos: `ReminderCheckWorker` (`PeriodicWorkRequest`, `:core:notifications`), pull-to-refresh manual na Home, e — desde #192 — retomar a tela de Listagem (`HomeEvent.OnScreenResumed`, disparado por um `LifecycleEventObserver` em `HomeScreen.kt` no `ON_RESUME`). Os três caminhos convergem no mesmo `HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger.refreshNow()` (mesmo mecanismo que já disparava o worker fora do ciclo após concluir um item); o disparo por resume não toca `_isRefreshing`, pra não piscar o spinner de pull-to-refresh a cada volta de navegação.
 - **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável). `isPinned` (item fixado manualmente) entra na priorização independente desse cálculo.
 
 ### Migrations (histórico, `data/local/database/migration/`)
@@ -514,7 +519,7 @@ Estrutura em `:core:backup`:
 Sem sync bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda **e** um backup automático opcional (#193, abaixo). `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
 
 **Backup automático (#193), desligado por padrão.** Preferência própria em DataStore, self-contained em `:core:backup` (não `:data`/`:domain` — é específica de backup, mesma lógica que já mantém `BackupRepository`/`GoogleAuthRepository` dentro do módulo): `AutoBackupPreferences` (chaves `auto_backup_enabled`/`auto_backup_tracked_file_id`) → `AutoBackupRepository`/`Impl` → `GetAutoBackupEnabledUseCase`/`SetAutoBackupEnabledUseCase`/`GetAutoBackupTrackedFileIdUseCase` (leaf use cases) → `AutoBackupSettingsUseCase` (facade — `isEnabled`/`setEnabled`/`getTrackedFileId`, mesma razão de existir de `GoogleAuthUseCase`: mais de um use case pequeno injetado solto no ViewModel deveria virar facade).
-- **Gatilho: só o pull-to-refresh manual, não cada mutação de item.** `AutoBackupTrigger` (interface em `:domain`, impl `AutoBackupTriggerImpl` em `:core:backup` via `AutoBackupScheduler`/`AutoBackupWorker`, `WorkManager` `enqueueUniqueWork(..., ExistingWorkPolicy.KEEP, ...)`, mesmo padrão do `ReminderCheckWorker`) é chamado só de `HomeUseCase.refreshReminders()`, ao lado de `ReminderRefreshTrigger.refreshNow()`. Cogitado (e revertido) hookar em `CompleteItemUseCase`/`EditItemUseCase`/etc. individualmente — cada mutação fina (ex: cada campo salvo no auto-save da Config Screen) dispararia um upload próprio; pull-to-refresh é o único ponto de "estado assentado" hoje. A reavaliação de estado da Listagem ao retomar a tela (#192) é o outro gatilho de estado assentado planejado — ainda não implementado.
+- **Gatilho: pull-to-refresh manual e retomar a Listagem (#192), nunca cada mutação de item.** `AutoBackupTrigger` (interface em `:domain`, impl `AutoBackupTriggerImpl` em `:core:backup` via `AutoBackupScheduler`/`AutoBackupWorker`, `WorkManager` `enqueueUniqueWork(..., ExistingWorkPolicy.KEEP, ...)`, mesmo padrão do `ReminderCheckWorker`) é chamado só de `HomeUseCase.refreshReminders()`, ao lado de `ReminderRefreshTrigger.refreshNow()` — e desde #192, `refreshReminders()` também é chamado ao retomar a tela de Listagem (`HomeEvent.OnScreenResumed`), não só no pull-to-refresh, então os dois caminhos contam como "estado assentado" pro backup automático. Cogitado (e revertido) hookar em `CompleteItemUseCase`/`EditItemUseCase`/etc. individualmente — cada mutação fina (ex: cada campo salvo no auto-save da Config Screen) dispararia um upload próprio.
 - **Regra de substituição (slot único, nunca empilha):** `PerformAutoBackupUseCase` — checa `isEnabled()`, faz upload via `BackupUseCase.upload(account)`, grava o novo `fileId` como rastreado, e só então apaga o `fileId` anterior (falha ao apagar é só logada via `Timber.w`, não desfaz o upload que já teve sucesso).
 - **Convivência com a lista de backups manuais (#184), sem duplicar:** `BackupListEntry(info: BackupInfo, isAutomatic: Boolean)` substitui `List<BackupInfo>` dentro de `BackupListStatus.Loaded`; `BackupViewModel.listBackups()` compara cada `fileId` retornado contra `AutoBackupSettingsUseCase.getTrackedFileId()` pra marcar a entrada certa — o slot automático é só uma tag visual sobre o mesmo arquivo, não uma entrada extra.
 - **UI:** `Switch` inline dentro de `ConnectedBackupContent` (`BackupBottomSheet.kt`, não virou função própria pra não estourar `TooManyFunctions` do arquivo), ligado a `BackupUiState.isAutoBackupEnabled`/`BackupEvent.OnAutoBackupToggled`. Tag "· Automático" somente-leitura no subtítulo do item de Backup em `SettingsScreen`, sem precisar abrir o sheet pra saber o estado.

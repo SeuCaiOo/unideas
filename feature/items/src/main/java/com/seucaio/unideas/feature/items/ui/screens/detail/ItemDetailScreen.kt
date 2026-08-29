@@ -62,6 +62,7 @@ fun ItemDetailScreen(
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long, Boolean) -> Unit,
     initialType: ItemType = ItemType.TASK,
+    promptCompleteOnEntry: Boolean = false,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
 ) {
@@ -70,6 +71,10 @@ fun ItemDetailScreen(
     LifecycleResumeEffect(Unit) {
         viewModel.onEvent(ItemDetailEvent.OnScreenResumed)
         onPauseOrDispose { }
+    }
+
+    LaunchedEffect(Unit) {
+        if (promptCompleteOnEntry) occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
     }
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +108,7 @@ fun ItemDetailScreen(
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemOccurrenceUiAction.ItemPersisted ->
                     viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
+                is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
             }
         }
     }

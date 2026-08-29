@@ -65,6 +65,9 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         onNavigateToDetail = { itemId ->
             navController.navigate(ItemsRoute.Detail(itemId))
         },
+        onNavigateToDetailForLateCompletion = { itemId ->
+            navController.navigate(ItemsRoute.Detail(itemId = itemId, promptCompleteOnEntry = true))
+        },
         onNavigateToAddItem = { type ->
             navController.navigate(ItemsRoute.Detail(itemId = null, initialType = type))
         },

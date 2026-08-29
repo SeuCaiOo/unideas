@@ -63,6 +63,7 @@ private object ColdStartPriorityPrompt {
 fun HomeScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
+    onNavigateToDetailForLateCompletion: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -77,6 +78,7 @@ fun HomeScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
+    val updatedOnNavigateToDetailForLateCompletion by rememberUpdatedState(onNavigateToDetailForLateCompletion)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
@@ -86,6 +88,8 @@ fun HomeScreen(
         viewModel.uiAction.collect { action ->
             when (action) {
                 is HomeUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
+                is HomeUiAction.NavigateToDetailForLateCompletion ->
+                    updatedOnNavigateToDetailForLateCompletion(action.itemId)
                 is HomeUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
                 is HomeUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }

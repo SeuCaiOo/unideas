@@ -10,6 +10,7 @@ import com.seucaio.unideas.feature.home.features.home.screen.HomeScreen
 fun NavGraphBuilder.homeNavGraph(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
+    onNavigateToDetailForLateCompletion: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
@@ -31,6 +32,7 @@ fun NavGraphBuilder.homeNavGraph(
         HomeScreen(
             onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
+            onNavigateToDetailForLateCompletion = onNavigateToDetailForLateCompletion,
             onNavigateToAddItem = onNavigateToAddItem,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToArchivedItems = onNavigateToArchivedItems,

@@ -153,6 +153,7 @@ class HomeViewModel(
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
             is HomeEvent.OnRefreshRequested -> handleRefresh()
+            is HomeEvent.OnScreenResumed -> homeUseCase.refreshReminders()
             is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
     }

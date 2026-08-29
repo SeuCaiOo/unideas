@@ -352,6 +352,17 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `when OnScreenResumed should call HomeUseCase's refreshReminders without touching isRefreshing`() = runTest {
+        every { homeUseCase.refreshReminders() } returns Unit
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnScreenResumed)
+
+        verify(exactly = 1) { homeUseCase.refreshReminders() }
+        assertEquals(false, vm.isRefreshing.value)
+    }
+
+    @Test
     fun `when OnItemClicked should emit NavigateToDetail with the item id`() = runTest {
         val vm = viewModel()
 

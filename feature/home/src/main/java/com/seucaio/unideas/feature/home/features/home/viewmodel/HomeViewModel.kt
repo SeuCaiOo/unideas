@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
+import com.seucaio.unideas.domain.model.UrgencyLevel
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
@@ -220,10 +221,16 @@ class HomeViewModel(
         _isRefreshing.value = false
     }
 
-    private fun handleComplete(itemId: Long) = viewModelScope.launch {
-        val item = currentItems.firstOrNull { it.id == itemId } ?: return@launch
-        homeUseCase.complete(item, LocalDateTime.now())
-            .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
+    private fun handleComplete(itemId: Long) {
+        val item = currentItems.firstOrNull { it.id == itemId } ?: return
+        if (item.urgency(LocalDate.now(), Constants.DUE_SOON_DAYS) == UrgencyLevel.OVERDUE) {
+            sendUiAction(HomeUiAction.NavigateToDetailForLateCompletion(itemId))
+            return
+        }
+        viewModelScope.launch {
+            homeUseCase.complete(item, LocalDateTime.now())
+                .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
+        }
     }
 
     private fun sendUiAction(action: HomeUiAction) =

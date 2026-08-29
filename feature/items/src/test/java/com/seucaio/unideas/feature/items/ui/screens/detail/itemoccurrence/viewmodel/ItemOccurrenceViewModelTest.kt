@@ -57,7 +57,7 @@ class ItemOccurrenceViewModelTest {
     @Test
     fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() =
         runTest {
-            val item = ItemStub.task(id = 1L)
+            val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
             val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
             every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
             coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
@@ -74,6 +74,19 @@ class ItemOccurrenceViewModelTest {
         }
 
     @Test
+    fun `when OnCompleteClicked on a pending late non-recurring task should require a note`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+
+        assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = true), vm.dialogState.value)
+        coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+    }
+
+    @Test
     fun `when OnCompleteClicked on a completed task should open the reopen confirmation dialog`() =
         runTest {
             val item = ItemStub.completedTask(id = 1L)
@@ -88,8 +101,8 @@ class ItemOccurrenceViewModelTest {
         }
 
     @Test
-    fun `when OnCompleteClicked completes a task should emit the completed snackbar`() = runTest {
-        val item = ItemStub.task(id = 1L)
+    fun `when OnCompleteClicked completes a task should emit the completed snackbar then navigate back`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
         every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
         coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
@@ -105,6 +118,7 @@ class ItemOccurrenceViewModelTest {
                 ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar),
                 awaitItem(),
             )
+            assertEquals(ItemOccurrenceUiAction.NavigateBack, awaitItem())
         }
     }
 

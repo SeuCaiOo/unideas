@@ -31,6 +31,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 /** Each test targets whichever of `filterState`/`itemsState`/`uiState` owns the behavior. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -204,7 +205,7 @@ class HomeViewModelTest {
 
     @Test
     fun `when OnCompleteClicked for a known item should call HomeUseCase's complete`() = runTest {
-        val item = ItemStub.task(id = 1L)
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
         coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel()
@@ -217,7 +218,7 @@ class HomeViewModelTest {
 
     @Test
     fun `when OnCompleteClicked fails should emit ShowError`() = runTest {
-        val item = ItemStub.task(id = 1L)
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
         coEvery { homeUseCase.complete(item, any()) } returns Result.failure(IllegalStateException("boom"))
         val vm = viewModel()
@@ -228,6 +229,21 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnCompleteClicked(1L))
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
+    }
+
+    @Test
+    fun `when OnCompleteClicked for a late item should redirect to Detail instead of completing`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+        val vm = viewModel()
+
+        vm.itemsState.test { awaitItem() }
+
+        vm.uiAction.test {
+            vm.onEvent(HomeEvent.OnCompleteClicked(1L))
+            assertEquals(HomeUiAction.NavigateToDetailForLateCompletion(1L), awaitItem())
+        }
+        coVerify(exactly = 0) { homeUseCase.complete(any(), any()) }
     }
 
     @Test

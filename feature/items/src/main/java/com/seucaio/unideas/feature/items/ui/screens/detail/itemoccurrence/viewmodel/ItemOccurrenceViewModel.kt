@@ -117,7 +117,7 @@ class ItemOccurrenceViewModel(
         val item = originalItem ?: return
         when {
             uiState.value.isCompleted -> _dialogState.update { ItemOccurrenceDialogState.ReopenConfirm }
-            item.isRecurring -> _dialogState.update {
+            item.isRecurring || uiState.value.isLate -> _dialogState.update {
                 ItemOccurrenceDialogState.CompleteConfirm(isLate = uiState.value.isLate)
             }
 
@@ -144,6 +144,7 @@ class ItemOccurrenceViewModel(
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
                 if (result == CompletionResult.Completed) {
                     sendUiAction(ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
+                    sendUiAction(ItemOccurrenceUiAction.NavigateBack)
                 }
             }
             .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }

@@ -3,6 +3,7 @@ package com.seucaio.unideas.domain.usecase.item
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
+import com.seucaio.unideas.domain.repository.AutoBackupTrigger
 import com.seucaio.unideas.domain.repository.ReminderRefreshTrigger
 import com.seucaio.unideas.domain.usecase.section.SetSectionPinnedUseCase
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,7 @@ class HomeUseCase(
     private val deleteItemUseCase: DeleteItemUseCase,
     private val setItemPinnedUseCase: SetItemPinnedUseCase,
     private val reminderRefreshTrigger: ReminderRefreshTrigger,
+    private val autoBackupTrigger: AutoBackupTrigger,
 ) {
 
     fun getPriorityItems(today: LocalDate, dueSoonDays: Int): Flow<List<Item>> =
@@ -41,5 +43,8 @@ class HomeUseCase(
         ids.forEach { id -> deleteItemUseCase(id).getOrThrow() }
     }
 
-    fun refreshReminders() = reminderRefreshTrigger.refreshNow()
+    fun refreshReminders() {
+        reminderRefreshTrigger.refreshNow()
+        autoBackupTrigger.triggerNow()
+    }
 }

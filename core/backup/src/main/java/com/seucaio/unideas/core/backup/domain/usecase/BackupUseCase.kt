@@ -16,6 +16,8 @@ class BackupUseCase(
     private val restoreBackupUseCase: RestoreBackupUseCase,
     private val getLastBackupInfoUseCase: GetLastBackupInfoUseCase,
     private val deleteBackupUseCase: DeleteBackupUseCase,
+    private val getAutoBackupEnabledUseCase: GetAutoBackupEnabledUseCase,
+    private val setAutoBackupEnabledUseCase: SetAutoBackupEnabledUseCase,
 ) {
 
     suspend fun upload(account: GoogleSignInAccount): Result<BackupInfo> =
@@ -32,4 +34,8 @@ class BackupUseCase(
 
     suspend fun delete(account: GoogleSignInAccount, fileId: String): Result<Unit> =
         deleteBackupUseCase(buildDriveServiceUseCase(account), fileId)
+
+    suspend fun isAutoBackupEnabled(): Boolean = getAutoBackupEnabledUseCase()
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) = setAutoBackupEnabledUseCase(enabled)
 }

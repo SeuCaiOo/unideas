@@ -77,7 +77,7 @@ class ItemOccurrenceViewModelTest {
     @Test
     fun `when OnCompleteClicked on a pending late non-recurring task should complete it directly`() = runTest {
         val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
-        val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
+        val completed = item.copy(completedAt = LocalDate.now().atTime(12, 0))
         every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
         coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
             CompletionResult.Completed

@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.ds.components.inputs.AddEntryRow
 import com.seucaio.unideas.ds.components.inputs.InlineEditRow
-import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.EntityListItemWithMenu
 import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -188,7 +188,7 @@ private fun TagsDialogs(
     when (dialogState) {
         is TagsDialogState.None, is TagsDialogState.Add, is TagsDialogState.Rename -> Unit
         is TagsDialogState.Delete ->
-            ConfirmationDialog(
+            ConfirmationBottomSheet(
                 titleRes = R.string.tag_delete_confirm_title,
                 messageRes = R.string.tag_delete_confirm_message,
                 onDismiss = { onEvent(TagsEvent.OnDialogDismissed) },

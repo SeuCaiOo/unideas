@@ -24,7 +24,7 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -220,7 +220,7 @@ private fun ItemDetailDialogs(
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_delete_title,
             messageRes = R.string.item_detail_delete_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -229,7 +229,7 @@ private fun ItemDetailDialogs(
     }
 
     if (dialogState is ItemDetailDialogState.DiscardConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = dialogState.titleRes,
             messageRes = dialogState.messageRes,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -238,7 +238,7 @@ private fun ItemDetailDialogs(
     }
 
     if (dialogState is ItemDetailDialogState.UnarchiveConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_unarchive_confirm_title,
             messageRes = R.string.item_detail_unarchive_confirm_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -253,7 +253,7 @@ private fun ItemOccurrenceDialogs(
     onEvent: (ItemOccurrenceEvent) -> Unit,
 ) {
     if (dialogState is ItemOccurrenceDialogState.ReopenConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_reopen_title,
             messageRes = R.string.item_detail_reopen_message,
             onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },

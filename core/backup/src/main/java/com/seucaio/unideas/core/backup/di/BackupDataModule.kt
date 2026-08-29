@@ -7,6 +7,7 @@ import com.seucaio.unideas.core.backup.data.repository.GoogleAuthRepositoryImpl
 import com.seucaio.unideas.core.backup.domain.repository.AutoBackupRepository
 import com.seucaio.unideas.core.backup.domain.repository.BackupRepository
 import com.seucaio.unideas.core.backup.domain.repository.GoogleAuthRepository
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BuildDriveServiceUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.DeleteBackupUseCase
@@ -51,6 +52,7 @@ val backupDataModule = module {
     factoryOf(::GetLastBackupInfoUseCase)
     factoryOf(::GetAutoBackupEnabledUseCase)
     factoryOf(::SetAutoBackupEnabledUseCase)
+    factoryOf(::AutoBackupSettingsUseCase)
     factoryOf(::PerformAutoBackupUseCase)
     factoryOf(::GoogleAuthUseCase)
     factoryOf(::BackupUseCase)

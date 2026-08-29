@@ -22,6 +22,7 @@ import java.time.LocalDateTime
 
 class ItemOccurrenceViewModel(
     private val itemId: Long?,
+    private val promptCompleteOnEntry: Boolean,
     private val itemFormUseCase: ItemFormUseCase,
     private val itemOccurrenceUseCase: ItemOccurrenceUseCase,
 ) : ViewModel() {
@@ -52,6 +53,7 @@ class ItemOccurrenceViewModel(
                         isRecurring = item.isRecurring,
                     )
                 }
+                if (promptCompleteOnEntry) handleCompleteClicked()
             }
         }
     }

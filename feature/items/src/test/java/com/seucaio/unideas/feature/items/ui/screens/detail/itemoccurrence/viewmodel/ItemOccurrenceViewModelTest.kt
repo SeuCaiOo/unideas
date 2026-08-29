@@ -47,9 +47,10 @@ class ItemOccurrenceViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long? = null) =
+    private fun viewModel(itemId: Long? = null, promptCompleteOnEntry: Boolean = false) =
         ItemOccurrenceViewModel(
             itemId = itemId,
+            promptCompleteOnEntry = promptCompleteOnEntry,
             itemFormUseCase = itemFormUseCase,
             itemOccurrenceUseCase = itemOccurrenceUseCase,
         )
@@ -85,6 +86,19 @@ class ItemOccurrenceViewModelTest {
         assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = true), vm.dialogState.value)
         coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
     }
+
+    @Test
+    fun `when promptCompleteOnEntry is true should open the complete confirmation dialog after item loads`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+
+            val vm = viewModel(itemId = 1L, promptCompleteOnEntry = true)
+            vm.uiState.test { awaitItem() }
+
+            assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = true), vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
 
     @Test
     fun `when OnCompleteClicked on a completed task should open the reopen confirmation dialog`() =

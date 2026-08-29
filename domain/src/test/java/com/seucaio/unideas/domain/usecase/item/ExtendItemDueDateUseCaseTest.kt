@@ -64,6 +64,25 @@ class ExtendItemDueDateUseCaseTest {
         }
 
     @Test
+    fun `invoke resets remindersMuted since the mute was about the old dueDate`() = runTest {
+        val originalDueDate = ItemStub.TODAY.minusDays(3)
+        val item = ItemStub.task(dueDate = originalDueDate, remindersMuted = true)
+        val newDueDate = ItemStub.TODAY.plusDays(2)
+        val extended = item.copy(
+            dueDate = newDueDate,
+            pendingExtensionOriginalDueDate = originalDueDate,
+            pendingExtensionCount = 1,
+            remindersMuted = false,
+        )
+        coEvery { repository.updateItem(extended) } returns Unit
+
+        val result = useCase(item, newDueDate, ItemStub.TODAY)
+
+        assertEquals(false, result.getOrNull()?.remindersMuted)
+        coVerify(exactly = 1) { repository.updateItem(extended) }
+    }
+
+    @Test
     fun `invoke fails when the item is not overdue`() = runTest {
         val item = ItemStub.task(dueDate = ItemStub.TODAY.plusDays(1))
 

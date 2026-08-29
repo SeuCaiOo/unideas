@@ -21,11 +21,13 @@ class ItemOccurrenceUseCaseTest {
     private val itemCompletionHistoryUseCase: ItemCompletionHistoryUseCase = mockk()
     private val ignoreOccurrenceUseCase: IgnoreOccurrenceUseCase = mockk()
     private val extendItemDueDateUseCase: ExtendItemDueDateUseCase = mockk()
+    private val setRemindersMutedUseCase: SetRemindersMutedUseCase = mockk()
     private val useCase = ItemOccurrenceUseCase(
         completeItem,
         itemCompletionHistoryUseCase,
         ignoreOccurrenceUseCase,
         extendItemDueDateUseCase,
+        setRemindersMutedUseCase,
     )
 
     @Test
@@ -110,6 +112,18 @@ class ItemOccurrenceUseCaseTest {
 
         assertEquals(Result.success(extended), result)
         coVerify(exactly = 1) { extendItemDueDateUseCase(item, newDueDate, ItemStub.TODAY) }
+    }
+
+    @Test
+    fun `setRemindersMuted delegates to SetRemindersMutedUseCase`() = runTest {
+        val item = ItemStub.task()
+        val muted = item.copy(remindersMuted = true)
+        coEvery { setRemindersMutedUseCase(item, true) } returns Result.success(muted)
+
+        val result = useCase.setRemindersMuted(item, true)
+
+        assertEquals(Result.success(muted), result)
+        coVerify(exactly = 1) { setRemindersMutedUseCase(item, true) }
     }
 
     @Test

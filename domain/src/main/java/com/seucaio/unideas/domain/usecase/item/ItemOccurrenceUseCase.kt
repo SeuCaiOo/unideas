@@ -12,6 +12,7 @@ class ItemOccurrenceUseCase(
     private val itemCompletionHistoryUseCase: ItemCompletionHistoryUseCase,
     private val ignoreOccurrenceUseCase: IgnoreOccurrenceUseCase,
     private val extendItemDueDateUseCase: ExtendItemDueDateUseCase,
+    private val setRemindersMutedUseCase: SetRemindersMutedUseCase,
 ) {
 
     suspend fun complete(
@@ -39,4 +40,7 @@ class ItemOccurrenceUseCase(
 
     suspend fun deleteHistoryEntry(id: Long): Result<Unit> =
         itemCompletionHistoryUseCase.delete(id)
+
+    suspend fun setRemindersMuted(item: Item, muted: Boolean): Result<Item> =
+        setRemindersMutedUseCase(item, muted)
 }

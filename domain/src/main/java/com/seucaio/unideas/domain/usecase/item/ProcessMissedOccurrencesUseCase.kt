@@ -47,6 +47,7 @@ class ProcessMissedOccurrencesUseCase(
             lastCompletedScheduledDate = null,
             pendingExtensionOriginalDueDate = null,
             pendingExtensionCount = 0,
+            remindersMuted = false,
         )
         repository.updateItem(advanced)
         advanced

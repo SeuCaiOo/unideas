@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -59,6 +62,8 @@ fun NoteConfirmSheetContent(
     onDismiss: () -> Unit = {},
 ) {
     var note by remember { mutableStateOf("") }
+    val confirmEnabled = !noteRequired || note.isNotBlank()
+    val noteOrNull = note.ifBlank { null }
 
     Column(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(titleRes), style = MaterialTheme.typography.titleLarge)
@@ -75,12 +80,16 @@ fun NoteConfirmSheetContent(
                 }
                 Text(stringResource(labelRes))
             },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(
+                onDone = { if (confirmEnabled) { onConfirm(noteOrNull) } },
+            ),
             modifier = Modifier.fillMaxWidth(),
         )
 
         Button(
-            onClick = { onConfirm(note.ifBlank { null }) },
-            enabled = !noteRequired || note.isNotBlank(),
+            onClick = { onConfirm(noteOrNull) },
+            enabled = confirmEnabled,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(android.R.string.ok))

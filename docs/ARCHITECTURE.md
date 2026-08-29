@@ -29,9 +29,17 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
 :uds                 — design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Substituiu :core:ui por completo (#82) — todo trabalho novo de UI compartilhada vai aqui; expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose. `uds/components/legacy/` guarda componentes portados ao pé da letra do antigo :core:ui (alguns com exceção documentada à regra "sem R.*" do módulo, por serem transitórios)
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
-:core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia, ReminderNotifier
-                        (2 canais: normal dispensável / urgente ongoing), notificação por item + resumo
-                        de grupo por tier, deep link pro item ao tocar
+:core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia. `ReminderNotifier`
+                        (orquestra: diffing por tier, o que postar/cancelar) delega pra
+                        `ReminderNotificationPoster` (constrói/posta a notificação Android crua,
+                        incluindo o deep link) e `createReminderNotificationChannels` (setup dos 2
+                        canais: normal dispensável / urgente ongoing); `NotificationTier` centraliza a
+                        config de apresentação por tier (canal, ids, cor, vibração). Deep link pro item
+                        ao tocar usa `unideas://item?itemId={id}` — query param, não path segment: a
+                        rota (`ItemsRoute.Detail`) tem `itemId`/`initialType` com default, e o
+                        Navigation Compose type-safe trata campo-com-default como query param no
+                        padrão de URI que `navDeepLink` gera, não path — usar path ali faz o deep link
+                        falhar silenciosamente e cair no `startDestination` (bug real, corrigido em #195)
 :feature:home        — Home (lista de itens, abas Tarefas/Anotações, seleção múltipla + exclusão em lote) +
                         painel de prioridades (Bottom Sheet, acionado pelo FAB — não mais painel fixo) +
                         Todas as Prioridades
@@ -173,9 +181,11 @@ data/
 ```
 core/common/
 ├── extensions/       — Kotlin extensions (Boolean.orFalse, String.EMPTY, Long.toLocalDate, etc.);
-│                       maioria pura, mas Context.restartApplication() (#76) é Android-dependente —
-│                       comportamento genérico de app (não específico de nenhum módulo), por isso
-│                       mora aqui e não em :core:backup, que é quem hoje o consome
+│                       maioria pura, mas Context.restartApplication()/hasPermission() (#76/#195) são
+│                       Android-dependentes — comportamento genérico de app (não específico de nenhum
+│                       módulo), por isso moram aqui e não no módulo que hoje os consome
+│                       (:core:backup, :core:notifications); String.stripMarkdownPreview() (#195) —
+│                       mesma lógica, sem Android
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 

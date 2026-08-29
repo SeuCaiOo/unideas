@@ -11,6 +11,33 @@ import androidx.core.net.toUri
 import com.seucaio.unideas.core.common.extensions.hasPermission
 import com.seucaio.unideas.core.notifications.R
 
+internal data class NotificationContent(val title: String, val body: String)
+
+internal sealed interface PostTarget {
+    fun notificationId(tier: NotificationTier): Int
+    fun groupKey(tier: NotificationTier): String? = tier.channelId
+    val groupSummary: Boolean get() = false
+
+    data object Summary : PostTarget {
+        override fun notificationId(tier: NotificationTier) = tier.notificationId
+        override val groupSummary = true
+    }
+
+    data object TestSummary : PostTarget {
+        override fun notificationId(tier: NotificationTier) = tier.testNotificationId
+        override fun groupKey(tier: NotificationTier): String? = null
+    }
+
+    data class PerItem(val itemId: Long) : PostTarget {
+        override fun notificationId(tier: NotificationTier) =
+            ITEM_NOTIFICATION_ID_OFFSET + itemId.toInt()
+    }
+
+    companion object {
+        private const val ITEM_NOTIFICATION_ID_OFFSET = 10_000
+    }
+}
+
 internal data class PostNotificationRequest(
     val notificationId: Int,
     val channelId: String,
@@ -22,7 +49,28 @@ internal data class PostNotificationRequest(
     val groupSummary: Boolean = false,
     val itemId: Long? = null,
     @param:ColorInt val accentColor: Int? = null,
-)
+) {
+    companion object {
+        fun forTier(
+            tier: NotificationTier,
+            content: NotificationContent,
+            silent: Boolean,
+            target: PostTarget,
+            accentColor: Int?,
+        ) = PostNotificationRequest(
+            notificationId = target.notificationId(tier),
+            channelId = tier.channelId,
+            title = content.title,
+            body = content.body,
+            ongoing = tier.ongoing,
+            silent = silent,
+            groupKey = target.groupKey(tier),
+            groupSummary = target.groupSummary,
+            itemId = (target as? PostTarget.PerItem)?.itemId,
+            accentColor = accentColor,
+        )
+    }
+}
 
 internal class ReminderNotificationPoster(private val context: Context) {
 

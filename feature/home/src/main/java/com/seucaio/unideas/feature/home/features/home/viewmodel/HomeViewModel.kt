@@ -223,7 +223,8 @@ class HomeViewModel(
 
     private fun handleComplete(itemId: Long) {
         val item = currentItems.firstOrNull { it.id == itemId } ?: return
-        if (item.urgency(LocalDate.now(), Constants.DUE_SOON_DAYS) == UrgencyLevel.OVERDUE) {
+        val isLate = item.urgency(LocalDate.now(), Constants.DUE_SOON_DAYS) == UrgencyLevel.OVERDUE
+        if (item.isRecurring && isLate) {
             sendUiAction(HomeUiAction.NavigateToDetailForLateCompletion(itemId))
             return
         }

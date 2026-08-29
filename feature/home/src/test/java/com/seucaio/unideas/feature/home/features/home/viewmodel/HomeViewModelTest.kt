@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.home.features.home.viewmodel
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.model.Tag
@@ -232,18 +233,36 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `when OnCompleteClicked for a late item should redirect to Detail instead of completing`() = runTest {
+    fun `when OnCompleteClicked for a late recurring item should redirect to Detail instead of completing`() =
+        runTest {
+            val item = ItemStub.task(
+                id = 1L,
+                dueDate = LocalDate.now().minusDays(1),
+                recurrence = Recurrence.Weekly,
+            )
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+            val vm = viewModel()
+
+            vm.itemsState.test { awaitItem() }
+
+            vm.uiAction.test {
+                vm.onEvent(HomeEvent.OnCompleteClicked(1L))
+                assertEquals(HomeUiAction.NavigateToDetailForLateCompletion(1L), awaitItem())
+            }
+            coVerify(exactly = 0) { homeUseCase.complete(any(), any()) }
+        }
+
+    @Test
+    fun `when OnCompleteClicked for a late non-recurring item should complete it directly`() = runTest {
         val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+        coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel()
 
         vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnCompleteClicked(1L))
 
-        vm.uiAction.test {
-            vm.onEvent(HomeEvent.OnCompleteClicked(1L))
-            assertEquals(HomeUiAction.NavigateToDetailForLateCompletion(1L), awaitItem())
-        }
-        coVerify(exactly = 0) { homeUseCase.complete(any(), any()) }
+        coVerify(exactly = 1) { homeUseCase.complete(item, any()) }
     }
 
     @Test

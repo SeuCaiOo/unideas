@@ -119,7 +119,7 @@ class ItemOccurrenceViewModel(
         val item = originalItem ?: return
         when {
             uiState.value.isCompleted -> _dialogState.update { ItemOccurrenceDialogState.ReopenConfirm }
-            item.isRecurring || uiState.value.isLate -> _dialogState.update {
+            item.isRecurring -> _dialogState.update {
                 ItemOccurrenceDialogState.CompleteConfirm(isLate = uiState.value.isLate)
             }
 

@@ -22,6 +22,7 @@ import java.time.LocalDateTime
 
 class ItemOccurrenceViewModel(
     private val itemId: Long?,
+    private val promptCompleteOnEntry: Boolean,
     private val itemFormUseCase: ItemFormUseCase,
     private val itemOccurrenceUseCase: ItemOccurrenceUseCase,
 ) : ViewModel() {
@@ -52,6 +53,7 @@ class ItemOccurrenceViewModel(
                         isRecurring = item.isRecurring,
                     )
                 }
+                if (promptCompleteOnEntry) handleCompleteClicked()
             }
         }
     }
@@ -144,6 +146,7 @@ class ItemOccurrenceViewModel(
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
                 if (result == CompletionResult.Completed) {
                     sendUiAction(ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar))
+                    sendUiAction(ItemOccurrenceUiAction.NavigateBack)
                 }
             }
             .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }

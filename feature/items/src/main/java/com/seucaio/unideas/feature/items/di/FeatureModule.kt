@@ -26,6 +26,7 @@ val itemsModule = module {
     viewModel { params ->
         ItemOccurrenceViewModel(
             itemId = params.getOrNull(),
+            promptCompleteOnEntry = params.getOrNull() ?: false,
             itemFormUseCase = get(),
             itemOccurrenceUseCase = get(),
         )

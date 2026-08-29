@@ -33,6 +33,7 @@ fun ItemFormFooter(
             CompletionField(
                 isCompleted = occurrenceState.isCompleted,
                 isLate = occurrenceState.isLate,
+                completedLate = occurrenceState.completedLate,
                 completedAt = occurrenceState.completedAt,
                 overdueDays = occurrenceState.dueDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()).toInt() },
                 onCompleteClicked = onCompleteClicked,

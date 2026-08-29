@@ -47,9 +47,10 @@ class ItemOccurrenceViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(itemId: Long? = null) =
+    private fun viewModel(itemId: Long? = null, promptCompleteOnEntry: Boolean = false) =
         ItemOccurrenceViewModel(
             itemId = itemId,
+            promptCompleteOnEntry = promptCompleteOnEntry,
             itemFormUseCase = itemFormUseCase,
             itemOccurrenceUseCase = itemOccurrenceUseCase,
         )
@@ -57,7 +58,7 @@ class ItemOccurrenceViewModelTest {
     @Test
     fun `when OnCompleteClicked on a pending task should complete it directly without a dialog`() =
         runTest {
-            val item = ItemStub.task(id = 1L)
+            val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
             val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
             every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
             coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
@@ -71,6 +72,41 @@ class ItemOccurrenceViewModelTest {
             assertEquals(ItemOccurrenceDialogState.None, vm.dialogState.value)
             assertEquals(true, vm.uiState.value.isCompleted)
             coVerify(exactly = 1) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
+
+    @Test
+    fun `when OnCompleteClicked on a pending late non-recurring task should complete it directly`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
+        val completed = item.copy(completedAt = LocalDate.now().atTime(12, 0))
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
+        coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
+            CompletionResult.Completed
+        )
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnCompleteClicked)
+
+        assertEquals(ItemOccurrenceDialogState.None, vm.dialogState.value)
+        assertEquals(true, vm.uiState.value.completedLate)
+        coVerify(exactly = 1) { itemOccurrenceUseCase.complete(any(), any(), null) }
+    }
+
+    @Test
+    fun `when promptCompleteOnEntry is true should open the complete confirmation dialog after item loads`() =
+        runTest {
+            val item = ItemStub.task(
+                id = 1L,
+                dueDate = LocalDate.now().minusDays(1),
+                recurrence = Recurrence.Weekly,
+            )
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+
+            val vm = viewModel(itemId = 1L, promptCompleteOnEntry = true)
+            vm.uiState.test { awaitItem() }
+
+            assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = true), vm.dialogState.value)
+            coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
         }
 
     @Test
@@ -88,8 +124,8 @@ class ItemOccurrenceViewModelTest {
         }
 
     @Test
-    fun `when OnCompleteClicked completes a task should emit the completed snackbar`() = runTest {
-        val item = ItemStub.task(id = 1L)
+    fun `when OnCompleteClicked completes a task should emit the completed snackbar then navigate back`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         val completed = item.copy(completedAt = ItemStub.TODAY.atTime(12, 0))
         every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(completed))
         coEvery { itemOccurrenceUseCase.complete(any(), any(), any()) } returns Result.success(
@@ -105,6 +141,7 @@ class ItemOccurrenceViewModelTest {
                 ItemOccurrenceUiAction.ShowSnackbar(R.string.item_detail_completed_snackbar),
                 awaitItem(),
             )
+            assertEquals(ItemOccurrenceUiAction.NavigateBack, awaitItem())
         }
     }
 

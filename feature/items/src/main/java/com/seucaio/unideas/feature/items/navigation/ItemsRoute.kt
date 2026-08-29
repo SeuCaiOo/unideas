@@ -6,7 +6,11 @@ import kotlinx.serialization.Serializable
 sealed interface ItemsRoute {
 
     @Serializable
-    data class Detail(val itemId: Long? = null, val initialType: ItemType = ItemType.TASK) : ItemsRoute
+    data class Detail(
+        val itemId: Long? = null,
+        val initialType: ItemType = ItemType.TASK,
+        val promptCompleteOnEntry: Boolean = false,
+    ) : ItemsRoute
 
     @Serializable
     data class History(val itemId: Long) : ItemsRoute

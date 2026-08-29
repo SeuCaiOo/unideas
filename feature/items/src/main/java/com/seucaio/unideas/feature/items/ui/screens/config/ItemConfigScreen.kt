@@ -40,7 +40,7 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.ds.components.buttons.AppIconButton
 import com.seucaio.unideas.ds.components.inputs.SwitchSection
-import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -163,7 +163,7 @@ private fun ItemConfigScreenContent(
     }
 
     if (dialogState is ItemConfigDialogState.TypeSwitchConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_config_type_switch_title,
             messageRes = R.string.item_config_type_switch_message,
             onDismiss = { onEvent(ItemConfigEvent.OnDialogDismissed) },

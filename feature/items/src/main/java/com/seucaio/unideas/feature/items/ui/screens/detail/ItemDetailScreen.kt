@@ -24,7 +24,7 @@ import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
-import com.seucaio.unideas.ds.components.legacy.ConfirmationDialog
+import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
 import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
@@ -40,7 +40,7 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.ExtendDeadlineDatePickerDialog
-import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.NoteConfirmDialog
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.NoteConfirmBottomSheet
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceDialogState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceEvent
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiAction
@@ -62,8 +62,11 @@ fun ItemDetailScreen(
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long, Boolean) -> Unit,
     initialType: ItemType = ItemType.TASK,
+    promptCompleteOnEntry: Boolean = false,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
-    occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel { parametersOf(itemId) },
+    occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel {
+        parametersOf(itemId, promptCompleteOnEntry)
+    },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -71,6 +74,7 @@ fun ItemDetailScreen(
         viewModel.onEvent(ItemDetailEvent.OnScreenResumed)
         onPauseOrDispose { }
     }
+
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
@@ -103,6 +107,7 @@ fun ItemDetailScreen(
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemOccurrenceUiAction.ItemPersisted ->
                     viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
+                is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
             }
         }
     }
@@ -136,6 +141,7 @@ private fun ItemDetailScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    val isSnackbarVisible = snackbarHostState.currentSnackbarData != null
 
     BackHandler {
         onEvent(ItemDetailEvent.OnBackRequested)
@@ -183,6 +189,7 @@ private fun ItemDetailScreenContent(
                         null
                     }
                 },
+                isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -213,7 +220,7 @@ private fun ItemDetailDialogs(
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     if (dialogState is ItemDetailDialogState.DeleteConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_delete_title,
             messageRes = R.string.item_detail_delete_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -222,7 +229,7 @@ private fun ItemDetailDialogs(
     }
 
     if (dialogState is ItemDetailDialogState.DiscardConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = dialogState.titleRes,
             messageRes = dialogState.messageRes,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -231,7 +238,7 @@ private fun ItemDetailDialogs(
     }
 
     if (dialogState is ItemDetailDialogState.UnarchiveConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_unarchive_confirm_title,
             messageRes = R.string.item_detail_unarchive_confirm_message,
             onDismiss = { onEvent(ItemDetailEvent.OnDialogDismissed) },
@@ -246,7 +253,7 @@ private fun ItemOccurrenceDialogs(
     onEvent: (ItemOccurrenceEvent) -> Unit,
 ) {
     if (dialogState is ItemOccurrenceDialogState.ReopenConfirm) {
-        ConfirmationDialog(
+        ConfirmationBottomSheet(
             titleRes = R.string.item_detail_reopen_title,
             messageRes = R.string.item_detail_reopen_message,
             onDismiss = { onEvent(ItemOccurrenceEvent.OnDialogDismissed) },
@@ -255,7 +262,7 @@ private fun ItemOccurrenceDialogs(
     }
 
     if (dialogState is ItemOccurrenceDialogState.CompleteConfirm) {
-        NoteConfirmDialog(
+        NoteConfirmBottomSheet(
             titleRes = if (dialogState.isLate) {
                 R.string.item_detail_complete_late_confirm_title
             } else {
@@ -273,7 +280,7 @@ private fun ItemOccurrenceDialogs(
     }
 
     if (dialogState is ItemOccurrenceDialogState.IgnoreConfirm) {
-        NoteConfirmDialog(
+        NoteConfirmBottomSheet(
             titleRes = R.string.item_detail_ignore_confirm_title,
             messageRes = R.string.item_detail_ignore_confirm_message,
             noteRequired = true,

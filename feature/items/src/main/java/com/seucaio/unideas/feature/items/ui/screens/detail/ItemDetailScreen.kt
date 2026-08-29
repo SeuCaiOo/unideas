@@ -141,6 +141,7 @@ private fun ItemDetailScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
+    val isSnackbarVisible = snackbarHostState.currentSnackbarData != null
 
     BackHandler {
         onEvent(ItemDetailEvent.OnBackRequested)
@@ -188,6 +189,7 @@ private fun ItemDetailScreenContent(
                         null
                     }
                 },
+                isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
             )
         }

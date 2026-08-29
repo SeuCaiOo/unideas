@@ -110,7 +110,9 @@ domain/
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
-│   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
+│   ├── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
+│   └── AutoBackupTrigger.kt     — dispara o backup automático (#193), implementado em :core:backup; mesmo padrão de
+│                                    trigger cross-módulo do ReminderRefreshTrigger acima
 └── usecase/
     ├── SectionsAndTagsUseCase.kt  — facade get+create sobre SectionUseCase/TagUseCase: getAll(): Flow<SectionsAndTags>
     │                                 (live, combine) + addSection/addTag; usado por HomeViewModel, ItemDetailViewModel
@@ -313,7 +315,9 @@ feature/home/
     │                    — `isRefreshing: StateFlow<Boolean>` próprio (evento-driven, fora do `combine` de `uiState` —
     │                      exceção 3 do padrão MVI) alimenta o `PullToRefreshBox` da Home; dispara
     │                      `HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger`, gatilho manual do motor de
-    │                      reavaliação de ocorrências (#101/D, ver seção de persistência)
+    │                      reavaliação de ocorrências (#101/D, ver seção de persistência); mesma chamada também
+    │                      dispara `AutoBackupTrigger` (#193, ver seção Backup) — pull-to-refresh é hoje o único
+    │                      ponto de "estado assentado" que aciona o backup automático
     ├── priority/
     │   ├── screen/    — PriorityBottomSheet.kt + PriorityPreviewProvider.kt   — painel de prioridades, hoje um
     │   │                Bottom Sheet mostrado a partir da HomeScreen (state local, não rota própria), não mais
@@ -507,7 +511,13 @@ Estrutura em `:core:backup`:
 - `checkpoint()` (`UnideasDatabase`) força o WAL a descarregar no `.db` principal antes do upload: `SupportSQLiteDatabase.query()` é lazy no Android — o `PRAGMA` só roda de fato quando o cursor é lido (`.use { it.moveToFirst() }`), não bastava abrir e fechar. Sem isso todo backup subia um arquivo vazio (4096 bytes, só cabeçalho) — bug real encontrado e corrigido em #76.
 - Restore troca o arquivo físico do Room no disco; qualquer singleton Room/Koin já resolvido no processo (DAOs, repositórios) continua com o file handle antigo. Em vez de rastrear cada referência, `BackupUiAction.RestoreCompleted` reage reiniciando o processo inteiro via `Context.restartApplication()` (`:core:common`, ver seção abaixo) — só matar o processo garante que tudo seja reconstruído contra os dados restaurados; `finishAffinity()` sozinho não é suficiente (confirmado em device: processo sobrevive com o mesmo pid).
 
-Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+Sem sync bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda **e** um backup automático opcional (#193, abaixo). `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+
+**Backup automático (#193), desligado por padrão.** Preferência própria em DataStore, self-contained em `:core:backup` (não `:data`/`:domain` — é específica de backup, mesma lógica que já mantém `BackupRepository`/`GoogleAuthRepository` dentro do módulo): `AutoBackupPreferences` (chaves `auto_backup_enabled`/`auto_backup_tracked_file_id`) → `AutoBackupRepository`/`Impl` → `GetAutoBackupEnabledUseCase`/`SetAutoBackupEnabledUseCase`/`GetAutoBackupTrackedFileIdUseCase` (leaf use cases) → `AutoBackupSettingsUseCase` (facade — `isEnabled`/`setEnabled`/`getTrackedFileId`, mesma razão de existir de `GoogleAuthUseCase`: mais de um use case pequeno injetado solto no ViewModel deveria virar facade).
+- **Gatilho: só o pull-to-refresh manual, não cada mutação de item.** `AutoBackupTrigger` (interface em `:domain`, impl `AutoBackupTriggerImpl` em `:core:backup` via `AutoBackupScheduler`/`AutoBackupWorker`, `WorkManager` `enqueueUniqueWork(..., ExistingWorkPolicy.KEEP, ...)`, mesmo padrão do `ReminderCheckWorker`) é chamado só de `HomeUseCase.refreshReminders()`, ao lado de `ReminderRefreshTrigger.refreshNow()`. Cogitado (e revertido) hookar em `CompleteItemUseCase`/`EditItemUseCase`/etc. individualmente — cada mutação fina (ex: cada campo salvo no auto-save da Config Screen) dispararia um upload próprio; pull-to-refresh é o único ponto de "estado assentado" hoje. A reavaliação de estado da Listagem ao retomar a tela (#192) é o outro gatilho de estado assentado planejado — ainda não implementado.
+- **Regra de substituição (slot único, nunca empilha):** `PerformAutoBackupUseCase` — checa `isEnabled()`, faz upload via `BackupUseCase.upload(account)`, grava o novo `fileId` como rastreado, e só então apaga o `fileId` anterior (falha ao apagar é só logada via `Timber.w`, não desfaz o upload que já teve sucesso).
+- **Convivência com a lista de backups manuais (#184), sem duplicar:** `BackupListEntry(info: BackupInfo, isAutomatic: Boolean)` substitui `List<BackupInfo>` dentro de `BackupListStatus.Loaded`; `BackupViewModel.listBackups()` compara cada `fileId` retornado contra `AutoBackupSettingsUseCase.getTrackedFileId()` pra marcar a entrada certa — o slot automático é só uma tag visual sobre o mesmo arquivo, não uma entrada extra.
+- **UI:** `Switch` inline dentro de `ConnectedBackupContent` (`BackupBottomSheet.kt`, não virou função própria pra não estourar `TooManyFunctions` do arquivo), ligado a `BackupUiState.isAutoBackupEnabled`/`BackupEvent.OnAutoBackupToggled`. Tag "· Automático" somente-leitura no subtítulo do item de Backup em `SettingsScreen`, sem precisar abrir o sheet pra saber o estado.
 
 **Identidade de conta + logout (#183) não vivem no `BackupViewModel`.** `BackupViewModel` continua só upload/sync/restore de arquivo (sheet "Backup e Sincronização" na Settings). Ver qual conta está conectada, e sair dela, é responsabilidade do `SettingsViewModel` (`:feature:settings`), que usa `GoogleAuthUseCase` diretamente — sem `AccountViewModel` intermediário (ver `CLAUDE.md`). Logout **não** faz upload/backup automático (decisão consciente: o usuário pode estar saindo justamente pra descartar mudanças locais indesejadas) — só limpa o banco local (`ClearDatabaseUseCase`), desconecta (`signOut()`) e reseta a flag de onboarding (`SetOnboardingSeenUseCase(false)`). Também não existe "trocar de conta" como ação própria — trocar é sair e reconectar pela tela de Login/Onboarding, mesmo fluxo da primeira vez (o `RestoreBackupBottomSheet` de restaurar-ou-começar-do-zero só existe ali, em `:feature:onboarding`, não é reaproveitado pelo logout).
 

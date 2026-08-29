@@ -45,6 +45,9 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.coroutines.play.services)
     implementation(libs.timber)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.work.runtime)
+    implementation(libs.koin.workmanager)
 
     // Google Drive backup (scoped GoogleSignIn + Drive API, not Firebase Auth)
     implementation(libs.google.auth.identity)

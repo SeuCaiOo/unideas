@@ -8,10 +8,16 @@ data class ItemOccurrenceUiState(
     val completedAt: LocalDateTime? = null,
     val dueDate: LocalDate? = null,
     val isRecurring: Boolean = false,
+    val remindersMuted: Boolean = false,
+    val hasHistory: Boolean = false,
 ) {
 
     val isLate: Boolean
         get() = !isCompleted && dueDate != null && LocalDate.now().isAfter(dueDate)
+
+    val completedLate: Boolean
+        get() = isCompleted && !isRecurring && dueDate != null && completedAt != null &&
+            completedAt.toLocalDate().isAfter(dueDate)
 
     val canIgnore: Boolean get() = isLate && isRecurring
 }

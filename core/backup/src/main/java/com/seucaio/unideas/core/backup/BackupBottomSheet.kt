@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -52,9 +53,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.viewmodel.BackupAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
+import com.seucaio.unideas.core.backup.viewmodel.BackupListEntry
 import com.seucaio.unideas.core.backup.viewmodel.BackupListStatus
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
 import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
@@ -127,6 +128,7 @@ fun BackupBottomSheet(
                 onRestoreClick = { viewModel.onEvent(BackupEvent.OnRestoreClick) },
                 onDeleteBackupClick = { fileId -> viewModel.onEvent(BackupEvent.OnDeleteBackupClick(fileId)) },
                 onRetryBackupListClick = { viewModel.onEvent(BackupEvent.OnRetryBackupListClick) },
+                onAutoBackupToggle = { enabled -> viewModel.onEvent(BackupEvent.OnAutoBackupToggled(enabled)) },
             )
         }
     }
@@ -208,6 +210,7 @@ private fun BackupSheetContent(
     onRestoreClick: () -> Unit,
     onDeleteBackupClick: (fileId: String) -> Unit,
     onRetryBackupListClick: () -> Unit,
+    onAutoBackupToggle: (Boolean) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -233,6 +236,7 @@ private fun BackupSheetContent(
                     onRestoreClick = onRestoreClick,
                     onDeleteBackupClick = onDeleteBackupClick,
                     onRetryBackupListClick = onRetryBackupListClick,
+                    onAutoBackupToggle = onAutoBackupToggle,
                 )
             } else {
                 DisconnectedBackupContent(onConnectClick)
@@ -250,6 +254,7 @@ private fun ConnectedBackupContent(
     onRestoreClick: () -> Unit,
     onDeleteBackupClick: (fileId: String) -> Unit,
     onRetryBackupListClick: () -> Unit,
+    onAutoBackupToggle: (Boolean) -> Unit,
 ) {
     val subtitle = uiState.lastBackupAt?.toFormattedDateTimeString()
         ?.let { stringResource(R.string.backup_last_at, it) }
@@ -262,14 +267,11 @@ private fun ConnectedBackupContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(onClick = onBackupClick, modifier = Modifier.weight(1f)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = onBackupClick, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.backup_action_upload))
             }
-            OutlinedButton(onClick = onToggleBackupListClick, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = onToggleBackupListClick, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(
                         if (uiState.isBackupListVisible) {
@@ -280,6 +282,25 @@ private fun ConnectedBackupContent(
                     ),
                 )
             }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.backup_auto_backup_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = stringResource(R.string.backup_auto_backup_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = uiState.isAutoBackupEnabled, onCheckedChange = onAutoBackupToggle)
         }
 
         if (uiState.isBackupListVisible) {
@@ -341,13 +362,13 @@ private fun BackupListSection(
                         .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(status.backups, key = { _, backup -> backup.fileId }) { index, backup ->
+                    itemsIndexed(status.backups, key = { _, entry -> entry.info.fileId }) { index, entry ->
                         BackupListItemRow(
-                            backup = backup,
-                            selected = backup.fileId == selectedFileId,
+                            entry = entry,
+                            selected = entry.info.fileId == selectedFileId,
                             isMostRecent = index == 0,
-                            onSelect = { onBackupSelect(backup.fileId) },
-                            onDelete = { onDeleteBackupClick(backup.fileId) },
+                            onSelect = { onBackupSelect(entry.info.fileId) },
+                            onDelete = { onDeleteBackupClick(entry.info.fileId) },
                         )
                     }
                 }
@@ -393,12 +414,13 @@ private fun BackupListMessage(
 
 @Composable
 private fun BackupListItemRow(
-    backup: BackupInfo,
+    entry: BackupListEntry,
     selected: Boolean,
     isMostRecent: Boolean,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val backup = entry.info
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -424,9 +446,12 @@ private fun BackupListItemRow(
                     else -> backup.createdAt.toFormattedDateTimeString()
                 }
                 Text(text = dateLabel, style = MaterialTheme.typography.bodyMedium)
-                if (isMostRecent) {
+                if (isMostRecent || entry.isAutomatic) {
                     Text(
-                        text = stringResource(R.string.backup_most_recent),
+                        text = listOfNotNull(
+                            stringResource(R.string.backup_most_recent).takeIf { isMostRecent },
+                            stringResource(R.string.backup_auto_backup_enabled_tag).takeIf { entry.isAutomatic },
+                        ).joinToString(separator = " · "),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -464,6 +489,7 @@ private fun BackupSheetContentPreview(
                 onRestoreClick = {},
                 onDeleteBackupClick = {},
                 onRetryBackupListClick = {},
+                onAutoBackupToggle = {},
             )
         }
     }

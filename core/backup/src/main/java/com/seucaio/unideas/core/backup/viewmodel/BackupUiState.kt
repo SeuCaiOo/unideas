@@ -11,11 +11,14 @@ sealed interface BackupUiState {
         val isBackupListVisible: Boolean = false,
         val backupListStatus: BackupListStatus = BackupListStatus.Empty,
         val selectedBackupFileId: String? = null,
+        val isAutoBackupEnabled: Boolean = false,
     ) : BackupUiState
 }
 
 sealed interface BackupListStatus {
     data object Empty : BackupListStatus
     data object Error : BackupListStatus
-    data class Loaded(val backups: List<BackupInfo>) : BackupListStatus
+    data class Loaded(val backups: List<BackupListEntry>) : BackupListStatus
 }
+
+data class BackupListEntry(val info: BackupInfo, val isAutomatic: Boolean = false)

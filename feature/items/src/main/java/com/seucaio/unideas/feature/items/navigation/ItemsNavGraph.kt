@@ -24,6 +24,7 @@ fun NavGraphBuilder.itemsNavGraph(
         ItemDetailScreen(
             itemId = route.itemId,
             initialType = route.initialType,
+            promptCompleteOnEntry = route.promptCompleteOnEntry,
             onNavigateBack = onNavigateBack,
             onNavigateToHistory = onNavigateToHistory,
             onNavigateToConfig = onNavigateToConfig,

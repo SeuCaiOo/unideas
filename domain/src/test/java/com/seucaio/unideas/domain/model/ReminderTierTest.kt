@@ -89,6 +89,29 @@ class ReminderTierTest {
     }
 
     @Test
+    fun `muted reminders suppress NORMAL inside the warning window`() {
+        val item = ItemStub.task(
+            dueDate = dueDate,
+            reminderWarning = ReminderWarning.DaysBefore(2),
+            remindersMuted = true,
+        )
+        val today = dueDate.minusDays(2)
+
+        val tier = ReminderTier.of(item, check(today, 0), check(today, 6))
+
+        assertEquals(ReminderTier.NOT_YET, tier)
+    }
+
+    @Test
+    fun `muted reminders still fire URGENT on the due date`() {
+        val item = ItemStub.task(dueDate = dueDate, remindersMuted = true)
+
+        val tier = ReminderTier.of(item, check(dueDate, 18), check(dueDate.plusDays(1), 0))
+
+        assertEquals(ReminderTier.URGENT, tier)
+    }
+
+    @Test
     fun `overdue is URGENT`() {
         val item = ItemStub.task(dueDate = ItemStub.TODAY.minusDays(1))
 

@@ -2,6 +2,8 @@ package com.seucaio.unideas.core.common.extensions
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 
 /**
  * Restarts the app in a fresh process: relaunches the launcher activity, then kills this
@@ -21,3 +23,7 @@ fun Context.shareText(text: String) {
     val sendIntent = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
     startActivity(Intent.createChooser(sendIntent, null))
 }
+
+/** Whether [permission] is currently granted to this app. */
+fun Context.hasPermission(permission: String): Boolean =
+    ActivityCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

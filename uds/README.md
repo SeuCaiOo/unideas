@@ -54,7 +54,7 @@ mapping its domain type to that `Ui` class.
 
 **Exception: `components/legacy/`.** This subfolder holds components ported verbatim from
 `unideas`'s old `:core:ui` module (deleted once every consumer moved over) — some of them
-(`ConfirmationDialog`, `UnideasEmptyContent`, `UnideasErrorContent`) still take `@StringRes`
+(`ConfirmationBottomSheet`, `UnideasEmptyContent`, `UnideasErrorContent`) still take `@StringRes`
 params or reference this module's own `R.string.*`, breaking the "no `R.*`" rule above. That's
 accepted on purpose: `legacy/` is transitional, not part of the portable surface, and either gets
 folded into the rest of `:uds` (converted to plain `String` params) or deleted outright once it's

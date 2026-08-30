@@ -48,6 +48,10 @@ import java.time.format.DateTimeFormatter
 
 private val cardTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
+/** Approximate height of a one-line Snackbar; reserved as bottom padding while one is showing, so it
+ * doesn't cover [ItemFormFooter]'s completion status. */
+private val SNACKBAR_RESERVED_HEIGHT = 72.dp
+
 @Composable
 fun ItemFormBody(
     state: ItemFormFieldsState,
@@ -61,6 +65,8 @@ fun ItemFormBody(
     modifier: Modifier = Modifier,
     isArchived: Boolean = false,
     onUnarchiveClicked: (() -> Unit)? = null,
+    isSnackbarVisible: Boolean = false,
+    onMuteRemindersToggled: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Column(
@@ -86,7 +92,11 @@ fun ItemFormBody(
         }
 
         if (state.isEditing) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = if (isSnackbarVisible) SNACKBAR_RESERVED_HEIGHT else 0.dp),
+            ) {
                 NavCard(
                     icon = Icons.Default.Settings,
                     title = stringResource(R.string.item_config_title),
@@ -111,6 +121,7 @@ fun ItemFormBody(
                     onCompleteClicked = onCompleteClicked,
                     onIgnoreClicked = onIgnoreClicked,
                     onExtendDeadlineClicked = onExtendDeadlineClicked,
+                    onMuteRemindersToggled = onMuteRemindersToggled,
                 )
             }
         }

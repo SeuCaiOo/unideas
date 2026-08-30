@@ -65,6 +65,10 @@
     <string name="item_detail_complete_late">Complete late</string>
     <string name="item_detail_reopen">Reopen task</string>
     <string name="item_detail_completed_status">Completed</string>
+    <string name="item_detail_completed_late_status">Completed late</string>
+    <string name="item_detail_mute_reminders">Stop notifying</string>
+    <string name="item_detail_unmute_reminders">Resume notifying</string>
+    <string name="item_detail_reminders_muted_hint">Reminders paused until the due date</string>
     <string name="item_detail_completed_on">Completed on %1$s</string>
     <plurals name="item_detail_overdue_days">
         <item quantity="one">Overdue by %d day</item>

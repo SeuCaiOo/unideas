@@ -19,7 +19,11 @@ sealed interface ItemOccurrenceEvent {
 
     data class OnExtendDeadlineConfirmClicked(val newDueDate: LocalDate) : ItemOccurrenceEvent
 
+    data object OnMuteRemindersToggled : ItemOccurrenceEvent
+
     data object OnDialogDismissed : ItemOccurrenceEvent
 
     data class OnItemUpdatedExternally(val item: Item) : ItemOccurrenceEvent
+
+    data object OnScreenResumed : ItemOccurrenceEvent
 }

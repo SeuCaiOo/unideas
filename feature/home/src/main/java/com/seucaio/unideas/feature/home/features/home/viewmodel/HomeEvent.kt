@@ -28,6 +28,8 @@ sealed interface HomeEvent {
 
     data object OnRefreshRequested : HomeEvent
 
+    data object OnScreenResumed : HomeEvent
+
     //endregion
 
     //region selection events

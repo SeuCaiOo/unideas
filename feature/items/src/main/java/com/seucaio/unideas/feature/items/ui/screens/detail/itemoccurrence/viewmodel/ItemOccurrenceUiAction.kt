@@ -10,4 +10,6 @@ sealed interface ItemOccurrenceUiAction {
     data class ShowError(val message: String) : ItemOccurrenceUiAction
 
     data class ItemPersisted(val item: Item) : ItemOccurrenceUiAction
+
+    data object NavigateBack : ItemOccurrenceUiAction
 }

@@ -12,6 +12,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
@@ -59,6 +63,7 @@ private object ColdStartPriorityPrompt {
 fun HomeScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
+    onNavigateToDetailForLateCompletion: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -73,6 +78,7 @@ fun HomeScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
+    val updatedOnNavigateToDetailForLateCompletion by rememberUpdatedState(onNavigateToDetailForLateCompletion)
     val updatedOnNavigateToAddItem by rememberUpdatedState(onNavigateToAddItem)
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
@@ -82,10 +88,21 @@ fun HomeScreen(
         viewModel.uiAction.collect { action ->
             when (action) {
                 is HomeUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
+                is HomeUiAction.NavigateToDetailForLateCompletion ->
+                    updatedOnNavigateToDetailForLateCompletion(action.itemId)
                 is HomeUiAction.NavigateToAddItem -> updatedOnNavigateToAddItem(action.type)
                 is HomeUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
             }
         }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.onEvent(HomeEvent.OnScreenResumed)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     HomeContent(

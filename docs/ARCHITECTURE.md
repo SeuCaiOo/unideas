@@ -29,9 +29,17 @@ Princípios: **SOLID, KISS, YAGNI, DRY, Clean Code.**
 :core:common         — utilitários (extensions, constantes); maioria Kotlin puro, uma exceção Android-dependente. Sem Compose
 :uds                 — design system (pacote com.seucaio.unideas.ds), portado de outro projeto (#87), domain-agnostic (não depende de :domain nem de :core:common). Substituiu :core:ui por completo (#82) — todo trabalho novo de UI compartilhada vai aqui; expõe Compose via `api` — quem depende de :uds não precisa redeclarar BOM/artifacts de Compose. `uds/components/legacy/` guarda componentes portados ao pé da letra do antigo :core:ui (alguns com exceção documentada à regra "sem R.*" do módulo, por serem transitórios)
 :core:backup         — backup/restore via Google Drive (Google Sign-In escopado + Drive API), auto-contido
-:core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia, ReminderNotifier
-                        (2 canais: normal dispensável / urgente ongoing), notificação por item + resumo
-                        de grupo por tier, deep link pro item ao tocar
+:core:notifications  — notificações de lembrete (#95): PeriodicWorkRequest 4x/dia. `ReminderNotifier`
+                        (orquestra: diffing por tier, o que postar/cancelar) delega pra
+                        `ReminderNotificationPoster` (constrói/posta a notificação Android crua,
+                        incluindo o deep link) e `createReminderNotificationChannels` (setup dos 2
+                        canais: normal dispensável / urgente ongoing); `NotificationTier` centraliza a
+                        config de apresentação por tier (canal, ids, cor, vibração). Deep link pro item
+                        ao tocar usa `unideas://item?itemId={id}` — query param, não path segment: a
+                        rota (`ItemsRoute.Detail`) tem `itemId`/`initialType` com default, e o
+                        Navigation Compose type-safe trata campo-com-default como query param no
+                        padrão de URI que `navDeepLink` gera, não path — usar path ali faz o deep link
+                        falhar silenciosamente e cair no `startDestination` (bug real, corrigido em #195)
 :feature:home        — Home (lista de itens, abas Tarefas/Anotações, seleção múltipla + exclusão em lote) +
                         painel de prioridades (Bottom Sheet, acionado pelo FAB — não mais painel fixo) +
                         Todas as Prioridades
@@ -102,7 +110,9 @@ domain/
 │   ├── SectionRepository.kt
 │   ├── TagRepository.kt
 │   ├── DatabaseRepository.kt     — clearAll()/seed(scope) — debug-only tooling (#19), implementado em :data
-│   └── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
+│   ├── ReminderRefreshTrigger.kt — reposta as notificações após uma conclusão de item, implementado em :core:notifications
+│   └── AutoBackupTrigger.kt     — dispara o backup automático (#193), implementado em :core:backup; mesmo padrão de
+│                                    trigger cross-módulo do ReminderRefreshTrigger acima
 └── usecase/
     ├── SectionsAndTagsUseCase.kt  — facade get+create sobre SectionUseCase/TagUseCase: getAll(): Flow<SectionsAndTags>
     │                                 (live, combine) + addSection/addTag; usado por HomeViewModel, ItemDetailViewModel
@@ -173,9 +183,11 @@ data/
 ```
 core/common/
 ├── extensions/       — Kotlin extensions (Boolean.orFalse, String.EMPTY, Long.toLocalDate, etc.);
-│                       maioria pura, mas Context.restartApplication() (#76) é Android-dependente —
-│                       comportamento genérico de app (não específico de nenhum módulo), por isso
-│                       mora aqui e não em :core:backup, que é quem hoje o consome
+│                       maioria pura, mas Context.restartApplication()/hasPermission() (#76/#195) são
+│                       Android-dependentes — comportamento genérico de app (não específico de nenhum
+│                       módulo), por isso moram aqui e não no módulo que hoje os consome
+│                       (:core:backup, :core:notifications); String.stripMarkdownPreview() (#195) —
+│                       mesma lógica, sem Android
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 
@@ -200,7 +212,8 @@ uds/
     ├── UnideasEmptyContent.kt          — estado vazio: ícone (TaskAlt) + texto; `titleRes` opcional (#165)
     │                                      adiciona um título (usado só no onboarding real da Home)
     ├── UnideasListItem.kt / EntityListItemWithMenu.kt
-    ├── ConfirmationDialog.kt
+    ├── ConfirmationBottomSheet.kt      — `ModalBottomSheet` (era `AlertDialog`/`ConfirmationDialog` até #192 —
+    │                                      texto pequeno demais, mesmo padrão outer+`*SheetContent` de `mvi.md`)
     ├── ConditionalFab.kt
     └── AppVersionFooter.kt             — recebe versionName como parâmetro (não lê BuildConfig do :app)
 ```
@@ -219,6 +232,8 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 **Tipo do item trava após a criação (#160/#162).** Não existe mais seletor de tipo inline no formulário (`TypeSelectorField` foi removido) — Tarefa/Anotação é definida só na criação (`initialType`) e exibida como badge (`TextBadge`) em ambos os modos; trocar Tarefa↔Anotação de um item já existente exige a Config Screen (guardrail com confirmação + reset total, ver `config/` abaixo). `dueDate`/`dueTime`/`recurrence`/`reminderWarning` deixaram de ser exclusivos de Tarefa — `completedAt`/conclusão continua sendo a única diferença estrutural real entre os dois tipos, reforçada em runtime por `CompleteItemUseCase`.
 
 **Tela de Detalhe reestruturada (#162).** `ItemFormBody` mostra o badge de tipo + `TitleDescriptionFields` rolável, e — só quando `state.isEditing` (item já persistido) — dois `NavCard` (`:uds`, com chevron) pra "Configurações" e "Histórico" (cada um com resumo próprio) mais o `ItemFormFooter` (conclusão), fixados fora da área de scroll. Pra item novo ainda não salvo (auto-save ainda não rodou), esse bloco inteiro fica oculto — não só desabilitado — já que `Configurações`/`Histórico`/conclusão não fazem sentido sem um `itemId` real. A antiga seção inline "Mais opções" (`ItemFormOptionsSection`/`ItemFormCommonOptions`/`ItemFormTaskOptions`) foi removida — os campos que ela continha (data/hora, recorrência, aviso, seção, tags) migraram pra Config Screen no #160.
+
+**Divisão `ItemDetailViewModel` × `ItemOccurrenceViewModel` e sincronização no resume (#101/B, #194).** `ItemDetailScreen` sustenta duas ViewModels irmãs, cada uma com seu próprio `originalItem` cacheado: `ItemDetailViewModel` (título/descrição/config, `persist()`/auto-save) e `ItemOccurrenceViewModel` (conclusão/histórico/lembrete, `ItemOccurrenceUseCase`). Elas se mantêm sincronizadas por dois canais — `ItemDetailUiAction.ItemPersisted`/`ItemOccurrenceUiAction.ItemPersisted` relayados uma pra outra via `OnItemUpdatedExternally` (só funciona enquanto ambas estão compostas ao mesmo tempo), e o `LifecycleResumeEffect` da tela, que dispara `OnScreenResumed` em **ambas** desde o #194 — antes disparava só na `ItemDetailViewModel`. A `ItemConfigScreen` (Config Screen, `#160`) é uma terceira ViewModel totalmente independente (`ItemConfigViewModel`) numa rota separada do nav graph; suas mudanças (seção/tags/recorrência/aviso) só chegam de volta às outras duas quando a tela de Detalhe volta a compor e o resume dispara — daí a obrigação de recarregar as duas, não só a principal. `CompleteItemUseCase` decide o branch de conclusão (toggle de ocorrência vs. completar permanente) só olhando `item.recurrence`/`item.dueDate` do objeto recebido, sem reler do banco — um `originalItem` desatualizado nessa borda leva pro branch errado silenciosamente.
 
 ```
 feature/items/
@@ -243,14 +258,18 @@ feature/items/
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     │                        — item arquivado (`status == ARCHIVED`) troca o badge de tipo por uma `Column` com um
     │                        `FilterChip` "Arquivado" (ícone `Archive`, empilhado acima do badge) clicável → abre
-    │                        `ConfirmationDialog` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
+    │                        `ConfirmationBottomSheet` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
     └── screens/
         ├── detail/
         │   ├── itemdetail/     — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt (formulário: título, descrição,
         │   │                      seção, tags, data/recorrência) + viewmodel/ (ItemDetailUiState/UiAction/Event/
         │   │                      ViewModel/DialogState)
         │   └── itemoccurrence/ — ciclo de vida da ocorrência (concluir/concluir atrasado/ignorar/aumentar prazo),
-        │                          separado do form desde #101/B: NoteConfirmDialog (nota obrigatória em atraso/ignorar),
+        │                          separado do form desde #101/B: NoteConfirmBottomSheet (`ModalBottomSheet` desde
+        │                          #192, era dialog — nota obrigatória em atraso/ignorar; atraso só pede nota pra
+        │                          item **recorrente** — não-recorrente completa direto, sem histórico pra mostrar
+        │                          a nota depois; `CompletionField` ganhou um estado visual "concluído com atraso"
+        │                          pra cobrir esse caso, #192),
         │                          ExtendDeadlineDatePickerDialog + viewmodel/ (ItemOccurrenceUiState/UiAction/Event/
         │                          ViewModel/DialogState). `ItemDetailScreen` hoisteia os dois ViewModels lado a lado,
         │                          com uma ponte de sincronização (`OnItemUpdatedExternally`) — sem ela, uma escrita
@@ -303,7 +322,9 @@ feature/home/
     │                    — `isRefreshing: StateFlow<Boolean>` próprio (evento-driven, fora do `combine` de `uiState` —
     │                      exceção 3 do padrão MVI) alimenta o `PullToRefreshBox` da Home; dispara
     │                      `HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger`, gatilho manual do motor de
-    │                      reavaliação de ocorrências (#101/D, ver seção de persistência)
+    │                      reavaliação de ocorrências (#101/D, ver seção de persistência); mesma chamada também
+    │                      dispara `AutoBackupTrigger` (#193, ver seção Backup) — pull-to-refresh é hoje o único
+    │                      ponto de "estado assentado" que aciona o backup automático
     ├── priority/
     │   ├── screen/    — PriorityBottomSheet.kt + PriorityPreviewProvider.kt   — painel de prioridades, hoje um
     │   │                Bottom Sheet mostrado a partir da HomeScreen (state local, não rota própria), não mais
@@ -424,7 +445,7 @@ PK composta (itemId, tagId)
   2. `ProcessMissedOccurrencesUseCase` não grava um `MISSED` pra um `scheduledDate` que já é o `lastCompletedScheduledDate` do item — evita duplicar um registro `COMPLETED` que já existe pra aquele ciclo.
   3. `ProcessMissedOccurrencesUseCase` carrega `pendingExtensionOriginalDueDate`/`pendingExtensionCount` pro registro `MISSED` do primeiro ciclo pulado (mesmo padrão de `CompleteItemUseCase`/`IgnoreOccurrenceUseCase`) e limpa os dois campos do `Item` ao avançar — uma extensão pendente nunca resolvida não fica órfã.
 
-  Gatilhos: `ReminderCheckWorker` (`PeriodicWorkRequest`, `:core:notifications`) e pull-to-refresh manual na Home (`HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger.refreshNow()`, mesmo mecanismo que já disparava o worker fora do ciclo após concluir um item).
+  Gatilhos: `ReminderCheckWorker` (`PeriodicWorkRequest`, `:core:notifications`), pull-to-refresh manual na Home, e — desde #192 — retomar a tela de Listagem (`HomeEvent.OnScreenResumed`, disparado por um `LifecycleEventObserver` em `HomeScreen.kt` no `ON_RESUME`). Os três caminhos convergem no mesmo `HomeUseCase.refreshReminders()` → `ReminderRefreshTrigger.refreshNow()` (mesmo mecanismo que já disparava o worker fora do ciclo após concluir um item); o disparo por resume não toca `_isRefreshing`, pra não piscar o spinner de pull-to-refresh a cada volta de navegação.
 - **Urgência** (`UrgencyLevel`) é **derivada** de `dueDate` vs. hoje, não persistida: `< hoje` = `OVERDUE` (vermelho); `<= hoje + N dias` = `DUE_SOON` (âmbar); senão `NORMAL`. `N` (limiar "vencendo em breve") fica em `Constants` — 3 dias por padrão (a decidir se configurável). `isPinned` (item fixado manualmente) entra na priorização independente desse cálculo.
 
 ### Migrations (histórico, `data/local/database/migration/`)
@@ -487,15 +508,23 @@ Fluxo próprio e separado, específico pro Drive (**não** reaproveita Google Si
 Estrutura em `:core:backup`:
 - `GoogleAuthRepository` / `BackupRepository` (interfaces + impl auto-contidas no módulo)
 - Use cases de sessão (sem `Drive` como parâmetro de entrada): `GetSignInIntentUseCase`, `GetSignedInAccountUseCase`, `BuildDriveServiceUseCase`
-- Use cases de dados (recebem uma conta/`Drive`): `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`
+- Use cases de dados (recebem uma conta/`Drive`): `UploadBackupUseCase`, `ListBackupsUseCase`, `RestoreBackupUseCase`, `GetLastBackupInfoUseCase`, `DeleteBackupUseCase` (executa `files().delete()` do Drive na IO dispatcher)
 - `GoogleAuthUseCase` — facade sobre os use cases de sessão (`getSignInIntent`/`getSignedInAccount`/`buildDriveService`/`signOut`, #183). `signOut()` delega a `SignOutUseCase` → `GoogleAuthRepository.signOut()` → `GoogleSignIn.getClient(...).signOut()` via `.await()` (`kotlinx-coroutines-play-services`)
-- `BackupUseCase` — facade sobre os 4 use cases de dados; recebe `GoogleSignInAccount` direto e constrói o `Drive` internamente (compõe `BuildDriveServiceUseCase`), então o `BackupViewModel` nunca lida com o tipo `Drive` (#16)
+- `BackupUseCase` — facade sobre os 5 use cases de dados (incluindo `delete`); recebe `GoogleSignInAccount` direto e constrói o `Drive` internamente (compõe `BuildDriveServiceUseCase`), então o `BackupViewModel` nunca lida com o tipo `Drive` (#16)
 - `BackupViewModel` — checa conexão (`GoogleAuthUseCase.getSignedInAccount()`) no `init` e pré-carrega o último backup se já conectado; `isConnected` explícito em `BackupUiState.Ready`, evento `OnConnectClick` dedicado (não dispara sign-in implícito no primeiro clique de backup/restore)
-- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables). `BackupBottomSheet` é o **único** coletor de `BackupUiAction` (recebe `snackbarHostState` direto do `SettingsScreen`) — `Channel` não faz broadcast, então dois coletores do mesmo canal perdiam ações um pro outro de forma não-determinística (bug real, corrigido junto de #76).
+- Gestão inline da lista de backups (#184): o antigo fluxo de restore via dialog foi substituído por uma lista expansível dentro do próprio sheet (`OnToggleBackupListClick`, `availableBackups`/`selectedBackupFileId` em `BackupUiState`). `BackupListStatus` (sealed interface: `Loading`/`Empty`/`Error`/`Loaded`) modela o estado da lista explicitamente — erro e lista vazia viram UI inline persistente em vez de snackbar transiente; `OnRetryBackupListClick` reexecuta a busca. Deletar um backup (`OnDeleteBackupClick` → confirmação → `OnDeleteConfirmed`) reavalia o estado da lista (`InternalState.removeBackup`), incluindo a transição pra `Empty` quando o último backup é removido.
+- `BackupViewModel` + `BackupUiState`/`BackupUiAction`/`BackupEvent`, exibido via `ModalBottomSheet` a partir de um item de lista na tela de Configurações (`SettingsScreen` hoisteia o mesmo `BackupViewModel` via `koinViewModel()` — Koin resolve a mesma instância pro item da lista e pro sheet, sem precisar repassar o ViewModel explicitamente entre composables). `BackupBottomSheet` é o **único** coletor de `BackupUiAction` (recebe `snackbarHostState` direto do `SettingsScreen`) — `Channel` não faz broadcast, então dois coletores do mesmo canal perdiam ações um pro outro de forma não-determinística (bug real, corrigido junto de #76). Os efeitos colaterais (snackbars, restore) ficam isolados em `BackupActionEffects`, pra completarem mesmo se o sheet for dispensado no meio do processo. `BackupBottomSheet` usa uma prop `visible` (em vez de composição condicional no pai) — isso é o que permite ao `SettingsScreen` disparar `refreshAccountState()` (ver abaixo) reagindo à mudança de `isConnected`, sem depender de o sheet estar montado/desmontado.
+- `SettingsViewModel.accountUiState` era resolvido só na construção do ViewModel, então não refletia um sign-in disparado por um ViewModel de escopo diferente (o `BackupViewModel` do sheet) — `refreshAccountState()` reexecuta `getSignedInAccount()` manualmente; `SettingsScreen` chama isso via `LaunchedEffect` sempre que o estado de conexão do backup muda pra conectado (bug real, corrigido em #184).
 - `checkpoint()` (`UnideasDatabase`) força o WAL a descarregar no `.db` principal antes do upload: `SupportSQLiteDatabase.query()` é lazy no Android — o `PRAGMA` só roda de fato quando o cursor é lido (`.use { it.moveToFirst() }`), não bastava abrir e fechar. Sem isso todo backup subia um arquivo vazio (4096 bytes, só cabeçalho) — bug real encontrado e corrigido em #76.
 - Restore troca o arquivo físico do Room no disco; qualquer singleton Room/Koin já resolvido no processo (DAOs, repositórios) continua com o file handle antigo. Em vez de rastrear cada referência, `BackupUiAction.RestoreCompleted` reage reiniciando o processo inteiro via `Context.restartApplication()` (`:core:common`, ver seção abaixo) — só matar o processo garante que tudo seja reconstruído contra os dados restaurados; `finishAffinity()` sozinho não é suficiente (confirmado em device: processo sobrevive com o mesmo pid).
 
-Sem sync automático, sem bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda. `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+Sem sync bidirecional — só "fazer backup agora" / "restaurar backup" sob demanda **e** um backup automático opcional (#193, abaixo). `ViewModel → UseCase → Repository(Application)`: o `Context`/`Application` que as Google APIs exigem fica encapsulado no repositório, **nunca** no ViewModel.
+
+**Backup automático (#193), desligado por padrão.** Preferência própria em DataStore, self-contained em `:core:backup` (não `:data`/`:domain` — é específica de backup, mesma lógica que já mantém `BackupRepository`/`GoogleAuthRepository` dentro do módulo): `AutoBackupPreferences` (chaves `auto_backup_enabled`/`auto_backup_tracked_file_id`) → `AutoBackupRepository`/`Impl` → `GetAutoBackupEnabledUseCase`/`SetAutoBackupEnabledUseCase`/`GetAutoBackupTrackedFileIdUseCase` (leaf use cases) → `AutoBackupSettingsUseCase` (facade — `isEnabled`/`setEnabled`/`getTrackedFileId`, mesma razão de existir de `GoogleAuthUseCase`: mais de um use case pequeno injetado solto no ViewModel deveria virar facade).
+- **Gatilho: pull-to-refresh manual e retomar a Listagem (#192), nunca cada mutação de item.** `AutoBackupTrigger` (interface em `:domain`, impl `AutoBackupTriggerImpl` em `:core:backup` via `AutoBackupScheduler`/`AutoBackupWorker`, `WorkManager` `enqueueUniqueWork(..., ExistingWorkPolicy.KEEP, ...)`, mesmo padrão do `ReminderCheckWorker`) é chamado só de `HomeUseCase.refreshReminders()`, ao lado de `ReminderRefreshTrigger.refreshNow()` — e desde #192, `refreshReminders()` também é chamado ao retomar a tela de Listagem (`HomeEvent.OnScreenResumed`), não só no pull-to-refresh, então os dois caminhos contam como "estado assentado" pro backup automático. Cogitado (e revertido) hookar em `CompleteItemUseCase`/`EditItemUseCase`/etc. individualmente — cada mutação fina (ex: cada campo salvo no auto-save da Config Screen) dispararia um upload próprio.
+- **Regra de substituição (slot único, nunca empilha):** `PerformAutoBackupUseCase` — checa `isEnabled()`, faz upload via `BackupUseCase.upload(account)`, grava o novo `fileId` como rastreado, e só então apaga o `fileId` anterior (falha ao apagar é só logada via `Timber.w`, não desfaz o upload que já teve sucesso).
+- **Convivência com a lista de backups manuais (#184), sem duplicar:** `BackupListEntry(info: BackupInfo, isAutomatic: Boolean)` substitui `List<BackupInfo>` dentro de `BackupListStatus.Loaded`; `BackupViewModel.listBackups()` compara cada `fileId` retornado contra `AutoBackupSettingsUseCase.getTrackedFileId()` pra marcar a entrada certa — o slot automático é só uma tag visual sobre o mesmo arquivo, não uma entrada extra.
+- **UI:** `Switch` inline dentro de `ConnectedBackupContent` (`BackupBottomSheet.kt`, não virou função própria pra não estourar `TooManyFunctions` do arquivo), ligado a `BackupUiState.isAutoBackupEnabled`/`BackupEvent.OnAutoBackupToggled`. Tag "· Automático" somente-leitura no subtítulo do item de Backup em `SettingsScreen`, sem precisar abrir o sheet pra saber o estado.
 
 **Identidade de conta + logout (#183) não vivem no `BackupViewModel`.** `BackupViewModel` continua só upload/sync/restore de arquivo (sheet "Backup e Sincronização" na Settings). Ver qual conta está conectada, e sair dela, é responsabilidade do `SettingsViewModel` (`:feature:settings`), que usa `GoogleAuthUseCase` diretamente — sem `AccountViewModel` intermediário (ver `CLAUDE.md`). Logout **não** faz upload/backup automático (decisão consciente: o usuário pode estar saindo justamente pra descartar mudanças locais indesejadas) — só limpa o banco local (`ClearDatabaseUseCase`), desconecta (`signOut()`) e reseta a flag de onboarding (`SetOnboardingSeenUseCase(false)`). Também não existe "trocar de conta" como ação própria — trocar é sair e reconectar pela tela de Login/Onboarding, mesmo fluxo da primeira vez (o `RestoreBackupBottomSheet` de restaurar-ou-começar-do-zero só existe ali, em `:feature:onboarding`, não é reaproveitado pelo logout).
 

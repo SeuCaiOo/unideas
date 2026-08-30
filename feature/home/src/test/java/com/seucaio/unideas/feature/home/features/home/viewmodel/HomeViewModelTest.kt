@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.home.features.home.viewmodel
 import app.cash.turbine.test
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.SectionsAndTags
 import com.seucaio.unideas.domain.model.Tag
@@ -31,6 +32,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
 
 /** Each test targets whichever of `filterState`/`itemsState`/`uiState` owns the behavior. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -204,7 +206,7 @@ class HomeViewModelTest {
 
     @Test
     fun `when OnCompleteClicked for a known item should call HomeUseCase's complete`() = runTest {
-        val item = ItemStub.task(id = 1L)
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
         coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
         val vm = viewModel()
@@ -217,7 +219,7 @@ class HomeViewModelTest {
 
     @Test
     fun `when OnCompleteClicked fails should emit ShowError`() = runTest {
-        val item = ItemStub.task(id = 1L)
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
         coEvery { homeUseCase.complete(item, any()) } returns Result.failure(IllegalStateException("boom"))
         val vm = viewModel()
@@ -228,6 +230,39 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnCompleteClicked(1L))
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
+    }
+
+    @Test
+    fun `when OnCompleteClicked for a late recurring item should redirect to Detail instead of completing`() =
+        runTest {
+            val item = ItemStub.task(
+                id = 1L,
+                dueDate = LocalDate.now().minusDays(1),
+                recurrence = Recurrence.Weekly,
+            )
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+            val vm = viewModel()
+
+            vm.itemsState.test { awaitItem() }
+
+            vm.uiAction.test {
+                vm.onEvent(HomeEvent.OnCompleteClicked(1L))
+                assertEquals(HomeUiAction.NavigateToDetailForLateCompletion(1L), awaitItem())
+            }
+            coVerify(exactly = 0) { homeUseCase.complete(any(), any()) }
+        }
+
+    @Test
+    fun `when OnCompleteClicked for a late non-recurring item should complete it directly`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
+        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+        coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
+        val vm = viewModel()
+
+        vm.itemsState.test { awaitItem() }
+        vm.onEvent(HomeEvent.OnCompleteClicked(1L))
+
+        coVerify(exactly = 1) { homeUseCase.complete(item, any()) }
     }
 
     @Test
@@ -346,6 +381,17 @@ class HomeViewModelTest {
         val vm = viewModel()
 
         vm.onEvent(HomeEvent.OnRefreshRequested)
+
+        verify(exactly = 1) { homeUseCase.refreshReminders() }
+        assertEquals(false, vm.isRefreshing.value)
+    }
+
+    @Test
+    fun `when OnScreenResumed should call HomeUseCase's refreshReminders without touching isRefreshing`() = runTest {
+        every { homeUseCase.refreshReminders() } returns Unit
+        val vm = viewModel()
+
+        vm.onEvent(HomeEvent.OnScreenResumed)
 
         verify(exactly = 1) { homeUseCase.refreshReminders() }
         assertEquals(false, vm.isRefreshing.value)

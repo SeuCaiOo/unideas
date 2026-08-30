@@ -89,6 +89,19 @@ class ProcessMissedOccurrencesUseCaseTest {
     }
 
     @Test
+    fun `invoke resets remindersMuted when advancing past a skipped cycle`() = runTest {
+        val item = ItemStub.task(recurrence = Recurrence.Weekly, dueDate = today.minusWeeks(1), remindersMuted = true)
+        val advanced = item.copy(dueDate = today, remindersMuted = false)
+        coEvery { historyRepository.insert(any()) } returns 1L
+        coEvery { repository.updateItem(advanced) } returns Unit
+
+        val result = useCase(item, today)
+
+        assertEquals(false, result.getOrNull()?.remindersMuted)
+        coVerify(exactly = 1) { repository.updateItem(advanced) }
+    }
+
+    @Test
     fun `invoke skips MISSED for a cycle already completed and clears lastCompletedScheduledDate`() = runTest {
         val item = ItemStub.task(
             recurrence = Recurrence.Weekly,

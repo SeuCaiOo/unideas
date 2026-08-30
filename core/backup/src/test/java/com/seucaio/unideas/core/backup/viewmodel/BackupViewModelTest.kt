@@ -5,10 +5,12 @@ import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
@@ -33,6 +35,9 @@ class BackupViewModelTest {
     @MockK
     private lateinit var backupUseCase: BackupUseCase
 
+    @MockK
+    private lateinit var autoBackupSettingsUseCase: AutoBackupSettingsUseCase
+
     private val account: GoogleSignInAccount = mockk()
 
     @Before
@@ -40,6 +45,8 @@ class BackupViewModelTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { googleAuthUseCase.getSignedInAccount() } returns null
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
+        coEvery { autoBackupSettingsUseCase.getTrackedFileId() } returns null
     }
 
     @After
@@ -47,7 +54,7 @@ class BackupViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase)
+    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase, autoBackupSettingsUseCase)
 
     @Test
     fun `when created with no signed-in account should expose disconnected state`() = runTest {
@@ -229,7 +236,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                 ),
                 awaitItem(),
             )
@@ -254,7 +261,10 @@ class BackupViewModelTest {
             vm.onEvent(BackupEvent.OnToggleBackupListClick)
 
             assertEquals(
-                BackupUiState.Ready(isConnected = true, backupListStatus = BackupListStatus.Loaded(backups)),
+                BackupUiState.Ready(
+                    isConnected = true,
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
+                ),
                 awaitItem(),
             )
         }
@@ -380,7 +390,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                     selectedBackupFileId = "file-2",
                 ),
                 awaitItem(),
@@ -395,7 +405,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(listOf(backups[0])),
+                    backupListStatus = BackupListStatus.Loaded(listOf(BackupListEntry(backups[0]))),
                     selectedBackupFileId = null,
                 ),
                 awaitItem(),
@@ -418,7 +428,7 @@ class BackupViewModelTest {
                 BackupUiState.Ready(
                     isConnected = true,
                     isBackupListVisible = true,
-                    backupListStatus = BackupListStatus.Loaded(backups),
+                    backupListStatus = BackupListStatus.Loaded(backups.map { BackupListEntry(it) }),
                 ),
                 awaitItem(),
             )
@@ -430,6 +440,62 @@ class BackupViewModelTest {
                     isConnected = true,
                     isBackupListVisible = true,
                     backupListStatus = BackupListStatus.Empty,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `when created should expose the current auto-backup preference`() = runTest {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns true
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnAutoBackupToggled should persist the preference and update the state`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setEnabled(true) } returns Unit
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnAutoBackupToggled(true))
+
+            assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
+        }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(true) }
+    }
+
+    @Test
+    fun `when sync finds a tracked auto-backup should mark the matching entry as automatic`() = runTest {
+        val backups = listOf(
+            BackupInfo("file-1", LocalDateTime.now(), 1024L),
+            BackupInfo("file-2", LocalDateTime.now(), 1024L),
+        )
+        coEvery { backupUseCase.list(account) } returns Result.success(backups)
+        coEvery { autoBackupSettingsUseCase.getTrackedFileId() } returns "file-2"
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Sync))
+
+            assertEquals(
+                BackupUiState.Ready(
+                    isConnected = true,
+                    isBackupListVisible = true,
+                    backupListStatus = BackupListStatus.Loaded(
+                        listOf(
+                            BackupListEntry(backups[0], isAutomatic = false),
+                            BackupListEntry(backups[1], isAutomatic = true),
+                        ),
+                    ),
                 ),
                 awaitItem(),
             )

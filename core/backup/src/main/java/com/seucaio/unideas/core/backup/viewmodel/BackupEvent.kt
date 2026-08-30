@@ -15,4 +15,5 @@ sealed interface BackupEvent {
     data object OnRestoreClick : BackupEvent
     data class OnDeleteBackupClick(val fileId: String) : BackupEvent
     data class OnDeleteConfirmed(val fileId: String) : BackupEvent
+    data class OnAutoBackupToggled(val enabled: Boolean) : BackupEvent
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.seucaio.unideas.domain.model.ItemType
+import com.seucaio.unideas.domain.model.ReminderWarning
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.ui.components.fields.CompletionField
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
@@ -27,17 +28,23 @@ fun ItemFormFooter(
     onIgnoreClicked: () -> Unit,
     onExtendDeadlineClicked: () -> Unit,
     modifier: Modifier = Modifier,
+    onMuteRemindersToggled: (() -> Unit)? = null,
 ) {
     Column(modifier) {
         if (state.typeIsTask) {
+            val canMuteReminders = state.reminderWarning != ReminderWarning.None &&
+                !occurrenceState.isCompleted && !occurrenceState.isLate
             CompletionField(
                 isCompleted = occurrenceState.isCompleted,
                 isLate = occurrenceState.isLate,
+                completedLate = occurrenceState.completedLate,
                 completedAt = occurrenceState.completedAt,
                 overdueDays = occurrenceState.dueDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()).toInt() },
                 onCompleteClicked = onCompleteClicked,
                 onExtendDeadlineClicked = onExtendDeadlineClicked,
                 onIgnoreClicked = if (occurrenceState.canIgnore) onIgnoreClicked else null,
+                remindersMuted = occurrenceState.remindersMuted,
+                onMuteRemindersToggled = if (canMuteReminders) onMuteRemindersToggled else null,
                 modifier = Modifier.padding(top = 16.dp),
             )
         }

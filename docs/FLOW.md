@@ -43,8 +43,10 @@ HomeScreen
   │     → item da lista: título, cor de urgência, ícone de recorrência (se houver),
   │        checkbox de conclusão (SÓ na aba Tarefas)
   │           → toca no item → ItemDetailScreen  (ItemsRoute.Detail(itemId = id))
-  │           → checkbox (Tarefas) → marca a ocorrência atual como concluída (não gera item novo —
-  │              ver ARCHITECTURE.md); se atrasada/recorrente com histórico, mais nuance fica em ItemDetailScreen
+  │           → checkbox (Tarefas) → item vencido **e** recorrente redireciona pra ItemDetailScreen já
+  │              no fluxo de nota obrigatória (#192); qualquer outro caso (no prazo, ou vencido não-recorrente)
+  │              marca a ocorrência atual como concluída direto, sem sair da Home (não gera item novo —
+  │              ver ARCHITECTURE.md)
   │           → toque longo → entra em modo Seleção (HomeMode.Selection)
   │     → [modo Seleção] selecionar itens (inclusive "selecionar todos" por seção) → FAB expansível
   │        (mesmo padrão do AddItemFab) → [Excluir] (dialog de confirmação — #140) ou [Arquivar]
@@ -68,7 +70,8 @@ HomeScreen
 - Seleção múltipla e exclusão em lote vivem na Home (long-press num item da lista), não numa tela separada.
 - Cor de urgência (vermelho = vencido, âmbar = vencendo em ≤N dias) é o **único** uso dessas cores na UI.
 - **Pull-to-refresh** (#101/D): puxar a lista pra baixo dispara o motor de reavaliação de ocorrências fora do ciclo periódico do `ReminderCheckWorker` — mesmo gatilho manual que existia só via Settings ("Rodar verificação de lembretes agora"), agora também acessível direto na tela principal.
-- Grupos de seção na lista abrem **expandidos por padrão** (#147) — antes só abriam expandidos se fixados; sem nada fixado, a Home inteira abria recolhida.
+- **Retomar a Home também reavalia** (#192): voltar pra Home (navegação de volta, app volta de background) dispara o mesmo `homeUseCase.refreshReminders()` do pull-to-refresh, sem piscar o spinner — cobre o caso de concluir um item no Detalhe e a Listagem não refletir o novo estado até o próximo pull-to-refresh/scan.
+- Grupos de seção na lista abrem **expandidos por padrão** (#147), **exceto quando todos os itens do grupo já estão concluídos** — nesse caso abrem recolhidos por padrão (#192, inclui o grupo de fixados e o de "sem seção"); usuário sempre pode expandir manualmente.
 - O botão "Prioridades" na `HomeTopBar` e o auto-abrir do `PriorityBottomSheet` no cold start só aparecem/disparam quando existe **pelo menos um item de prioridade** (#147) — antes disparava sempre, mesmo vazio.
 
 ---
@@ -124,28 +127,36 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
   → (todo o resto — Seção, Tags, Data de vencimento, Recorrência, Horário, Aviso — vive só na
      Config Screen desde o #162; não aparece mais inline aqui, ver seção abaixo)
   → item arquivado (`status == ARCHIVED`) → badge de tipo vira `FilterChip` "Arquivado" (ícone
-     Archive), empilhado acima do badge de tipo Tarefa/Anotação → toca → ConfirmationDialog →
+     Archive), empilhado acima do badge de tipo Tarefa/Anotação → toca → ConfirmationBottomSheet →
      confirma → desarquiva (#168)
   → ações (Tarefa, ocorrência dentro do prazo):
-       [Concluir]      → nota opcional; ItemOccurrenceViewModel (#101/B), separado do form
-  → ações (Tarefa, ocorrência vencida — OverdueOccurrenceActions):
-       [Concluir atrasado] → NoteConfirmDialog, nota **obrigatória** explicando o atraso (#101/A)
-       [Ignorar]            → NoteConfirmDialog, nota **obrigatória**; avança dueDate um ciclo na hora,
-                               sem esperar o worker (#101/A)
+       [Concluir]      → item recorrente: NoteConfirmBottomSheet com nota opcional; item não-recorrente:
+                          completa direto, sem sheet. ItemOccurrenceViewModel (#101/B), separado do form.
+                          Em qualquer caso, ao concluir com sucesso volta automaticamente pra Home depois
+                          do snackbar — só na conclusão, não ao reabrir/desmarcar (#192)
+  → ações (Tarefa, ocorrência vencida — checkbox "Concluir" + OverdueOccurrenceActions):
+       [Concluir atrasado] → item **recorrente**: NoteConfirmBottomSheet, nota **obrigatória** explicando
+                              o atraso (#101/A). Item **não-recorrente**: completa direto, sem sheet — não
+                              tem tela de Histórico pra mostrar a nota depois, então não faz sentido pedir
+                              (decisão revertida em #192 — a versão inicial ampliava a exigência de nota pra
+                              não-recorrente também, mas ficava sem onde ser vista). `CompletionField` mostra
+                              um estado visual "concluído com atraso" (cor de aviso, não verde) nesse caso.
+       [Ignorar]            → NoteConfirmBottomSheet, nota **obrigatória**; avança dueDate um ciclo na hora,
+                               sem esperar o worker — só item recorrente (`canIgnore = isLate && isRecurring`) (#101/A)
        [Aumentar prazo]     → ExtendDeadlineDatePickerDialog; empurra dueDate sem fechar a ocorrência
-                               (não conta como concluída nem perdida) (#101/A)
+                               (não conta como concluída nem perdida) — qualquer item vencido, recorrente ou não (#101/A)
   → ações (comuns, só quando state.isEditing — ver acima):
        [Compartilhar]     → share sheet do sistema (sempre visível, mesmo em criação)
        [Configurações]    → NavCard "Configurações" → ItemConfigScreen (ItemsRoute.Config(itemId,
                              isNewItem)) — substituiu o ícone de engrenagem no toolbar do #160 (#162)
-       [Excluir]          → ConfirmationDialog → confirma → volta pra Home (sempre visível)
+       [Excluir]          → ConfirmationBottomSheet → confirma → volta pra Home (sempre visível)
        [Ver histórico]    → NavCard "Histórico" → ItemHistoryScreen (ItemsRoute.History(itemId)) — só
                              pra item recorrente; resumo (% no prazo, sequência atual), filtros, cartão
                              por ocorrência com hora, dias de atraso, nota e trilha de extensão (#101/C).
                              CRUD completo desde o #169: FAB → AddEditHistoryEntryBottomSheet (data
                              retroativa, não-futura e ainda não usada; nota obrigatória se marcar
                              concluída com atraso) cria uma entrada; menu por card (editar/excluir) reabre
-                             o mesmo sheet ou ConfirmationDialog. Diferente de completar/desmarcar o
+                             o mesmo sheet ou ConfirmationBottomSheet. Diferente de completar/desmarcar o
                              item ao vivo (#101/B) — não mexe em `Item.lastCompletedScheduledDate`
   → "←" → volta
 ```
@@ -169,7 +180,7 @@ ItemConfigScreen  (ItemsRoute.Config(itemId, isNewItem = false))
      — mesmos campos/componentes do form principal, disponíveis pros dois tipos (#160)
   → Zona de risco: tipo atual do item + botão [Alterar] — só aparece quando isNewItem == false
        (item recém-criado, sem histórico/ocorrência acumulada, não tem risco a avisar — #165 batch)
-       → ConfirmationDialog (confirmação genérica, título/mensagem por tipo alvo)
+       → ConfirmationBottomSheet (confirmação genérica, título/mensagem por tipo alvo)
        → confirma → reset total: dueDate/dueTime/recurrence/reminderWarning voltam a
          nulo/None, mesmo que o novo tipo também suportasse esses campos — nunca seletivo.
          Título/descrição/seção/tags NUNCA são tocados. Histórico (`ItemCompletionHistory`)
@@ -198,7 +209,7 @@ SectionsListScreen  (SectionsRoute.List)
        [se há itens vinculados]
        → BLOQUEADO: dialog informando quantos itens estão vinculados (sem exclusão)
        [se não há]
-       → ConfirmationDialog → confirma → remove
+       → ConfirmationBottomSheet → confirma → remove
 ```
 
 ---
@@ -256,11 +267,15 @@ SettingsScreen  (SettingsRoute.Settings)
   │     Não existe "Trocar de conta" — pra trocar, o usuário sai e reconecta pela tela de Login,
   │     igual da primeira vez.
   │
-  ├── Backup (Google Drive) — inalterado desde antes do #183, gatilho de conexão inicial
+  ├── Backup (Google Drive) — gatilho de conexão inicial, gestão inline da lista desde #184
   │     → status de conexão (conectado / desconectado) + botão Conectar
   │           → GoogleSignIn (escopo Drive) → volta com conta conectada
   │     → "Fazer backup agora" → UploadBackupUseCase → atualiza data/hora do último backup
-  │     → "Restaurar backup" → ListBackups → escolhe → RestoreBackupUseCase
+  │     → toggle "ver backups" → expande lista inline (Loading/Empty/Error/Loaded, BackupListStatus)
+  │           → Error → "Tentar novamente" → refaz a busca
+  │           → seleciona um backup → "Restaurar" → RestoreBackupUseCase → restart do processo
+  │           → ícone de excluir num backup → confirmação → DeleteBackupUseCase → lista reavalia
+  │                 (vira Empty se era o último backup)
   │     → texto de status: data/hora do último backup
   │
   └── Organizar

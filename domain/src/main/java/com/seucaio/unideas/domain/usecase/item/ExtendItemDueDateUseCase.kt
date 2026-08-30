@@ -22,6 +22,7 @@ class ExtendItemDueDateUseCase(
                 dueDate = newDueDate,
                 pendingExtensionOriginalDueDate = item.pendingExtensionOriginalDueDate ?: dueDate,
                 pendingExtensionCount = item.pendingExtensionCount + 1,
+                remindersMuted = false,
             )
             repository.updateItem(extended)
             reminderRefreshTrigger.refreshNow()

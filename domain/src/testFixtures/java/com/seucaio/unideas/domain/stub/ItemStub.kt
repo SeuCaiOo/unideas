@@ -37,6 +37,7 @@ object ItemStub {
         pendingExtensionOriginalDueDate: LocalDate? = null,
         pendingExtensionCount: Int = 0,
         status: ItemStatus = ItemStatus.ACTIVE,
+        remindersMuted: Boolean = false,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -55,6 +56,7 @@ object ItemStub {
         pendingExtensionOriginalDueDate = pendingExtensionOriginalDueDate,
         pendingExtensionCount = pendingExtensionCount,
         status = status,
+        remindersMuted = remindersMuted,
         tags = tags,
     )
 

@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class ItemDetailViewModel(
-    private val itemId: Long?,
+    private val initialItemId: Long?,
     private val itemFormUseCase: ItemFormUseCase,
     private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
     private val setItemArchivedUseCase: SetItemArchivedUseCase,
@@ -40,26 +40,26 @@ class ItemDetailViewModel(
     }
 
     private var originalItem: Item? = null
-    private var currentItemId: Long? = itemId
+    private var currentItemId: Long? = initialItemId
     private var debounceJob: Job? = null
     private var hasPendingTextSave = false
 
     private val editUiState = MutableStateFlow(
         ItemDetailUiState(
-            itemId = itemId,
-            isLoading = itemId != null,
+            itemId = initialItemId,
+            isLoading = initialItemId != null,
             type = initialType
         )
     )
 
-    val uiState: StateFlow<ItemDetailUiState> = if (itemId == null) {
+    val uiState: StateFlow<ItemDetailUiState> = if (initialItemId == null) {
         savedStateHandle.getStateFlow(UI_STATE_KEY, ItemDetailUiState(type = initialType))
     } else {
         editUiState.asStateFlow()
     }
 
     private fun updateUiState(transform: (ItemDetailUiState) -> ItemDetailUiState) {
-        if (itemId == null) {
+        if (initialItemId == null) {
             savedStateHandle[UI_STATE_KEY] = transform(uiState.value)
         } else {
             editUiState.update(transform)
@@ -78,7 +78,7 @@ class ItemDetailViewModel(
                 updateUiState { it.setReferenceData(sections, tags) }
             }
             .launchIn(viewModelScope)
-        if (itemId != null) viewModelScope.launch { loadItem(itemId) }
+        if (initialItemId != null) viewModelScope.launch { loadItem(initialItemId) }
     }
 
     private suspend fun loadItem(id: Long) {
@@ -103,7 +103,7 @@ class ItemDetailViewModel(
             is ItemDetailEvent.OnBackRequested -> handleBackRequested()
             is ItemDetailEvent.OnDiscardConfirmed -> handleDiscardConfirmed()
             is ItemDetailEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
-            is ItemDetailEvent.OnScreenResumed -> itemId?.let { id -> viewModelScope.launch { loadItem(id) } }
+            is ItemDetailEvent.OnScreenResumed -> currentItemId?.let { id -> viewModelScope.launch { loadItem(id) } }
             is ItemDetailEvent.OnUnarchiveChipClicked -> _dialogState.update { ItemDetailDialogState.UnarchiveConfirm }
             is ItemDetailEvent.OnUnarchiveConfirmClicked -> {
                 _dialogState.update { ItemDetailDialogState.None }
@@ -137,7 +137,7 @@ class ItemDetailViewModel(
     }
 
     private fun retryLoad() {
-        val id = itemId ?: return
+        val id = initialItemId ?: return
         updateUiState { it.startLoading() }
         viewModelScope.launch { loadItem(id) }
     }
@@ -176,7 +176,7 @@ class ItemDetailViewModel(
         }
     }
 
-    private fun discardConfirmDialogState(): ItemDetailDialogState.DiscardConfirm = if (itemId != null) {
+    private fun discardConfirmDialogState(): ItemDetailDialogState.DiscardConfirm = if (initialItemId != null) {
         ItemDetailDialogState.DiscardConfirm(
             titleRes = R.string.item_detail_discard_edit_title,
             messageRes = R.string.item_detail_discard_edit_message,
@@ -191,7 +191,7 @@ class ItemDetailViewModel(
     private fun handleDiscardConfirmed() = viewModelScope.launch {
         _dialogState.update { ItemDetailDialogState.None }
         val id = currentItemId
-        if (itemId == null && id != null) {
+        if (initialItemId == null && id != null) {
             itemFormUseCase.delete(id)
                 .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
                 .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }

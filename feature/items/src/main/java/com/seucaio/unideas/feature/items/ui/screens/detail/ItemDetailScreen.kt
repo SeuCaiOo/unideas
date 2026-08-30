@@ -72,6 +72,7 @@ fun ItemDetailScreen(
 
     LifecycleResumeEffect(Unit) {
         viewModel.onEvent(ItemDetailEvent.OnScreenResumed)
+        occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnScreenResumed)
         onPauseOrDispose { }
     }
 
@@ -184,7 +185,7 @@ private fun ItemDetailScreenContent(
                 onMuteRemindersToggled = { onOccurrenceEvent(ItemOccurrenceEvent.OnMuteRemindersToggled) },
                 onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
                 onNavigateToHistory = uiState.itemId?.let { savedItemId ->
-                    if (uiState.recurrence != Recurrence.None) {
+                    if (uiState.recurrence != Recurrence.None && occurrenceState.hasHistory) {
                         { onNavigateToHistory(savedItemId) }
                     } else {
                         null

@@ -1,6 +1,7 @@
 package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel
 
 import app.cash.turbine.test
+import com.seucaio.unideas.domain.model.ItemCompletionHistory
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
@@ -40,6 +41,7 @@ class ItemOccurrenceViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
+        every { itemOccurrenceUseCase.getHistory(any()) } returns flowOf(emptyList())
     }
 
     @After
@@ -386,5 +388,71 @@ class ItemOccurrenceViewModelTest {
 
             assertEquals(ItemOccurrenceDialogState.CompleteConfirm(isLate = false), vm.dialogState.value)
             coVerify(exactly = 0) { itemOccurrenceUseCase.complete(any(), any(), any()) }
+        }
+
+    @Test
+    fun `when an item has no completion history hasHistory should be false`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(emptyList())
+
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        assertEquals(false, vm.uiState.value.hasHistory)
+    }
+
+    @Test
+    fun `when getHistory emits records should update hasHistory to true`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        val history = ItemCompletionHistory(
+            itemId = 1L,
+            scheduledDate = ItemStub.TODAY,
+            completedAt = ItemStub.TODAY.atTime(9, 0),
+        )
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(history))
+
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        assertEquals(true, vm.uiState.value.hasHistory)
+    }
+
+    @Test
+    fun `when OnScreenResumed fires for a known item should reload it from the repository`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.None, dueDate = null)
+        val updated = item.copy(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        every { itemFormUseCase.get(1L) } returnsMany listOf(flowOf(item), flowOf(updated))
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnScreenResumed)
+
+        assertEquals(true, vm.uiState.value.isRecurring)
+        coVerify(exactly = 2) { itemFormUseCase.get(1L) }
+    }
+
+    @Test
+    fun `when OnScreenResumed fires before the item has ever been created should not call the repository`() =
+        runTest {
+            val vm = viewModel(itemId = null)
+
+            vm.onEvent(ItemOccurrenceEvent.OnScreenResumed)
+
+            coVerify(exactly = 0) { itemFormUseCase.get(any()) }
+        }
+
+    @Test
+    fun `when a new item is persisted then OnScreenResumed fires should reload using the real item id`() =
+        runTest {
+            val createdItem = ItemStub.task(id = 42L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+            every { itemFormUseCase.get(42L) } returns flowOf(createdItem)
+            val vm = viewModel(itemId = null)
+            vm.onEvent(ItemOccurrenceEvent.OnItemUpdatedExternally(createdItem))
+
+            vm.onEvent(ItemOccurrenceEvent.OnScreenResumed)
+
+            coVerify(exactly = 1) { itemFormUseCase.get(42L) }
         }
 }

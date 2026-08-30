@@ -68,7 +68,7 @@ class ItemDetailViewModelTest {
         savedStateHandle: SavedStateHandle = SavedStateHandle()
     ) =
         ItemDetailViewModel(
-            itemId = itemId,
+            initialItemId = itemId,
             itemFormUseCase = itemFormUseCase,
             sectionsAndTagsUseCase = sectionsAndTagsUseCase,
             setItemArchivedUseCase = setItemArchivedUseCase,
@@ -174,6 +174,37 @@ class ItemDetailViewModelTest {
             assertEquals(false, state.isLoading)
         }
     }
+
+    @Test
+    fun `when OnScreenResumed fires after creating a new item should reload using the real item id`() =
+        runTest {
+            coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)
+            val configuredElsewhere = ItemStub.task(id = 10L, title = "Nova tarefa", sectionId = 5L)
+            every { itemFormUseCase.get(10L) } returns flowOf(configuredElsewhere)
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Nova tarefa"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            vm.onEvent(ItemDetailEvent.OnScreenResumed)
+
+            coVerify(exactly = 1) { itemFormUseCase.get(10L) }
+            vm.uiState.test {
+                val state = awaitItem()
+                assertEquals(5L, state.sectionId)
+            }
+        }
+
+    @Test
+    fun `when OnScreenResumed fires before any title was ever saved should not call the repository`() =
+        runTest {
+            val vm = viewModel(itemId = null)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnScreenResumed)
+
+            coVerify(exactly = 0) { itemFormUseCase.get(any()) }
+        }
 
     @Test
     fun `when a section or tag is created elsewhere should reflect in availableSections and availableTags live`() =

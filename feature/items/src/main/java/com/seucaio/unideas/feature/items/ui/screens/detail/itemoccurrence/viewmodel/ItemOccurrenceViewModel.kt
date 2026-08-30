@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,6 +30,8 @@ class ItemOccurrenceViewModel(
 ) : ViewModel() {
 
     private var originalItem: Item? = null
+    private var currentItemId: Long? = itemId
+    private var historyObserved = false
 
     private val _uiState = MutableStateFlow(ItemOccurrenceUiState())
     val uiState: StateFlow<ItemOccurrenceUiState> = _uiState.asStateFlow()
@@ -42,21 +46,34 @@ class ItemOccurrenceViewModel(
     init {
         val id = itemId
         if (id != null) {
+            observeHistory(id)
             viewModelScope.launch {
-                val item = itemFormUseCase.get(id).first() ?: return@launch
-                originalItem = item
-                _uiState.update {
-                    it.copy(
-                        isCompleted = item.isCompleted,
-                        completedAt = item.completedAt,
-                        dueDate = item.dueDate,
-                        isRecurring = item.isRecurring,
-                        remindersMuted = item.remindersMuted,
-                    )
-                }
+                loadItem(id)
                 if (promptCompleteOnEntry) handleCompleteClicked()
             }
         }
+    }
+
+    private suspend fun loadItem(id: Long) {
+        val item = itemFormUseCase.get(id).first() ?: return
+        originalItem = item
+        _uiState.update {
+            it.copy(
+                isCompleted = item.isCompleted,
+                completedAt = item.completedAt,
+                dueDate = item.dueDate,
+                isRecurring = item.isRecurring,
+                remindersMuted = item.remindersMuted,
+            )
+        }
+    }
+
+    private fun observeHistory(id: Long) {
+        if (historyObserved) return
+        historyObserved = true
+        itemOccurrenceUseCase.getHistory(id)
+            .onEach { history -> _uiState.update { it.copy(hasHistory = history.isNotEmpty()) } }
+            .launchIn(viewModelScope)
     }
 
     fun onEvent(event: ItemOccurrenceEvent) {
@@ -93,10 +110,15 @@ class ItemOccurrenceViewModel(
             is ItemOccurrenceEvent.OnDialogDismissed -> _dialogState.update { ItemOccurrenceDialogState.None }
 
             is ItemOccurrenceEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
+
+            is ItemOccurrenceEvent.OnScreenResumed ->
+                currentItemId?.let { id -> viewModelScope.launch { loadItem(id) } }
         }
     }
 
     private fun handleItemUpdatedExternally(item: Item) {
+        currentItemId = item.id
+        observeHistory(item.id)
         val current = originalItem
         originalItem = current?.copy(
             title = item.title,

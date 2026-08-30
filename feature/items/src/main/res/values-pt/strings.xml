@@ -66,6 +66,9 @@
     <string name="item_detail_reopen">Reabrir tarefa</string>
     <string name="item_detail_completed_status">Concluída</string>
     <string name="item_detail_completed_late_status">Concluída com atraso</string>
+    <string name="item_detail_mute_reminders">Parar de avisar</string>
+    <string name="item_detail_unmute_reminders">Retomar avisos</string>
+    <string name="item_detail_reminders_muted_hint">Avisos pausados até o prazo</string>
     <string name="item_detail_completed_on">Concluída em %1$s</string>
     <plurals name="item_detail_overdue_days">
         <item quantity="one">Venceu há %d dia</item>

@@ -15,7 +15,7 @@ val itemsModule = module {
     // type) at the call site; ParametersHolder reads them back in that same order.
     viewModel { params ->
         ItemDetailViewModel(
-            itemId = params.getOrNull(),
+            initialItemId = params.getOrNull(),
             itemFormUseCase = get(),
             sectionsAndTagsUseCase = get(),
             setItemArchivedUseCase = get(),

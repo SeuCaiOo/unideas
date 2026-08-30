@@ -68,7 +68,7 @@ class ItemDetailViewModelTest {
         savedStateHandle: SavedStateHandle = SavedStateHandle()
     ) =
         ItemDetailViewModel(
-            itemId = itemId,
+            initialItemId = itemId,
             itemFormUseCase = itemFormUseCase,
             sectionsAndTagsUseCase = sectionsAndTagsUseCase,
             setItemArchivedUseCase = setItemArchivedUseCase,

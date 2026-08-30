@@ -343,6 +343,36 @@ class ItemOccurrenceViewModelTest {
     }
 
     @Test
+    fun `when OnMuteRemindersToggled on an unmuted item should mute it`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(3), remindersMuted = false)
+        val muted = item.copy(remindersMuted = true)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemOccurrenceUseCase.setRemindersMuted(item, true) } returns Result.success(muted)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnMuteRemindersToggled)
+
+        assertEquals(true, vm.uiState.value.remindersMuted)
+        coVerify(exactly = 1) { itemOccurrenceUseCase.setRemindersMuted(item, true) }
+    }
+
+    @Test
+    fun `when OnMuteRemindersToggled on a muted item should unmute it`() = runTest {
+        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(3), remindersMuted = true)
+        val unmuted = item.copy(remindersMuted = false)
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        coEvery { itemOccurrenceUseCase.setRemindersMuted(item, false) } returns Result.success(unmuted)
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        vm.onEvent(ItemOccurrenceEvent.OnMuteRemindersToggled)
+
+        assertEquals(false, vm.uiState.value.remindersMuted)
+        coVerify(exactly = 1) { itemOccurrenceUseCase.setRemindersMuted(item, false) }
+    }
+
+    @Test
     fun `when OnItemUpdatedExternally changes recurrence a subsequent complete should use the updated item`() =
         runTest {
             val item = ItemStub.task(id = 1L, recurrence = Recurrence.None, dueDate = null)

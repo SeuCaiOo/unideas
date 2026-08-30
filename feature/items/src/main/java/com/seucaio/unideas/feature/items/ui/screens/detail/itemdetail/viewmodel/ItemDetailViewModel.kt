@@ -131,6 +131,7 @@ class ItemDetailViewModel(
             dueTime = item.dueTime,
             recurrence = item.recurrence,
             reminderWarning = item.reminderWarning,
+            remindersMuted = item.remindersMuted,
         )
         updateUiState { it.applyExternalOccurrenceUpdate(item) }
     }

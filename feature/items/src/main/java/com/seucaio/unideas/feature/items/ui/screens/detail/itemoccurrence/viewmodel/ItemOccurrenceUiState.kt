@@ -8,6 +8,7 @@ data class ItemOccurrenceUiState(
     val completedAt: LocalDateTime? = null,
     val dueDate: LocalDate? = null,
     val isRecurring: Boolean = false,
+    val remindersMuted: Boolean = false,
 ) {
 
     val isLate: Boolean

@@ -78,7 +78,6 @@ class DatabaseSeeder(
         seedFullPriorityTasks(today, sections, tags)
         seedFullExtraTasks(today, sections, tags)
         seedFullReevaluationScenarios(today, sections)
-        seedFullReminderMuteScenarios(today, sections)
         seedFullNotes(today, sections, tags)
         seedFullDescriptionScenarios(today, sections)
     }
@@ -177,9 +176,9 @@ class DatabaseSeeder(
         )
     }
 
-    // Pre-set item/history states the occurrence reevaluation engine (#151) reads on its own —
-    // lets a manual pull-to-refresh test exercise the dedup/carry-over paths without editing
-    // the DB by hand. Titles double as the expected outcome, checkable at a glance post-refresh.
+    // Pre-set item/history/reminder states that background engines (occurrence reevaluation #151,
+    // reminder mute #196) read on their own — lets manual testing exercise those paths without
+    // editing the DB by hand. Titles double as the expected outcome, checkable at a glance.
     private suspend fun seedFullReevaluationScenarios(today: LocalDate, sections: FullSections) {
         insertItem(
             SeedItem(
@@ -215,13 +214,9 @@ class DatabaseSeeder(
                 pendingExtensionCount = 1,
             ),
         )
-    }
-
-    // Pending items with a reminderWarning window already open, one muted and one not — lets
-    // opening the item in the Detail screen show the "Parar de avisar"/"Retomar avisos" toggle
-    // right away (#196). Titles double as the expected outcome, same pattern as the reevaluation
-    // scenarios above.
-    private suspend fun seedFullReminderMuteScenarios(today: LocalDate, sections: FullSections) {
+        // Pending items with a reminderWarning window already open, one muted and one not — lets
+        // opening the item in the Detail screen show the "Parar de avisar"/"Retomar avisos" toggle
+        // right away (#196).
         insertItem(
             SeedItem(
                 ItemType.TASK,

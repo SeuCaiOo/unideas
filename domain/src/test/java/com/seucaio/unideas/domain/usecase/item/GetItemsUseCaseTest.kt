@@ -39,4 +39,17 @@ class GetItemsUseCaseTest {
         assertEquals(items, result)
         verify(exactly = 1) { repository.getItems(ItemType.NOTE, null, emptyList()) }
     }
+
+    @Test
+    fun `invoke sinks completed items below pending ones while preserving relative order`() = runTest {
+        val pendingDueSoon = ItemStub.task(id = 1L)
+        val completed = ItemStub.completedTask(id = 2L)
+        val pendingDueLater = ItemStub.task(id = 3L)
+        every { repository.getItems(ItemType.TASK, null, emptyList()) } returns
+            flowOf(listOf(completed, pendingDueSoon, pendingDueLater))
+
+        val result = useCase(type = ItemType.TASK).first()
+
+        assertEquals(listOf(pendingDueSoon, pendingDueLater, completed), result)
+    }
 }

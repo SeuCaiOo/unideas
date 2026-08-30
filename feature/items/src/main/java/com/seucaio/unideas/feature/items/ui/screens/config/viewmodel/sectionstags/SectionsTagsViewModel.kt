@@ -45,13 +45,19 @@ class SectionsTagsViewModel(
 
     private fun handleCreateSection(name: String) = viewModelScope.launch {
         sectionsAndTagsUseCase.addSection(name)
-            .onSuccess { handleDialog(SectionsTagsDialogState.None) }
+            .onSuccess { id ->
+                handleDialog(SectionsTagsDialogState.None)
+                sendUiAction(SectionsTagsUiAction.SectionCreated(id))
+            }
             .onFailure { handleFailure(it, R.string.item_config_section_name_required) }
     }
 
     private fun handleCreateTag(name: String) = viewModelScope.launch {
         sectionsAndTagsUseCase.addTag(name)
-            .onSuccess { handleDialog(SectionsTagsDialogState.None) }
+            .onSuccess { id ->
+                handleDialog(SectionsTagsDialogState.None)
+                sendUiAction(SectionsTagsUiAction.TagCreated(id))
+            }
             .onFailure { handleFailure(it, R.string.item_config_tag_name_required) }
     }
 

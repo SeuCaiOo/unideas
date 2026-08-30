@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit
  */
 @Composable
 internal fun dueBadgeLabel(item: Item, today: LocalDate = LocalDate.now()): String? {
+    if (item.isCompleted) return null
     val dueDate = item.dueDate ?: return null
     val days = ChronoUnit.DAYS.between(today, dueDate).toInt()
     return when {

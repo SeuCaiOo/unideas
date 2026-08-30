@@ -24,6 +24,10 @@ import java.time.LocalTime
  *   `null` means this occurrence has never been extended since its last resolution.
  * @property pendingExtensionCount how many times this occurrence's `dueDate` was pushed forward
  *   since its last resolution — carried into [ItemCompletionHistory] when it finally resolves.
+ * @property remindersMuted when true, suppresses [ReminderTier.NORMAL] (the advance-warning tier)
+ *   until [dueDate] — [ReminderTier.URGENT] still fires regardless. Reset to `false` whenever
+ *   [dueDate] moves (extend deadline, or a recurring cycle advancing) since the mute was a decision
+ *   about that specific due date, not a standing preference.
  */
 data class Item(
     val id: Long = 0L,
@@ -42,6 +46,7 @@ data class Item(
     val pendingExtensionOriginalDueDate: LocalDate? = null,
     val pendingExtensionCount: Int = 0,
     val status: ItemStatus = ItemStatus.ACTIVE,
+    val remindersMuted: Boolean = false,
     val tags: List<Tag> = emptyList(),
 ) {
     /**

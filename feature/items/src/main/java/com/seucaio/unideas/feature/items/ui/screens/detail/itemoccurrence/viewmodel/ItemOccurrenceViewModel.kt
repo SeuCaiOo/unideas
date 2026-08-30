@@ -51,6 +51,7 @@ class ItemOccurrenceViewModel(
                         completedAt = item.completedAt,
                         dueDate = item.dueDate,
                         isRecurring = item.isRecurring,
+                        remindersMuted = item.remindersMuted,
                     )
                 }
                 if (promptCompleteOnEntry) handleCompleteClicked()
@@ -87,6 +88,8 @@ class ItemOccurrenceViewModel(
                 handleExtendDeadline(event.newDueDate)
             }
 
+            is ItemOccurrenceEvent.OnMuteRemindersToggled -> handleMuteRemindersToggled()
+
             is ItemOccurrenceEvent.OnDialogDismissed -> _dialogState.update { ItemOccurrenceDialogState.None }
 
             is ItemOccurrenceEvent.OnItemUpdatedExternally -> handleItemUpdatedExternally(event.item)
@@ -111,6 +114,7 @@ class ItemOccurrenceViewModel(
                 completedAt = item.completedAt,
                 dueDate = item.dueDate,
                 isRecurring = item.isRecurring,
+                remindersMuted = item.remindersMuted,
             )
         }
     }
@@ -141,6 +145,7 @@ class ItemOccurrenceViewModel(
                         completedAt = updated.completedAt,
                         dueDate = updated.dueDate,
                         isRecurring = updated.isRecurring,
+                        remindersMuted = updated.remindersMuted,
                     )
                 }
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
@@ -157,7 +162,13 @@ class ItemOccurrenceViewModel(
         itemOccurrenceUseCase.ignore(item, note)
             .onSuccess { updated ->
                 originalItem = updated
-                _uiState.update { it.copy(dueDate = updated.dueDate, isRecurring = updated.isRecurring) }
+                _uiState.update {
+                    it.copy(
+                        dueDate = updated.dueDate,
+                        isRecurring = updated.isRecurring,
+                        remindersMuted = updated.remindersMuted,
+                    )
+                }
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
             }
             .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }
@@ -168,7 +179,24 @@ class ItemOccurrenceViewModel(
         itemOccurrenceUseCase.extendDueDate(item, newDueDate)
             .onSuccess { updated ->
                 originalItem = updated
-                _uiState.update { it.copy(dueDate = updated.dueDate, isRecurring = updated.isRecurring) }
+                _uiState.update {
+                    it.copy(
+                        dueDate = updated.dueDate,
+                        isRecurring = updated.isRecurring,
+                        remindersMuted = updated.remindersMuted,
+                    )
+                }
+                sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
+            }
+            .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }
+    }
+
+    private fun handleMuteRemindersToggled() = viewModelScope.launch {
+        val item = originalItem ?: return@launch
+        itemOccurrenceUseCase.setRemindersMuted(item, !uiState.value.remindersMuted)
+            .onSuccess { updated ->
+                originalItem = updated
+                _uiState.update { it.copy(remindersMuted = updated.remindersMuted) }
                 sendUiAction(ItemOccurrenceUiAction.ItemPersisted(updated))
             }
             .onFailure { sendUiAction(ItemOccurrenceUiAction.ShowError(it.message.orEmpty())) }

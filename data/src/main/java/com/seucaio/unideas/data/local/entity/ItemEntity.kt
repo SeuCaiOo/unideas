@@ -48,4 +48,5 @@ data class ItemEntity(
     val pendingExtensionOriginalDueDate: Long? = null,
     val pendingExtensionCount: Int = 0,
     val status: ItemStatus = ItemStatus.ACTIVE,
+    val remindersMuted: Boolean = false,
 )

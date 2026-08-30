@@ -32,6 +32,7 @@ enum class ReminderTier {
 
             return when {
                 !effectiveDueDateTime.isAfter(nextCheck) -> URGENT
+                item.remindersMuted -> NOT_YET
                 isWithinWarningWindow(item.reminderWarning, dueDate, currentCheck.toLocalDate()) -> NORMAL
                 else -> NOT_YET
             }

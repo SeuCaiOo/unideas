@@ -314,6 +314,22 @@ class ItemDetailViewModelTest {
         }
 
     @Test
+    fun `when OnItemUpdatedExternally sets remindersMuted a subsequent persist should not clobber it`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, remindersMuted = false)
+            val mutedByOccurrence = item.copy(remindersMuted = true)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnItemUpdatedExternally(mutedByOccurrence))
+            vm.onEvent(ItemDetailEvent.OnBackRequested)
+
+            coVerify(exactly = 1) { itemFormUseCase.edit(match { it.remindersMuted }) }
+        }
+
+    @Test
     fun `when the use case fails unexpectedly should emit ShowError with the exception message`() =
         runTest {
             coEvery { itemFormUseCase.create(any()) } returns Result.failure(IllegalStateException("boom"))

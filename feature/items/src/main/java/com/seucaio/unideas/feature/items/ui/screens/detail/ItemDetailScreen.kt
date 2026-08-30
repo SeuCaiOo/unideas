@@ -181,6 +181,7 @@ private fun ItemDetailScreenContent(
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
+                onMuteRemindersToggled = { onOccurrenceEvent(ItemOccurrenceEvent.OnMuteRemindersToggled) },
                 onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
                 onNavigateToHistory = uiState.itemId?.let { savedItemId ->
                     if (uiState.recurrence != Recurrence.None) {

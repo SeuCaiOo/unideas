@@ -66,6 +66,7 @@ fun ItemFormBody(
     isArchived: Boolean = false,
     onUnarchiveClicked: (() -> Unit)? = null,
     isSnackbarVisible: Boolean = false,
+    onMuteRemindersToggled: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Column(
@@ -120,6 +121,7 @@ fun ItemFormBody(
                     onCompleteClicked = onCompleteClicked,
                     onIgnoreClicked = onIgnoreClicked,
                     onExtendDeadlineClicked = onExtendDeadlineClicked,
+                    onMuteRemindersToggled = onMuteRemindersToggled,
                 )
             }
         }

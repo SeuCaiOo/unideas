@@ -120,13 +120,24 @@ class ItemDaoTest {
     }
 
     @Test
-    fun getItemsSortsByCreatedAtDescending() = runTest {
+    fun getItemsWithoutADueDateSortByCreatedAtDescending() = runTest {
         dao.insert(task(title = "antiga", createdAt = 1_000L))
         dao.insert(task(title = "recente", createdAt = 2_000L))
 
         val items = dao.getItems(ItemType.TASK, null, emptyList(), 0).first()
 
         assertEquals(listOf("recente", "antiga"), items.map { it.item.title })
+    }
+
+    @Test
+    fun getItemsSortsByDueDateAscendingBeforeItemsWithNoDueDate() = runTest {
+        dao.insert(task(title = "sem prazo", createdAt = 3_000L))
+        dao.insert(task(title = "vence amanhã", dueDate = 2_000L))
+        dao.insert(task(title = "vence hoje", dueDate = 1_000L))
+
+        val items = dao.getItems(ItemType.TASK, null, emptyList(), 0).first()
+
+        assertEquals(listOf("vence hoje", "vence amanhã", "sem prazo"), items.map { it.item.title })
     }
 
     @Test

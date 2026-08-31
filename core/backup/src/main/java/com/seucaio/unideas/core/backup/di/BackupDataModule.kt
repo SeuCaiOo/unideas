@@ -23,8 +23,10 @@ import com.seucaio.unideas.core.backup.domain.usecase.ListBackupsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.PerformAutoBackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.RestoreBackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.SetAutoBackupEnabledUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.SetAutoBackupTrackedFileIdUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.SignOutUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
+import com.seucaio.unideas.core.backup.viewmodel.BackupSyncViewModel
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
 import com.seucaio.unideas.core.backup.worker.AutoBackupTriggerImpl
 import com.seucaio.unideas.core.backup.worker.AutoBackupWorker
@@ -58,10 +60,12 @@ val backupDataModule = module {
     factoryOf(::GetAutoBackupEnabledUseCase)
     factoryOf(::SetAutoBackupEnabledUseCase)
     factoryOf(::GetAutoBackupTrackedFileIdUseCase)
+    factoryOf(::SetAutoBackupTrackedFileIdUseCase)
     factoryOf(::AutoBackupSettingsUseCase)
     factoryOf(::PerformAutoBackupUseCase)
     factoryOf(::GoogleAuthUseCase)
     factoryOf(::BackupUseCase)
     viewModelOf(::BackupViewModel)
+    viewModelOf(::BackupSyncViewModel)
     workerOf(::AutoBackupWorker)
 }

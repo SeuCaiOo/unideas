@@ -48,13 +48,12 @@ gh issue create \
 
 ## Definition of Done (DoD)
 
-> Issue só é considerada concluída quando todos os itens abaixo estiverem ok.
+> Issue só é considerada concluída quando todos os itens abaixo estiverem ok. DoD é sobre o trabalho em si — não inclui "PR aberto/revisado/mergeado em `dev`", que é estado de processo de release (rastreado no board — coluna `Done` — e no artefato "unideas — Improvements"), não definição de tarefa concluída; nem toda issue vira PR direto pra `dev` (sub-issue de epic vai pro branch do epic), então essa linha nem sempre fazia sentido literal.
 
 - [ ] Todos os itens do checklist concluídos
 - [ ] Testes unitários escritos e passando (`./gradlew test`)
 - [ ] Cobertura de testes ok (`./gradlew koverVerify`)
 - [ ] Sem warnings novos de Detekt (`./gradlew detekt`)
-- [ ] PR aberto, revisado e mergeado em `dev`
 EOF
 )" \
   --label "<label>" \

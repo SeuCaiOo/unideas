@@ -26,7 +26,7 @@ gh pr view <pr-number> --json number,title,url,headRefName,isDraft   # only if a
 
 ### 2. Reconcile DoD against the real diff
 
-Start from the local plan file (`.claude/plans/<type>-#<number>-*.md`) — its `## Checklist`/`## Verification` boxes should already be checked as items were completed during implementation (per `CLAUDE.md`'s Implementation workflow step 6), so it's the fast path to what's done instead of re-deriving everything from the diff. Treat it as a starting hypothesis, not ground truth: confirm each checked box still holds against `git log dev..HEAD` / `git diff dev..HEAD` before relying on it, since the plan file can drift or be stale. The plan's `## Verification` section deliberately omits the issue DoD's "PR aberto/mergeado" line (that's GitHub-only state — see step 3 below), so that one always needs a live check regardless of what the plan file says.
+Start from the local plan file (`.claude/plans/<type>-#<number>-*.md`) — its `## Checklist`/`## Verification` boxes should already be checked as items were completed during implementation (per `CLAUDE.md`'s Implementation workflow step 6), so it's the fast path to what's done instead of re-deriving everything from the diff. Treat it as a starting hypothesis, not ground truth: confirm each checked box still holds against `git log dev..HEAD` / `git diff dev..HEAD` before relying on it, since the plan file can drift or be stale.
 
 Compare the issue's Checklist/DoD section against that reconciled state. Every item lands in one of three buckets:
 
@@ -56,7 +56,7 @@ gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
 
-The DoD's "PR aberto, revisado e mergeado em `dev`" line stays unchecked here regardless of how green everything else is — it's only true once the PR has actually merged, which this step, by definition, runs before.
+DoD no unideas is about the work itself, not release-process state — it no longer carries a "PR aberto/revisado/mergeado" line (removed 2026-08-30: every closed issue was permanently stuck with that box unchecked, since nothing ever went back to check it after the actual merge, and it never made literal sense for an epic sub-issue merging into the epic branch instead of `dev`). "Has it shipped" is tracked separately — the board's `Done`/`Released` columns and the Improvements artifact's `✅ Merged` tag — not inside the issue's own DoD checklist.
 
 ### 4. Report — and ask, don't act, on promotion
 

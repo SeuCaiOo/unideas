@@ -1,5 +1,6 @@
 package com.seucaio.unideas.domain.usecase.item
 
+import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.stub.ItemStub
 import io.mockk.every
@@ -26,5 +27,23 @@ class GetPriorityItemsUseCaseTest {
 
         assertEquals(items, result)
         verify(exactly = 1) { repository.getPriorityItems(today.plusDays(3)) }
+    }
+
+    @Test
+    fun `invoke excludes a recurring item already completed for its current cycle`() = runTest {
+        val pending = ItemStub.overdueTask()
+        val completedRecurring = ItemStub.task(
+            id = 8L,
+            title = "Fazer NF",
+            recurrence = Recurrence.Monthly,
+            dueDate = today,
+            lastCompletedScheduledDate = today,
+        )
+        every { repository.getPriorityItems(today.plusDays(3)) } returns
+            flowOf(listOf(pending, completedRecurring))
+
+        val result = useCase(today = today, dueSoonDays = 3).first()
+
+        assertEquals(listOf(pending), result)
     }
 }

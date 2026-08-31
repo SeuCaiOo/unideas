@@ -84,6 +84,17 @@ class SectionsTagsViewModelTest {
     }
 
     @Test
+    fun `when OnSectionCreateRequested succeeds should emit SectionCreated with the new id`() = runTest {
+        val vm = viewModel()
+        coEvery { sectionsAndTagsUseCase.addSection("Trabalho") } returns Result.success(42L)
+
+        vm.uiAction.test {
+            vm.onEvent(SectionsTagsEvent.OnSectionCreateRequested("Trabalho"))
+            assertEquals(SectionsTagsUiAction.SectionCreated(42L), awaitItem())
+        }
+    }
+
+    @Test
     fun `when OnSectionCreateRequested fails with a blank name should emit a name-required snackbar`() = runTest {
         val vm = viewModel()
         coEvery { sectionsAndTagsUseCase.addSection("") } returns
@@ -108,6 +119,17 @@ class SectionsTagsViewModelTest {
 
         coVerify(exactly = 1) { sectionsAndTagsUseCase.addTag("urgente") }
         assertEquals(SectionsTagsDialogState.None, vm.dialogState.value)
+    }
+
+    @Test
+    fun `when OnTagCreateRequested succeeds should emit TagCreated with the new id`() = runTest {
+        val vm = viewModel()
+        coEvery { sectionsAndTagsUseCase.addTag("urgente") } returns Result.success(7L)
+
+        vm.uiAction.test {
+            vm.onEvent(SectionsTagsEvent.OnTagCreateRequested("urgente"))
+            assertEquals(SectionsTagsUiAction.TagCreated(7L), awaitItem())
+        }
     }
 
     @Test

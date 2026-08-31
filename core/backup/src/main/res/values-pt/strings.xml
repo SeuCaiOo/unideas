@@ -38,4 +38,15 @@
     <string name="logout_confirm_message_suffix">. Sair desconecta essa conta e limpa os dados locais — você vai precisar entrar de novo pra usar backup e sincronização.</string>
     <string name="logout_confirm_warning">Tudo que ainda não foi salvo será perdido.</string>
     <string name="logout_confirm_confirm">Sair</string>
+
+    <!-- Backup sync -->
+    <string name="backup_sync_restore_title">Backup desincronizado</string>
+    <string name="backup_sync_restore_message">Foi encontrado um backup diferente no Google Drive. Restaurar para ter os dados mais recentes?</string>
+    <string name="backup_sync_restore_action">Restaurar</string>
+    <string name="backup_sync_restore_decline">Agora não</string>
+    <string name="backup_sync_disable_title">Desligar o backup automático?</string>
+    <string name="backup_sync_disable_message">A partir de agora, as mudanças só serão salvas neste aparelho, e o backup automático será desligado.</string>
+    <string name="backup_sync_disable_confirm">Desligar</string>
+    <string name="backup_sync_disable_decline">Voltar</string>
+    <string name="backup_sync_error">Não foi possível restaurar o backup.</string>
 </resources>

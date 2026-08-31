@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
@@ -30,9 +32,11 @@ internal fun HomeTopBar(
     homeMode: HomeMode,
     itemsState: HomeItemsState,
     hasAnyPriorityItem: Boolean,
+    isAutoBackupEnabled: Boolean,
     onNavigateBack: (() -> Unit)?,
     onShowPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onShowBackup: () -> Unit,
     onEvent: (HomeEvent) -> Unit,
 ) {
     if (homeMode is HomeMode.Selection) {
@@ -68,8 +72,10 @@ internal fun HomeTopBar(
             actions = {
                 HomeTopBarActions(
                     hasAnyPriorityItem = hasAnyPriorityItem,
+                    isAutoBackupEnabled = isAutoBackupEnabled,
                     onShowPriorities = onShowPriorities,
                     onNavigateToSettings = onNavigateToSettings,
+                    onShowBackup = onShowBackup,
                 )
             },
         )
@@ -79,9 +85,19 @@ internal fun HomeTopBar(
 @Composable
 private fun RowScope.HomeTopBarActions(
     hasAnyPriorityItem: Boolean,
+    isAutoBackupEnabled: Boolean,
     onShowPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onShowBackup: () -> Unit,
 ) {
+    IconButton(onClick = onShowBackup) {
+        Icon(
+            imageVector = if (isAutoBackupEnabled) Icons.Outlined.CloudSync else Icons.Outlined.CloudOff,
+            contentDescription = stringResource(
+                if (isAutoBackupEnabled) R.string.home_backup_action_enabled else R.string.home_backup_action_disabled
+            ),
+        )
+    }
     if (hasAnyPriorityItem) {
         IconButton(onClick = onShowPriorities) {
             Icon(
@@ -119,9 +135,11 @@ private fun HomeTopBarPreview(@PreviewParameter(HomeTopBarPreviewProvider::class
                 homeMode = homeMode,
                 itemsState = HomeItemsState(tabItems = homeTopBarPreviewItems),
                 hasAnyPriorityItem = true,
+                isAutoBackupEnabled = true,
                 onNavigateBack = {},
                 onShowPriorities = {},
                 onNavigateToSettings = {},
+                onShowBackup = {},
                 onEvent = {},
             )
         }

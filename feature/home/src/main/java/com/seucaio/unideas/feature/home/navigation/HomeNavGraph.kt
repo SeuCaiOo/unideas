@@ -15,6 +15,7 @@ fun NavGraphBuilder.homeNavGraph(
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToBackupSettings: () -> Unit,
 ) {
     composable<HomeRoute.AllPriorities> {
         AllPrioritiesScreen(
@@ -28,8 +29,9 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToDetail = onNavigateToDetail,
         )
     }
-    composable<HomeRoute.Home> {
+    composable<HomeRoute.Home> { backStackEntry ->
         HomeScreen(
+            savedStateHandle = backStackEntry.savedStateHandle,
             onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToDetailForLateCompletion = onNavigateToDetailForLateCompletion,
@@ -37,6 +39,7 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToArchivedItems = onNavigateToArchivedItems,
             onNavigateToSettings = onNavigateToSettings,
+            onNavigateToBackupSettings = onNavigateToBackupSettings,
         )
     }
 }

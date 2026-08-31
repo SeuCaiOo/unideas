@@ -2,6 +2,8 @@
 <resources>
     <string name="home_load_error">Não foi possível carregar seus itens</string>
     <string name="home_settings_action">Configurações</string>
+    <string name="home_backup_action_enabled">Backup automático ligado</string>
+    <string name="home_backup_action_disabled">Backup automático desligado</string>
     <string name="home_add_action">Adicionar item</string>
     <string name="home_add_task">Tarefa</string>
     <string name="home_add_note">Anotação</string>

@@ -26,8 +26,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
+import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -61,6 +65,7 @@ private object ColdStartPriorityPrompt {
 
 @Composable
 fun HomeScreen(
+    savedStateHandle: SavedStateHandle,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToDetailForLateCompletion: (Long) -> Unit,
@@ -68,9 +73,13 @@ fun HomeScreen(
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onNavigateToBackupSettings: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
+    backupViewModel: BackupViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val backupUiState by backupViewModel.uiState.collectAsStateWithLifecycle()
+    val isAutoBackupEnabled = (backupUiState as? BackupUiState.Ready)?.isAutoBackupEnabled == true
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val itemsState by viewModel.itemsState.collectAsStateWithLifecycle()
     val homeMode by viewModel.homeMode.collectAsStateWithLifecycle()
@@ -83,6 +92,7 @@ fun HomeScreen(
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
     val updatedOnNavigateToArchivedItems by rememberUpdatedState(onNavigateToArchivedItems)
+    val updatedOnNavigateToBackupSettings by rememberUpdatedState(onNavigateToBackupSettings)
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
@@ -96,10 +106,19 @@ fun HomeScreen(
         }
     }
 
+    val itemSaved by remember(savedStateHandle) {
+        savedStateHandle.getStateFlow(Constants.ITEM_SAVED_RESULT_KEY, false)
+    }.collectAsStateWithLifecycle()
+    val updatedItemSaved by rememberUpdatedState(itemSaved)
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.onEvent(HomeEvent.OnScreenResumed())
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val hasChanges = updatedItemSaved
+                if (hasChanges) savedStateHandle[Constants.ITEM_SAVED_RESULT_KEY] = false
+                viewModel.onEvent(HomeEvent.OnScreenResumed(hasChanges))
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -112,12 +131,14 @@ fun HomeScreen(
         homeMode = homeMode,
         dialogState = dialogState,
         isRefreshing = isRefreshing,
+        isAutoBackupEnabled = isAutoBackupEnabled,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
         onNavigateToAllPriorities = updatedOnNavigateToAllPriorities,
         onNavigateToSettings = updatedOnNavigateToSettings,
         onNavigateToArchivedItems = updatedOnNavigateToArchivedItems,
+        onShowBackup = updatedOnNavigateToBackupSettings,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -130,12 +151,14 @@ private fun HomeContent(
     homeMode: HomeMode,
     dialogState: HomeDialogState,
     isRefreshing: Boolean,
+    isAutoBackupEnabled: Boolean,
     onEvent: (HomeEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onShowBackup: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -165,9 +188,11 @@ private fun HomeContent(
                 homeMode = homeMode,
                 itemsState = itemsState,
                 hasAnyPriorityItem = (uiState as? HomeUiState.Success)?.hasAnyPriorityItem == true,
+                isAutoBackupEnabled = isAutoBackupEnabled,
                 onNavigateBack = updatedOnNavigateBack,
                 onShowPriorities = { showPriorityBottomSheet = true },
                 onNavigateToSettings = onNavigateToSettings,
+                onShowBackup = onShowBackup,
                 onEvent = onEvent,
             )
         },
@@ -292,12 +317,14 @@ private fun HomeScreenPreview(
             homeMode = HomeMode.Normal,
             dialogState = HomeDialogState.None,
             isRefreshing = false,
+            isAutoBackupEnabled = true,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
             onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
             onNavigateToArchivedItems = {},
+            onShowBackup = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }
@@ -320,12 +347,14 @@ private fun HomeScreenArchivedFooterPreview(
             homeMode = HomeMode.Normal,
             dialogState = HomeDialogState.None,
             isRefreshing = false,
+            isAutoBackupEnabled = true,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
             onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
             onNavigateToArchivedItems = {},
+            onShowBackup = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }
@@ -344,12 +373,14 @@ private fun HomeScreenSelectionModePreview(
             homeMode = HomeMode.Selection(fixture.itemsState.tabItems.take(2).map { it.id }.toSet()),
             dialogState = HomeDialogState.None,
             isRefreshing = false,
+            isAutoBackupEnabled = true,
             onEvent = {},
             onNavigateBack = {},
             onNavigateToDetail = {},
             onNavigateToAllPriorities = {},
             onNavigateToSettings = {},
             onNavigateToArchivedItems = {},
+            onShowBackup = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

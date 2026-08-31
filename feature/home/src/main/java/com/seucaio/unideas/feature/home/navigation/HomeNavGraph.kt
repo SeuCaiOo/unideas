@@ -28,9 +28,8 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToDetail = onNavigateToDetail,
         )
     }
-    composable<HomeRoute.Home> { backStackEntry ->
+    composable<HomeRoute.Home> {
         HomeScreen(
-            savedStateHandle = backStackEntry.savedStateHandle,
             onNavigateBack = null,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToDetailForLateCompletion = onNavigateToDetailForLateCompletion,

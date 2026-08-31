@@ -154,7 +154,7 @@ class HomeViewModel(
             is HomeEvent.OnAddClicked -> sendUiAction(HomeUiAction.NavigateToAddItem(event.type))
             is HomeEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
             is HomeEvent.OnRefreshRequested -> handleRefresh()
-            is HomeEvent.OnScreenResumed -> handleScreenResumed(event.hasChanges)
+            is HomeEvent.OnScreenResumed -> homeUseCase.refreshReminders()
             is HomeEvent.SelectionEvent -> handleSelectionEvent(event)
         }
     }
@@ -212,7 +212,6 @@ class HomeViewModel(
 
     private fun handleItemPinToggle(itemId: Long, isPinned: Boolean) = viewModelScope.launch {
         homeUseCase.setItemPinned(itemId, isPinned)
-            .onSuccess { homeUseCase.triggerAutoBackup() }
             .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
     }
 
@@ -220,11 +219,6 @@ class HomeViewModel(
         _isRefreshing.value = true
         homeUseCase.refreshReminders()
         _isRefreshing.value = false
-    }
-
-    private fun handleScreenResumed(hasChanges: Boolean) {
-        homeUseCase.refreshReminders()
-        if (hasChanges) homeUseCase.triggerAutoBackup()
     }
 
     private fun handleComplete(itemId: Long) {
@@ -236,7 +230,6 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             homeUseCase.complete(item, LocalDateTime.now())
-                .onSuccess { homeUseCase.triggerAutoBackup() }
                 .onFailure { sendUiAction(HomeUiAction.ShowError(it.message.orEmpty())) }
         }
     }

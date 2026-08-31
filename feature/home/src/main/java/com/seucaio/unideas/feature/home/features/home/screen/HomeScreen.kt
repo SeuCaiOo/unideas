@@ -26,10 +26,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -63,7 +61,6 @@ private object ColdStartPriorityPrompt {
 
 @Composable
 fun HomeScreen(
-    savedStateHandle: SavedStateHandle,
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToDetailForLateCompletion: (Long) -> Unit,
@@ -99,19 +96,10 @@ fun HomeScreen(
         }
     }
 
-    val itemSaved by remember(savedStateHandle) {
-        savedStateHandle.getStateFlow(Constants.ITEM_SAVED_RESULT_KEY, false)
-    }.collectAsStateWithLifecycle()
-    val updatedItemSaved by rememberUpdatedState(itemSaved)
-
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                val hasChanges = updatedItemSaved
-                if (hasChanges) savedStateHandle[Constants.ITEM_SAVED_RESULT_KEY] = false
-                viewModel.onEvent(HomeEvent.OnScreenResumed(hasChanges))
-            }
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.onEvent(HomeEvent.OnScreenResumed)
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }

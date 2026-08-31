@@ -28,7 +28,7 @@ sealed interface HomeEvent {
 
     data object OnRefreshRequested : HomeEvent
 
-    data class OnScreenResumed(val hasChanges: Boolean = false) : HomeEvent
+    data object OnScreenResumed : HomeEvent
 
     //endregion
 

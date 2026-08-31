@@ -19,7 +19,10 @@ class BackupRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BackupRepository {
 
-    override suspend fun uploadBackup(driveService: Drive): Result<BackupInfo> = runCatching {
+    override suspend fun uploadBackup(
+        driveService: Drive,
+        isAutomatic: Boolean
+    ): Result<BackupInfo> = runCatching {
         withContext(ioDispatcher) {
             UnideasDatabase.checkpoint(database)
 
@@ -30,6 +33,9 @@ class BackupRepositoryImpl(
             val metadata = File().apply {
                 name = UnideasDatabase.DATABASE_NAME
                 parents = listOf(APP_DATA_FOLDER)
+                if (isAutomatic) {
+                    appProperties = mapOf(APP_PROPERTY_BACKUP_TYPE to APP_PROPERTY_VALUE_AUTO)
+                }
             }
 
             val mediaContent = FileContent(MIME_SQLITE, tempFile)
@@ -65,6 +71,28 @@ class BackupRepositoryImpl(
             } ?: emptyList()
         }
     }
+
+    override suspend fun getCurrentAutoBackupInfo(driveService: Drive): Result<BackupInfo?> =
+        runCatching {
+            withContext(ioDispatcher) {
+                val autoBackupQuery = "name = '${UnideasDatabase.DATABASE_NAME}' and " +
+                    "appProperties has { key='$APP_PROPERTY_BACKUP_TYPE' and value='$APP_PROPERTY_VALUE_AUTO' }"
+                val result = driveService.files().list()
+                    .setSpaces(APP_DATA_FOLDER)
+                    .setFields("files(id, name, size, createdTime)")
+                    .setQ(autoBackupQuery)
+                    .setOrderBy("createdTime desc")
+                    .execute()
+
+                result.files?.firstOrNull()?.let { file ->
+                    BackupInfo(
+                        fileId = file.id,
+                        createdAt = file.createdTime.value.toLocalDateTime(),
+                        sizeBytes = file.getSize() ?: 0L,
+                    )
+                }
+            }
+        }
 
     override suspend fun restoreBackup(driveService: Drive, fileId: String): Result<Unit> =
         runCatching {
@@ -103,5 +131,7 @@ class BackupRepositoryImpl(
         private const val APP_DATA_FOLDER = "appDataFolder"
         private const val MIME_SQLITE = "application/x-sqlite3"
         private const val TEMP_BACKUP_FILE_NAME = "temp_backup.db"
+        private const val APP_PROPERTY_BACKUP_TYPE = "backupType"
+        private const val APP_PROPERTY_VALUE_AUTO = "auto"
     }
 }

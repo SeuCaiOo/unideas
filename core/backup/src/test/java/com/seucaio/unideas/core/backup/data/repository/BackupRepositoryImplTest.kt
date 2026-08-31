@@ -17,6 +17,7 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -79,6 +80,52 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `uploadBackup tags the file as automatic when isAutomatic is true`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val createRequest = mockk<Drive.Files.Create>(relaxed = true)
+        val metadataSlot = slot<File>()
+        val uploadedFile = File().apply {
+            id = "remote-file-id"
+            name = UnideasDatabase.DATABASE_NAME
+            createdTime = DateTime(System.currentTimeMillis())
+            factory = GsonFactory.getDefaultInstance()
+        }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.create(capture(metadataSlot), any()) } returns createRequest
+        every { createRequest.setFields(any()) } returns createRequest
+        every { createRequest.execute() } returns uploadedFile
+
+        val result = repository.uploadBackup(driveService, isAutomatic = true)
+
+        assertTrue(result.isSuccess)
+        assertEquals(mapOf("backupType" to "auto"), metadataSlot.captured.appProperties)
+    }
+
+    @Test
+    fun `uploadBackup does not tag the file when isAutomatic is false`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val createRequest = mockk<Drive.Files.Create>(relaxed = true)
+        val metadataSlot = slot<File>()
+        val uploadedFile = File().apply {
+            id = "remote-file-id"
+            name = UnideasDatabase.DATABASE_NAME
+            createdTime = DateTime(System.currentTimeMillis())
+            factory = GsonFactory.getDefaultInstance()
+        }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.create(capture(metadataSlot), any()) } returns createRequest
+        every { createRequest.setFields(any()) } returns createRequest
+        every { createRequest.execute() } returns uploadedFile
+
+        val result = repository.uploadBackup(driveService)
+
+        assertTrue(result.isSuccess)
+        assertEquals(null, metadataSlot.captured.appProperties)
+    }
+
+    @Test
     fun `uploadBackup returns failure when drive throws`() = runTest {
         val driveFiles = mockk<Drive.Files>()
         val createRequest = mockk<Drive.Files.Create>(relaxed = true)
@@ -111,6 +158,52 @@ class BackupRepositoryImplTest {
 
         assertTrue(result.isSuccess)
         assertTrue(result.getOrNull()?.isEmpty() == true)
+    }
+
+    @Test
+    fun `getCurrentAutoBackupInfo returns the file when drive has an automatic backup`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val listRequest = mockk<Drive.Files.List>(relaxed = true)
+        val autoFile = File().apply {
+            id = "auto-file-id"
+            name = UnideasDatabase.DATABASE_NAME
+            createdTime = DateTime(System.currentTimeMillis())
+            setSize(2048L)
+        }
+        val fileList = FileList().apply { files = listOf(autoFile) }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.list() } returns listRequest
+        every { listRequest.setSpaces(any()) } returns listRequest
+        every { listRequest.setFields(any()) } returns listRequest
+        every { listRequest.setQ(any()) } returns listRequest
+        every { listRequest.setOrderBy(any()) } returns listRequest
+        every { listRequest.execute() } returns fileList
+
+        val result = repository.getCurrentAutoBackupInfo(driveService)
+
+        assertTrue(result.isSuccess)
+        assertEquals("auto-file-id", result.getOrNull()?.fileId)
+    }
+
+    @Test
+    fun `getCurrentAutoBackupInfo returns null when drive has no automatic backup`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val listRequest = mockk<Drive.Files.List>(relaxed = true)
+        val emptyFileList = FileList().apply { files = emptyList() }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.list() } returns listRequest
+        every { listRequest.setSpaces(any()) } returns listRequest
+        every { listRequest.setFields(any()) } returns listRequest
+        every { listRequest.setQ(any()) } returns listRequest
+        every { listRequest.setOrderBy(any()) } returns listRequest
+        every { listRequest.execute() } returns emptyFileList
+
+        val result = repository.getCurrentAutoBackupInfo(driveService)
+
+        assertTrue(result.isSuccess)
+        assertEquals(null, result.getOrNull())
     }
 
     @Test

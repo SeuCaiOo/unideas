@@ -11,7 +11,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.seucaio.unideas.BuildConfig
-import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.feature.home.navigation.HomeRoute
 import com.seucaio.unideas.feature.home.navigation.homeNavGraph
 import com.seucaio.unideas.feature.items.navigation.ItemsRoute
@@ -92,14 +91,7 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
     sectionsNavGraph(onNavigateBack = navController::popBackStack)
     tagsNavGraph(onNavigateBack = navController::popBackStack)
     itemsNavGraph(
-        onNavigateBack = { hasChanges ->
-            if (hasChanges) {
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set(Constants.ITEM_SAVED_RESULT_KEY, true)
-            }
-            navController.popBackStack()
-        },
+        onNavigateBack = navController::popBackStack,
         onNavigateToDetail = { itemId ->
             navController.navigate(ItemsRoute.Detail(itemId))
         },

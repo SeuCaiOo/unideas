@@ -24,9 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -71,7 +69,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun ItemConfigScreen(
     itemId: Long,
-    onNavigateBack: ((Boolean) -> Unit)?,
+    onNavigateBack: (() -> Unit)?,
     isNewItem: Boolean = false,
     viewModel: ItemConfigViewModel = koinViewModel { parametersOf(itemId) },
     sectionsTagsViewModel: SectionsTagsViewModel = koinViewModel(),
@@ -82,7 +80,6 @@ fun ItemConfigScreen(
     val sectionsTagsDialogState by sectionsTagsViewModel.dialogState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
-    var hasChanges by remember { mutableStateOf(false) }
 
     // Config Screen never creates a Tag itself — it only needs the current full list to resolve
     // selectedTagIds into the domain model's List<Tag> when persisting.
@@ -97,7 +94,6 @@ fun ItemConfigScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemConfigUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemConfigUiAction.Persisted -> hasChanges = true
             }
         }
     }
@@ -125,7 +121,7 @@ fun ItemConfigScreen(
         isNewItem = isNewItem,
         onEvent = viewModel::onEvent,
         onSectionsTagsEvent = sectionsTagsViewModel::onEvent,
-        onNavigateBack = onNavigateBack?.let { callback -> { callback(hasChanges) } },
+        onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
     )
 }

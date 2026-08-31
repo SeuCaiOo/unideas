@@ -163,16 +163,16 @@ class ItemDetailViewModel(
     private fun handleBackRequested() = viewModelScope.launch {
         val state = uiState.value
         when {
-            state.isPristine -> sendUiAction(ItemDetailUiAction.NavigateBack())
+            state.isPristine -> sendUiAction(ItemDetailUiAction.NavigateBack)
             state.isTitleValid && hasPendingTextSave -> {
                 debounceJob?.cancel()
                 hasPendingTextSave = false
                 persist()
-                    .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack()) }
+                    .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
                     .onFailure { handleFailure(it) }
             }
 
-            state.isTitleValid -> sendUiAction(ItemDetailUiAction.NavigateBack())
+            state.isTitleValid -> sendUiAction(ItemDetailUiAction.NavigateBack)
 
             state.titleError -> _dialogState.update { discardConfirmDialogState() }
 
@@ -197,10 +197,10 @@ class ItemDetailViewModel(
         val id = currentItemId
         if (initialItemId == null && id != null) {
             itemFormUseCase.delete(id)
-                .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack(discardedDraft = true)) }
+                .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
                 .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
         } else {
-            sendUiAction(ItemDetailUiAction.NavigateBack())
+            sendUiAction(ItemDetailUiAction.NavigateBack)
         }
     }
 
@@ -240,7 +240,7 @@ class ItemDetailViewModel(
         val id = currentItemId ?: return@launch
         _dialogState.update { ItemDetailDialogState.None }
         itemFormUseCase.delete(id)
-            .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack()) }
+            .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
             .onFailure { sendUiAction(ItemDetailUiAction.ShowError(it.message.orEmpty())) }
     }
 

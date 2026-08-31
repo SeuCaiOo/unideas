@@ -9,10 +9,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -60,7 +58,7 @@ private fun Item.toShareText(): String = buildString {
 @Composable
 fun ItemDetailScreen(
     itemId: Long?,
-    onNavigateBack: ((Boolean) -> Unit)?,
+    onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long, Boolean) -> Unit,
     initialType: ItemType = ItemType.TASK,
@@ -85,21 +83,17 @@ fun ItemDetailScreen(
     val resources = LocalResources.current
     val context = LocalContext.current
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
-    var hasChanges by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is ItemDetailUiAction.NavigateBack ->
-                    updatedOnNavigateBack?.invoke(hasChanges && !action.discardedDraft)
+                is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
                 is ItemDetailUiAction.ShowSnackbar ->
                     snackbarHostState.showSnackbar(resources.getString(action.messageRes))
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
-                is ItemDetailUiAction.ItemPersisted -> {
-                    hasChanges = true
+                is ItemDetailUiAction.ItemPersisted ->
                     occurrenceViewModel.onEvent(ItemOccurrenceEvent.OnItemUpdatedExternally(action.item))
-                }
             }
         }
     }
@@ -111,11 +105,9 @@ fun ItemDetailScreen(
                     resources.getString(action.messageRes)
                 )
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
-                is ItemOccurrenceUiAction.ItemPersisted -> {
-                    hasChanges = true
+                is ItemOccurrenceUiAction.ItemPersisted ->
                     viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
-                }
-                is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke(hasChanges)
+                is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
             }
         }
     }
@@ -143,7 +135,7 @@ private fun ItemDetailScreenContent(
     occurrenceDialogState: ItemOccurrenceDialogState,
     onEvent: (ItemDetailEvent) -> Unit,
     onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
-    onNavigateBack: ((Boolean) -> Unit)?,
+    onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,

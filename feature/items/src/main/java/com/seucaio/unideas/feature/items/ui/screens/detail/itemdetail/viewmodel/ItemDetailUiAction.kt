@@ -5,7 +5,7 @@ import com.seucaio.unideas.domain.model.Item
 
 sealed interface ItemDetailUiAction {
 
-    data class NavigateBack(val discardedDraft: Boolean = false) : ItemDetailUiAction
+    data object NavigateBack : ItemDetailUiAction
 
     data class ShowSnackbar(@param:StringRes val messageRes: Int) : ItemDetailUiAction
 

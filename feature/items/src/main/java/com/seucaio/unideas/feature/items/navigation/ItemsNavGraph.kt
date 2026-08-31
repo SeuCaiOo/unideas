@@ -11,7 +11,7 @@ import com.seucaio.unideas.feature.items.ui.screens.history.ItemHistoryScreen
 import com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen
 
 fun NavGraphBuilder.itemsNavGraph(
-    onNavigateBack: ((Boolean) -> Unit)?,
+    onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToHistory: (Long) -> Unit,
@@ -32,7 +32,7 @@ fun NavGraphBuilder.itemsNavGraph(
     }
     composable<ItemsRoute.History> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.History>()
-        ItemHistoryScreen(itemId = route.itemId, onNavigateBack = { onNavigateBack?.invoke(false) })
+        ItemHistoryScreen(itemId = route.itemId, onNavigateBack = onNavigateBack)
     }
     composable<ItemsRoute.Config> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Config>()
@@ -40,7 +40,7 @@ fun NavGraphBuilder.itemsNavGraph(
     }
     composable<ItemsRoute.List> {
         ItemsListScreen(
-            onNavigateBack = { onNavigateBack?.invoke(false) },
+            onNavigateBack = onNavigateBack,
             onNavigateToDetail = onNavigateToDetail,
             onNavigateToAddItem = { onNavigateToAddItem(ItemType.TASK) },
         )

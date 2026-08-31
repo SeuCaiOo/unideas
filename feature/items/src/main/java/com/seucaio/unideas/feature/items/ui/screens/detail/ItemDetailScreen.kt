@@ -206,7 +206,11 @@ private fun ItemDetailTopBarActions(
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     ItemActions(
-        onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+        onShareClicked = if (uiState.isEditing) {
+            { onEvent(ItemDetailEvent.OnShareClicked) }
+        } else {
+            null
+        },
         onDeleteClicked = if (uiState.isEditing) {
             { onEvent(ItemDetailEvent.OnDeleteClicked) }
         } else {

@@ -2,7 +2,6 @@ package com.seucaio.unideas.feature.settings.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import com.seucaio.unideas.feature.settings.SettingsScreen
 
 fun NavGraphBuilder.settingsNavGraph(
@@ -13,12 +12,10 @@ fun NavGraphBuilder.settingsNavGraph(
     onNavigateToItems: () -> Unit,
     onLogoutComplete: () -> Unit,
 ) {
-    composable<SettingsRoute.Settings> { backStackEntry ->
-        val route = backStackEntry.toRoute<SettingsRoute.Settings>()
+    composable<SettingsRoute.Settings> {
         SettingsScreen(
             versionName = config.versionName,
             showDebugSection = config.showDebugSection,
-            openBackupSheet = route.openBackupSheet,
             onNavigateBack = onNavigateBack,
             onNavigateToSections = onNavigateToSections,
             onNavigateToTags = onNavigateToTags,

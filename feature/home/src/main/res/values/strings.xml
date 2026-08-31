@@ -2,8 +2,6 @@
 <resources>
     <string name="home_load_error">Couldn\'t load your items</string>
     <string name="home_settings_action">Settings</string>
-    <string name="home_backup_action_enabled">Automatic backup on</string>
-    <string name="home_backup_action_disabled">Automatic backup off</string>
     <string name="home_add_action">Add item</string>
     <string name="home_add_task">Task</string>
     <string name="home_add_note">Note</string>

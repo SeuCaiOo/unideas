@@ -90,13 +90,10 @@ fun ItemDetailScreen(
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is ItemDetailUiAction.NavigateBack -> {
-                    if (action.discardedDraft) hasChanges = false
-                    updatedOnNavigateBack?.invoke(hasChanges)
-                }
-                is ItemDetailUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
-                    resources.getString(action.messageRes)
-                )
+                is ItemDetailUiAction.NavigateBack ->
+                    updatedOnNavigateBack?.invoke(hasChanges && !action.discardedDraft)
+                is ItemDetailUiAction.ShowSnackbar ->
+                    snackbarHostState.showSnackbar(resources.getString(action.messageRes))
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
                 is ItemDetailUiAction.ItemPersisted -> {

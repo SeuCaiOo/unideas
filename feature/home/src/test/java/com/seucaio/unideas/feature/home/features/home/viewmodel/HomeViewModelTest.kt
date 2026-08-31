@@ -184,13 +184,15 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `when OnItemPinToggled succeeds should call HomeUseCase's setItemPinned`() = runTest {
+    fun `when OnItemPinToggled succeeds should call HomeUseCase's setItemPinned and trigger auto-backup`() = runTest {
         coEvery { homeUseCase.setItemPinned(1L, true) } returns Result.success(Unit)
+        every { homeUseCase.triggerAutoBackup() } returns Unit
         val vm = viewModel()
 
         vm.onEvent(HomeEvent.OnItemPinToggled(1L, true))
 
         coVerify(exactly = 1) { homeUseCase.setItemPinned(1L, true) }
+        verify(exactly = 1) { homeUseCase.triggerAutoBackup() }
     }
 
     @Test
@@ -202,20 +204,24 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnItemPinToggled(1L, true))
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
+        verify(exactly = 0) { homeUseCase.triggerAutoBackup() }
     }
 
     @Test
-    fun `when OnCompleteClicked for a known item should call HomeUseCase's complete`() = runTest {
-        val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
-        every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
-        coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
-        val vm = viewModel()
+    fun `when OnCompleteClicked for a known item should call HomeUseCase's complete and trigger auto-backup`() =
+        runTest {
+            val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().plusDays(2))
+            every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
+            coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
+            every { homeUseCase.triggerAutoBackup() } returns Unit
+            val vm = viewModel()
 
-        vm.itemsState.test { awaitItem() }
-        vm.onEvent(HomeEvent.OnCompleteClicked(1L))
+            vm.itemsState.test { awaitItem() }
+            vm.onEvent(HomeEvent.OnCompleteClicked(1L))
 
-        coVerify(exactly = 1) { homeUseCase.complete(item, any()) }
-    }
+            coVerify(exactly = 1) { homeUseCase.complete(item, any()) }
+            verify(exactly = 1) { homeUseCase.triggerAutoBackup() }
+        }
 
     @Test
     fun `when OnCompleteClicked fails should emit ShowError`() = runTest {
@@ -230,6 +236,7 @@ class HomeViewModelTest {
             vm.onEvent(HomeEvent.OnCompleteClicked(1L))
             assertEquals(HomeUiAction.ShowError("boom"), awaitItem())
         }
+        verify(exactly = 0) { homeUseCase.triggerAutoBackup() }
     }
 
     @Test
@@ -257,6 +264,7 @@ class HomeViewModelTest {
         val item = ItemStub.task(id = 1L, dueDate = LocalDate.now().minusDays(1))
         every { homeUseCase.getItems(any(), any(), any()) } returns flowOf(listOf(item))
         coEvery { homeUseCase.complete(item, any()) } returns Result.success(CompletionResult.Completed)
+        every { homeUseCase.triggerAutoBackup() } returns Unit
         val vm = viewModel()
 
         vm.itemsState.test { awaitItem() }
@@ -376,24 +384,40 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `when OnRefreshRequested should call HomeUseCase's refreshReminders and leave isRefreshing false`() = runTest {
+    fun `when OnRefreshRequested should call HomeUseCase's refreshReminders but never trigger auto-backup`() =
+        runTest {
+            every { homeUseCase.refreshReminders() } returns Unit
+            val vm = viewModel()
+
+            vm.onEvent(HomeEvent.OnRefreshRequested)
+
+            verify(exactly = 1) { homeUseCase.refreshReminders() }
+            verify(exactly = 0) { homeUseCase.triggerAutoBackup() }
+            assertEquals(false, vm.isRefreshing.value)
+        }
+
+    @Test
+    fun `when OnScreenResumed without changes should refresh reminders but not trigger auto-backup`() = runTest {
         every { homeUseCase.refreshReminders() } returns Unit
         val vm = viewModel()
 
-        vm.onEvent(HomeEvent.OnRefreshRequested)
+        vm.onEvent(HomeEvent.OnScreenResumed(hasChanges = false))
 
         verify(exactly = 1) { homeUseCase.refreshReminders() }
+        verify(exactly = 0) { homeUseCase.triggerAutoBackup() }
         assertEquals(false, vm.isRefreshing.value)
     }
 
     @Test
-    fun `when OnScreenResumed should call HomeUseCase's refreshReminders without touching isRefreshing`() = runTest {
+    fun `when OnScreenResumed with changes should refresh reminders and trigger auto-backup`() = runTest {
         every { homeUseCase.refreshReminders() } returns Unit
+        every { homeUseCase.triggerAutoBackup() } returns Unit
         val vm = viewModel()
 
-        vm.onEvent(HomeEvent.OnScreenResumed)
+        vm.onEvent(HomeEvent.OnScreenResumed(hasChanges = true))
 
         verify(exactly = 1) { homeUseCase.refreshReminders() }
+        verify(exactly = 1) { homeUseCase.triggerAutoBackup() }
         assertEquals(false, vm.isRefreshing.value)
     }
 

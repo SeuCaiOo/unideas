@@ -45,6 +45,9 @@ class HomeUseCase(
 
     fun refreshReminders() {
         reminderRefreshTrigger.refreshNow()
+    }
+
+    fun triggerAutoBackup() {
         autoBackupTrigger.triggerNow()
     }
 }

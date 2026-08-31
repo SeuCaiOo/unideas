@@ -90,7 +90,10 @@ fun ItemDetailScreen(
     LaunchedEffect(Unit) {
         viewModel.uiAction.collect { action ->
             when (action) {
-                is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke(hasChanges)
+                is ItemDetailUiAction.NavigateBack -> {
+                    if (action.discardedDraft) hasChanges = false
+                    updatedOnNavigateBack?.invoke(hasChanges)
+                }
                 is ItemDetailUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
                     resources.getString(action.messageRes)
                 )

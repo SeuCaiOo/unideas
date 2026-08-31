@@ -320,7 +320,7 @@ class ItemDetailViewModelTest {
                 vm.onEvent(ItemDetailEvent.OnBackRequested)
                 val persisted = awaitItem()
                 check(persisted is ItemDetailUiAction.ItemPersisted && persisted.item.title == "Título editado")
-                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+                assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
             }
 
             coVerify(exactly = 1) { itemFormUseCase.edit(match { it.id == 1L && it.title == "Título editado" }) }
@@ -335,7 +335,7 @@ class ItemDetailViewModelTest {
 
         vm.uiAction.test {
             vm.onEvent(ItemDetailEvent.OnBackRequested)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
         }
 
         coVerify(exactly = 0) { itemFormUseCase.edit(any()) }
@@ -400,7 +400,7 @@ class ItemDetailViewModelTest {
 
         vm.uiAction.test {
             vm.onEvent(ItemDetailEvent.OnBackRequested)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
         }
         coVerify(exactly = 0) { itemFormUseCase.create(any()) }
     }
@@ -417,7 +417,7 @@ class ItemDetailViewModelTest {
                 vm.onEvent(ItemDetailEvent.OnBackRequested)
                 val persisted = awaitItem()
                 check(persisted is ItemDetailUiAction.ItemPersisted && persisted.item.title == "Nova tarefa")
-                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+                assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
             }
             coVerify(exactly = 1) { itemFormUseCase.create(match { it.title == "Nova tarefa" }) }
         }
@@ -491,7 +491,7 @@ class ItemDetailViewModelTest {
 
             vm.uiAction.test {
                 vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
-                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+                assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
             }
             coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
         }
@@ -513,7 +513,7 @@ class ItemDetailViewModelTest {
 
             vm.uiAction.test {
                 vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
-                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+                assertEquals(ItemDetailUiAction.NavigateBack(discardedDraft = true), awaitItem())
             }
             coVerify(exactly = 1) { itemFormUseCase.delete(10L) }
         }
@@ -532,7 +532,7 @@ class ItemDetailViewModelTest {
             vm.onEvent(ItemDetailEvent.OnDeleteClicked)
             vm.uiAction.test {
                 vm.onEvent(ItemDetailEvent.OnDeleteConfirmClicked)
-                assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+                assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
             }
             coVerify(exactly = 1) { itemFormUseCase.delete(10L) }
         }
@@ -549,7 +549,7 @@ class ItemDetailViewModelTest {
 
         vm.uiAction.test {
             vm.onEvent(ItemDetailEvent.OnDiscardConfirmed)
-            assertEquals(ItemDetailUiAction.NavigateBack, awaitItem())
+            assertEquals(ItemDetailUiAction.NavigateBack(), awaitItem())
         }
         coVerify(exactly = 0) { itemFormUseCase.delete(any()) }
     }

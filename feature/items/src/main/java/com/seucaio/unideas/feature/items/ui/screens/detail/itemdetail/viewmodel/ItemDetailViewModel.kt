@@ -164,11 +164,15 @@ class ItemDetailViewModel(
         val state = uiState.value
         when {
             state.isPristine -> sendUiAction(ItemDetailUiAction.NavigateBack)
-            state.isTitleValid -> {
+            state.isTitleValid && hasPendingTextSave -> {
                 debounceJob?.cancel()
                 hasPendingTextSave = false
-                persist().onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }.onFailure { handleFailure(it) }
+                persist()
+                    .onSuccess { sendUiAction(ItemDetailUiAction.NavigateBack) }
+                    .onFailure { handleFailure(it) }
             }
+
+            state.isTitleValid -> sendUiAction(ItemDetailUiAction.NavigateBack)
 
             state.titleError -> _dialogState.update { discardConfirmDialogState() }
 

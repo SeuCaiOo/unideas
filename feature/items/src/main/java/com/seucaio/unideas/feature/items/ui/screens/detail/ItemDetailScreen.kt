@@ -88,9 +88,8 @@ fun ItemDetailScreen(
         viewModel.uiAction.collect { action ->
             when (action) {
                 is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
-                is ItemDetailUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
-                    resources.getString(action.messageRes)
-                )
+                is ItemDetailUiAction.ShowSnackbar ->
+                    snackbarHostState.showSnackbar(resources.getString(action.messageRes))
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
                 is ItemDetailUiAction.ItemPersisted ->
@@ -207,7 +206,11 @@ private fun ItemDetailTopBarActions(
     onEvent: (ItemDetailEvent) -> Unit,
 ) {
     ItemActions(
-        onShareClicked = { onEvent(ItemDetailEvent.OnShareClicked) },
+        onShareClicked = if (uiState.isEditing) {
+            { onEvent(ItemDetailEvent.OnShareClicked) }
+        } else {
+            null
+        },
         onDeleteClicked = if (uiState.isEditing) {
             { onEvent(ItemDetailEvent.OnDeleteClicked) }
         } else {

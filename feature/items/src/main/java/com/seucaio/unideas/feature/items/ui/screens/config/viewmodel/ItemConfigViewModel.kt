@@ -99,6 +99,7 @@ class ItemConfigViewModel(
             .onSuccess {
                 originalItem = updated
                 _uiState.update { it.applyLoadedItem(updated) }
+                sendUiAction(ItemConfigUiAction.Persisted)
             }
             .onFailure { sendUiAction(ItemConfigUiAction.ShowError(it.message.orEmpty())) }
 
@@ -109,7 +110,10 @@ class ItemConfigViewModel(
         val original = originalItem ?: return
         val updated = uiState.value.toItem(original, availableTags)
         itemFormUseCase.edit(updated)
-            .onSuccess { originalItem = updated }
+            .onSuccess {
+                originalItem = updated
+                sendUiAction(ItemConfigUiAction.Persisted)
+            }
             .onFailure { sendUiAction(ItemConfigUiAction.ShowError(it.message.orEmpty())) }
     }
 

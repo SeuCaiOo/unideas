@@ -7,4 +7,7 @@ object Constants {
 
     /** Maximum number of items shown in the Home priority panel. */
     const val PRIORITY_PANEL_LIMIT = 5
+
+    /** NavBackStackEntry.savedStateHandle key: did the screen the user just left persist a change? */
+    const val ITEM_SAVED_RESULT_KEY = "itemSaved"
 }

@@ -38,4 +38,15 @@
     <string name="logout_confirm_message_suffix">. Signing out disconnects this account and clears your local data — you\'ll need to sign in again to use backup and sync.</string>
     <string name="logout_confirm_warning">Anything not backed up yet will be lost.</string>
     <string name="logout_confirm_confirm">Sign out</string>
+
+    <!-- Backup sync -->
+    <string name="backup_sync_restore_title">Backup out of sync</string>
+    <string name="backup_sync_restore_message">A different backup was found on Google Drive. Restore it to get the latest data?</string>
+    <string name="backup_sync_restore_action">Restore</string>
+    <string name="backup_sync_restore_decline">Not now</string>
+    <string name="backup_sync_disable_title">Turn off automatic backup?</string>
+    <string name="backup_sync_disable_message">From now on, changes will only be saved on this device, and automatic backup will be turned off.</string>
+    <string name="backup_sync_disable_confirm">Turn off</string>
+    <string name="backup_sync_disable_decline">Go back</string>
+    <string name="backup_sync_error">Couldn\'t restore the backup.</string>
 </resources>

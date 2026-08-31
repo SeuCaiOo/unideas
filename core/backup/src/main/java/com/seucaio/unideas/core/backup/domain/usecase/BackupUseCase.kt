@@ -18,8 +18,8 @@ class BackupUseCase(
     private val deleteBackupUseCase: DeleteBackupUseCase,
 ) {
 
-    suspend fun upload(account: GoogleSignInAccount): Result<BackupInfo> =
-        uploadBackupUseCase(buildDriveServiceUseCase(account))
+    suspend fun upload(account: GoogleSignInAccount, isAutomatic: Boolean = false): Result<BackupInfo> =
+        uploadBackupUseCase(buildDriveServiceUseCase(account), isAutomatic)
 
     suspend fun list(account: GoogleSignInAccount): Result<List<BackupInfo>> =
         listBackupsUseCase(buildDriveServiceUseCase(account))

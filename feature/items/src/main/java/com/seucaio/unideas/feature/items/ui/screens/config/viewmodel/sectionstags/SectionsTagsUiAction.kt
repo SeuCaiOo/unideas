@@ -5,4 +5,6 @@ import androidx.annotation.StringRes
 sealed interface SectionsTagsUiAction {
     data class ShowSnackbar(@param:StringRes val messageRes: Int) : SectionsTagsUiAction
     data class ShowError(val message: String) : SectionsTagsUiAction
+    data class SectionCreated(val id: Long) : SectionsTagsUiAction
+    data class TagCreated(val id: Long) : SectionsTagsUiAction
 }

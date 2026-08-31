@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.domain.model.CompletionStatus
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
@@ -72,7 +73,20 @@ class ItemOccurrenceViewModel(
         if (historyObserved) return
         historyObserved = true
         itemOccurrenceUseCase.getHistory(id)
-            .onEach { history -> _uiState.update { it.copy(hasHistory = history.isNotEmpty()) } }
+            .onEach { history ->
+                val onTimeCount = history.count { it.status == CompletionStatus.ON_TIME }
+                _uiState.update {
+                    it.copy(
+                        hasHistory = history.isNotEmpty(),
+                        historyCount = history.size,
+                        historyOnTimePercent = if (history.isEmpty()) {
+                            0
+                        } else {
+                            onTimeCount * PERCENT / history.size
+                        },
+                    )
+                }
+            }
             .launchIn(viewModelScope)
     }
 
@@ -225,4 +239,8 @@ class ItemOccurrenceViewModel(
     }
 
     private suspend fun sendUiAction(action: ItemOccurrenceUiAction) = _uiAction.send(action)
+
+    private companion object {
+        const val PERCENT = 100
+    }
 }

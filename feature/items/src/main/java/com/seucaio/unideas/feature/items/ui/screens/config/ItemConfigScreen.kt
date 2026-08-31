@@ -105,6 +105,10 @@ fun ItemConfigScreen(
                     resources.getString(action.messageRes)
                 )
                 is SectionsTagsUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is SectionsTagsUiAction.SectionCreated ->
+                    viewModel.onEvent(ItemConfigEvent.OnSectionChanged(action.id))
+                is SectionsTagsUiAction.TagCreated ->
+                    viewModel.onEvent(ItemConfigEvent.OnTagToggled(action.id))
             }
         }
     }

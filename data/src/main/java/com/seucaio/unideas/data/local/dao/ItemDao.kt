@@ -23,7 +23,9 @@ interface ItemDao {
 
     /**
      * Observes items of [type], optionally filtered by section and/or tags — excludes archived
-     * items (see [getArchivedItems]).
+     * items (see [getArchivedItems]). Ordered by due date first (soonest due first; items with
+     * no due date sort last), then by creation date within that — same tie-breaker as before
+     * `dueDate` ordering existed (#206).
      *
      * @param sectionId `null` = no section filter.
      * @param tagCount pass `tagIds.size`; `0` disables the tag filter
@@ -37,7 +39,7 @@ interface ItemDao {
           AND status = 'ACTIVE'
           AND (:sectionId IS NULL OR sectionId = :sectionId)
           AND (:tagCount = 0 OR id IN (SELECT itemId FROM item_tag WHERE tagId IN (:tagIds)))
-        ORDER BY createdAt DESC
+        ORDER BY dueDate IS NULL, dueDate ASC, createdAt DESC
         """,
     )
     fun getItems(

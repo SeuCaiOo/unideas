@@ -420,6 +420,29 @@ class ItemOccurrenceViewModelTest {
     }
 
     @Test
+    fun `when getHistory emits mixed records should compute historyCount and on-time percentage`() = runTest {
+        val item = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)
+        val onTime = ItemCompletionHistory(
+            itemId = 1L,
+            scheduledDate = ItemStub.TODAY,
+            completedAt = ItemStub.TODAY.atTime(9, 0),
+        )
+        val late = ItemCompletionHistory(
+            itemId = 1L,
+            scheduledDate = ItemStub.TODAY.minusDays(7),
+            completedAt = ItemStub.TODAY.minusDays(6).atTime(9, 0),
+        )
+        every { itemFormUseCase.get(1L) } returns flowOf(item)
+        every { itemOccurrenceUseCase.getHistory(1L) } returns flowOf(listOf(onTime, late))
+
+        val vm = viewModel(itemId = 1L)
+        vm.uiState.test { awaitItem() }
+
+        assertEquals(2, vm.uiState.value.historyCount)
+        assertEquals(50, vm.uiState.value.historyOnTimePercent)
+    }
+
+    @Test
     fun `when OnScreenResumed fires for a known item should reload it from the repository`() = runTest {
         val item = ItemStub.task(id = 1L, recurrence = Recurrence.None, dueDate = null)
         val updated = item.copy(recurrence = Recurrence.Weekly, dueDate = ItemStub.TODAY)

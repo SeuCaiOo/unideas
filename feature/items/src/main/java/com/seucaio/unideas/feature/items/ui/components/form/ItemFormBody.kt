@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Repeat
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -31,7 +34,9 @@ import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.chips.TextBadge
-import com.seucaio.unideas.ds.components.lists.NavCard
+import com.seucaio.unideas.ds.components.lists.ConfigSummaryNavCard
+import com.seucaio.unideas.ds.components.lists.HistorySummaryNavCard
+import com.seucaio.unideas.ds.components.lists.NavCardConfigItem
 import com.seucaio.unideas.ds.theme.UdsTheme
 import com.seucaio.unideas.feature.items.R
 import com.seucaio.unideas.feature.items.ui.components.fields.TitleDescriptionFields
@@ -96,25 +101,8 @@ fun ItemFormBody(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .padding(bottom = if (isSnackbarVisible) SNACKBAR_RESERVED_HEIGHT else 0.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                NavCard(
-                    icon = Icons.Default.Settings,
-                    title = stringResource(R.string.item_config_title),
-                    subtitle = configCardSubtitle(state),
-                    onClick = onNavigateToConfig,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-
-                if (onNavigateToHistory != null) {
-                    NavCard(
-                        icon = Icons.Default.History,
-                        title = stringResource(R.string.item_detail_history),
-                        subtitle = stringResource(R.string.item_detail_history_card_subtitle),
-                        onClick = onNavigateToHistory,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-
                 ItemFormFooter(
                     state = state,
                     occurrenceState = occurrenceState,
@@ -123,9 +111,45 @@ fun ItemFormBody(
                     onExtendDeadlineClicked = onExtendDeadlineClicked,
                     onMuteRemindersToggled = onMuteRemindersToggled,
                 )
+
+                HistoryAndConfigCards(
+                    state = state,
+                    occurrenceState = occurrenceState,
+                    onNavigateToConfig = onNavigateToConfig,
+                    onNavigateToHistory = onNavigateToHistory,
+                )
             }
         }
     }
+}
+
+@Composable
+private fun HistoryAndConfigCards(
+    state: ItemFormFieldsState,
+    occurrenceState: ItemOccurrenceUiState,
+    onNavigateToConfig: () -> Unit,
+    onNavigateToHistory: (() -> Unit)?,
+) {
+    if (onNavigateToHistory != null) {
+        HistorySummaryNavCard(
+            title = stringResource(R.string.item_detail_history),
+            lines = listOf(
+                stringResource(R.string.item_detail_history_on_time_percent, occurrenceState.historyOnTimePercent),
+                pluralStringResource(
+                    R.plurals.item_history_occurrence_count,
+                    occurrenceState.historyCount,
+                    occurrenceState.historyCount,
+                ),
+            ),
+            onClick = onNavigateToHistory,
+        )
+    }
+
+    ConfigSummaryNavCard(
+        title = stringResource(R.string.item_config_title),
+        rows = configSummaryRows(state),
+        onClick = onNavigateToConfig,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -165,29 +189,39 @@ private fun ItemFormBadges(
 }
 
 @Composable
-private fun configCardSubtitle(state: ItemFormFieldsState): String {
-    val parts = buildList {
-        val recurrence = state.persistableRecurrence
-        val dueDate = state.persistableDueDate
-        if (recurrence != Recurrence.None) {
-            recurrence.label(dueDate)?.let(::add)
-        } else {
-            dueDate?.let { add(it.toFormattedDateString()) }
-        }
-        state.persistableDueTime?.let { add(it.format(cardTimeFormatter)) }
-        state.availableSections.firstOrNull { it.id == state.sectionId }?.let { add(it.name) }
-        if (state.selectedTagIds.isNotEmpty()) {
-            add(
-                pluralStringResource(
-                    R.plurals.item_config_card_tags,
-                    state.selectedTagIds.size,
-                    state.selectedTagIds.size
-                )
-            )
-        }
+private fun configSummaryRows(state: ItemFormFieldsState): List<List<NavCardConfigItem>> {
+    val recurrence = state.persistableRecurrence
+    val dueDate = state.persistableDueDate
+    val recurrenceItem = if (recurrence != Recurrence.None) {
+        recurrence.label(dueDate)?.let { NavCardConfigItem(Icons.Outlined.Repeat, it) }
+    } else {
+        dueDate?.let { NavCardConfigItem(Icons.Outlined.Event, it.toFormattedDateString()) }
     }
-    return parts.ifEmpty { null }?.joinToString(" · ")
-        ?: stringResource(R.string.item_config_card_subtitle_empty)
+    val timeItem = state.persistableDueTime?.let {
+        NavCardConfigItem(Icons.Outlined.Schedule, it.format(cardTimeFormatter))
+    }
+    val sectionItem = state.availableSections.firstOrNull { it.id == state.sectionId }?.let {
+        NavCardConfigItem(Icons.Outlined.Folder, it.name)
+    }
+    val tagsItem = if (state.selectedTagIds.isNotEmpty()) {
+        NavCardConfigItem(
+            Icons.Outlined.Sell,
+            pluralStringResource(R.plurals.item_config_card_tags, state.selectedTagIds.size, state.selectedTagIds.size),
+        )
+    } else {
+        null
+    }
+
+    val rows = listOf(
+        listOfNotNull(recurrenceItem, timeItem),
+        listOfNotNull(sectionItem, tagsItem),
+    ).filter { it.isNotEmpty() }
+
+    return rows.ifEmpty {
+        listOf(
+            listOf(NavCardConfigItem(Icons.Outlined.Event, stringResource(R.string.item_config_card_subtitle_empty)))
+        )
+    }
 }
 
 @PreviewLightDark

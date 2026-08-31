@@ -64,6 +64,7 @@ fun SettingsScreen(
     onNavigateToTags: () -> Unit,
     onNavigateToItems: () -> Unit,
     onLogoutComplete: () -> Unit,
+    openBackupSheet: Boolean = false,
     viewModel: SettingsViewModel = koinViewModel(),
     backupViewModel: BackupViewModel = koinViewModel(),
 ) {
@@ -80,7 +81,7 @@ fun SettingsScreen(
     val updatedOnNavigateToTags by rememberUpdatedState(onNavigateToTags)
     val updatedOnNavigateToItems by rememberUpdatedState(onNavigateToItems)
     val updatedOnLogoutComplete by rememberUpdatedState(onLogoutComplete)
-    var showBackupSheet by remember { mutableStateOf(false) }
+    var showBackupSheet by remember { mutableStateOf(openBackupSheet) }
     var showDesignSystemGallery by remember { mutableStateOf(false) }
     var showTestNotificationSheet by remember { mutableStateOf(false) }
     var showLogoutSheet by remember { mutableStateOf(false) }

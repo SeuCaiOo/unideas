@@ -74,7 +74,10 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         },
         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
         onNavigateToArchivedItems = { navController.navigate(HomeRoute.ArchivedItems) },
-        onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
+        onNavigateToSettings = { navController.navigate(SettingsRoute.Settings()) },
+        onNavigateToBackupSettings = {
+            navController.navigate(SettingsRoute.Settings(openBackupSheet = true))
+        },
     )
     settingsNavGraph(
         config = SettingsScreenConfig(

@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 sealed interface SettingsRoute {
 
     @Serializable
-    data object Settings : SettingsRoute
+    data class Settings(val openBackupSheet: Boolean = false) : SettingsRoute
 }

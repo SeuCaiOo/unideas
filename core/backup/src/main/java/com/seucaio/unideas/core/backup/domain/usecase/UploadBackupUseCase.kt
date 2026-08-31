@@ -5,6 +5,6 @@ import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.repository.BackupRepository
 
 class UploadBackupUseCase(private val repository: BackupRepository) {
-    suspend operator fun invoke(driveService: Drive): Result<BackupInfo> =
-        repository.uploadBackup(driveService)
+    suspend operator fun invoke(driveService: Drive, isAutomatic: Boolean = false): Result<BackupInfo> =
+        repository.uploadBackup(driveService, isAutomatic)
 }

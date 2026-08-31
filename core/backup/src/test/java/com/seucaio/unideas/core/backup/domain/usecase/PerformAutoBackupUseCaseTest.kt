@@ -49,7 +49,7 @@ class PerformAutoBackupUseCaseTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
         coEvery { autoBackupRepository.getTrackedFileId() } returns null
-        coEvery { backupUseCase.upload(account) } returns Result.success(uploaded)
+        coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
 
         val result = useCase()
@@ -64,7 +64,7 @@ class PerformAutoBackupUseCaseTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
-        coEvery { backupUseCase.upload(account) } returns Result.success(uploaded)
+        coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
         coEvery { backupUseCase.delete(account, "old-file") } returns Result.success(Unit)
 
@@ -80,7 +80,7 @@ class PerformAutoBackupUseCaseTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
-        coEvery { backupUseCase.upload(account) } returns Result.failure(RuntimeException("IO error"))
+        coEvery { backupUseCase.upload(account, true) } returns Result.failure(RuntimeException("IO error"))
 
         val result = useCase()
 
@@ -94,7 +94,7 @@ class PerformAutoBackupUseCaseTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
-        coEvery { backupUseCase.upload(account) } returns Result.success(uploaded)
+        coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
         coEvery { backupUseCase.delete(account, "old-file") } returns Result.failure(RuntimeException("IO error"))
 

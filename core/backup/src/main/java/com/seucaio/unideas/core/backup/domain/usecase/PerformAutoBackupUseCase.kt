@@ -21,7 +21,7 @@ class PerformAutoBackupUseCase(
         val account = googleAuthUseCase.getSignedInAccount() ?: return@runCatching
 
         val previousFileId = autoBackupRepository.getTrackedFileId()
-        val uploaded = backupUseCase.upload(account).getOrThrow()
+        val uploaded = backupUseCase.upload(account, isAutomatic = true).getOrThrow()
         autoBackupRepository.setTrackedFileId(uploaded.fileId)
 
         if (previousFileId != null) {

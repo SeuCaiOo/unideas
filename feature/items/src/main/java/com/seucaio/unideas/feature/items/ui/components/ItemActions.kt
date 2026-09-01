@@ -17,14 +17,16 @@ import com.seucaio.unideas.feature.items.R
 
 @Composable
 fun ItemActions(
-    onShareClicked: () -> Unit,
     modifier: Modifier = Modifier,
+    onShareClicked: (() -> Unit)? = null,
     onEditClicked: (() -> Unit)? = null,
     onDeleteClicked: (() -> Unit)? = null,
 ) {
     Row(modifier) {
-        IconButton(onClick = onShareClicked) {
-            Icon(Icons.Default.Share, contentDescription = stringResource(R.string.item_detail_share))
+        if (onShareClicked != null) {
+            IconButton(onClick = onShareClicked) {
+                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.item_detail_share))
+            }
         }
         if (onEditClicked != null) {
             IconButton(onClick = onEditClicked) {

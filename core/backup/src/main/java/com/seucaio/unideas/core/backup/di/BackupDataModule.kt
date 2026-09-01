@@ -28,6 +28,7 @@ import com.seucaio.unideas.core.backup.domain.usecase.SignOutUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
 import com.seucaio.unideas.core.backup.viewmodel.BackupSyncViewModel
 import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.backup.worker.AutoBackupDataObserver
 import com.seucaio.unideas.core.backup.worker.AutoBackupTriggerImpl
 import com.seucaio.unideas.core.backup.worker.AutoBackupWorker
 import com.seucaio.unideas.domain.repository.AutoBackupTrigger
@@ -46,6 +47,7 @@ val backupDataModule = module {
     single { AutoBackupPreferences(androidContext()) }
     single { AutoBackupRepositoryImpl(get()) }.bind<AutoBackupRepository>()
     single { AutoBackupTriggerImpl(androidContext()) }.bind<AutoBackupTrigger>()
+    single(createdAtStart = true) { AutoBackupDataObserver(get(), get()) }
     factoryOf(::GetSignInIntentUseCase)
     factoryOf(::GetSignedInAccountUseCase)
     factoryOf(::SignOutUseCase)

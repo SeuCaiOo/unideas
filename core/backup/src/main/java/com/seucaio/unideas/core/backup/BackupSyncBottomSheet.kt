@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetDefaults
@@ -31,13 +34,21 @@ private fun rememberFixedSheetState(): SheetState = rememberModalBottomSheetStat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestorePromptBottomSheet(onRestoreClick: () -> Unit, onDeclineClick: () -> Unit) {
+fun RestorePromptBottomSheet(
+    isRestoring: Boolean,
+    onRestoreClick: () -> Unit,
+    onDeclineClick: () -> Unit,
+) {
     ModalBottomSheet(
         onDismissRequest = {},
         sheetState = rememberFixedSheetState(),
         properties = ModalBottomSheetDefaults.properties(shouldDismissOnBackPress = false),
     ) {
-        RestorePromptSheetContent(onRestoreClick = onRestoreClick, onDeclineClick = onDeclineClick)
+        RestorePromptSheetContent(
+            isRestoring = isRestoring,
+            onRestoreClick = onRestoreClick,
+            onDeclineClick = onDeclineClick,
+        )
     }
 }
 
@@ -46,6 +57,7 @@ fun RestorePromptSheetContent(
     onRestoreClick: () -> Unit,
     onDeclineClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isRestoring: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -66,10 +78,18 @@ fun RestorePromptSheetContent(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onRestoreClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = stringResource(R.string.backup_sync_restore_action))
+            Button(onClick = onRestoreClick, enabled = !isRestoring, modifier = Modifier.fillMaxWidth()) {
+                if (isRestoring) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = LocalContentColor.current,
+                    )
+                } else {
+                    Text(text = stringResource(R.string.backup_sync_restore_action))
+                }
             }
-            TextButton(onClick = onDeclineClick, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onDeclineClick, enabled = !isRestoring, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.backup_sync_restore_decline))
             }
         }

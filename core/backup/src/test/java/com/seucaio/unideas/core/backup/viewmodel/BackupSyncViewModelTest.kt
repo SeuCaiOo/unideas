@@ -12,6 +12,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -109,6 +110,25 @@ class BackupSyncViewModelTest {
         assertEquals(BackupSyncDialogState.RestorePrompt(remoteBackup), viewModel.dialogState.value)
         coVerify(exactly = 0) { autoBackupSettingsUseCase.setTrackedFileId(any()) }
     }
+
+    @Test
+    fun `when OnRestoreConfirmClicked fires again while already restoring should not call restore twice`() =
+        runTest {
+            val restoreDeferred = CompletableDeferred<Result<Unit>>()
+            coEvery { backupUseCase.restore(account, "remote-file") } coAnswers { restoreDeferred.await() }
+            coEvery { autoBackupSettingsUseCase.setTrackedFileId("remote-file") } returns Unit
+            viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+
+            viewModel.onEvent(BackupSyncEvent.OnRestoreConfirmClicked)
+            assertEquals(
+                true,
+                (viewModel.dialogState.value as BackupSyncDialogState.RestorePrompt).isRestoring,
+            )
+            viewModel.onEvent(BackupSyncEvent.OnRestoreConfirmClicked)
+
+            coVerify(exactly = 1) { backupUseCase.restore(any(), any()) }
+            restoreDeferred.complete(Result.success(Unit))
+        }
 
     @Test
     fun `when OnDisableSyncConfirmClicked should turn off auto-backup and dismiss`() = runTest {

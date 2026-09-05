@@ -55,16 +55,29 @@ class BackupSyncViewModel(
             BackupSyncDialogState.None -> null
         }
 
-    private fun handleRestore() = viewModelScope.launch {
-        val remoteBackup = currentRemoteBackup() ?: return@launch
-        val account = getSignedInAccountUseCase() ?: return@launch
-        backupUseCase.restore(account, remoteBackup.fileId)
+    private fun handleRestore() {
+        val prompt = _dialogState.value as? BackupSyncDialogState.RestorePrompt ?: return
+        if (prompt.isRestoring) return
+        _dialogState.update { prompt.restoring(true) }
+        viewModelScope.launch { performRestore(prompt) }
+    }
+
+    private suspend fun performRestore(prompt: BackupSyncDialogState.RestorePrompt) {
+        val account = getSignedInAccountUseCase()
+        if (account == null) {
+            _dialogState.update { prompt.restoring(false) }
+            return
+        }
+        backupUseCase.restore(account, prompt.remoteBackup.fileId)
             .onSuccess {
-                autoBackupSettingsUseCase.setTrackedFileId(remoteBackup.fileId)
+                autoBackupSettingsUseCase.setTrackedFileId(prompt.remoteBackup.fileId)
                 _dialogState.update { BackupSyncDialogState.None }
                 sendUiAction(BackupSyncUiAction.RestoreCompleted)
             }
-            .onFailure { sendUiAction(BackupSyncUiAction.ShowError(it.message.orEmpty())) }
+            .onFailure {
+                _dialogState.update { prompt.restoring(false) }
+                sendUiAction(BackupSyncUiAction.ShowError(it.message.orEmpty()))
+            }
     }
 
     private fun handleDisableSync() = viewModelScope.launch {

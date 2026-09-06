@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.sync
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

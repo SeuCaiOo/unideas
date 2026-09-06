@@ -3,8 +3,8 @@ package com.seucaio.unideas.feature.home.features.home.screen.components.chrome
 import androidx.compose.runtime.Composable
 import com.seucaio.unideas.core.backup.DisableSyncConfirmBottomSheet
 import com.seucaio.unideas.core.backup.RestorePromptBottomSheet
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncDialogState
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncEvent
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncDialogState
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncEvent
 import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.feature.home.R
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeDialogState

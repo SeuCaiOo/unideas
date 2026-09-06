@@ -1,7 +1,7 @@
 package com.seucaio.unideas.feature.home.features.home.screen
 
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncDialogState
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncEvent
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncDialogState
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncEvent
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeDialogState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState

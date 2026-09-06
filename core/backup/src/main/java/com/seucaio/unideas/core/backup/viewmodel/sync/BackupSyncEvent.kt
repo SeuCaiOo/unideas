@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.sync
 
 sealed interface BackupSyncEvent {
     data object OnSyncCheckRequested : BackupSyncEvent

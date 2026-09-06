@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.sync
 
 import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount

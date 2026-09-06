@@ -26,8 +26,8 @@ import com.seucaio.unideas.core.backup.domain.usecase.SetAutoBackupEnabledUseCas
 import com.seucaio.unideas.core.backup.domain.usecase.SetAutoBackupTrackedFileIdUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.SignOutUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.UploadBackupUseCase
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncViewModel
-import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupViewModel
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncViewModel
 import com.seucaio.unideas.core.backup.worker.AutoBackupDataObserver
 import com.seucaio.unideas.core.backup.worker.AutoBackupTriggerImpl
 import com.seucaio.unideas.core.backup.worker.AutoBackupWorker

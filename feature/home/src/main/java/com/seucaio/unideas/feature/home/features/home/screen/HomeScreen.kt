@@ -12,9 +12,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncEvent
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncUiAction
-import com.seucaio.unideas.core.backup.viewmodel.BackupSyncViewModel
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncEvent
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncUiAction
+import com.seucaio.unideas.core.backup.viewmodel.sync.BackupSyncViewModel
 import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeEvent

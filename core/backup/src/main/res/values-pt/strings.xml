@@ -14,9 +14,14 @@
     <string name="backup_action_hide_backups">Esconder backups</string>
     <string name="backup_action_restore">Restaurar backup</string>
     <string name="backup_auto_backup_title">Backup automático</string>
-    <string name="backup_auto_backup_subtitle">Faz backup automaticamente após uma sincronização (ex.: pull-to-refresh)</string>
+    <string name="backup_auto_backup_subtitle">Faz backup automaticamente sempre que seus dados mudam</string>
     <string name="backup_auto_backup_enabled_tag">Automático</string>
     <string name="backup_backups_saved_title">Backups salvos</string>
+    <string name="backup_date_group_this_week">Essa semana</string>
+    <string name="backup_date_group_last_week">Semana passada</string>
+    <string name="backup_date_group_this_month">Este mês</string>
+    <string name="backup_date_group_last_month">Mês passado</string>
+    <string name="backup_date_group_older">Mais antigos</string>
     <string name="backup_most_recent">Mais recente</string>
     <string name="backup_date_today">Hoje, %s</string>
     <string name="backup_date_yesterday">Ontem, %s</string>

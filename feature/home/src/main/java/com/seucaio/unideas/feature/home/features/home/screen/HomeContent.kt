@@ -56,6 +56,14 @@ internal fun HomeContent(
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
     val isSnackbarVisible = snackbarHostState.currentSnackbarData != null
     val isPreview = LocalInspectionMode.current
+    var syncGateResolved by remember { mutableStateOf(ColdStartSyncGate.resolved) }
+
+    LaunchedEffect(backupSync.checkCompleted) {
+        if (backupSync.checkCompleted) {
+            ColdStartSyncGate.resolved = true
+            syncGateResolved = true
+        }
+    }
 
     LaunchedEffect(
         state.uiState,
@@ -112,7 +120,7 @@ internal fun HomeContent(
     ) { padding ->
         HomeBody(
             uiState = state.uiState,
-            syncCheckCompleted = backupSync.checkCompleted,
+            syncGateResolved = syncGateResolved,
             filterState = state.filterState,
             itemsState = state.itemsState,
             homeMode = state.homeMode,
@@ -138,7 +146,7 @@ private fun isReadyForPriorityPrompt(
 @Composable
 private fun HomeBody(
     uiState: HomeUiState,
-    syncCheckCompleted: Boolean,
+    syncGateResolved: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
@@ -156,7 +164,7 @@ private fun HomeBody(
                 modifier = Modifier.padding(padding),
             )
         is HomeUiState.Success ->
-            if (!syncCheckCompleted) {
+            if (!syncGateResolved) {
                 UnideasLoadingContent(modifier = Modifier.padding(padding))
             } else {
                 PullToRefreshBox(

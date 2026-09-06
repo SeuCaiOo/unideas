@@ -14,6 +14,7 @@ import com.seucaio.unideas.core.backup.domain.usecase.DeleteBackupUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetAutoBackupEnabledUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetAutoBackupTrackedFileIdUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetBackupSyncStateUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GetConfirmedBackupSyncStateUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetLastBackupInfoUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetSignInIntentUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetSignedInAccountUseCase
@@ -57,6 +58,7 @@ val backupDataModule = module {
     factoryOf(::DeleteBackupUseCase)
     factoryOf(::GetLastBackupInfoUseCase)
     factoryOf(::GetBackupSyncStateUseCase)
+    factoryOf(::GetConfirmedBackupSyncStateUseCase)
     factoryOf(::GetAutoBackupEnabledUseCase)
     factoryOf(::SetAutoBackupEnabledUseCase)
     factoryOf(::GetAutoBackupTrackedFileIdUseCase)

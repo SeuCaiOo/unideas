@@ -5,6 +5,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GetConfirmedBackupSyncStateUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GetSignedInAccountUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -15,7 +16,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -37,17 +40,26 @@ class BackupSyncViewModelTest {
     @MockK
     private lateinit var autoBackupSettingsUseCase: AutoBackupSettingsUseCase
 
+    @MockK
+    private lateinit var getConfirmedBackupSyncStateUseCase: GetConfirmedBackupSyncStateUseCase
+
     private val account: GoogleSignInAccount = mockk()
     private val remoteBackup = BackupInfo("remote-file", LocalDateTime.now(), 2048L)
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var viewModel: BackupSyncViewModel
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
         every { getSignedInAccountUseCase() } returns account
-        viewModel = BackupSyncViewModel(getSignedInAccountUseCase, backupUseCase, autoBackupSettingsUseCase)
+        viewModel = BackupSyncViewModel(
+            getSignedInAccountUseCase,
+            backupUseCase,
+            autoBackupSettingsUseCase,
+            getConfirmedBackupSyncStateUseCase,
+        )
     }
 
     @After
@@ -55,16 +67,63 @@ class BackupSyncViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun TestScope.desyncFound() {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns true
+        coEvery { getConfirmedBackupSyncStateUseCase(account) } returns remoteBackup
+        viewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+        advanceUntilIdle()
+    }
+
     @Test
-    fun `when OnDesyncDetected should show the restore prompt`() = runTest {
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+    fun `when OnSyncCheckRequested finds a desync should show the restore prompt`() = runTest(testDispatcher) {
+        desyncFound()
 
         assertEquals(BackupSyncDialogState.RestorePrompt(remoteBackup), viewModel.dialogState.value)
     }
 
     @Test
-    fun `when OnRestoreDeclineClicked should show the disable-sync confirmation`() = runTest {
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+    fun `when OnSyncCheckRequested finds no desync should not show any prompt`() = runTest(testDispatcher) {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns true
+        coEvery { getConfirmedBackupSyncStateUseCase(account) } returns null
+
+        viewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+
+        assertEquals(BackupSyncDialogState.None, viewModel.dialogState.value)
+    }
+
+    @Test
+    fun `when OnSyncCheckRequested runs with auto-backup disabled should skip the check`() = runTest(testDispatcher) {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
+
+        viewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+
+        assertEquals(BackupSyncDialogState.None, viewModel.dialogState.value)
+        coVerify(exactly = 0) { getConfirmedBackupSyncStateUseCase(any()) }
+    }
+
+    @Test
+    fun `when OnSyncCheckRequested runs with no signed-in account should skip the check`() = runTest(testDispatcher) {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns true
+        every { getSignedInAccountUseCase() } returns null
+
+        viewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+
+        assertEquals(BackupSyncDialogState.None, viewModel.dialogState.value)
+        coVerify(exactly = 0) { getConfirmedBackupSyncStateUseCase(any()) }
+    }
+
+    @Test
+    fun `when OnSyncCheckRequested resolves should mark the check as completed`() = runTest(testDispatcher) {
+        coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
+
+        viewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+
+        assertEquals(true, viewModel.syncCheckCompleted.value)
+    }
+
+    @Test
+    fun `when OnRestoreDeclineClicked should show the disable-sync confirmation`() = runTest(testDispatcher) {
+        desyncFound()
 
         viewModel.onEvent(BackupSyncEvent.OnRestoreDeclineClicked)
 
@@ -72,8 +131,8 @@ class BackupSyncViewModelTest {
     }
 
     @Test
-    fun `when OnDisableSyncDeclineClicked should go back to the restore prompt`() = runTest {
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+    fun `when OnDisableSyncDeclineClicked should go back to the restore prompt`() = runTest(testDispatcher) {
+        desyncFound()
         viewModel.onEvent(BackupSyncEvent.OnRestoreDeclineClicked)
 
         viewModel.onEvent(BackupSyncEvent.OnDisableSyncDeclineClicked)
@@ -82,10 +141,10 @@ class BackupSyncViewModelTest {
     }
 
     @Test
-    fun `when OnRestoreConfirmClicked succeeds should track the file id and dismiss`() = runTest {
+    fun `when OnRestoreConfirmClicked succeeds should track the file id and dismiss`() = runTest(testDispatcher) {
         coEvery { backupUseCase.restore(account, "remote-file") } returns Result.success(Unit)
         coEvery { autoBackupSettingsUseCase.setTrackedFileId("remote-file") } returns Unit
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+        desyncFound()
 
         viewModel.uiAction.test {
             viewModel.onEvent(BackupSyncEvent.OnRestoreConfirmClicked)
@@ -97,10 +156,10 @@ class BackupSyncViewModelTest {
     }
 
     @Test
-    fun `when OnRestoreConfirmClicked fails should emit an error and keep the dialog open`() = runTest {
+    fun `when OnRestoreConfirmClicked fails should emit an error and keep the dialog open`() = runTest(testDispatcher) {
         val error = RuntimeException("Network error")
         coEvery { backupUseCase.restore(account, "remote-file") } returns Result.failure(error)
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+        desyncFound()
 
         viewModel.uiAction.test {
             viewModel.onEvent(BackupSyncEvent.OnRestoreConfirmClicked)
@@ -113,11 +172,11 @@ class BackupSyncViewModelTest {
 
     @Test
     fun `when OnRestoreConfirmClicked fires again while already restoring should not call restore twice`() =
-        runTest {
+        runTest(testDispatcher) {
             val restoreDeferred = CompletableDeferred<Result<Unit>>()
             coEvery { backupUseCase.restore(account, "remote-file") } coAnswers { restoreDeferred.await() }
             coEvery { autoBackupSettingsUseCase.setTrackedFileId("remote-file") } returns Unit
-            viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+            desyncFound()
 
             viewModel.onEvent(BackupSyncEvent.OnRestoreConfirmClicked)
             assertEquals(
@@ -131,9 +190,9 @@ class BackupSyncViewModelTest {
         }
 
     @Test
-    fun `when OnDisableSyncConfirmClicked should turn off auto-backup and dismiss`() = runTest {
+    fun `when OnDisableSyncConfirmClicked should turn off auto-backup and dismiss`() = runTest(testDispatcher) {
         coEvery { autoBackupSettingsUseCase.setEnabled(false) } returns Unit
-        viewModel.onEvent(BackupSyncEvent.OnDesyncDetected(remoteBackup))
+        desyncFound()
         viewModel.onEvent(BackupSyncEvent.OnRestoreDeclineClicked)
 
         viewModel.onEvent(BackupSyncEvent.OnDisableSyncConfirmClicked)

@@ -23,6 +23,9 @@
     <string name="backup_delete_confirm_title">Excluir backup?</string>
     <string name="backup_delete_confirm_message">Essa ação não pode ser desfeita.</string>
     <string name="backup_delete_confirm_action">Excluir</string>
+    <string name="backup_overwrite_confirm_title">Backup diferente encontrado</string>
+    <string name="backup_overwrite_confirm_message">Isso vai substituir um backup diferente que já existe na nuvem. Confirma?</string>
+    <string name="backup_overwrite_confirm_action">Confirmar</string>
     <string name="backup_upload_success">Backup concluído</string>
     <string name="backup_delete_success">Backup excluído</string>
     <string name="backup_delete_error">Não foi possível excluir o backup.</string>

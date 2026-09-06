@@ -23,6 +23,9 @@
     <string name="backup_delete_confirm_title">Delete backup?</string>
     <string name="backup_delete_confirm_message">This can\'t be undone.</string>
     <string name="backup_delete_confirm_action">Delete</string>
+    <string name="backup_overwrite_confirm_title">Different backup found</string>
+    <string name="backup_overwrite_confirm_message">This will overwrite a different backup that already exists in the cloud. Confirm?</string>
+    <string name="backup_overwrite_confirm_action">Confirm</string>
     <string name="backup_upload_success">Backup completed</string>
     <string name="backup_delete_success">Backup deleted</string>
     <string name="backup_delete_error">Couldn\'t delete the backup.</string>

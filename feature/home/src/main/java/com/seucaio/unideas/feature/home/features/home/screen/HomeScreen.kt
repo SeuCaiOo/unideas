@@ -32,6 +32,14 @@ internal object ColdStartPriorityPrompt {
     var shown = false
 }
 
+/**
+ * Plain in-memory flag, same reasoning as [ColdStartPriorityPrompt] — resolved once per process,
+ * so the list only waits for the backup sync check the first time, not on every screen resume.
+ */
+internal object ColdStartSyncGate {
+    var resolved = false
+}
+
 @Composable
 fun HomeScreen(
     onNavigateBack: (() -> Unit)?,

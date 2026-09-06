@@ -5,8 +5,10 @@ import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
+import com.seucaio.unideas.core.backup.domain.model.BackupSyncState
 import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
+import com.seucaio.unideas.core.backup.domain.usecase.GetBackupSyncStateUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -38,6 +40,9 @@ class BackupViewModelTest {
     @MockK
     private lateinit var autoBackupSettingsUseCase: AutoBackupSettingsUseCase
 
+    @MockK
+    private lateinit var getBackupSyncStateUseCase: GetBackupSyncStateUseCase
+
     private val account: GoogleSignInAccount = mockk()
 
     @Before
@@ -47,6 +52,8 @@ class BackupViewModelTest {
         every { googleAuthUseCase.getSignedInAccount() } returns null
         coEvery { autoBackupSettingsUseCase.isEnabled() } returns false
         coEvery { autoBackupSettingsUseCase.getTrackedFileId() } returns null
+        coEvery { autoBackupSettingsUseCase.setTrackedFileId(any()) } returns Unit
+        coEvery { getBackupSyncStateUseCase(any()) } returns Result.success(BackupSyncState.NoRemoteBackup)
     }
 
     @After
@@ -54,7 +61,12 @@ class BackupViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = BackupViewModel(googleAuthUseCase, backupUseCase, autoBackupSettingsUseCase)
+    private fun viewModel() = BackupViewModel(
+        googleAuthUseCase,
+        backupUseCase,
+        autoBackupSettingsUseCase,
+        getBackupSyncStateUseCase,
+    )
 
     @Test
     fun `when created with no signed-in account should expose disconnected state`() = runTest {
@@ -187,6 +199,7 @@ class BackupViewModelTest {
 
             assertEquals(BackupUiState.Ready(isConnected = true, lastBackupAt = createdAt), awaitItem())
         }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setTrackedFileId("file-1") }
     }
 
     @Test
@@ -197,6 +210,34 @@ class BackupViewModelTest {
         vm.action.test {
             vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Upload))
             assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_error), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when upload finds a desynced backup should ask for overwrite confirmation instead of uploading`() = runTest {
+        coEvery { getBackupSyncStateUseCase(account) } returns
+            Result.success(BackupSyncState.Desynced(BackupInfo("remote-file", LocalDateTime.now(), 2048L)))
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnGoogleSignInResult(account, BackupAction.Upload))
+            assertEquals(
+                BackupUiAction.ShowOverwriteConfirm(PendingBackupOverwrite.Upload(account)),
+                awaitItem(),
+            )
+        }
+        coVerify(exactly = 0) { backupUseCase.upload(account) }
+    }
+
+    @Test
+    fun `when OnOverwriteConfirmClicked with a pending upload should proceed with the upload`() = runTest {
+        val createdAt = LocalDateTime.of(2026, 7, 12, 8, 30)
+        coEvery { backupUseCase.upload(account) } returns Result.success(BackupInfo("file-1", createdAt, 1024L))
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnOverwriteConfirmClicked(PendingBackupOverwrite.Upload(account)))
+            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_upload_success), awaitItem())
         }
     }
 
@@ -334,6 +375,7 @@ class BackupViewModelTest {
             vm.onEvent(BackupEvent.OnRestoreClick)
             assertEquals(BackupUiAction.RestoreCompleted, awaitItem())
         }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setTrackedFileId("file-1") }
     }
 
     @Test
@@ -469,6 +511,50 @@ class BackupViewModelTest {
             assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
         }
         coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(true) }
+    }
+
+    @Test
+    fun `when OnAutoBackupToggled true finds a desynced backup should ask for overwrite confirmation`() = runTest {
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { backupUseCase.getLastBackupInfo(account) } returns Result.success(null)
+        coEvery { getBackupSyncStateUseCase(account) } returns
+            Result.success(BackupSyncState.Desynced(BackupInfo("remote-file", LocalDateTime.now(), 2048L)))
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnAutoBackupToggled(true))
+            assertEquals(
+                BackupUiAction.ShowOverwriteConfirm(PendingBackupOverwrite.EnableAutoBackup(account)),
+                awaitItem(),
+            )
+        }
+        coVerify(exactly = 0) { autoBackupSettingsUseCase.setEnabled(any()) }
+    }
+
+    @Test
+    fun `when OnOverwriteConfirmClicked with a pending enable should turn on auto-backup`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setEnabled(true) } returns Unit
+        val vm = viewModel()
+
+        vm.uiState.test {
+            assertEquals(BackupUiState.Ready(), awaitItem())
+
+            vm.onEvent(BackupEvent.OnOverwriteConfirmClicked(PendingBackupOverwrite.EnableAutoBackup(account)))
+
+            assertEquals(BackupUiState.Ready(isAutoBackupEnabled = true), awaitItem())
+        }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(true) }
+    }
+
+    @Test
+    fun `when OnAutoBackupToggled false should not check for desync`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setEnabled(false) } returns Unit
+        val vm = viewModel()
+
+        vm.onEvent(BackupEvent.OnAutoBackupToggled(false))
+
+        coVerify(exactly = 0) { getBackupSyncStateUseCase(any()) }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(false) }
     }
 
     @Test

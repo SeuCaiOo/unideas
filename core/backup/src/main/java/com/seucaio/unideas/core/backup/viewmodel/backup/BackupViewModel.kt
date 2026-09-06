@@ -1,6 +1,5 @@
 package com.seucaio.unideas.core.backup.viewmodel.backup
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -72,81 +71,34 @@ class BackupViewModel(
             BackupEvent.OnBackupClick -> launchSignIn(BackupAction.Upload)
             BackupEvent.OnToggleBackupListClick -> handleToggleBackupListClick()
             BackupEvent.OnRetryBackupListClick -> launchSignIn(BackupAction.Sync)
-            is BackupEvent.OnGoogleSignInResult -> handleSignInResult(event.account, event.pendingAction)
+            is BackupEvent.OnGoogleSignInResult -> handleSignInResult(
+                event.account,
+                event.pendingAction
+            )
+
             is BackupEvent.OnBackupSelected -> _backupListState.update { it.select(event.fileId) }
             BackupEvent.OnRestoreClick -> handleRestoreClick()
             is BackupEvent.OnDeleteBackupClick ->
-                viewModelScope.launch { _action.send(BackupUiAction.ShowDeleteConfirm(event.fileId)) }
+                viewModelScope.launch { sendUiAction(BackupUiAction.ShowDeleteConfirm(event.fileId)) }
+
             is BackupEvent.OnDeleteConfirmed -> delete(event.fileId)
             is BackupEvent.OnAutoBackupToggled -> handleAutoBackupToggled(event.enabled)
             is BackupEvent.OnOverwriteConfirmClicked -> handleOverwriteConfirmed(event.pending)
         }
     }
 
-    private fun handleToggleBackupListClick() {
-        if (_backupListState.value.isVisible) {
-            _backupListState.update { it.hide() }
-        } else {
-            launchSignIn(BackupAction.Sync)
-        }
-    }
-
-    private fun handleRestoreClick() {
-        val fileId = _backupListState.value.selectedFileId
-        val account = googleAuthUseCase.getSignedInAccount()
-        if (fileId == null || account == null) return
-        viewModelScope.launch { performRestore(account, fileId) }
-    }
-
-    private suspend fun performRestore(account: GoogleSignInAccount, fileId: String) {
-        _connectionState.update { it.startLoading() }
-        backupUseCase.restore(account, fileId)
-            .onSuccess {
-                Timber.i("Backup: Restore use case finished successfully")
-                autoBackupSettingsUseCase.setTrackedFileId(fileId)
-                _connectionState.update { it.connected() }
-                _action.send(BackupUiAction.RestoreCompleted)
-            }
-            .onFailure {
-                Timber.e(it, "Backup: Restore failed")
-                _connectionState.update { it.stopLoading() }
-                showSnackbar(R.string.backup_error)
-            }
-    }
-
-    private fun handleAutoBackupToggled(enabled: Boolean) = viewModelScope.launch {
-        val account = googleAuthUseCase.getSignedInAccount()
-        if (enabled && account != null &&
-            getBackupSyncStateUseCase(account).getOrNull() is BackupSyncState.Desynced
-        ) {
-            _action.send(BackupUiAction.ShowOverwriteConfirm(PendingBackupOverwrite.EnableAutoBackup(account)))
-            return@launch
-        }
-        autoBackupSettingsUseCase.setEnabled(enabled)
-        _isAutoBackupEnabled.update { enabled }
-    }
-
-    private fun handleOverwriteConfirmed(pending: PendingBackupOverwrite) {
-        when (pending) {
-            is PendingBackupOverwrite.Upload -> performUpload(pending.account)
-            is PendingBackupOverwrite.EnableAutoBackup -> viewModelScope.launch {
-                autoBackupSettingsUseCase.setEnabled(true)
-                _isAutoBackupEnabled.update { true }
-            }
-        }
-    }
-
+    //region Sign-in
     private fun launchSignIn(pendingAction: BackupAction) {
         viewModelScope.launch {
             val intent = googleAuthUseCase.getSignInIntent()
-            _action.send(BackupUiAction.LaunchGoogleSignIn(intent, pendingAction))
+            sendUiAction(BackupUiAction.LaunchGoogleSignIn(intent, pendingAction))
         }
     }
 
     private fun handleSignInResult(account: GoogleSignInAccount?, pendingAction: BackupAction) {
         if (account == null) {
             Timber.w("Backup: Google Sign-In result is null (user cancelled or error)")
-            viewModelScope.launch { showSnackbar(R.string.backup_sign_in_failed) }
+            viewModelScope.launch { sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_sign_in_failed)) }
             return
         }
         when (pendingAction) {
@@ -166,15 +118,16 @@ class BackupViewModel(
                 .onFailure {
                     Timber.e(it, "Backup: Failed to get last backup info")
                     _connectionState.update { it.stopLoading() }
-                    if (!isInitialCheck) showSnackbar(R.string.backup_error)
+                    if (!isInitialCheck) sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_error))
                 }
         }
     }
+    //endregion
 
+    //region Upload
     private fun upload(account: GoogleSignInAccount) = viewModelScope.launch {
-        val desynced = getBackupSyncStateUseCase(account).getOrNull() is BackupSyncState.Desynced
-        if (desynced) {
-            _action.send(BackupUiAction.ShowOverwriteConfirm(PendingBackupOverwrite.Upload(account)))
+        if (isDesynced(account)) {
+            sendUiAction(BackupUiAction.ShowOverwriteConfirm(PendingBackupOverwrite.Upload(account)))
             return@launch
         }
         performUpload(account)
@@ -187,13 +140,48 @@ class BackupViewModel(
                 .onSuccess { info ->
                     autoBackupSettingsUseCase.setTrackedFileId(info.fileId)
                     _connectionState.update { it.connected(lastBackupAt = info.createdAt) }
-                    showSnackbar(R.string.backup_upload_success)
+                    sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_upload_success))
                 }
                 .onFailure {
                     Timber.e(it, "Backup: Upload failed")
                     _connectionState.update { it.stopLoading() }
-                    showSnackbar(R.string.backup_error)
+                    sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_error))
                 }
+        }
+    }
+    //endregion
+
+    //region Restore
+    private fun handleRestoreClick() {
+        val fileId = _backupListState.value.selectedFileId
+        val account = googleAuthUseCase.getSignedInAccount()
+        if (fileId == null || account == null) return
+        viewModelScope.launch { performRestore(account, fileId) }
+    }
+
+    private suspend fun performRestore(account: GoogleSignInAccount, fileId: String) {
+        _connectionState.update { it.startLoading() }
+        backupUseCase.restore(account, fileId)
+            .onSuccess {
+                Timber.i("Backup: Restore use case finished successfully")
+                autoBackupSettingsUseCase.setTrackedFileId(fileId)
+                _connectionState.update { it.connected() }
+                sendUiAction(BackupUiAction.RestoreCompleted)
+            }
+            .onFailure {
+                Timber.e(it, "Backup: Restore failed")
+                _connectionState.update { it.stopLoading() }
+                sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_error))
+            }
+    }
+    //endregion
+
+    //region Backup list
+    private fun handleToggleBackupListClick() {
+        if (_backupListState.value.isVisible) {
+            _backupListState.update { it.hide() }
+        } else {
+            launchSignIn(BackupAction.Sync)
         }
     }
 
@@ -203,8 +191,14 @@ class BackupViewModel(
             backupUseCase.list(account)
                 .onSuccess { backups ->
                     val autoFileId = autoBackupSettingsUseCase.getTrackedFileId()
-                    val entries = backups.map { BackupListEntry(it, isAutomatic = it.fileId == autoFileId) }
-                    val status = if (entries.isEmpty()) BackupListStatus.Empty else BackupListStatus.Loaded(entries)
+                    val entries =
+                        backups.map { BackupListEntry(it, isAutomatic = it.fileId == autoFileId) }
+                    val status =
+                        if (entries.isEmpty()) {
+                            BackupListStatus.Empty
+                        } else {
+                            BackupListStatus.Loaded(entries)
+                        }
                     _connectionState.update { it.connected() }
                     _backupListState.update { it.show(status) }
                 }
@@ -222,17 +216,48 @@ class BackupViewModel(
             backupUseCase.delete(account, fileId)
                 .onSuccess {
                     _backupListState.update { it.removeBackup(fileId) }
-                    showSnackbar(R.string.backup_delete_success)
+                    sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_delete_success))
                 }
                 .onFailure {
                     Timber.e(it, "Backup: Delete failed")
-                    showSnackbar(R.string.backup_delete_error)
+                    sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_delete_error))
                 }
         }
     }
+    //endregion
 
-    private suspend fun showSnackbar(@StringRes message: Int) =
-        _action.send(BackupUiAction.ShowSnackbar(message))
+    //region Auto-backup
+    private fun handleAutoBackupToggled(enabled: Boolean) = viewModelScope.launch {
+        val account = googleAuthUseCase.getSignedInAccount()
+        if (enabled && account != null && isDesynced(account)) {
+            sendUiAction(
+                BackupUiAction.ShowOverwriteConfirm(
+                    PendingBackupOverwrite.EnableAutoBackup(
+                        account
+                    )
+                )
+            )
+            return@launch
+        }
+        autoBackupSettingsUseCase.setEnabled(enabled)
+        _isAutoBackupEnabled.update { enabled }
+    }
+
+    private fun handleOverwriteConfirmed(pending: PendingBackupOverwrite) {
+        when (pending) {
+            is PendingBackupOverwrite.Upload -> performUpload(pending.account)
+            is PendingBackupOverwrite.EnableAutoBackup -> viewModelScope.launch {
+                autoBackupSettingsUseCase.setEnabled(true)
+                _isAutoBackupEnabled.update { true }
+            }
+        }
+    }
+
+    private suspend fun isDesynced(account: GoogleSignInAccount): Boolean =
+        getBackupSyncStateUseCase(account).getOrNull() is BackupSyncState.Desynced
+    //endregion
+
+    private suspend fun sendUiAction(action: BackupUiAction) = _action.send(action)
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5000L

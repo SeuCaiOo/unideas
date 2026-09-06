@@ -558,6 +558,17 @@ class BackupViewModelTest {
     }
 
     @Test
+    fun `when OnAutoBackupToggled false should show the disabled snackbar`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setEnabled(false) } returns Unit
+        val vm = viewModel()
+
+        vm.action.test {
+            vm.onEvent(BackupEvent.OnAutoBackupToggled(false))
+            assertEquals(BackupUiAction.ShowSnackbar(R.string.backup_auto_backup_disabled), awaitItem())
+        }
+    }
+
+    @Test
     fun `when sync finds a tracked auto-backup should mark the matching entry as automatic`() = runTest {
         val backups = listOf(
             BackupInfo("file-1", LocalDateTime.now(), 1024L),

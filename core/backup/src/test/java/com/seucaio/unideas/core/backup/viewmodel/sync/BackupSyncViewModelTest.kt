@@ -2,6 +2,7 @@ package com.seucaio.unideas.core.backup.viewmodel.sync
 
 import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
@@ -199,5 +200,17 @@ class BackupSyncViewModelTest {
 
         assertEquals(BackupSyncDialogState.None, viewModel.dialogState.value)
         coVerify(exactly = 1) { autoBackupSettingsUseCase.setEnabled(false) }
+    }
+
+    @Test
+    fun `when OnDisableSyncConfirmClicked should show the disabled snackbar`() = runTest(testDispatcher) {
+        coEvery { autoBackupSettingsUseCase.setEnabled(false) } returns Unit
+        desyncFound()
+        viewModel.onEvent(BackupSyncEvent.OnRestoreDeclineClicked)
+
+        viewModel.uiAction.test {
+            viewModel.onEvent(BackupSyncEvent.OnDisableSyncConfirmClicked)
+            assertEquals(BackupSyncUiAction.ShowSnackbar(R.string.backup_auto_backup_disabled), awaitItem())
+        }
     }
 }

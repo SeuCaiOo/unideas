@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -136,11 +137,14 @@ private fun HandleBackupSyncUiActions(
     snackbarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     LaunchedEffect(Unit) {
         backupSyncViewModel.uiAction.collect { action ->
             when (action) {
                 BackupSyncUiAction.RestoreCompleted -> context.restartApplication()
                 is BackupSyncUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+                is BackupSyncUiAction.ShowSnackbar ->
+                    snackbarHostState.showSnackbar(resources.getString(action.messageRes))
             }
         }
     }

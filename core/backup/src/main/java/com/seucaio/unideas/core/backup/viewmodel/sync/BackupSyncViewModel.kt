@@ -2,6 +2,7 @@ package com.seucaio.unideas.core.backup.viewmodel.sync
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.core.backup.R
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
 import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.BackupUseCase
@@ -96,6 +97,7 @@ class BackupSyncViewModel(
     private fun handleDisableSync() = viewModelScope.launch {
         autoBackupSettingsUseCase.setEnabled(false)
         _dialogState.update { BackupSyncDialogState.None }
+        sendUiAction(BackupSyncUiAction.ShowSnackbar(R.string.backup_auto_backup_disabled))
     }
 
     private fun handleDisableSyncDecline() {

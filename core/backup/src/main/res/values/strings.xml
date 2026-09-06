@@ -52,4 +52,5 @@
     <string name="backup_sync_disable_confirm">Turn off</string>
     <string name="backup_sync_disable_decline">Go back</string>
     <string name="backup_sync_error">Couldn\'t restore the backup.</string>
+    <string name="backup_auto_backup_disabled">Automatic backup turned off</string>
 </resources>

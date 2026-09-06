@@ -241,6 +241,7 @@ class BackupViewModel(
         }
         autoBackupSettingsUseCase.setEnabled(enabled)
         _isAutoBackupEnabled.update { enabled }
+        if (!enabled) sendUiAction(BackupUiAction.ShowSnackbar(R.string.backup_auto_backup_disabled))
     }
 
     private fun handleOverwriteConfirmed(pending: PendingBackupOverwrite) {

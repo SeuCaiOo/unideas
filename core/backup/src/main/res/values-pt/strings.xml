@@ -52,4 +52,5 @@
     <string name="backup_sync_disable_confirm">Desligar</string>
     <string name="backup_sync_disable_decline">Voltar</string>
     <string name="backup_sync_error">Não foi possível restaurar o backup.</string>
+    <string name="backup_auto_backup_disabled">Backup automático desligado</string>
 </resources>

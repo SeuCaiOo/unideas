@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,6 +65,7 @@ import com.seucaio.unideas.core.backup.viewmodel.backup.PendingBackupOverwrite
 import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.core.common.extensions.toFormattedTimeString
+import com.seucaio.unideas.ds.components.lists.GroupHeader
 import com.seucaio.unideas.ds.theme.UdsTheme
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
@@ -367,20 +368,27 @@ private fun BackupListSection(
                     onRetryClick = onRetryClick,
                 )
             is BackupListStatus.Loaded -> {
+                val mostRecentFileId = status.backups.firstOrNull()?.info?.fileId
+                val groups = remember(status.backups) { groupBackupsByDate(status.backups) }
                 LazyColumn(
                     modifier = Modifier
                         .heightIn(max = BACKUP_LIST_MAX_HEIGHT)
                         .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(status.backups, key = { _, entry -> entry.info.fileId }) { index, entry ->
-                        BackupListItemRow(
-                            entry = entry,
-                            selected = entry.info.fileId == selectedFileId,
-                            isMostRecent = index == 0,
-                            onSelect = { onBackupSelect(entry.info.fileId) },
-                            onDelete = { onDeleteBackupClick(entry.info.fileId) },
-                        )
+                    groups.forEach { (group, entries) ->
+                        item(key = "header-${group.name}") {
+                            GroupHeader(text = stringResource(group.labelRes()))
+                        }
+                        items(entries, key = { it.info.fileId }) { entry ->
+                            BackupListItemRow(
+                                entry = entry,
+                                selected = entry.info.fileId == selectedFileId,
+                                isMostRecent = entry.info.fileId == mostRecentFileId,
+                                onSelect = { onBackupSelect(entry.info.fileId) },
+                                onDelete = { onDeleteBackupClick(entry.info.fileId) },
+                            )
+                        }
                     }
                 }
 

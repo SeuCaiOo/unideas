@@ -2,9 +2,9 @@ package com.seucaio.unideas.core.backup
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
-import com.seucaio.unideas.core.backup.viewmodel.BackupListEntry
-import com.seucaio.unideas.core.backup.viewmodel.BackupListStatus
-import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupListEntry
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupListStatus
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupUiState
 import java.time.LocalDateTime
 
 class BackupPreviewProvider : PreviewParameterProvider<BackupUiState> {

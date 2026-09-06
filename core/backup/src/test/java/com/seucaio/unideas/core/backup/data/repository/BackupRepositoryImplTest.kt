@@ -17,6 +17,7 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -76,6 +77,52 @@ class BackupRepositoryImplTest {
         verify(exactly = 1) { UnideasDatabase.checkpoint(database) }
         verify(exactly = 0) { database.close() }
         assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `uploadBackup tags the file as automatic when isAutomatic is true`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val createRequest = mockk<Drive.Files.Create>(relaxed = true)
+        val metadataSlot = slot<File>()
+        val uploadedFile = File().apply {
+            id = "remote-file-id"
+            name = UnideasDatabase.DATABASE_NAME
+            createdTime = DateTime(System.currentTimeMillis())
+            factory = GsonFactory.getDefaultInstance()
+        }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.create(capture(metadataSlot), any()) } returns createRequest
+        every { createRequest.setFields(any()) } returns createRequest
+        every { createRequest.execute() } returns uploadedFile
+
+        val result = repository.uploadBackup(driveService, isAutomatic = true)
+
+        assertTrue(result.isSuccess)
+        assertEquals(mapOf("backupType" to "auto"), metadataSlot.captured.appProperties)
+    }
+
+    @Test
+    fun `uploadBackup does not tag the file when isAutomatic is false`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val createRequest = mockk<Drive.Files.Create>(relaxed = true)
+        val metadataSlot = slot<File>()
+        val uploadedFile = File().apply {
+            id = "remote-file-id"
+            name = UnideasDatabase.DATABASE_NAME
+            createdTime = DateTime(System.currentTimeMillis())
+            factory = GsonFactory.getDefaultInstance()
+        }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.create(capture(metadataSlot), any()) } returns createRequest
+        every { createRequest.setFields(any()) } returns createRequest
+        every { createRequest.execute() } returns uploadedFile
+
+        val result = repository.uploadBackup(driveService)
+
+        assertTrue(result.isSuccess)
+        assertEquals(null, metadataSlot.captured.appProperties)
     }
 
     @Test

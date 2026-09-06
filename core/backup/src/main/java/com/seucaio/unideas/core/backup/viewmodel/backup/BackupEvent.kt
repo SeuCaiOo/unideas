@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.backup
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 
@@ -16,4 +16,5 @@ sealed interface BackupEvent {
     data class OnDeleteBackupClick(val fileId: String) : BackupEvent
     data class OnDeleteConfirmed(val fileId: String) : BackupEvent
     data class OnAutoBackupToggled(val enabled: Boolean) : BackupEvent
+    data class OnOverwriteConfirmClicked(val pending: PendingBackupOverwrite) : BackupEvent
 }

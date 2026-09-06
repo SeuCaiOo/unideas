@@ -42,12 +42,23 @@ class BackupUseCaseTest {
     @Test
     fun `upload builds the Drive service and delegates to UploadBackupUseCase`() = runTest {
         val info = BackupInfo("file-1", LocalDateTime.now(), 1024L)
-        coEvery { uploadBackupUseCase(driveService) } returns Result.success(info)
+        coEvery { uploadBackupUseCase(driveService, false) } returns Result.success(info)
 
         val result = useCase.upload(account)
 
         assertEquals(info, result.getOrNull())
-        coVerify(exactly = 1) { uploadBackupUseCase(driveService) }
+        coVerify(exactly = 1) { uploadBackupUseCase(driveService, false) }
+    }
+
+    @Test
+    fun `upload forwards isAutomatic to UploadBackupUseCase`() = runTest {
+        val info = BackupInfo("file-1", LocalDateTime.now(), 1024L)
+        coEvery { uploadBackupUseCase(driveService, true) } returns Result.success(info)
+
+        val result = useCase.upload(account, isAutomatic = true)
+
+        assertEquals(info, result.getOrNull())
+        coVerify(exactly = 1) { uploadBackupUseCase(driveService, true) }
     }
 
     @Test

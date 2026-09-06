@@ -28,8 +28,8 @@ android {
         applicationId = "com.seucaio.unideas"
         minSdk = 24
         targetSdk = 37
-        versionCode = 12
-        versionName = "0.0.12"
+        versionCode = 13
+        versionName = "0.0.13"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

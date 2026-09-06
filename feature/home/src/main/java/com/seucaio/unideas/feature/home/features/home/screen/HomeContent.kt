@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -53,9 +54,22 @@ internal fun HomeContent(
     val updatedOnNavigateBack by rememberUpdatedState(navActions.onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val isSnackbarVisible = snackbarHostState.currentSnackbarData != null
+    val isPreview = LocalInspectionMode.current
 
-    LaunchedEffect(state.uiState, backupSync.checkCompleted, backupSync.dialogState) {
-        val ready = isReadyForPriorityPrompt(state.uiState, backupSync.checkCompleted, backupSync.dialogState)
+    LaunchedEffect(
+        state.uiState,
+        backupSync.checkCompleted,
+        backupSync.dialogState,
+        isSnackbarVisible
+    ) {
+        if (isPreview) return@LaunchedEffect
+        val ready = isReadyForPriorityPrompt(
+            uiState = state.uiState,
+            syncCheckCompleted = backupSync.checkCompleted,
+            backupSyncDialogState = backupSync.dialogState,
+            isSnackbarVisible = isSnackbarVisible,
+        )
         if (!ColdStartPriorityPrompt.shown && ready) {
             ColdStartPriorityPrompt.shown = true
             showPriorityBottomSheet = true
@@ -98,6 +112,7 @@ internal fun HomeContent(
     ) { padding ->
         HomeBody(
             uiState = state.uiState,
+            syncCheckCompleted = backupSync.checkCompleted,
             filterState = state.filterState,
             itemsState = state.itemsState,
             homeMode = state.homeMode,
@@ -113,14 +128,17 @@ private fun isReadyForPriorityPrompt(
     uiState: HomeUiState,
     syncCheckCompleted: Boolean,
     backupSyncDialogState: BackupSyncDialogState,
+    isSnackbarVisible: Boolean,
 ): Boolean = uiState is HomeUiState.Success &&
     uiState.hasAnyPriorityItem &&
     syncCheckCompleted &&
-    backupSyncDialogState == BackupSyncDialogState.None
+    backupSyncDialogState == BackupSyncDialogState.None &&
+    !isSnackbarVisible
 
 @Composable
 private fun HomeBody(
     uiState: HomeUiState,
+    syncCheckCompleted: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
@@ -138,20 +156,24 @@ private fun HomeBody(
                 modifier = Modifier.padding(padding),
             )
         is HomeUiState.Success ->
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { onEvent(HomeEvent.OnRefreshRequested) },
-                modifier = Modifier.padding(padding),
-            ) {
-                HomeSuccessBody(
-                    hasAnyItem = uiState.hasAnyItem,
-                    hasAnyArchivedItem = uiState.hasAnyArchivedItem,
-                    filterState = filterState,
-                    itemsState = itemsState,
-                    homeMode = homeMode,
-                    onEvent = onEvent,
-                    onNavigateToArchivedItems = onNavigateToArchivedItems,
-                )
+            if (!syncCheckCompleted) {
+                UnideasLoadingContent(modifier = Modifier.padding(padding))
+            } else {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { onEvent(HomeEvent.OnRefreshRequested) },
+                    modifier = Modifier.padding(padding),
+                ) {
+                    HomeSuccessBody(
+                        hasAnyItem = uiState.hasAnyItem,
+                        hasAnyArchivedItem = uiState.hasAnyArchivedItem,
+                        filterState = filterState,
+                        itemsState = itemsState,
+                        homeMode = homeMode,
+                        onEvent = onEvent,
+                        onNavigateToArchivedItems = onNavigateToArchivedItems,
+                    )
+                }
             }
     }
 }

@@ -18,11 +18,11 @@ class GetBackupSyncStateUseCaseTest {
 
     private val autoBackupRepository: AutoBackupRepository = mockk()
     private val buildDriveServiceUseCase: BuildDriveServiceUseCase = mockk()
-    private val getCurrentAutoBackupInfoUseCase: GetCurrentAutoBackupInfoUseCase = mockk()
+    private val listBackupsUseCase: ListBackupsUseCase = mockk()
     private val useCase = GetBackupSyncStateUseCase(
         autoBackupRepository,
         buildDriveServiceUseCase,
-        getCurrentAutoBackupInfoUseCase,
+        listBackupsUseCase,
     )
 
     private val account: GoogleSignInAccount = mockk()
@@ -34,9 +34,9 @@ class GetBackupSyncStateUseCaseTest {
     }
 
     @Test
-    fun `invoke returns Synced when the tracked file id matches the remote automatic backup`() = runTest {
+    fun `invoke returns Synced when the tracked file id matches the most recent remote backup`() = runTest {
         val remoteBackup = BackupInfo("same-file", LocalDateTime.now(), 2048L)
-        coEvery { getCurrentAutoBackupInfoUseCase(driveService) } returns Result.success(remoteBackup)
+        coEvery { listBackupsUseCase(driveService) } returns Result.success(listOf(remoteBackup))
         coEvery { autoBackupRepository.getTrackedFileId() } returns "same-file"
 
         val result = useCase(account)
@@ -45,9 +45,9 @@ class GetBackupSyncStateUseCaseTest {
     }
 
     @Test
-    fun `invoke returns Desynced when the tracked file id differs from the remote automatic backup`() = runTest {
+    fun `invoke returns Desynced when the tracked file id differs from the most recent remote backup`() = runTest {
         val remoteBackup = BackupInfo("remote-file", LocalDateTime.now(), 2048L)
-        coEvery { getCurrentAutoBackupInfoUseCase(driveService) } returns Result.success(remoteBackup)
+        coEvery { listBackupsUseCase(driveService) } returns Result.success(listOf(remoteBackup))
         coEvery { autoBackupRepository.getTrackedFileId() } returns "local-file"
 
         val result = useCase(account)
@@ -56,9 +56,20 @@ class GetBackupSyncStateUseCaseTest {
     }
 
     @Test
+    fun `invoke returns Desynced for a manual backup made on another device, same as an automatic one`() = runTest {
+        val manualRemoteBackup = BackupInfo("manual-remote-file", LocalDateTime.now(), 2048L)
+        coEvery { listBackupsUseCase(driveService) } returns Result.success(listOf(manualRemoteBackup))
+        coEvery { autoBackupRepository.getTrackedFileId() } returns "local-file"
+
+        val result = useCase(account)
+
+        assertEquals(BackupSyncState.Desynced(manualRemoteBackup), result.getOrNull())
+    }
+
+    @Test
     fun `invoke returns Desynced when this device never tracked a backup but one exists remotely`() = runTest {
         val remoteBackup = BackupInfo("remote-file", LocalDateTime.now(), 2048L)
-        coEvery { getCurrentAutoBackupInfoUseCase(driveService) } returns Result.success(remoteBackup)
+        coEvery { listBackupsUseCase(driveService) } returns Result.success(listOf(remoteBackup))
         coEvery { autoBackupRepository.getTrackedFileId() } returns null
 
         val result = useCase(account)
@@ -67,8 +78,8 @@ class GetBackupSyncStateUseCaseTest {
     }
 
     @Test
-    fun `invoke returns NoRemoteBackup when there is no automatic backup on Drive`() = runTest {
-        coEvery { getCurrentAutoBackupInfoUseCase(driveService) } returns Result.success(null)
+    fun `invoke returns NoRemoteBackup when there is no backup on Drive`() = runTest {
+        coEvery { listBackupsUseCase(driveService) } returns Result.success(emptyList())
 
         val result = useCase(account)
 
@@ -76,9 +87,9 @@ class GetBackupSyncStateUseCaseTest {
     }
 
     @Test
-    fun `invoke propagates a failure from getCurrentAutoBackupInfo`() = runTest {
+    fun `invoke propagates a failure from listBackups`() = runTest {
         val error = RuntimeException("Network error")
-        coEvery { getCurrentAutoBackupInfoUseCase(driveService) } returns Result.failure(error)
+        coEvery { listBackupsUseCase(driveService) } returns Result.failure(error)
 
         val result = useCase(account)
 

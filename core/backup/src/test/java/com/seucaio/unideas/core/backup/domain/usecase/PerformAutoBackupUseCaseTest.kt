@@ -2,6 +2,7 @@ package com.seucaio.unideas.core.backup.domain.usecase
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.seucaio.unideas.core.backup.domain.model.BackupInfo
+import com.seucaio.unideas.core.backup.domain.model.BackupSyncState
 import com.seucaio.unideas.core.backup.domain.repository.AutoBackupRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -17,7 +18,13 @@ class PerformAutoBackupUseCaseTest {
     private val autoBackupRepository: AutoBackupRepository = mockk()
     private val googleAuthUseCase: GoogleAuthUseCase = mockk()
     private val backupUseCase: BackupUseCase = mockk()
-    private val useCase = PerformAutoBackupUseCase(autoBackupRepository, googleAuthUseCase, backupUseCase)
+    private val getBackupSyncStateUseCase: GetBackupSyncStateUseCase = mockk()
+    private val useCase = PerformAutoBackupUseCase(
+        autoBackupRepository,
+        googleAuthUseCase,
+        backupUseCase,
+        getBackupSyncStateUseCase,
+    )
 
     private val account: GoogleSignInAccount = mockk()
     private val uploaded = BackupInfo("new-file", LocalDateTime.now(), 2048L)
@@ -48,6 +55,7 @@ class PerformAutoBackupUseCaseTest {
     fun `invoke uploads and tracks the new file id when there is no previous slot`() = runTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { getBackupSyncStateUseCase(account) } returns Result.success(BackupSyncState.Synced)
         coEvery { autoBackupRepository.getTrackedFileId() } returns null
         coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
@@ -63,6 +71,7 @@ class PerformAutoBackupUseCaseTest {
     fun `invoke uploads, tracks the new file id, and deletes the previous slot`() = runTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { getBackupSyncStateUseCase(account) } returns Result.success(BackupSyncState.Synced)
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
         coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
@@ -79,6 +88,7 @@ class PerformAutoBackupUseCaseTest {
     fun `invoke fails when the upload fails and does not delete the previous slot`() = runTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { getBackupSyncStateUseCase(account) } returns Result.success(BackupSyncState.Synced)
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
         coEvery { backupUseCase.upload(account, true) } returns Result.failure(RuntimeException("IO error"))
 
@@ -93,6 +103,7 @@ class PerformAutoBackupUseCaseTest {
     fun `invoke still succeeds when deleting the previous slot fails`() = runTest {
         coEvery { autoBackupRepository.isEnabled() } returns true
         every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { getBackupSyncStateUseCase(account) } returns Result.success(BackupSyncState.Synced)
         coEvery { autoBackupRepository.getTrackedFileId() } returns "old-file"
         coEvery { backupUseCase.upload(account, true) } returns Result.success(uploaded)
         coEvery { autoBackupRepository.setTrackedFileId("new-file") } returns Unit
@@ -101,5 +112,18 @@ class PerformAutoBackupUseCaseTest {
         val result = useCase()
 
         assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `invoke is a no-op when already desynced, to avoid overwriting a newer remote backup`() = runTest {
+        coEvery { autoBackupRepository.isEnabled() } returns true
+        every { googleAuthUseCase.getSignedInAccount() } returns account
+        coEvery { getBackupSyncStateUseCase(account) } returns
+            Result.success(BackupSyncState.Desynced(uploaded))
+
+        val result = useCase()
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 0) { backupUseCase.upload(any(), any()) }
     }
 }

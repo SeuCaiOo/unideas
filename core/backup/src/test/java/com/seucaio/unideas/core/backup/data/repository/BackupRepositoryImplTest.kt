@@ -161,52 +161,6 @@ class BackupRepositoryImplTest {
     }
 
     @Test
-    fun `getCurrentAutoBackupInfo returns the file when drive has an automatic backup`() = runTest {
-        val driveFiles = mockk<Drive.Files>()
-        val listRequest = mockk<Drive.Files.List>(relaxed = true)
-        val autoFile = File().apply {
-            id = "auto-file-id"
-            name = UnideasDatabase.DATABASE_NAME
-            createdTime = DateTime(System.currentTimeMillis())
-            setSize(2048L)
-        }
-        val fileList = FileList().apply { files = listOf(autoFile) }
-
-        every { driveService.files() } returns driveFiles
-        every { driveFiles.list() } returns listRequest
-        every { listRequest.setSpaces(any()) } returns listRequest
-        every { listRequest.setFields(any()) } returns listRequest
-        every { listRequest.setQ(any()) } returns listRequest
-        every { listRequest.setOrderBy(any()) } returns listRequest
-        every { listRequest.execute() } returns fileList
-
-        val result = repository.getCurrentAutoBackupInfo(driveService)
-
-        assertTrue(result.isSuccess)
-        assertEquals("auto-file-id", result.getOrNull()?.fileId)
-    }
-
-    @Test
-    fun `getCurrentAutoBackupInfo returns null when drive has no automatic backup`() = runTest {
-        val driveFiles = mockk<Drive.Files>()
-        val listRequest = mockk<Drive.Files.List>(relaxed = true)
-        val emptyFileList = FileList().apply { files = emptyList() }
-
-        every { driveService.files() } returns driveFiles
-        every { driveFiles.list() } returns listRequest
-        every { listRequest.setSpaces(any()) } returns listRequest
-        every { listRequest.setFields(any()) } returns listRequest
-        every { listRequest.setQ(any()) } returns listRequest
-        every { listRequest.setOrderBy(any()) } returns listRequest
-        every { listRequest.execute() } returns emptyFileList
-
-        val result = repository.getCurrentAutoBackupInfo(driveService)
-
-        assertTrue(result.isSuccess)
-        assertEquals(null, result.getOrNull())
-    }
-
-    @Test
     fun `restoreBackup closes the database before downloading and reopens it after`() = runTest {
         val driveFiles = mockk<Drive.Files>()
         val getRequest = mockk<Drive.Files.Get>(relaxed = true)

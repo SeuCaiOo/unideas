@@ -3,6 +3,8 @@ package com.seucaio.unideas.feature.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.automirrored.outlined.List
@@ -13,6 +15,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -251,7 +254,7 @@ private fun SettingsBody(
     showDebugSection: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         if (accountUiState.isConnected) {
             AccountCard(
                 accountName = accountUiState.accountName,
@@ -314,6 +317,11 @@ private fun SettingsBody(
                     icon = Icons.Outlined.Notifications,
                     label = stringResource(R.string.settings_debug_test_notification),
                     onClick = onTestNotificationClicked,
+                )
+                NavRow(
+                    icon = Icons.Outlined.SyncProblem,
+                    label = stringResource(R.string.settings_debug_force_desync),
+                    onClick = { onEvent(SettingsEvent.OnForceDesyncClicked) },
                 )
                 ScreenVersionRow()
             }

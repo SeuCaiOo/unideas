@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.settings.ClearDatabaseUseCase
@@ -21,6 +22,7 @@ class SettingsViewModel(
     private val clearDatabase: ClearDatabaseUseCase,
     private val setOnboardingSeenUseCase: SetOnboardingSeenUseCase,
     private val googleAuthUseCase: GoogleAuthUseCase,
+    private val autoBackupSettingsUseCase: AutoBackupSettingsUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> =
@@ -49,7 +51,13 @@ class SettingsViewModel(
             SettingsEvent.OnSeedDialogDismissed -> _dialogState.update { SettingsDialogState.None }
             SettingsEvent.OnClearDatabaseClicked -> handleClearDatabase()
             SettingsEvent.OnLogoutConfirmed -> handleLogoutConfirmed()
+            SettingsEvent.OnForceDesyncClicked -> handleForceDesync()
         }
+    }
+
+    private fun handleForceDesync() = viewModelScope.launch {
+        autoBackupSettingsUseCase.setTrackedFileId("debug-forced-desync-${System.currentTimeMillis()}")
+        _uiAction.send(SettingsUiAction.ShowSnackbar(R.string.settings_debug_force_desync_success))
     }
 
     private fun handleSeedConfirm() {

@@ -18,6 +18,8 @@
     <string name="settings_debug_run_reminder_check_success">Reminder check triggered</string>
     <string name="settings_debug_test_notification">Test notification</string>
     <string name="settings_debug_test_notification_success">Test notification sent</string>
+    <string name="settings_debug_force_desync">Force backup out-of-sync</string>
+    <string name="settings_debug_force_desync_success">Local tracked backup corrupted — reopen the item list to see the sync prompt</string>
     <string name="test_notification_sheet_title">Which notification?</string>
     <string name="test_notification_normal">Normal</string>
     <string name="test_notification_normal_description">Dismissible, default sound/vibration</string>

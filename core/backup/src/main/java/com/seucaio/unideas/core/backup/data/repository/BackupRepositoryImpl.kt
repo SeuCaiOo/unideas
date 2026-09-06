@@ -19,7 +19,10 @@ class BackupRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BackupRepository {
 
-    override suspend fun uploadBackup(driveService: Drive): Result<BackupInfo> = runCatching {
+    override suspend fun uploadBackup(
+        driveService: Drive,
+        isAutomatic: Boolean
+    ): Result<BackupInfo> = runCatching {
         withContext(ioDispatcher) {
             UnideasDatabase.checkpoint(database)
 
@@ -30,6 +33,9 @@ class BackupRepositoryImpl(
             val metadata = File().apply {
                 name = UnideasDatabase.DATABASE_NAME
                 parents = listOf(APP_DATA_FOLDER)
+                if (isAutomatic) {
+                    appProperties = mapOf(APP_PROPERTY_BACKUP_TYPE to APP_PROPERTY_VALUE_AUTO)
+                }
             }
 
             val mediaContent = FileContent(MIME_SQLITE, tempFile)
@@ -103,5 +109,7 @@ class BackupRepositoryImpl(
         private const val APP_DATA_FOLDER = "appDataFolder"
         private const val MIME_SQLITE = "application/x-sqlite3"
         private const val TEMP_BACKUP_FILE_NAME = "temp_backup.db"
+        private const val APP_PROPERTY_BACKUP_TYPE = "backupType"
+        private const val APP_PROPERTY_VALUE_AUTO = "auto"
     }
 }

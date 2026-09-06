@@ -1,6 +1,5 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.backup
 
-/** What to do once the pending Google Sign-In flow resolves. */
 sealed interface BackupAction {
     data object Connect : BackupAction
     data object Upload : BackupAction

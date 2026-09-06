@@ -58,11 +58,21 @@ HomeScreen
   │     → escolher tipo (Tarefa / Anotação)
   │           → ItemDetailScreen (modo criação)  (ItemsRoute.Detail(itemId = null, initialType))
   │
-  └── PriorityBottomSheet (aberto a partir do botão "Prioridades" da HomeTopBar)
-        → itens vencidos + vencendo em breve, limitados a N
-        → "Ver todas" (aparece só quando excede o limite)
-              → AllPrioritiesScreen  (HomeRoute.AllPriorities)
-        → toca num item → ItemDetailScreen
+  ├── PriorityBottomSheet (aberto a partir do botão "Prioridades" da HomeTopBar)
+  │     → itens vencidos + vencendo em breve, limitados a N
+  │     → "Ver todas" (aparece só quando excede o limite)
+  │           → AllPrioritiesScreen  (HomeRoute.AllPriorities)
+  │     → toca num item → ItemDetailScreen
+  │
+  └── RestorePromptBottomSheet / DisableSyncConfirmBottomSheet (#209/#210/#211, :core:backup)
+        → dispara ao ganhar foco (abertura fria + retomada do Detalhe), só com auto-backup ligado
+        → confirmado desincronizado (backup remoto diferente do rastreado) → RestorePromptBottomSheet,
+           fixo/não-dismissível: "Restaurar" → RestoreBackupUseCase → restart do processo, ou
+           "Agora não" → DisableSyncConfirmBottomSheet (também fixo) → "Desligar" → desliga a flag +
+           snackbar avisando, ou "Voltar" → volta pro RestorePromptBottomSheet
+        → tem prioridade sobre o PriorityBottomSheet — o auto-abrir de Prioridades no cold start só
+           avalia depois que essa checagem termina (achou desincronismo ou não) e nenhum snackbar
+           está visível, senão os dois bottom sheets/o snackbar competiriam pela mesma janela
 ```
 
 **Regras:**
@@ -73,6 +83,7 @@ HomeScreen
 - **Retomar a Home também reavalia** (#192): voltar pra Home (navegação de volta, app volta de background) dispara o mesmo `homeUseCase.refreshReminders()` do pull-to-refresh, sem piscar o spinner — cobre o caso de concluir um item no Detalhe e a Listagem não refletir o novo estado até o próximo pull-to-refresh/scan.
 - Grupos de seção na lista abrem **expandidos por padrão** (#147), **exceto quando todos os itens do grupo já estão concluídos** — nesse caso abrem recolhidos por padrão (#192, inclui o grupo de fixados e o de "sem seção"); usuário sempre pode expandir manualmente.
 - O botão "Prioridades" na `HomeTopBar` e o auto-abrir do `PriorityBottomSheet` no cold start só aparecem/disparam quando existe **pelo menos um item de prioridade** (#147) — antes disparava sempre, mesmo vazio.
+- **A lista só aparece depois que a checagem de desincronismo termina** (#211), mesmo que a query local já tenha resolvido antes — sem isso a lista aparecia e só segundos depois (leitura do Drive) surgia o bottom sheet de desincronismo por cima, uma experiência ruim. Ver `ARCHITECTURE.md` (seção Backup) pros detalhes do `BackupSyncViewModel`.
 
 ---
 

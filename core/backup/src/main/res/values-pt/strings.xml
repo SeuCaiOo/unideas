@@ -14,15 +14,23 @@
     <string name="backup_action_hide_backups">Esconder backups</string>
     <string name="backup_action_restore">Restaurar backup</string>
     <string name="backup_auto_backup_title">Backup automático</string>
-    <string name="backup_auto_backup_subtitle">Faz backup automaticamente após uma sincronização (ex.: pull-to-refresh)</string>
+    <string name="backup_auto_backup_subtitle">Faz backup automaticamente sempre que seus dados mudam</string>
     <string name="backup_auto_backup_enabled_tag">Automático</string>
     <string name="backup_backups_saved_title">Backups salvos</string>
+    <string name="backup_date_group_this_week">Essa semana</string>
+    <string name="backup_date_group_last_week">Semana passada</string>
+    <string name="backup_date_group_this_month">Este mês</string>
+    <string name="backup_date_group_last_month">Mês passado</string>
+    <string name="backup_date_group_older">Mais antigos</string>
     <string name="backup_most_recent">Mais recente</string>
     <string name="backup_date_today">Hoje, %s</string>
     <string name="backup_date_yesterday">Ontem, %s</string>
     <string name="backup_delete_confirm_title">Excluir backup?</string>
     <string name="backup_delete_confirm_message">Essa ação não pode ser desfeita.</string>
     <string name="backup_delete_confirm_action">Excluir</string>
+    <string name="backup_overwrite_confirm_title">Backup diferente encontrado</string>
+    <string name="backup_overwrite_confirm_message">Isso vai substituir um backup diferente que já existe na nuvem. Confirma?</string>
+    <string name="backup_overwrite_confirm_action">Confirmar</string>
     <string name="backup_upload_success">Backup concluído</string>
     <string name="backup_delete_success">Backup excluído</string>
     <string name="backup_delete_error">Não foi possível excluir o backup.</string>
@@ -38,4 +46,16 @@
     <string name="logout_confirm_message_suffix">. Sair desconecta essa conta e limpa os dados locais — você vai precisar entrar de novo pra usar backup e sincronização.</string>
     <string name="logout_confirm_warning">Tudo que ainda não foi salvo será perdido.</string>
     <string name="logout_confirm_confirm">Sair</string>
+
+    <!-- Backup sync -->
+    <string name="backup_sync_restore_title">Backup desincronizado</string>
+    <string name="backup_sync_restore_message">Foi encontrado um backup diferente no Google Drive. Restaurar para ter os dados mais recentes?</string>
+    <string name="backup_sync_restore_action">Restaurar</string>
+    <string name="backup_sync_restore_decline">Agora não</string>
+    <string name="backup_sync_disable_title">Desligar o backup automático?</string>
+    <string name="backup_sync_disable_message">A partir de agora, as mudanças só serão salvas neste aparelho, e o backup automático será desligado.</string>
+    <string name="backup_sync_disable_confirm">Desligar</string>
+    <string name="backup_sync_disable_decline">Voltar</string>
+    <string name="backup_sync_error">Não foi possível restaurar o backup.</string>
+    <string name="backup_auto_backup_disabled">Backup automático desligado</string>
 </resources>

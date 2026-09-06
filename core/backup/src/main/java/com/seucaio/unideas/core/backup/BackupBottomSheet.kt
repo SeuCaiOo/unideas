@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.Resources
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,16 +54,18 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.seucaio.unideas.core.backup.viewmodel.BackupAction
-import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
-import com.seucaio.unideas.core.backup.viewmodel.BackupListEntry
-import com.seucaio.unideas.core.backup.viewmodel.BackupListStatus
-import com.seucaio.unideas.core.backup.viewmodel.BackupUiAction
-import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
-import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupAction
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupEvent
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupListEntry
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupListStatus
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupUiAction
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupUiState
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupViewModel
+import com.seucaio.unideas.core.backup.viewmodel.backup.PendingBackupOverwrite
 import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.core.common.extensions.toFormattedTimeString
+import com.seucaio.unideas.ds.components.lists.GroupHeader
 import com.seucaio.unideas.ds.theme.UdsTheme
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
@@ -88,7 +91,7 @@ fun BackupBottomSheet(
     val resources by rememberUpdatedState(LocalResources.current)
 
     var pendingAction by remember { mutableStateOf<BackupAction?>(null) }
-    var pendingDeleteFileId by remember { mutableStateOf<String?>(null) }
+    var pendingConfirmDialog by remember { mutableStateOf<PendingConfirmDialog?>(null) }
 
     val signInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -110,7 +113,8 @@ fun BackupBottomSheet(
             pendingAction = action
             signInLauncher.launch(intent)
         },
-        onShowDeleteConfirm = { pendingDeleteFileId = it },
+        onShowDeleteConfirm = { pendingConfirmDialog = PendingConfirmDialog.Delete(it) },
+        onShowOverwriteConfirm = { pendingConfirmDialog = PendingConfirmDialog.Overwrite(it) },
     )
 
     if (visible) {
@@ -133,14 +137,16 @@ fun BackupBottomSheet(
         }
     }
 
-    val deleteFileId = pendingDeleteFileId
-    if (deleteFileId != null) {
-        DeleteBackupConfirmDialog(
+    pendingConfirmDialog?.let { dialog ->
+        ConfirmDialog(
+            titleRes = dialog.titleRes,
+            messageRes = dialog.messageRes,
+            confirmActionRes = dialog.confirmActionRes,
             onConfirm = {
-                viewModel.onEvent(BackupEvent.OnDeleteConfirmed(deleteFileId))
-                pendingDeleteFileId = null
+                viewModel.onEvent(dialog.toEvent())
+                pendingConfirmDialog = null
             },
-            onDismiss = { pendingDeleteFileId = null },
+            onDismiss = { pendingConfirmDialog = null },
         )
     }
 }
@@ -153,11 +159,13 @@ private fun BackupActionEffects(
     onDismiss: () -> Unit,
     onLaunchSignIn: (intent: Intent, pendingAction: BackupAction) -> Unit,
     onShowDeleteConfirm: (fileId: String) -> Unit,
+    onShowOverwriteConfirm: (PendingBackupOverwrite) -> Unit,
 ) {
     val context = LocalContext.current
     val currentOnDismiss by rememberUpdatedState(onDismiss)
     val currentOnLaunchSignIn by rememberUpdatedState(onLaunchSignIn)
     val currentOnShowDeleteConfirm by rememberUpdatedState(onShowDeleteConfirm)
+    val currentOnShowOverwriteConfirm by rememberUpdatedState(onShowOverwriteConfirm)
 
     LaunchedEffect(actions) {
         actions.collect { action ->
@@ -172,6 +180,7 @@ private fun BackupActionEffects(
                 is BackupUiAction.LaunchGoogleSignIn ->
                     currentOnLaunchSignIn(action.intent, action.pendingAction)
                 is BackupUiAction.ShowDeleteConfirm -> currentOnShowDeleteConfirm(action.fileId)
+                is BackupUiAction.ShowOverwriteConfirm -> currentOnShowOverwriteConfirm(action.pending)
                 is BackupUiAction.RestoreCompleted -> {
                     currentOnDismiss()
                     // A simple activity restart (finishAffinity()) is not enough here — confirmed
@@ -186,13 +195,19 @@ private fun BackupActionEffects(
 }
 
 @Composable
-private fun DeleteBackupConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun ConfirmDialog(
+    @StringRes titleRes: Int,
+    @StringRes messageRes: Int,
+    @StringRes confirmActionRes: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = stringResource(R.string.backup_delete_confirm_title)) },
-        text = { Text(text = stringResource(R.string.backup_delete_confirm_message)) },
+        title = { Text(text = stringResource(titleRes)) },
+        text = { Text(text = stringResource(messageRes)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text(text = stringResource(R.string.backup_delete_confirm_action)) }
+            TextButton(onClick = onConfirm) { Text(text = stringResource(confirmActionRes)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
@@ -259,6 +274,11 @@ private fun ConnectedBackupContent(
     val subtitle = uiState.lastBackupAt?.toFormattedDateTimeString()
         ?.let { stringResource(R.string.backup_last_at, it) }
         ?: stringResource(R.string.backup_none)
+    val toggleListLabelRes = if (uiState.isBackupListVisible) {
+        R.string.backup_action_hide_backups
+    } else {
+        R.string.backup_action_view_backups
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
@@ -272,15 +292,7 @@ private fun ConnectedBackupContent(
                 Text(text = stringResource(R.string.backup_action_upload))
             }
             OutlinedButton(onClick = onToggleBackupListClick, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(
-                        if (uiState.isBackupListVisible) {
-                            R.string.backup_action_hide_backups
-                        } else {
-                            R.string.backup_action_view_backups
-                        },
-                    ),
-                )
+                Text(text = stringResource(toggleListLabelRes))
             }
         }
 
@@ -356,20 +368,27 @@ private fun BackupListSection(
                     onRetryClick = onRetryClick,
                 )
             is BackupListStatus.Loaded -> {
+                val mostRecentFileId = status.backups.firstOrNull()?.info?.fileId
+                val groups = remember(status.backups) { groupBackupsByDate(status.backups) }
                 LazyColumn(
                     modifier = Modifier
                         .heightIn(max = BACKUP_LIST_MAX_HEIGHT)
                         .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(status.backups, key = { _, entry -> entry.info.fileId }) { index, entry ->
-                        BackupListItemRow(
-                            entry = entry,
-                            selected = entry.info.fileId == selectedFileId,
-                            isMostRecent = index == 0,
-                            onSelect = { onBackupSelect(entry.info.fileId) },
-                            onDelete = { onDeleteBackupClick(entry.info.fileId) },
-                        )
+                    groups.forEach { (group, entries) ->
+                        item(key = "header-${group.name}") {
+                            GroupHeader(text = stringResource(group.labelRes()))
+                        }
+                        items(entries, key = { it.info.fileId }) { entry ->
+                            BackupListItemRow(
+                                entry = entry,
+                                selected = entry.info.fileId == selectedFileId,
+                                isMostRecent = entry.info.fileId == mostRecentFileId,
+                                onSelect = { onBackupSelect(entry.info.fileId) },
+                                onDelete = { onDeleteBackupClick(entry.info.fileId) },
+                            )
+                        }
                     }
                 }
 

@@ -28,6 +28,8 @@ android {
 dependencies {
     implementation(project(":domain"))
     implementation(project(":core:common"))
+    // Documented exception to ":feature:* never depends on :core:backup" — see CLAUDE.md.
+    implementation(project(":core:backup"))
     implementation(project(":uds"))
 
     implementation(platform(libs.androidx.compose.bom))

@@ -21,6 +21,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -28,6 +29,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seucaio.unideas.core.backup.viewmodel.BackupSyncDialogState
+import com.seucaio.unideas.core.backup.viewmodel.BackupSyncEvent
+import com.seucaio.unideas.core.backup.viewmodel.BackupSyncUiAction
+import com.seucaio.unideas.core.backup.viewmodel.BackupSyncViewModel
+import com.seucaio.unideas.core.common.extensions.restartApplication
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -69,6 +75,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
+    backupSyncViewModel: BackupSyncViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val filterState by viewModel.filterState.collectAsStateWithLifecycle()
@@ -76,6 +83,8 @@ fun HomeScreen(
     val homeMode by viewModel.homeMode.collectAsStateWithLifecycle()
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val backupSyncDialogState by backupSyncViewModel.dialogState.collectAsStateWithLifecycle()
+    val syncCheckCompleted by backupSyncViewModel.syncCheckCompleted.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
     val updatedOnNavigateToDetailForLateCompletion by rememberUpdatedState(onNavigateToDetailForLateCompletion)
@@ -96,10 +105,15 @@ fun HomeScreen(
         }
     }
 
+    HandleBackupSyncUiActions(backupSyncViewModel, snackbarHostState)
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.onEvent(HomeEvent.OnScreenResumed)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onEvent(HomeEvent.OnScreenResumed)
+                backupSyncViewModel.onEvent(BackupSyncEvent.OnSyncCheckRequested)
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -112,7 +126,10 @@ fun HomeScreen(
         homeMode = homeMode,
         dialogState = dialogState,
         isRefreshing = isRefreshing,
+        backupSyncDialogState = backupSyncDialogState,
+        syncCheckCompleted = syncCheckCompleted,
         onEvent = viewModel::onEvent,
+        onBackupSyncEvent = backupSyncViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToDetail = updatedOnNavigateToDetail,
         onNavigateToAllPriorities = updatedOnNavigateToAllPriorities,
@@ -120,6 +137,22 @@ fun HomeScreen(
         onNavigateToArchivedItems = updatedOnNavigateToArchivedItems,
         snackbarHostState = snackbarHostState,
     )
+}
+
+@Composable
+private fun HandleBackupSyncUiActions(
+    backupSyncViewModel: BackupSyncViewModel,
+    snackbarHostState: SnackbarHostState,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        backupSyncViewModel.uiAction.collect { action ->
+            when (action) {
+                BackupSyncUiAction.RestoreCompleted -> context.restartApplication()
+                is BackupSyncUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
 }
 
 @Composable
@@ -137,14 +170,17 @@ private fun HomeContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
     snackbarHostState: SnackbarHostState,
+    backupSyncDialogState: BackupSyncDialogState = BackupSyncDialogState.None,
+    syncCheckCompleted: Boolean = true,
+    onBackupSyncEvent: (BackupSyncEvent) -> Unit = {},
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showPriorityBottomSheet by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(uiState) {
-        val state = uiState
-        if (!ColdStartPriorityPrompt.shown && state is HomeUiState.Success && state.hasAnyPriorityItem) {
+    LaunchedEffect(uiState, syncCheckCompleted, backupSyncDialogState) {
+        val ready = isReadyForPriorityPrompt(uiState, syncCheckCompleted, backupSyncDialogState)
+        if (!ColdStartPriorityPrompt.shown && ready) {
             ColdStartPriorityPrompt.shown = true
             showPriorityBottomSheet = true
         }
@@ -154,9 +190,11 @@ private fun HomeContent(
         showPriorityBottomSheet = showPriorityBottomSheet,
         onPriorityBottomSheetDismiss = { showPriorityBottomSheet = false },
         dialogState = dialogState,
+        backupSyncDialogState = backupSyncDialogState,
         onNavigateToDetail = onNavigateToDetail,
         onNavigateToAllPriorities = onNavigateToAllPriorities,
         onEvent = onEvent,
+        onBackupSyncEvent = onBackupSyncEvent,
     )
 
     Scaffold(
@@ -194,6 +232,15 @@ private fun HomeContent(
         )
     }
 }
+
+private fun isReadyForPriorityPrompt(
+    uiState: HomeUiState,
+    syncCheckCompleted: Boolean,
+    backupSyncDialogState: BackupSyncDialogState,
+): Boolean = uiState is HomeUiState.Success &&
+    uiState.hasAnyPriorityItem &&
+    syncCheckCompleted &&
+    backupSyncDialogState == BackupSyncDialogState.None
 
 @Composable
 private fun HomeBody(

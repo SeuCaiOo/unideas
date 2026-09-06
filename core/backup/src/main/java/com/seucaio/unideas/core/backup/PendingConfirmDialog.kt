@@ -1,8 +1,8 @@
 package com.seucaio.unideas.core.backup
 
 import androidx.annotation.StringRes
-import com.seucaio.unideas.core.backup.viewmodel.BackupEvent
-import com.seucaio.unideas.core.backup.viewmodel.PendingBackupOverwrite
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupEvent
+import com.seucaio.unideas.core.backup.viewmodel.backup.PendingBackupOverwrite
 
 internal sealed interface PendingConfirmDialog {
     @get:StringRes val titleRes: Int

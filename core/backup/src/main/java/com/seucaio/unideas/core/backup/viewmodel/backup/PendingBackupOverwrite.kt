@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.backup
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 

@@ -1,4 +1,4 @@
-package com.seucaio.unideas.core.backup.viewmodel
+package com.seucaio.unideas.core.backup.viewmodel.backup
 
 import android.content.Intent
 import androidx.annotation.StringRes

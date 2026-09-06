@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seucaio.unideas.core.backup.BackupBottomSheet
 import com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet
-import com.seucaio.unideas.core.backup.viewmodel.BackupUiState
-import com.seucaio.unideas.core.backup.viewmodel.BackupViewModel
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupUiState
+import com.seucaio.unideas.core.backup.viewmodel.backup.BackupViewModel
 import com.seucaio.unideas.core.common.extensions.toFormattedDateTimeString
 import com.seucaio.unideas.core.notifications.notification.ReminderNotifier
 import com.seucaio.unideas.core.notifications.worker.ReminderScheduler

@@ -23,6 +23,9 @@
     <string name="backup_delete_confirm_title">Delete backup?</string>
     <string name="backup_delete_confirm_message">This can\'t be undone.</string>
     <string name="backup_delete_confirm_action">Delete</string>
+    <string name="backup_overwrite_confirm_title">Different backup found</string>
+    <string name="backup_overwrite_confirm_message">This will overwrite a different backup that already exists in the cloud. Confirm?</string>
+    <string name="backup_overwrite_confirm_action">Confirm</string>
     <string name="backup_upload_success">Backup completed</string>
     <string name="backup_delete_success">Backup deleted</string>
     <string name="backup_delete_error">Couldn\'t delete the backup.</string>
@@ -49,4 +52,5 @@
     <string name="backup_sync_disable_confirm">Turn off</string>
     <string name="backup_sync_disable_decline">Go back</string>
     <string name="backup_sync_error">Couldn\'t restore the backup.</string>
+    <string name="backup_auto_backup_disabled">Automatic backup turned off</string>
 </resources>

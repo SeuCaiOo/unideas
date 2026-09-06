@@ -8,6 +8,7 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.home.features.home.viewmodel.FilterState
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeItemsState
+import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeMode
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemSectionGroup
 import com.seucaio.unideas.feature.home.features.home.viewmodel.ItemsViewMode
 import java.time.LocalDate
@@ -130,4 +131,28 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
             hasAnyItem = false,
         ),
     )
+}
+
+internal data class HomeContentPreviewScenario(
+    val fixture: HomePreviewFixture,
+    val hasAnyArchivedItem: Boolean = false,
+    val homeMode: HomeMode = HomeMode.Normal,
+)
+
+internal class HomeContentPreviewProvider : PreviewParameterProvider<HomeContentPreviewScenario> {
+
+    private val baseFixtures = HomePreviewProvider().values.toList()
+
+    override val values: Sequence<HomeContentPreviewScenario> = baseFixtures
+        .map { HomeContentPreviewScenario(fixture = it) }
+        .plus(HomeContentPreviewScenario(fixture = baseFixtures.first(), hasAnyArchivedItem = true))
+        .plus(
+            HomeContentPreviewScenario(
+                fixture = baseFixtures.first(),
+                homeMode = HomeMode.Selection(
+                    baseFixtures.first().itemsState.tabItems.take(2).map { it.id }.toSet()
+                ),
+            ),
+        )
+        .asSequence()
 }

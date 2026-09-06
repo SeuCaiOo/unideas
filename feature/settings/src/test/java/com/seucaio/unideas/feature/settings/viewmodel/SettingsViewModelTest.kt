@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.settings.viewmodel
 
 import app.cash.turbine.test
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.seucaio.unideas.core.backup.domain.usecase.AutoBackupSettingsUseCase
 import com.seucaio.unideas.core.backup.domain.usecase.GoogleAuthUseCase
 import com.seucaio.unideas.domain.model.SeedScope
 import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
@@ -40,6 +41,9 @@ class SettingsViewModelTest {
     @MockK
     private lateinit var googleAuthUseCase: GoogleAuthUseCase
 
+    @MockK
+    private lateinit var autoBackupSettingsUseCase: AutoBackupSettingsUseCase
+
     private val account: GoogleSignInAccount = mockk(relaxed = true)
 
     @Before
@@ -56,8 +60,13 @@ class SettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() =
-        SettingsViewModel(seedDatabase, clearDatabase, setOnboardingSeenUseCase, googleAuthUseCase)
+    private fun viewModel() = SettingsViewModel(
+        seedDatabase,
+        clearDatabase,
+        setOnboardingSeenUseCase,
+        googleAuthUseCase,
+        autoBackupSettingsUseCase,
+    )
 
     @Test
     fun `when created should expose Success`() = runTest {
@@ -257,4 +266,19 @@ class SettingsViewModelTest {
             coVerify(exactly = 1) { setOnboardingSeenUseCase(false) }
             assertEquals(SettingsAccountUiState(isConnected = false), vm.accountUiState.value)
         }
+
+    @Test
+    fun `when OnForceDesyncClicked should corrupt the tracked fileId and notify the user`() = runTest {
+        coEvery { autoBackupSettingsUseCase.setTrackedFileId(any()) } returns Unit
+        val vm = viewModel()
+
+        vm.uiAction.test {
+            vm.onEvent(SettingsEvent.OnForceDesyncClicked)
+            assertEquals(
+                SettingsUiAction.ShowSnackbar(R.string.settings_debug_force_desync_success),
+                awaitItem(),
+            )
+        }
+        coVerify(exactly = 1) { autoBackupSettingsUseCase.setTrackedFileId(any()) }
+    }
 }

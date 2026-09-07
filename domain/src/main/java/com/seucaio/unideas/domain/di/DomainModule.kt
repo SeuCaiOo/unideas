@@ -20,6 +20,7 @@ import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemLinkUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.LinkItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
@@ -97,6 +98,7 @@ val domainModule = module {
     factoryOf(::LinkItemsUseCase)
     factoryOf(::UnlinkItemsUseCase)
     factoryOf(::GetLinkedItemsUseCase)
+    factoryOf(::ItemLinkUseCase)
     //endregion
 
     //region Onboarding

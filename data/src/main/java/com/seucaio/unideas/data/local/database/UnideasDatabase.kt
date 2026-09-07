@@ -12,6 +12,7 @@ import com.seucaio.unideas.data.local.dao.SectionDao
 import com.seucaio.unideas.data.local.dao.TagDao
 import com.seucaio.unideas.data.local.database.UnideasDatabase.Companion.getInstance
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_10_11
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_11_12
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_2_3
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_3_4
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_4_5
@@ -49,7 +50,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         ItemTagCrossRef::class,
         ItemCompletionHistoryEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -107,6 +108,7 @@ abstract class UnideasDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
+                    MIGRATION_11_12,
                 )
                 .build()
     }

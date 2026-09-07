@@ -170,4 +170,8 @@
 
     <!-- Item Links -->
     <string name="item_links_load_error">Couldn\'t load linked items</string>
+    <string name="item_links_picker_title_task">Add task</string>
+    <string name="item_links_picker_title_note">Add note</string>
+    <string name="item_links_picker_empty">No items available to link</string>
+    <string name="item_links_picker_confirm_content_description">Confirm</string>
 </resources>

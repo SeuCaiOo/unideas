@@ -30,6 +30,8 @@ fun NavGraphBuilder.itemsNavGraph(
             onNavigateBack = onNavigateBack,
             onNavigateToHistory = onNavigateToHistory,
             onNavigateToConfig = onNavigateToConfig,
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToLinkPicker = onNavigateToLinkPicker,
         )
     }
     composable<ItemsRoute.History> { backStackEntry ->

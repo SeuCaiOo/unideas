@@ -71,6 +71,7 @@ fun ItemFormBody(
     onExtendDeadlineClicked: () -> Unit,
     onNavigateToConfig: () -> Unit,
     onNavigateToHistory: (() -> Unit)?,
+    linksSection: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     isArchived: Boolean = false,
     onUnarchiveClicked: (() -> Unit)? = null,
@@ -124,6 +125,8 @@ fun ItemFormBody(
                     onNavigateToConfig = onNavigateToConfig,
                     onNavigateToHistory = onNavigateToHistory,
                 )
+
+                linksSection()
             }
         }
     }
@@ -271,6 +274,7 @@ private fun ItemFormBodyPreview(
                 onExtendDeadlineClicked = {},
                 onNavigateToConfig = {},
                 onNavigateToHistory = {},
+                linksSection = {},
             )
         }
     }

@@ -23,9 +23,9 @@ interface ItemDao {
 
     /**
      * Observes items of [type], optionally filtered by section and/or tags — excludes archived
-     * items (see [getArchivedItems]). Ordered by due date first (soonest due first; items with
-     * no due date sort last), then by creation date within that — same tie-breaker as before
-     * `dueDate` ordering existed (#206).
+     * items (see [getArchivedItems]) and confidential items (see [getConfidentialItems]). Ordered
+     * by due date first (soonest due first; items with no due date sort last), then by creation
+     * date within that — same tie-breaker as before `dueDate` ordering existed (#206).
      *
      * @param sectionId `null` = no section filter.
      * @param tagCount pass `tagIds.size`; `0` disables the tag filter
@@ -37,6 +37,7 @@ interface ItemDao {
         SELECT * FROM items
         WHERE type = :type
           AND status = 'ACTIVE'
+          AND isConfidential = 0
           AND (:sectionId IS NULL OR sectionId = :sectionId)
           AND (:tagCount = 0 OR id IN (SELECT itemId FROM item_tag WHERE tagId IN (:tagIds)))
         ORDER BY dueDate IS NULL, dueDate ASC, createdAt DESC
@@ -53,6 +54,11 @@ interface ItemDao {
     @Transaction
     @Query("SELECT * FROM items WHERE status = 'ARCHIVED' ORDER BY createdAt DESC")
     fun getArchivedItems(): Flow<List<ItemWithTags>>
+
+    /** Observes every confidential item, most recently created first (#220). */
+    @Transaction
+    @Query("SELECT * FROM items WHERE isConfidential = 1 ORDER BY createdAt DESC")
+    fun getConfidentialItems(): Flow<List<ItemWithTags>>
 
     @Transaction
     @Query("SELECT * FROM items WHERE id = :id")
@@ -75,6 +81,7 @@ interface ItemDao {
         SELECT * FROM items
         WHERE completedAt IS NULL
           AND status = 'ACTIVE'
+          AND isConfidential = 0
           AND (isPinned = 1 OR (dueDate IS NOT NULL AND dueDate <= :dueOnOrBefore))
         ORDER BY isPinned DESC, dueDate IS NULL, dueDate ASC
         """,
@@ -88,7 +95,10 @@ interface ItemDao {
      * window; excluding archived items is what pauses their reminders/occurrence processing (#168).
      */
     @Transaction
-    @Query("SELECT * FROM items WHERE dueDate IS NOT NULL AND completedAt IS NULL AND status = 'ACTIVE'")
+    @Query(
+        "SELECT * FROM items WHERE dueDate IS NOT NULL AND completedAt IS NULL " +
+            "AND status = 'ACTIVE' AND isConfidential = 0",
+    )
     fun getItemsWithDueDate(): Flow<List<ItemWithTags>>
 
     /** Cheap existence check — no items in the entire table, regardless of type/section/tags. */
@@ -109,6 +119,9 @@ interface ItemDao {
 
     @Query("UPDATE items SET status = :status WHERE id = :id")
     suspend fun setStatus(id: Long, status: ItemStatus)
+
+    @Query("UPDATE items SET isConfidential = :isConfidential WHERE id = :id")
+    suspend fun setConfidential(id: Long, isConfidential: Boolean)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTagCrossRefs(refs: List<ItemTagCrossRef>)

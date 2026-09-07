@@ -38,6 +38,7 @@ object ItemStub {
         pendingExtensionCount: Int = 0,
         status: ItemStatus = ItemStatus.ACTIVE,
         remindersMuted: Boolean = false,
+        isConfidential: Boolean = false,
         tags: List<Tag> = emptyList(),
     ): Item = Item(
         id = id,
@@ -57,6 +58,7 @@ object ItemStub {
         pendingExtensionCount = pendingExtensionCount,
         status = status,
         remindersMuted = remindersMuted,
+        isConfidential = isConfidential,
         tags = tags,
     )
 

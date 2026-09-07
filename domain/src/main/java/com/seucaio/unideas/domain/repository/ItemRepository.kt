@@ -55,6 +55,9 @@ interface ItemRepository {
     /** Observes every archived item ([ItemStatus.ARCHIVED]), most recently created first. */
     fun getArchivedItems(): Flow<List<Item>>
 
+    /** Observes every confidential item ([Item.isConfidential]), most recently created first. */
+    fun getConfidentialItems(): Flow<List<Item>>
+
     /** Inserts [item] (and its tag links) and returns the generated id. */
     suspend fun insertItem(item: Item): Long
 
@@ -69,4 +72,7 @@ interface ItemRepository {
 
     /** Sets [Item.status] for the item with [id]. */
     suspend fun setItemStatus(id: Long, status: ItemStatus)
+
+    /** Sets [Item.isConfidential] for the item with [id]. */
+    suspend fun setItemConfidential(id: Long, isConfidential: Boolean)
 }

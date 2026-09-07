@@ -44,6 +44,9 @@ class ItemRepositoryImpl(
     override fun getArchivedItems(): Flow<List<Item>> =
         itemDao.getArchivedItems().map { rows -> rows.map { it.toDomain() } }
 
+    override fun getConfidentialItems(): Flow<List<Item>> =
+        itemDao.getConfidentialItems().map { rows -> rows.map { it.toDomain() } }
+
     override suspend fun insertItem(item: Item): Long =
         itemDao.insertItemWithTags(item.toEntity(), item.tags.map { it.id })
 
@@ -55,4 +58,7 @@ class ItemRepositoryImpl(
     override suspend fun setItemPinned(id: Long, isPinned: Boolean) = itemDao.setPinned(id, isPinned)
 
     override suspend fun setItemStatus(id: Long, status: ItemStatus) = itemDao.setStatus(id, status)
+
+    override suspend fun setItemConfidential(id: Long, isConfidential: Boolean) =
+        itemDao.setConfidential(id, isConfidential)
 }

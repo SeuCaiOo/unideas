@@ -32,6 +32,9 @@
     <string name="archived_items_title">Itens arquivados</string>
     <string name="archived_items_empty">Nenhum item arquivado.</string>
     <string name="archived_items_load_error">Não foi possível carregar seus itens arquivados</string>
+    <string name="hidden_items_title">Itens ocultos</string>
+    <string name="hidden_items_empty">Nenhum item oculto.</string>
+    <string name="hidden_items_load_error">Não foi possível carregar seus itens ocultos</string>
     <string name="home_title">Todos os itens</string>
     <string name="home_due_today">Vence hoje</string>
     <plurals name="home_due_in_days">
@@ -54,4 +57,5 @@
     <string name="home_delete_selected_title">Excluir itens</string>
     <string name="home_delete_selected_message">Esta ação não pode ser desfeita.</string>
     <string name="home_archived_items_action">Itens arquivados</string>
+    <string name="home_hidden_items_action">Itens ocultos</string>
 </resources>

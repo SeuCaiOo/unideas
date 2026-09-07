@@ -2,6 +2,7 @@ package com.seucaio.unideas.feature.home.di
 
 import com.seucaio.unideas.feature.home.features.allpriorities.viewmodel.AllPrioritiesViewModel
 import com.seucaio.unideas.feature.home.features.archiveditems.viewmodel.ArchivedItemsViewModel
+import com.seucaio.unideas.feature.home.features.hiddenitems.viewmodel.HiddenItemsViewModel
 import com.seucaio.unideas.feature.home.features.home.viewmodel.HomeViewModel
 import com.seucaio.unideas.feature.home.features.priority.viewmodel.PriorityViewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -12,4 +13,5 @@ val homeModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::AllPrioritiesViewModel)
     viewModelOf(::ArchivedItemsViewModel)
+    viewModelOf(::HiddenItemsViewModel)
 }

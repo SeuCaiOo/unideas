@@ -34,6 +34,13 @@ class HiddenItemsViewModel(private val getConfidentialItemsUseCase: GetConfident
     private val _uiAction = Channel<HiddenItemsUiAction>(Channel.BUFFERED)
     val uiAction: Flow<HiddenItemsUiAction> = _uiAction.receiveAsFlow()
 
+    var isAuthenticated: Boolean = false
+        private set
+
+    fun markAuthenticated() {
+        isAuthenticated = true
+    }
+
     fun onEvent(event: HiddenItemsEvent) {
         when (event) {
             is HiddenItemsEvent.OnItemClicked ->

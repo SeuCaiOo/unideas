@@ -28,7 +28,12 @@ fun HiddenItemsScreen(
     val context = LocalContext.current
     val title = stringResource(R.string.hidden_items_biometric_title)
     var mode by remember {
-        mutableStateOf<HiddenItemsMode>(HiddenItemsMode.Gating(HiddenItemsGateState.Authenticating))
+        val initial = if (viewModel.isAuthenticated) {
+            HiddenItemsMode.Unlocked
+        } else {
+            HiddenItemsMode.Gating(HiddenItemsGateState.Authenticating)
+        }
+        mutableStateOf(initial)
     }
 
     val authenticate: () -> Unit = {
@@ -39,7 +44,11 @@ fun HiddenItemsScreen(
             mode = HiddenItemsMode.Gating(HiddenItemsGateState.Authenticating)
             BiometricAuthenticator.authenticate(activity = activity, title = title) { result ->
                 mode = when (result) {
-                    BiometricAuthResult.Success -> HiddenItemsMode.Unlocked
+                    BiometricAuthResult.Success -> {
+                        viewModel.markAuthenticated()
+                        HiddenItemsMode.Unlocked
+                    }
+
                     BiometricAuthResult.Unavailable ->
                         HiddenItemsMode.Gating(HiddenItemsGateState.Failed(R.string.hidden_items_biometric_unavailable))
 
@@ -50,7 +59,9 @@ fun HiddenItemsScreen(
         }
     }
 
-    LaunchedEffect(Unit) { authenticate() }
+    LaunchedEffect(Unit) {
+        if (!viewModel.isAuthenticated) authenticate()
+    }
 
     when (val itemsMode = mode) {
         is HiddenItemsMode.Gating ->

@@ -190,6 +190,10 @@ core/common/
 │                       módulo), por isso moram aqui e não no módulo que hoje os consome
 │                       (:core:backup, :core:notifications); String.stripMarkdownPreview() (#195) —
 │                       mesma lógica, sem Android
+├── biometric/        — BiometricAuthenticator (#220): wrapper puro sobre BiometricPrompt/BiometricManager,
+│                       sem Compose e sem @StringRes de nenhuma feature (título recebido como String pronta).
+│                       androidx.biometric exposto como `api` — quem depende de :core:common ganha
+│                       FragmentActivity no classpath sem redeclarar a dependência
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 

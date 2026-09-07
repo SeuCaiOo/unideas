@@ -411,6 +411,9 @@ private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigPre
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK, hasReminder = true)),
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.NOTE)),
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK), isNewItem = true),
+        ItemConfigPreviewScenario(
+            ItemConfigUiState(isLoading = false, type = ItemType.NOTE, isConfidential = true),
+        ),
     )
 }
 

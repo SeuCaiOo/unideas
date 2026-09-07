@@ -262,6 +262,7 @@ private fun HomeContentPreview(
                     hasAnyItem = scenario.fixture.hasAnyItem,
                     hasAnyPriorityItem = true,
                     hasAnyArchivedItem = scenario.hasAnyArchivedItem,
+                    hasAnyConfidentialItem = scenario.hasAnyConfidentialItem,
                 ),
                 filterState = scenario.fixture.filterState,
                 itemsState = scenario.fixture.itemsState,

@@ -178,6 +178,7 @@ private fun ItemDetailScreenContent(
                 occurrenceState = occurrenceState,
                 isArchived = uiState.status == ItemStatus.ARCHIVED,
                 onUnarchiveClicked = { onEvent(ItemDetailEvent.OnUnarchiveChipClicked) },
+                isConfidential = uiState.isConfidential,
                 onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
                 onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
                 onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },

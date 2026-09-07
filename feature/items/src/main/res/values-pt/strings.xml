@@ -76,6 +76,7 @@
     </plurals>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_archived_badge">Arquivado</string>
+    <string name="item_detail_confidential_badge">Confidencial</string>
     <string name="item_detail_unarchived_snackbar">Item desarquivado</string>
     <string name="item_detail_unarchive_confirm_title">Desarquivar item</string>
     <string name="item_detail_unarchive_confirm_message">O item volta pra sua listagem normal e os lembretes voltam a valer.</string>

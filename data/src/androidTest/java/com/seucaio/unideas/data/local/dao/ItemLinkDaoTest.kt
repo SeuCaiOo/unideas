@@ -46,8 +46,8 @@ class ItemLinkDaoTest {
 
         dao.insertLink(idA, idB)
 
-        assertEquals(listOf("Second"), dao.getLinkedItems(idA).first().map { it.title })
-        assertEquals(listOf("First"), dao.getLinkedItems(idB).first().map { it.title })
+        assertEquals(listOf("Second"), dao.getLinkedItems(idA).first().map { it.item.title })
+        assertEquals(listOf("First"), dao.getLinkedItems(idB).first().map { it.item.title })
     }
 
     @Test

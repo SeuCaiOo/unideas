@@ -4,8 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.seucaio.unideas.data.local.entity.ItemEntity
+import androidx.room.Transaction
 import com.seucaio.unideas.data.local.entity.ItemLinkEntity
+import com.seucaio.unideas.data.local.relation.ItemWithTags
 import kotlinx.coroutines.flow.Flow
 
 /** DAO for the symmetric item↔item link (`item_link` table). */
@@ -18,6 +19,7 @@ interface ItemLinkDao {
     @Query("DELETE FROM item_link WHERE itemIdA = :itemIdA AND itemIdB = :itemIdB")
     suspend fun deleteLinkEntity(itemIdA: Long, itemIdB: Long)
 
+    @Transaction
     @Query(
         """
         SELECT * FROM items WHERE id IN (
@@ -27,7 +29,7 @@ interface ItemLinkDao {
         )
         """,
     )
-    fun getLinkedItems(itemId: Long): Flow<List<ItemEntity>>
+    fun getLinkedItems(itemId: Long): Flow<List<ItemWithTags>>
 
     /** Normalizes the pair before inserting so `A→B` and `B→A` are never stored as two rows. */
     suspend fun insertLink(itemIdA: Long, itemIdB: Long) {

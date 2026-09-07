@@ -44,7 +44,6 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
     implementation(libs.markdown.renderer.m3)
-    implementation(libs.androidx.biometric)
 
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 

@@ -20,6 +20,7 @@ data class ItemConfigUiState(
     val dueTime: LocalTime? = null,
     val recurrence: Recurrence = Recurrence.None,
     val reminderWarning: ReminderWarning = ReminderWarning.None,
+    val isConfidential: Boolean = false,
 ) {
 
     val persistableDueDate: LocalDate? get() = if (hasReminder) dueDate else null
@@ -32,6 +33,8 @@ data class ItemConfigUiState(
         get() = if (hasReminder) reminderWarning else ReminderWarning.None
 
     fun toggleReminder(enabled: Boolean): ItemConfigUiState = copy(hasReminder = enabled)
+
+    fun toggleConfidential(enabled: Boolean): ItemConfigUiState = copy(isConfidential = enabled)
 
     fun toggleTag(tagId: Long): ItemConfigUiState =
         copy(selectedTagIds = if (tagId in selectedTagIds) selectedTagIds - tagId else selectedTagIds + tagId)
@@ -59,6 +62,7 @@ data class ItemConfigUiState(
         dueTime = item.dueTime,
         recurrence = item.recurrence,
         reminderWarning = item.reminderWarning,
+        isConfidential = item.isConfidential,
     )
 
     fun startLoading(): ItemConfigUiState = copy(isLoading = true, loadFailed = false)
@@ -71,6 +75,7 @@ data class ItemConfigUiState(
         dueTime = persistableDueTime,
         recurrence = persistableRecurrence,
         reminderWarning = persistableReminderWarning,
+        isConfidential = isConfidential,
         tags = availableTags.filter { it.id in selectedTagIds },
     )
 

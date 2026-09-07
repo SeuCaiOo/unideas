@@ -140,6 +140,8 @@
     <string name="item_config_title">Configurações</string>
     <string name="item_config_section_organization">Organização</string>
     <string name="item_config_section_recurrence">Recorrência e aviso</string>
+    <string name="item_config_section_privacy">Privacidade</string>
+    <string name="item_config_confidential_label">Confidencial</string>
     <string name="item_config_section_danger_zone">Zona de risco</string>
     <string name="item_config_type_subtitle_task">Pode ser concluída, gera histórico</string>
     <string name="item_config_type_subtitle_note">Só texto, sem conclusão</string>

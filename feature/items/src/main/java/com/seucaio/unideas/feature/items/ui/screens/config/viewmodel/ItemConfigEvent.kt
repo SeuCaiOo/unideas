@@ -18,6 +18,7 @@ sealed interface ItemConfigEvent {
     data class OnDueTimeChanged(val dueTime: LocalTime?) : FieldEvent
     data class OnRecurrenceChanged(val recurrence: Recurrence) : FieldEvent
     data class OnReminderWarningChanged(val reminderWarning: ReminderWarning) : FieldEvent
+    data class OnConfidentialToggled(val enabled: Boolean) : FieldEvent
 
     data class OnChangeTypeClicked(val newType: ItemType) : ItemConfigEvent
     data object OnTypeSwitchConfirmClicked : ItemConfigEvent

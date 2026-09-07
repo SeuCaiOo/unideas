@@ -3,6 +3,7 @@ package com.seucaio.unideas.feature.items.di
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.ItemConfigViewModel
 import com.seucaio.unideas.feature.items.ui.screens.config.viewmodel.sectionstags.SectionsTagsViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceViewModel
 import com.seucaio.unideas.feature.items.ui.screens.history.viewmodel.ItemHistoryViewModel
 import com.seucaio.unideas.feature.items.ui.screens.list.viewmodel.ItemsListViewModel
@@ -29,6 +30,12 @@ val itemsModule = module {
             promptCompleteOnEntry = params.getOrNull() ?: false,
             itemFormUseCase = get(),
             itemOccurrenceUseCase = get(),
+        )
+    }
+    viewModel { params ->
+        ItemLinksViewModel(
+            itemId = params.getOrNull(),
+            itemLinkUseCase = get(),
         )
     }
     viewModel { params ->

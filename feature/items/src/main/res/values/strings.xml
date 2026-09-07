@@ -167,4 +167,7 @@
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>
     <string name="items_list_add">New item</string>
+
+    <!-- Item Links -->
+    <string name="item_links_load_error">Couldn\'t load linked items</string>
 </resources>

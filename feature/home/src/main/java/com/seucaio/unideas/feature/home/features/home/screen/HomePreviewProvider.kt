@@ -136,6 +136,7 @@ internal class HomePreviewProvider : PreviewParameterProvider<HomePreviewFixture
 internal data class HomeContentPreviewScenario(
     val fixture: HomePreviewFixture,
     val hasAnyArchivedItem: Boolean = false,
+    val hasAnyConfidentialItem: Boolean = false,
     val homeMode: HomeMode = HomeMode.Normal,
 )
 
@@ -146,6 +147,7 @@ internal class HomeContentPreviewProvider : PreviewParameterProvider<HomeContent
     override val values: Sequence<HomeContentPreviewScenario> = baseFixtures
         .map { HomeContentPreviewScenario(fixture = it) }
         .plus(HomeContentPreviewScenario(fixture = baseFixtures.first(), hasAnyArchivedItem = true))
+        .plus(HomeContentPreviewScenario(fixture = baseFixtures.first(), hasAnyConfidentialItem = true))
         .plus(
             HomeContentPreviewScenario(
                 fixture = baseFixtures.first(),

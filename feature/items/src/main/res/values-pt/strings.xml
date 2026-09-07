@@ -76,6 +76,7 @@
     </plurals>
     <string name="item_detail_delete_title">Excluir item</string>
     <string name="item_detail_archived_badge">Arquivado</string>
+    <string name="item_detail_confidential_badge">Confidencial</string>
     <string name="item_detail_unarchived_snackbar">Item desarquivado</string>
     <string name="item_detail_unarchive_confirm_title">Desarquivar item</string>
     <string name="item_detail_unarchive_confirm_message">O item volta pra sua listagem normal e os lembretes voltam a valer.</string>
@@ -140,6 +141,8 @@
     <string name="item_config_title">Configurações</string>
     <string name="item_config_section_organization">Organização</string>
     <string name="item_config_section_recurrence">Recorrência e aviso</string>
+    <string name="item_config_section_privacy">Privacidade</string>
+    <string name="item_config_confidential_label">Confidencial</string>
     <string name="item_config_section_danger_zone">Zona de risco</string>
     <string name="item_config_type_subtitle_task">Pode ser concluída, gera histórico</string>
     <string name="item_config_type_subtitle_note">Só texto, sem conclusão</string>

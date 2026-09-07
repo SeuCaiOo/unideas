@@ -76,6 +76,7 @@
     </plurals>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_archived_badge">Archived</string>
+    <string name="item_detail_confidential_badge">Confidential</string>
     <string name="item_detail_unarchived_snackbar">Item unarchived</string>
     <string name="item_detail_unarchive_confirm_title">Unarchive item</string>
     <string name="item_detail_unarchive_confirm_message">The item goes back to your normal listing and its reminders resume.</string>
@@ -140,6 +141,8 @@
     <string name="item_config_title">Configuration</string>
     <string name="item_config_section_organization">Organization</string>
     <string name="item_config_section_recurrence">Recurrence and reminder</string>
+    <string name="item_config_section_privacy">Privacy</string>
+    <string name="item_config_confidential_label">Confidential</string>
     <string name="item_config_section_danger_zone">Danger zone</string>
     <string name="item_config_type_subtitle_task">Can be completed, generates history</string>
     <string name="item_config_type_subtitle_note">Just text, no completion</string>

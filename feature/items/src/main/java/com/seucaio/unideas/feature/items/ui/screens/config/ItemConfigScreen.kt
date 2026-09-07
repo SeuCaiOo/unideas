@@ -218,6 +218,12 @@ private fun ItemConfigFields(
         )
         RecurrenceAndReminderFields(uiState, onEvent, Modifier.padding(top = 8.dp))
 
+        SectionLabel(
+            stringResource(R.string.item_config_section_privacy),
+            Modifier.padding(top = 24.dp)
+        )
+        ConfidentialField(uiState, onEvent, Modifier.padding(top = 8.dp))
+
         if (!isNewItem) {
             SectionLabel(
                 stringResource(R.string.item_config_section_danger_zone),
@@ -288,6 +294,20 @@ private fun AddEntryTrigger(@StringRes labelRes: Int, onClick: () -> Unit) {
         onClick = onClick,
         tint = MaterialTheme.colorScheme.primary,
     )
+}
+
+@Composable
+private fun ConfidentialField(
+    uiState: ItemConfigUiState,
+    onEvent: (ItemConfigEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SwitchSection(
+        label = stringResource(R.string.item_config_confidential_label),
+        checked = uiState.isConfidential,
+        onCheckedChange = { onEvent(ItemConfigEvent.OnConfidentialToggled(it)) },
+        modifier = modifier,
+    ) {}
 }
 
 @Composable
@@ -391,6 +411,9 @@ private class ItemConfigPreviewProvider : PreviewParameterProvider<ItemConfigPre
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK, hasReminder = true)),
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.NOTE)),
         ItemConfigPreviewScenario(ItemConfigUiState(isLoading = false, type = ItemType.TASK), isNewItem = true),
+        ItemConfigPreviewScenario(
+            ItemConfigUiState(isLoading = false, type = ItemType.NOTE, isConfidential = true),
+        ),
     )
 }
 

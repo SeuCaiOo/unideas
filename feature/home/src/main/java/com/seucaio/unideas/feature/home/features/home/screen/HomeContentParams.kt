@@ -23,6 +23,7 @@ internal data class HomeNavActions(
     val onNavigateToAllPriorities: () -> Unit,
     val onNavigateToSettings: () -> Unit,
     val onNavigateToArchivedItems: () -> Unit,
+    val onNavigateToHiddenItems: () -> Unit,
 )
 
 internal data class HomeBackupSyncUi(

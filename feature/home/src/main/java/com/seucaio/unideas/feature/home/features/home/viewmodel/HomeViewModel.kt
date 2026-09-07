@@ -6,6 +6,7 @@ import com.seucaio.unideas.core.common.util.Constants
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.UrgencyLevel
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.item.GetConfidentialItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.feature.home.R
@@ -36,6 +37,7 @@ class HomeViewModel(
     private val homeUseCase: HomeUseCase,
     private val sectionsAndTagsUseCase: SectionsAndTagsUseCase,
     private val itemArchiveUseCase: ItemArchiveUseCase,
+    private val getConfidentialItemsUseCase: GetConfidentialItemsUseCase,
 ) : ViewModel() {
 
     //region filterState
@@ -95,19 +97,26 @@ class HomeViewModel(
             .map { it.isNotEmpty() }
             .catch { emit(false) }
 
+    private val hasAnyConfidentialItemFlow: Flow<Boolean> =
+        getConfidentialItemsUseCase()
+            .map { it.isNotEmpty() }
+            .catch { emit(false) }
+
     val uiState: StateFlow<HomeUiState> = retryTrigger
         .flatMapLatest {
             combine(
                 homeUseCase.hasAnyItem(),
                 hasAnyPriorityItemFlow,
                 hasAnyArchivedItemFlow,
+                hasAnyConfidentialItemFlow,
                 itemsState
-            ) { hasAnyItem, hasAnyPriorityItem, hasAnyArchivedItem, items ->
+            ) { hasAnyItem, hasAnyPriorityItem, hasAnyArchivedItem, hasAnyConfidentialItem, items ->
                 if (items.isLoaded) {
                     HomeUiState.Success(
                         hasAnyItem = hasAnyItem,
                         hasAnyPriorityItem = hasAnyPriorityItem,
                         hasAnyArchivedItem = hasAnyArchivedItem,
+                        hasAnyConfidentialItem = hasAnyConfidentialItem,
                     )
                 } else {
                     HomeUiState.Loading

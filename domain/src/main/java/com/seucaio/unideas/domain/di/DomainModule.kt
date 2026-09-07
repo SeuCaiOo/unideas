@@ -7,6 +7,7 @@ import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.ExtendItemDueDateUseCase
 import com.seucaio.unideas.domain.usecase.item.GetArchivedItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.GetConfidentialItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
@@ -78,6 +79,7 @@ val domainModule = module {
     factoryOf(::SetItemPinnedUseCase)
     factoryOf(::SetItemArchivedUseCase)
     factoryOf(::GetArchivedItemsUseCase)
+    factoryOf(::GetConfidentialItemsUseCase)
     factoryOf(::GetItemsWithDueDateUseCase)
     factoryOf(::HasAnyItemUseCase)
     factoryOf(::ItemFormUseCase)

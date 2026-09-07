@@ -45,5 +45,10 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
             title = "Old project",
             status = ItemStatus.ARCHIVED,
         ),
+        ItemDetailUiState(
+            itemId = 4L,
+            title = "Vault password",
+            isConfidential = true,
+        ),
     )
 }

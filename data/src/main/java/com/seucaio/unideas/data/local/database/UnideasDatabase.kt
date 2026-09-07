@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.seucaio.unideas.data.local.converter.Converters
 import com.seucaio.unideas.data.local.dao.ItemCompletionHistoryDao
 import com.seucaio.unideas.data.local.dao.ItemDao
+import com.seucaio.unideas.data.local.dao.ItemLinkDao
 import com.seucaio.unideas.data.local.dao.SectionDao
 import com.seucaio.unideas.data.local.dao.TagDao
 import com.seucaio.unideas.data.local.database.UnideasDatabase.Companion.getInstance
@@ -66,6 +67,8 @@ abstract class UnideasDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
 
     abstract fun itemCompletionHistoryDao(): ItemCompletionHistoryDao
+
+    abstract fun itemLinkDao(): ItemLinkDao
 
     companion object {
         const val DATABASE_NAME = "unideas.db"

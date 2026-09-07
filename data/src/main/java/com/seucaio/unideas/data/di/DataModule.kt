@@ -31,6 +31,7 @@ val dataModule = module {
     single { get<UnideasDatabase>().sectionDao() }
     single { get<UnideasDatabase>().tagDao() }
     single { get<UnideasDatabase>().itemCompletionHistoryDao() }
+    single { get<UnideasDatabase>().itemLinkDao() }
     //endregion
 
     //region Repositories

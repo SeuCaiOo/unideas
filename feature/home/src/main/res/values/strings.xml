@@ -35,6 +35,9 @@
     <string name="hidden_items_title">Hidden items</string>
     <string name="hidden_items_empty">No hidden items.</string>
     <string name="hidden_items_load_error">Couldn\'t load your hidden items</string>
+    <string name="hidden_items_biometric_title">Unlock hidden items</string>
+    <string name="hidden_items_biometric_failed">Authentication failed. Try again.</string>
+    <string name="hidden_items_biometric_unavailable">Set up a screen lock (PIN, pattern or biometrics) on this device to use hidden items.</string>
     <string name="home_title">All items</string>
     <string name="home_due_today">Due today</string>
     <plurals name="home_due_in_days">

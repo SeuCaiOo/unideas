@@ -35,6 +35,9 @@
     <string name="hidden_items_title">Itens ocultos</string>
     <string name="hidden_items_empty">Nenhum item oculto.</string>
     <string name="hidden_items_load_error">Não foi possível carregar seus itens ocultos</string>
+    <string name="hidden_items_biometric_title">Desbloquear itens ocultos</string>
+    <string name="hidden_items_biometric_failed">Falha na autenticação. Tente novamente.</string>
+    <string name="hidden_items_biometric_unavailable">Configure uma trava de tela (PIN, padrão ou biometria) neste aparelho pra usar os itens ocultos.</string>
     <string name="home_title">Todos os itens</string>
     <string name="home_due_today">Vence hoje</string>
     <plurals name="home_due_in_days">

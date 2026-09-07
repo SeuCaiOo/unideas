@@ -1,36 +1,22 @@
 package com.seucaio.unideas.feature.home.features.hiddenitems.screen
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seucaio.unideas.ds.components.legacy.UnideasEmptyContent
-import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
-import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
-import com.seucaio.unideas.ds.components.legacy.UnideasTopBar
-import com.seucaio.unideas.ds.components.lists.item.ListItemRow
-import com.seucaio.unideas.ds.theme.UdsTheme
+import com.seucaio.unideas.core.common.biometric.BiometricAuthResult
+import com.seucaio.unideas.core.common.biometric.BiometricAuthenticator
 import com.seucaio.unideas.feature.home.R
-import com.seucaio.unideas.feature.home.features.hiddenitems.viewmodel.HiddenItemsEvent
 import com.seucaio.unideas.feature.home.features.hiddenitems.viewmodel.HiddenItemsUiAction
-import com.seucaio.unideas.feature.home.features.hiddenitems.viewmodel.HiddenItemsUiState
 import com.seucaio.unideas.feature.home.features.hiddenitems.viewmodel.HiddenItemsViewModel
-import com.seucaio.unideas.feature.home.features.home.screen.components.items.toListItemUi
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -38,6 +24,56 @@ fun HiddenItemsScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToDetail: (Long) -> Unit,
     viewModel: HiddenItemsViewModel = koinViewModel(),
+) {
+    val context = LocalContext.current
+    val title = stringResource(R.string.hidden_items_biometric_title)
+    var mode by remember {
+        mutableStateOf<HiddenItemsMode>(HiddenItemsMode.Gating(HiddenItemsGateState.Authenticating))
+    }
+
+    val authenticate: () -> Unit = {
+        val activity = context as? FragmentActivity
+        if (activity == null) {
+            mode = HiddenItemsMode.Gating(HiddenItemsGateState.Failed(R.string.hidden_items_biometric_unavailable))
+        } else {
+            mode = HiddenItemsMode.Gating(HiddenItemsGateState.Authenticating)
+            BiometricAuthenticator.authenticate(activity = activity, title = title) { result ->
+                mode = when (result) {
+                    BiometricAuthResult.Success -> HiddenItemsMode.Unlocked
+                    BiometricAuthResult.Unavailable ->
+                        HiddenItemsMode.Gating(HiddenItemsGateState.Failed(R.string.hidden_items_biometric_unavailable))
+
+                    BiometricAuthResult.Failed ->
+                        HiddenItemsMode.Gating(HiddenItemsGateState.Failed(R.string.hidden_items_biometric_failed))
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) { authenticate() }
+
+    when (val itemsMode = mode) {
+        is HiddenItemsMode.Gating ->
+            HiddenItemsGateContent(
+                state = itemsMode.state,
+                onNavigateBack = onNavigateBack,
+                onRetryAuth = authenticate,
+            )
+
+        HiddenItemsMode.Unlocked ->
+            HiddenItemsUnlockedRoute(
+                viewModel = viewModel,
+                onNavigateBack = onNavigateBack,
+                onNavigateToDetail = onNavigateToDetail,
+            )
+    }
+}
+
+@Composable
+private fun HiddenItemsUnlockedRoute(
+    viewModel: HiddenItemsViewModel,
+    onNavigateBack: (() -> Unit)?,
+    onNavigateToDetail: (Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -52,91 +88,10 @@ fun HiddenItemsScreen(
         }
     }
 
-    HiddenItemsContent(
+    HiddenItemsListContent(
         uiState = uiState,
-        onEvent = viewModel::onEvent,
-        onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
+        onNavigateBack = onNavigateBack,
+        onEvent = viewModel::onEvent,
     )
-}
-
-@Composable
-private fun HiddenItemsContent(
-    uiState: HiddenItemsUiState,
-    onEvent: (HiddenItemsEvent) -> Unit,
-    onNavigateBack: (() -> Unit)?,
-    snackbarHostState: SnackbarHostState,
-) {
-    val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
-
-    Scaffold(
-        topBar = {
-            UnideasTopBar(
-                title = stringResource(R.string.hidden_items_title),
-                onNavigateBack = updatedOnNavigateBack,
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
-        HiddenItemsBody(uiState = uiState, padding = padding, onEvent = onEvent)
-    }
-}
-
-@Composable
-private fun HiddenItemsBody(
-    uiState: HiddenItemsUiState,
-    padding: PaddingValues,
-    onEvent: (HiddenItemsEvent) -> Unit,
-) {
-    when (uiState) {
-        is HiddenItemsUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
-        is HiddenItemsUiState.Error ->
-            UnideasErrorContent(
-                messageRes = uiState.messageRes,
-                onRetry = { onEvent(HiddenItemsEvent.OnRetryClicked) },
-                modifier = Modifier.padding(padding),
-            )
-
-        is HiddenItemsUiState.Success ->
-            if (uiState.items.isEmpty()) {
-                UnideasEmptyContent(
-                    messageRes = R.string.hidden_items_empty,
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize(),
-                )
-            } else {
-                val checkContentDescription =
-                    stringResource(R.string.home_item_recurring_content_description)
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                ) {
-                    items(uiState.items, key = { it.id }) { item ->
-                        ListItemRow(
-                            ui = item.toListItemUi(checkContentDescription),
-                            onClick = { onEvent(HiddenItemsEvent.OnItemClicked(item.id)) },
-                            onToggleCheck = { onEvent(HiddenItemsEvent.OnItemClicked(item.id)) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
-                }
-            }
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun HiddenItemsScreenPreview(
-    @PreviewParameter(HiddenItemsPreviewProvider::class) uiState: HiddenItemsUiState,
-) {
-    UdsTheme {
-        HiddenItemsContent(
-            uiState = uiState,
-            onEvent = {},
-            onNavigateBack = {},
-            snackbarHostState = remember { SnackbarHostState() },
-        )
-    }
 }

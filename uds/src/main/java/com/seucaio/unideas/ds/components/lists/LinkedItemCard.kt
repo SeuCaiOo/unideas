@@ -40,7 +40,7 @@ fun LinkedItemCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(Radii.Chip),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surface,
         modifier = modifier.width(LinkedItemCardWidth),
     ) {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -96,6 +96,7 @@ private fun ItemLinkPickerScreenContent(
     } else {
         R.string.item_links_picker_title_note
     }
+    val hasSelection = (uiState as? ItemLinkPickerUiState.Success)?.selectedIds?.isNotEmpty() ?: false
 
     Scaffold(
         topBar = {
@@ -103,7 +104,10 @@ private fun ItemLinkPickerScreenContent(
                 title = stringResource(titleRes),
                 onNavigateBack = onNavigateBack,
                 actions = {
-                    IconButton(onClick = { onEvent(ItemLinkPickerEvent.OnConfirmClicked) }) {
+                    IconButton(
+                        onClick = { onEvent(ItemLinkPickerEvent.OnConfirmClicked) },
+                        enabled = hasSelection,
+                    ) {
                         Icon(
                             Icons.Filled.Check,
                             contentDescription = stringResource(R.string.item_links_picker_confirm_content_description),

@@ -49,6 +49,7 @@ fun HomeScreen(
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onNavigateToHiddenItems: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
     backupSyncViewModel: BackupSyncViewModel = koinViewModel(),
 ) {
@@ -65,6 +66,7 @@ fun HomeScreen(
     val updatedOnNavigateToAllPriorities by rememberUpdatedState(onNavigateToAllPriorities)
     val updatedOnNavigateToSettings by rememberUpdatedState(onNavigateToSettings)
     val updatedOnNavigateToArchivedItems by rememberUpdatedState(onNavigateToArchivedItems)
+    val updatedOnNavigateToHiddenItems by rememberUpdatedState(onNavigateToHiddenItems)
 
     HandleHomeUiActions(
         viewModel = viewModel,
@@ -104,6 +106,7 @@ fun HomeScreen(
             onNavigateToAllPriorities = updatedOnNavigateToAllPriorities,
             onNavigateToSettings = updatedOnNavigateToSettings,
             onNavigateToArchivedItems = updatedOnNavigateToArchivedItems,
+            onNavigateToHiddenItems = updatedOnNavigateToHiddenItems,
         ),
         backupSync = HomeBackupSyncUi(
             dialogState = backupSyncDialogState,

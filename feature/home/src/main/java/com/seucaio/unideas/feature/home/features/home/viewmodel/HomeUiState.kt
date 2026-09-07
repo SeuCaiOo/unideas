@@ -14,6 +14,7 @@ sealed interface HomeUiState {
         val hasAnyItem: Boolean,
         val hasAnyPriorityItem: Boolean,
         val hasAnyArchivedItem: Boolean = false,
+        val hasAnyConfidentialItem: Boolean = false,
     ) : HomeUiState
 
     data class Error(@param:StringRes val messageRes: Int) : HomeUiState

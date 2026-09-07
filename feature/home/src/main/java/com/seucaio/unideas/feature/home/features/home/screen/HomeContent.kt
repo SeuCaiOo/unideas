@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -128,6 +129,7 @@ internal fun HomeContent(
             padding = padding,
             onEvent = onEvent,
             onNavigateToArchivedItems = navActions.onNavigateToArchivedItems,
+            onNavigateToHiddenItems = navActions.onNavigateToHiddenItems,
         )
     }
 }
@@ -154,6 +156,7 @@ private fun HomeBody(
     padding: PaddingValues,
     onEvent: (HomeEvent) -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onNavigateToHiddenItems: () -> Unit,
 ) {
     when (uiState) {
         is HomeUiState.Loading -> UnideasLoadingContent(modifier = Modifier.padding(padding))
@@ -175,11 +178,13 @@ private fun HomeBody(
                     HomeSuccessBody(
                         hasAnyItem = uiState.hasAnyItem,
                         hasAnyArchivedItem = uiState.hasAnyArchivedItem,
+                        hasAnyConfidentialItem = uiState.hasAnyConfidentialItem,
                         filterState = filterState,
                         itemsState = itemsState,
                         homeMode = homeMode,
                         onEvent = onEvent,
                         onNavigateToArchivedItems = onNavigateToArchivedItems,
+                        onNavigateToHiddenItems = onNavigateToHiddenItems,
                     )
                 }
             }
@@ -190,11 +195,13 @@ private fun HomeBody(
 private fun HomeSuccessBody(
     hasAnyItem: Boolean,
     hasAnyArchivedItem: Boolean,
+    hasAnyConfidentialItem: Boolean,
     filterState: FilterState,
     itemsState: HomeItemsState,
     homeMode: HomeMode,
     onEvent: (HomeEvent) -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onNavigateToHiddenItems: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -217,13 +224,24 @@ private fun HomeSuccessBody(
             hasAnyItem = hasAnyItem,
             onEvent = onEvent,
             homeMode = homeMode,
-            footer = if (hasAnyArchivedItem) {
+            footer = if (hasAnyArchivedItem || hasAnyConfidentialItem) {
                 {
-                    NavRow(
-                        icon = Icons.Outlined.Archive,
-                        label = stringResource(R.string.home_archived_items_action),
-                        onClick = onNavigateToArchivedItems,
-                    )
+                    Column {
+                        if (hasAnyArchivedItem) {
+                            NavRow(
+                                icon = Icons.Outlined.Archive,
+                                label = stringResource(R.string.home_archived_items_action),
+                                onClick = onNavigateToArchivedItems,
+                            )
+                        }
+                        if (hasAnyConfidentialItem) {
+                            NavRow(
+                                icon = Icons.Outlined.Lock,
+                                label = stringResource(R.string.home_hidden_items_action),
+                                onClick = onNavigateToHiddenItems,
+                            )
+                        }
+                    }
                 }
             } else {
                 null
@@ -258,6 +276,7 @@ private fun HomeContentPreview(
                 onNavigateToAllPriorities = {},
                 onNavigateToSettings = {},
                 onNavigateToArchivedItems = {},
+                onNavigateToHiddenItems = {},
             ),
             snackbarHostState = remember { SnackbarHostState() },
         )

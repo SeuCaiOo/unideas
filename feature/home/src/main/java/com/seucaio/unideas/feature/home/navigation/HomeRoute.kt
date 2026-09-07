@@ -12,4 +12,7 @@ sealed interface HomeRoute {
 
     @Serializable
     data object Home : HomeRoute
+
+    @Serializable
+    data object HiddenItems : HomeRoute
 }

@@ -10,6 +10,7 @@ import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.domain.model.outcome.CompletionResult
 import com.seucaio.unideas.domain.stub.ItemStub
 import com.seucaio.unideas.domain.usecase.SectionsAndTagsUseCase
+import com.seucaio.unideas.domain.usecase.item.GetConfidentialItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.feature.home.R
@@ -47,6 +48,9 @@ class HomeViewModelTest {
     @MockK
     private lateinit var itemArchiveUseCase: ItemArchiveUseCase
 
+    @MockK
+    private lateinit var getConfidentialItemsUseCase: GetConfidentialItemsUseCase
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
@@ -56,6 +60,7 @@ class HomeViewModelTest {
         every { homeUseCase.hasAnyItem() } returns flowOf(true)
         every { homeUseCase.getPriorityItems(any(), any()) } returns flowOf(emptyList())
         every { itemArchiveUseCase.getArchivedItems() } returns flowOf(emptyList())
+        every { getConfidentialItemsUseCase() } returns flowOf(emptyList())
     }
 
     @After
@@ -63,7 +68,8 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = HomeViewModel(homeUseCase, sectionsAndTagsUseCase, itemArchiveUseCase)
+    private fun viewModel() =
+        HomeViewModel(homeUseCase, sectionsAndTagsUseCase, itemArchiveUseCase, getConfidentialItemsUseCase)
 
     @Test
     fun `when OnTabChanged should switch the active tab and reload the tab list`() = runTest {

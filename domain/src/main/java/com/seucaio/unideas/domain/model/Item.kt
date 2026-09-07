@@ -28,6 +28,9 @@ import java.time.LocalTime
  *   until [dueDate] — [ReminderTier.URGENT] still fires regardless. Reset to `false` whenever
  *   [dueDate] moves (extend deadline, or a recurring cycle advancing) since the mute was a decision
  *   about that specific due date, not a standing preference.
+ * @property isConfidential when true, hides the item from the normal listing (same as
+ *   [ItemStatus.ARCHIVED], but independent — an item can be both) until unlocked via the device's
+ *   biometric/screen-lock authentication.
  */
 data class Item(
     val id: Long = 0L,
@@ -47,6 +50,7 @@ data class Item(
     val pendingExtensionCount: Int = 0,
     val status: ItemStatus = ItemStatus.ACTIVE,
     val remindersMuted: Boolean = false,
+    val isConfidential: Boolean = false,
     val tags: List<Tag> = emptyList(),
 ) {
     /**

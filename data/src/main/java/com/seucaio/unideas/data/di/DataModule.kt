@@ -5,12 +5,14 @@ import com.seucaio.unideas.data.local.database.UnideasDatabase
 import com.seucaio.unideas.data.local.datastore.OnboardingPreferences
 import com.seucaio.unideas.data.repository.DatabaseRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemCompletionHistoryRepositoryImpl
+import com.seucaio.unideas.data.repository.ItemLinkRepositoryImpl
 import com.seucaio.unideas.data.repository.ItemRepositoryImpl
 import com.seucaio.unideas.data.repository.OnboardingRepositoryImpl
 import com.seucaio.unideas.data.repository.SectionRepositoryImpl
 import com.seucaio.unideas.data.repository.TagRepositoryImpl
 import com.seucaio.unideas.domain.repository.DatabaseRepository
 import com.seucaio.unideas.domain.repository.ItemCompletionHistoryRepository
+import com.seucaio.unideas.domain.repository.ItemLinkRepository
 import com.seucaio.unideas.domain.repository.ItemRepository
 import com.seucaio.unideas.domain.repository.OnboardingRepository
 import com.seucaio.unideas.domain.repository.SectionRepository
@@ -31,11 +33,13 @@ val dataModule = module {
     single { get<UnideasDatabase>().sectionDao() }
     single { get<UnideasDatabase>().tagDao() }
     single { get<UnideasDatabase>().itemCompletionHistoryDao() }
+    single { get<UnideasDatabase>().itemLinkDao() }
     //endregion
 
     //region Repositories
     singleOf(::ItemRepositoryImpl).bind<ItemRepository>()
     singleOf(::ItemCompletionHistoryRepositoryImpl).bind<ItemCompletionHistoryRepository>()
+    singleOf(::ItemLinkRepositoryImpl).bind<ItemLinkRepository>()
     singleOf(::SectionRepositoryImpl).bind<SectionRepository>()
     singleOf(::TagRepositoryImpl).bind<TagRepository>()
     //endregion

@@ -2,16 +2,19 @@ package com.seucaio.unideas.feature.items.ui.components.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Sell
@@ -23,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -67,9 +71,11 @@ fun ItemFormBody(
     onExtendDeadlineClicked: () -> Unit,
     onNavigateToConfig: () -> Unit,
     onNavigateToHistory: (() -> Unit)?,
+    linksSection: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     isArchived: Boolean = false,
     onUnarchiveClicked: (() -> Unit)? = null,
+    isConfidential: Boolean = false,
     isSnackbarVisible: Boolean = false,
     onMuteRemindersToggled: (() -> Unit)? = null,
 ) {
@@ -83,7 +89,8 @@ fun ItemFormBody(
             ItemFormBadges(
                 type = state.type,
                 isArchived = isArchived,
-                onArchivedChipClicked = onUnarchiveClicked
+                onArchivedChipClicked = onUnarchiveClicked,
+                isConfidential = isConfidential,
             )
 
             TitleDescriptionFields(
@@ -118,6 +125,8 @@ fun ItemFormBody(
                     onNavigateToConfig = onNavigateToConfig,
                     onNavigateToHistory = onNavigateToHistory,
                 )
+
+                linksSection()
             }
         }
     }
@@ -157,7 +166,8 @@ private fun HistoryAndConfigCards(
 private fun ItemFormBadges(
     type: ItemType,
     isArchived: Boolean,
-    onArchivedChipClicked: (() -> Unit)?
+    onArchivedChipClicked: (() -> Unit)?,
+    isConfidential: Boolean,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -177,6 +187,24 @@ private fun ItemFormBadges(
                     selectedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             )
+        }
+        if (isConfidential) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
+                )
+                TextBadge(
+                    text = stringResource(R.string.item_detail_confidential_badge),
+                    background = MaterialTheme.colorScheme.surfaceVariant,
+                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         val typeLabelRes =
             if (type == ItemType.TASK) R.string.item_form_type_task else R.string.item_form_type_note
@@ -240,11 +268,13 @@ private fun ItemFormBodyPreview(
                 occurrenceState = ItemOccurrenceUiState(),
                 isArchived = previewState.status == ItemStatus.ARCHIVED,
                 onUnarchiveClicked = {},
+                isConfidential = previewState.isConfidential,
                 onCompleteClicked = {},
                 onIgnoreClicked = {},
                 onExtendDeadlineClicked = {},
                 onNavigateToConfig = {},
                 onNavigateToHistory = {},
+                linksSection = {},
             )
         }
     }

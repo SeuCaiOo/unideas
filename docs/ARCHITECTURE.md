@@ -168,10 +168,11 @@ data/
 │   │   ├── ItemCompletionHistoryEntity.kt — tabela item_completion_history, FK CASCADE → items, índice único (itemId, scheduledDate) (#126/#133)
 │   │   ├── SectionEntity.kt
 │   │   ├── TagEntity.kt
-│   │   └── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
-│   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao (retornam Flow)
-│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 10
-│   │                    migration/ — MIGRATION_2_3 até MIGRATION_9_10 (ver seção de persistência)
+│   │   ├── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
+│   │   └── ItemLinkEntity.kt       — tabela item_link, junção N:N simétrica Item ↔ Item (#208)
+│   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao, ItemLinkDao (retornam Flow)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 13
+│   │                    migration/ — MIGRATION_2_3 até MIGRATION_12_13 (ver seção de persistência)
 │   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
@@ -190,6 +191,10 @@ core/common/
 │                       módulo), por isso moram aqui e não no módulo que hoje os consome
 │                       (:core:backup, :core:notifications); String.stripMarkdownPreview() (#195) —
 │                       mesma lógica, sem Android
+├── biometric/        — BiometricAuthenticator (#220): wrapper puro sobre BiometricPrompt/BiometricManager,
+│                       sem Compose e sem @StringRes de nenhuma feature (título recebido como String pronta).
+│                       androidx.biometric exposto como `api` — quem depende de :core:common ganha
+│                       FragmentActivity no classpath sem redeclarar a dependência
 └── util/             — Constants (defaults, chaves), sem Android
 ```
 
@@ -439,6 +444,14 @@ tagId: Long              FK → tags.id  (CASCADE on delete)
 PK composta (itemId, tagId)
 ```
 
+### `ItemLinkEntity` → tabela `item_link` (junção N:N simétrica, sem direção) (#208)
+```
+itemIdA: Long            FK → items.id (CASCADE on delete)
+itemIdB: Long            FK → items.id (CASCADE on delete)
+PK composta (itemIdA, itemIdB); índice em itemIdB
+```
+Mesmo padrão do `item_tag`, mas item↔item — vincular A↔B é uma única linha, nunca duas (A→B e B→A); `ItemLinkDao.insertLink`/`deleteLink` normalizam a ordem dos ids (`itemIdA` sempre o menor) antes de gravar/apagar, então a ordem dos argumentos passados nunca importa pra quem chama.
+
 ### Regras de integridade na camada de domínio (não no FK)
 - **Excluir `Section`/`Tag` com itens vinculados é BLOQUEADO** — o use case (`DeleteSectionUseCase`/`DeleteTagUseCase`) conta os vínculos e retorna `DeletionStatus.BlockedByLinkedItems(count)` **antes** de delegar ao repositório. Não é uma constraint de FK que falha silenciosamente; o usuário vê quantos itens estão vinculados.
 - **Recorrência: uma linha só por série, `dueDate` avança, não "renasce" (rearquitetado em #126).** Um item recorrente **nunca** gera uma nova linha em `items`. `CompleteItemUseCase` só grava um registro em `item_completion_history` pra ocorrência atual (`scheduledDate = dueDate`) e marca `lastCompletedScheduledDate = dueDate` — `dueDate` em si não muda. Quem avança `dueDate` de fato é `ProcessMissedOccurrencesUseCase`, chamado pelo `ReminderCheckWorker` (`:core:notifications`) a cada varredura periódica: pra todo item recorrente cujo `dueDate` já passou, ele anda `dueDate` pra frente via `recurrence.nextDueDate(...)`, gravando um registro `completedAt = null` (não feito) em `item_completion_history` pra cada ciclo pulado, até `dueDate >= hoje`. Ou seja, o avanço de ciclo é **lazy** (só acontece quando alguém abre o app ou o worker roda), não disparado pela ação de concluir. `IgnoreOccurrenceUseCase` é a exceção — "ignorar" avança `dueDate` imediatamente (não espera o worker), já que é uma decisão explícita do usuário sobre a ocorrência atual.
@@ -461,6 +474,9 @@ MIGRATION_7_8   adiciona items.isPinned, default 0 (#127)
 MIGRATION_8_9   adiciona items.pendingExtensionOriginalDueDate/pendingExtensionCount e
                 item_completion_history.originalScheduledDate/extensionCount (#101/C)
 MIGRATION_9_10  adiciona items.status, default 'ACTIVE' (#168)
+MIGRATION_10_11 adiciona items.remindersMuted, default 0 (#196)
+MIGRATION_11_12 adiciona items.isConfidential, default 0 (#220)
+MIGRATION_12_13 cria a tabela item_link (junção N:N simétrica item↔item) + índice em itemIdB (#208)
 ```
 Sem `fallbackToDestructiveMigration` — migration faltando falha alto, nunca perde dados silenciosamente (app pré-MVP, mas a regra vale mesmo assim).
 
@@ -475,7 +491,8 @@ domain/di/DomainModule.kt     — Use Cases (factoryOf); todos os de Section, Ta
                                  SetItemPinnedUseCase (#127), ItemCompletionHistoryUseCase (#126, CRUD completo desde #169) e
                                  ProcessMissedOccurrencesUseCase (#126), IgnoreOccurrenceUseCase, ExtendItemDueDateUseCase,
                                  ItemOccurrenceUseCase (#101/A/B), SetItemArchivedUseCase/GetArchivedItemsUseCase/
-                                 ItemArchiveUseCase (#168)
+                                 ItemArchiveUseCase (#168), LinkItemsUseCase/UnlinkItemsUseCase/GetLinkedItemsUseCase +
+                                 facade ItemLinkUseCase (#208, mesmo padrão do TagUseCase/SectionUseCase)
 core/backup/di/BackupDataModule.kt — backupDataModule: GoogleAuthRepository + BackupRepository (singleOf().bind()),
                                       use cases (factoryOf) e BackupViewModel (viewModelOf) — completo em #30 (E1.2)
 core/notifications/di/NotificationsModule.kt — notificationsModule: ReminderNotifier (single), ReminderRefreshTriggerImpl

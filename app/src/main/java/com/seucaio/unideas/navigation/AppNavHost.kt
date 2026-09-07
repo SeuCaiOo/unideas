@@ -73,6 +73,7 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         },
         onNavigateToAllPriorities = { navController.navigate(HomeRoute.AllPriorities) },
         onNavigateToArchivedItems = { navController.navigate(HomeRoute.ArchivedItems) },
+        onNavigateToHiddenItems = { navController.navigate(HomeRoute.HiddenItems) },
         onNavigateToSettings = { navController.navigate(SettingsRoute.Settings) },
     )
     settingsNavGraph(
@@ -103,6 +104,9 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         },
         onNavigateToConfig = { itemId, isNewItem ->
             navController.navigate(ItemsRoute.Config(itemId, isNewItem))
+        },
+        onNavigateToLinkPicker = { itemId, type ->
+            navController.navigate(ItemsRoute.LinkPicker(itemId, type))
         },
     )
 }

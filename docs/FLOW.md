@@ -14,6 +14,7 @@
 | 3 | **Itens arquivados** (listagem simples, sem seções/filtros — #168) | `:feature:home` | `HomeRoute.ArchivedItems` |
 | 4 | **Criar/Editar/Detalhar Item** (tela única — ver "Detalhe do Item" abaixo) | `:feature:items` | `ItemsRoute.Detail(itemId: Long? = null, initialType: ItemType = TASK)` |
 | 5 | **Configurações do Item** (seção/tags/recorrência/aviso + troca de tipo guardada — #160) | `:feature:items` | `ItemsRoute.Config(itemId: Long)` |
+| 5.1 | **Adicionar vínculo** (seleção múltipla de itens de um tipo, pra vincular ao item atual — #208) | `:feature:items` | `ItemsRoute.LinkPicker(itemId: Long, type: ItemType)` |
 | 6 | **Gerenciar Seções** | `:feature:sections` | `SectionsRoute.List` |
 | 7 | **Gerenciar Tags** | `:feature:tags` | `TagsRoute.List` |
 | 8 | **Configurações / Backup / Conta** | `:feature:settings` | `SettingsRoute.Settings` |
@@ -169,13 +170,20 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
                              concluída com atraso) cria uma entrada; menu por card (editar/excluir) reabre
                              o mesmo sheet ou ConfirmationBottomSheet. Diferente de completar/desmarcar o
                              item ao vivo (#101/B) — não mexe em `Item.lastCompletedScheduledDate`
+       [Itens vinculados] → última seção (ItemLinksSection), mesmo visual de card das outras (fundo
+                             surfaceVariant arredondado) — lista horizontal (LinkedItemCard) dos itens já
+                             vinculados (toca → navega direto pro Detalhe daquele item; "x" desvincula) e
+                             um botão "+" com menu Tarefa/Nota que abre a tela de seleção (ItemsRoute.
+                             LinkPicker(itemId, type), já em modo de seleção múltipla, mesmo padrão visual
+                             de Arquivados/Confidenciais) — confirmar linka todos os selecionados de uma
+                             vez e volta pro Detalhe (#208)
   → "←" → volta
 ```
 
 **Regras:**
 - Só **Título** é obrigatório.
 - Concluir uma ocorrência recorrente não avança `dueDate` na hora — isso é feito de forma preguiçosa pelo `ReminderCheckWorker` (`ProcessMissedOccurrencesUseCase`) na próxima varredura periódica, pull-to-refresh na Home, ou ao reabrir o app, não pela ação de concluir em si (ver `ARCHITECTURE.md`, motor de reavaliação #101/D). "Ignorar" é a exceção — avança `dueDate` na hora.
-- `ItemDetailScreen` hoisteia dois ViewModels lado a lado (`ItemDetailViewModel` pro form, `ItemOccurrenceViewModel` pro ciclo de vida da ocorrência) — sincronizados via `OnItemUpdatedExternally` pra uma escrita de um lado não sobrescrever a do outro (#101/B).
+- `ItemDetailScreen` hoisteia três ViewModels lado a lado (`ItemDetailViewModel` pro form, `ItemOccurrenceViewModel` pro ciclo de vida da ocorrência, `ItemLinksViewModel` pros vínculos — #208) — os dois primeiros sincronizados via `OnItemUpdatedExternally` pra uma escrita de um lado não sobrescrever a do outro (#101/B); `ItemLinksViewModel` observa o banco direto (Flow reativo), não precisa desse mecanismo.
 - Item criado e depois excluído antes do primeiro save "de verdade" (ex. usuário desiste e sai) ainda é removido corretamente — `OnDeleteConfirmClicked` usa o `itemId` interno do ViewModel (que já pode ter sido auto-salvo), não o `itemId` de rota (#162).
 
 ---

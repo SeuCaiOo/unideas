@@ -73,6 +73,7 @@ class ItemConfigViewModel(
                 is ItemConfigEvent.OnDueTimeChanged -> state.copy(dueTime = event.dueTime)
                 is ItemConfigEvent.OnRecurrenceChanged -> state.changeRecurrence(event.recurrence)
                 is ItemConfigEvent.OnReminderWarningChanged -> state.copy(reminderWarning = event.reminderWarning)
+                is ItemConfigEvent.OnConfidentialToggled -> state.toggleConfidential(event.enabled)
             }
         }
         hasPendingSave = true

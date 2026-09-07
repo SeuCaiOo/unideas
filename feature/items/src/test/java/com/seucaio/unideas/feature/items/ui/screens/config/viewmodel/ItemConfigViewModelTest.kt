@@ -124,6 +124,22 @@ class ItemConfigViewModelTest {
     }
 
     @Test
+    fun `OnConfidentialToggled auto-saves the flag through ItemFormUseCase's edit`() = runTest {
+        val task = ItemStub.task(id = 1L, isConfidential = false)
+        every { itemFormUseCase.get(1L) } returns flowOf(task)
+        val vm = viewModel()
+
+        vm.uiState.test {
+            awaitItem()
+            vm.onEvent(ItemConfigEvent.OnConfidentialToggled(true))
+            val updated = awaitItem()
+            assertEquals(true, updated.isConfidential)
+        }
+
+        coVerify { itemFormUseCase.edit(match { it.isConfidential }) }
+    }
+
+    @Test
     fun `OnChangeTypeClicked opens the confirm dialog without changing anything yet`() = runTest {
         val task = ItemStub.task(id = 1L, recurrence = Recurrence.Weekly)
         every { itemFormUseCase.get(1L) } returns flowOf(task)

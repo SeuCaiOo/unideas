@@ -76,6 +76,7 @@
     </plurals>
     <string name="item_detail_delete_title">Delete item</string>
     <string name="item_detail_archived_badge">Archived</string>
+    <string name="item_detail_confidential_badge">Confidential</string>
     <string name="item_detail_unarchived_snackbar">Item unarchived</string>
     <string name="item_detail_unarchive_confirm_title">Unarchive item</string>
     <string name="item_detail_unarchive_confirm_message">The item goes back to your normal listing and its reminders resume.</string>
@@ -140,6 +141,8 @@
     <string name="item_config_title">Configuration</string>
     <string name="item_config_section_organization">Organization</string>
     <string name="item_config_section_recurrence">Recurrence and reminder</string>
+    <string name="item_config_section_privacy">Privacy</string>
+    <string name="item_config_confidential_label">Confidential</string>
     <string name="item_config_section_danger_zone">Danger zone</string>
     <string name="item_config_type_subtitle_task">Can be completed, generates history</string>
     <string name="item_config_type_subtitle_note">Just text, no completion</string>
@@ -164,4 +167,16 @@
     <string name="items_list_empty">No items yet</string>
     <string name="items_list_load_error">Couldn\'t load items</string>
     <string name="items_list_add">New item</string>
+
+    <!-- Item Links -->
+    <string name="item_links_load_error">Couldn\'t load linked items</string>
+    <string name="item_links_section_title">Linked items</string>
+    <string name="item_links_empty">No linked items yet</string>
+    <string name="item_links_add_content_description">Add link</string>
+    <string name="item_links_unlink_content_description">Remove link</string>
+    <string name="item_links_retry">Retry</string>
+    <string name="item_links_picker_title_task">Add task</string>
+    <string name="item_links_picker_title_note">Add note</string>
+    <string name="item_links_picker_empty">No items available to link</string>
+    <string name="item_links_picker_confirm_content_description">Confirm</string>
 </resources>

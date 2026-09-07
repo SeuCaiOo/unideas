@@ -5,6 +5,7 @@ import androidx.navigation.compose.composable
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.home.features.allpriorities.screen.AllPrioritiesScreen
 import com.seucaio.unideas.feature.home.features.archiveditems.screen.ArchivedItemsScreen
+import com.seucaio.unideas.feature.home.features.hiddenitems.screen.HiddenItemsScreen
 import com.seucaio.unideas.feature.home.features.home.screen.HomeScreen
 
 fun NavGraphBuilder.homeNavGraph(
@@ -14,6 +15,7 @@ fun NavGraphBuilder.homeNavGraph(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToAllPriorities: () -> Unit,
     onNavigateToArchivedItems: () -> Unit,
+    onNavigateToHiddenItems: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
     composable<HomeRoute.AllPriorities> {
@@ -28,6 +30,12 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToDetail = onNavigateToDetail,
         )
     }
+    composable<HomeRoute.HiddenItems> {
+        HiddenItemsScreen(
+            onNavigateBack = onNavigateBack,
+            onNavigateToDetail = onNavigateToDetail,
+        )
+    }
     composable<HomeRoute.Home> {
         HomeScreen(
             onNavigateBack = null,
@@ -36,6 +44,7 @@ fun NavGraphBuilder.homeNavGraph(
             onNavigateToAddItem = onNavigateToAddItem,
             onNavigateToAllPriorities = onNavigateToAllPriorities,
             onNavigateToArchivedItems = onNavigateToArchivedItems,
+            onNavigateToHiddenItems = onNavigateToHiddenItems,
             onNavigateToSettings = onNavigateToSettings,
         )
     }

@@ -7,10 +7,12 @@ import com.seucaio.unideas.domain.usecase.item.DeleteItemUseCase
 import com.seucaio.unideas.domain.usecase.item.EditItemUseCase
 import com.seucaio.unideas.domain.usecase.item.ExtendItemDueDateUseCase
 import com.seucaio.unideas.domain.usecase.item.GetArchivedItemsUseCase
+import com.seucaio.unideas.domain.usecase.item.GetConfidentialItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemDetailUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetItemsWithDueDateUseCase
+import com.seucaio.unideas.domain.usecase.item.GetLinkedItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.GetPriorityItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.HasAnyItemUseCase
 import com.seucaio.unideas.domain.usecase.item.HomeUseCase
@@ -18,11 +20,14 @@ import com.seucaio.unideas.domain.usecase.item.IgnoreOccurrenceUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemArchiveUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemCompletionHistoryUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemFormUseCase
+import com.seucaio.unideas.domain.usecase.item.ItemLinkUseCase
 import com.seucaio.unideas.domain.usecase.item.ItemOccurrenceUseCase
+import com.seucaio.unideas.domain.usecase.item.LinkItemsUseCase
 import com.seucaio.unideas.domain.usecase.item.ProcessMissedOccurrencesUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemArchivedUseCase
 import com.seucaio.unideas.domain.usecase.item.SetItemPinnedUseCase
 import com.seucaio.unideas.domain.usecase.item.SetRemindersMutedUseCase
+import com.seucaio.unideas.domain.usecase.item.UnlinkItemsUseCase
 import com.seucaio.unideas.domain.usecase.onboarding.GetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.onboarding.SetOnboardingSeenUseCase
 import com.seucaio.unideas.domain.usecase.section.AddSectionUseCase
@@ -78,6 +83,7 @@ val domainModule = module {
     factoryOf(::SetItemPinnedUseCase)
     factoryOf(::SetItemArchivedUseCase)
     factoryOf(::GetArchivedItemsUseCase)
+    factoryOf(::GetConfidentialItemsUseCase)
     factoryOf(::GetItemsWithDueDateUseCase)
     factoryOf(::HasAnyItemUseCase)
     factoryOf(::ItemFormUseCase)
@@ -89,6 +95,10 @@ val domainModule = module {
     factoryOf(::IgnoreOccurrenceUseCase)
     factoryOf(::ExtendItemDueDateUseCase)
     factoryOf(::SetRemindersMutedUseCase)
+    factoryOf(::LinkItemsUseCase)
+    factoryOf(::UnlinkItemsUseCase)
+    factoryOf(::GetLinkedItemsUseCase)
+    factoryOf(::ItemLinkUseCase)
     //endregion
 
     //region Onboarding

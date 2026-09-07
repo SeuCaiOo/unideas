@@ -177,4 +177,26 @@ class ItemRepositoryImplTest {
 
         coVerify(exactly = 1) { itemDao.setStatus(7L, ItemStatus.ARCHIVED) }
     }
+
+    @Test
+    fun `getConfidentialItems delegates to the dao and maps rows`() = runTest {
+        val item = ItemStub.task(isConfidential = true)
+        every { itemDao.getConfidentialItems() } returns flowOf(
+            listOf(ItemWithTags(item = item.toEntity(), tags = emptyList())),
+        )
+
+        val result = repository.getConfidentialItems().first()
+
+        assertEquals(listOf(item), result)
+        verify(exactly = 1) { itemDao.getConfidentialItems() }
+    }
+
+    @Test
+    fun `setItemConfidential delegates the id and flag to the dao`() = runTest {
+        coEvery { itemDao.setConfidential(7L, true) } returns Unit
+
+        repository.setItemConfidential(id = 7L, isConfidential = true)
+
+        coVerify(exactly = 1) { itemDao.setConfidential(7L, true) }
+    }
 }

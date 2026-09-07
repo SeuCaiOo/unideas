@@ -30,6 +30,7 @@ private fun toItem(entity: ItemEntity, tags: List<TagEntity>): Item = Item(
     pendingExtensionCount = entity.pendingExtensionCount,
     status = entity.status,
     remindersMuted = entity.remindersMuted,
+    isConfidential = entity.isConfidential,
     tags = tags.map { it.toDomain() },
 )
 
@@ -58,4 +59,5 @@ internal fun Item.toEntity(): ItemEntity = ItemEntity(
     pendingExtensionCount = pendingExtensionCount,
     status = status,
     remindersMuted = remindersMuted,
+    isConfidential = isConfidential,
 )

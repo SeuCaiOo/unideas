@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.timber)
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.crashlytics)
+    api(libs.androidx.biometric)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

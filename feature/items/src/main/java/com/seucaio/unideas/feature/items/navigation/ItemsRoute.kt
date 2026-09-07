@@ -19,5 +19,8 @@ sealed interface ItemsRoute {
     data class Config(val itemId: Long, val isNewItem: Boolean = false) : ItemsRoute
 
     @Serializable
+    data class LinkPicker(val itemId: Long, val type: ItemType) : ItemsRoute
+
+    @Serializable
     data object List : ItemsRoute
 }

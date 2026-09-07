@@ -170,6 +170,11 @@
 
     <!-- Item Links -->
     <string name="item_links_load_error">Couldn\'t load linked items</string>
+    <string name="item_links_section_title">Linked items</string>
+    <string name="item_links_empty">No linked items yet</string>
+    <string name="item_links_add_content_description">Add link</string>
+    <string name="item_links_unlink_content_description">Remove link</string>
+    <string name="item_links_retry">Retry</string>
     <string name="item_links_picker_title_task">Add task</string>
     <string name="item_links_picker_title_note">Add note</string>
     <string name="item_links_picker_empty">No items available to link</string>

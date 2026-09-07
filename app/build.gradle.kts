@@ -198,6 +198,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.biometric)
 
     // Compose UI
     implementation(libs.bundles.composeUi)

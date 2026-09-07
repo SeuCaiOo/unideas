@@ -105,5 +105,8 @@ private fun NavGraphBuilder.appDestinations(navController: NavHostController) {
         onNavigateToConfig = { itemId, isNewItem ->
             navController.navigate(ItemsRoute.Config(itemId, isNewItem))
         },
+        onNavigateToLinkPicker = { itemId, type ->
+            navController.navigate(ItemsRoute.LinkPicker(itemId, type))
+        },
     )
 }

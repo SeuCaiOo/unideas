@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.feature.items.ui.screens.config.ItemConfigScreen
 import com.seucaio.unideas.feature.items.ui.screens.detail.ItemDetailScreen
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.picker.ItemLinkPickerScreen
 import com.seucaio.unideas.feature.items.ui.screens.history.ItemHistoryScreen
 import com.seucaio.unideas.feature.items.ui.screens.list.ItemsListScreen
 
@@ -16,6 +17,7 @@ fun NavGraphBuilder.itemsNavGraph(
     onNavigateToAddItem: (ItemType) -> Unit,
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long, Boolean) -> Unit,
+    onNavigateToLinkPicker: (Long, ItemType) -> Unit,
 ) {
     composable<ItemsRoute.Detail>(
         deepLinks = listOf(navDeepLink<ItemsRoute.Detail>(basePath = "unideas://item")),
@@ -28,6 +30,8 @@ fun NavGraphBuilder.itemsNavGraph(
             onNavigateBack = onNavigateBack,
             onNavigateToHistory = onNavigateToHistory,
             onNavigateToConfig = onNavigateToConfig,
+            onNavigateToDetail = onNavigateToDetail,
+            onNavigateToLinkPicker = onNavigateToLinkPicker,
         )
     }
     composable<ItemsRoute.History> { backStackEntry ->
@@ -37,6 +41,14 @@ fun NavGraphBuilder.itemsNavGraph(
     composable<ItemsRoute.Config> { backStackEntry ->
         val route = backStackEntry.toRoute<ItemsRoute.Config>()
         ItemConfigScreen(itemId = route.itemId, isNewItem = route.isNewItem, onNavigateBack = onNavigateBack)
+    }
+    composable<ItemsRoute.LinkPicker> { backStackEntry ->
+        val route = backStackEntry.toRoute<ItemsRoute.LinkPicker>()
+        ItemLinkPickerScreen(
+            itemId = route.itemId,
+            type = route.type,
+            onNavigateBack = { onNavigateBack?.invoke() },
+        )
     }
     composable<ItemsRoute.List> {
         ItemsListScreen(

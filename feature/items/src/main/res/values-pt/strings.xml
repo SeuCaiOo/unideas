@@ -167,4 +167,16 @@
     <string name="items_list_empty">Nenhum item ainda</string>
     <string name="items_list_load_error">Não foi possível carregar os itens</string>
     <string name="items_list_add">Novo item</string>
+
+    <!-- Item Links -->
+    <string name="item_links_load_error">Não foi possível carregar os itens vinculados</string>
+    <string name="item_links_section_title">Itens vinculados</string>
+    <string name="item_links_empty">Nenhum item vinculado ainda</string>
+    <string name="item_links_add_content_description">Adicionar vínculo</string>
+    <string name="item_links_unlink_content_description">Remover vínculo</string>
+    <string name="item_links_retry">Tentar novamente</string>
+    <string name="item_links_picker_title_task">Adicionar tarefa</string>
+    <string name="item_links_picker_title_note">Adicionar nota</string>
+    <string name="item_links_picker_empty">Nenhum item disponível para vincular</string>
+    <string name="item_links_picker_confirm_content_description">Confirmar</string>
 </resources>

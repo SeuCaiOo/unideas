@@ -39,6 +39,11 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.ItemLinksSection
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksEvent
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiAction
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiState
+import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksViewModel
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.ExtendDeadlineDatePickerDialog
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.NoteConfirmBottomSheet
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceDialogState
@@ -46,6 +51,7 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmo
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemoccurrence.viewmodel.ItemOccurrenceViewModel
+import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -61,12 +67,15 @@ fun ItemDetailScreen(
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long, Boolean) -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
+    onNavigateToLinkPicker: (Long, ItemType) -> Unit,
     initialType: ItemType = ItemType.TASK,
     promptCompleteOnEntry: Boolean = false,
     viewModel: ItemDetailViewModel = koinViewModel { parametersOf(itemId, initialType) },
     occurrenceViewModel: ItemOccurrenceViewModel = koinViewModel {
         parametersOf(itemId, promptCompleteOnEntry)
     },
+    linksViewModel: ItemLinksViewModel = koinViewModel { parametersOf(itemId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -79,6 +88,7 @@ fun ItemDetailScreen(
     val dialogState by viewModel.dialogState.collectAsStateWithLifecycle()
     val occurrenceState by occurrenceViewModel.uiState.collectAsStateWithLifecycle()
     val occurrenceDialogState by occurrenceViewModel.dialogState.collectAsStateWithLifecycle()
+    val linksState by linksViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val context = LocalContext.current
@@ -112,18 +122,40 @@ fun ItemDetailScreen(
         }
     }
 
+    HandleLinksUiAction(linksViewModel.uiAction, onNavigateToDetail, snackbarHostState)
+
     ItemDetailScreenContent(
         uiState = uiState,
         dialogState = dialogState,
         occurrenceState = occurrenceState,
         occurrenceDialogState = occurrenceDialogState,
+        linksState = linksState,
         onEvent = viewModel::onEvent,
         onOccurrenceEvent = occurrenceViewModel::onEvent,
+        onLinksEvent = linksViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToConfig = { configuredItemId -> onNavigateToConfig(configuredItemId, itemId == null) },
+        onAddLinkType = { type -> uiState.itemId?.let { onNavigateToLinkPicker(it, type) } },
         snackbarHostState = snackbarHostState,
     )
+}
+
+@Composable
+private fun HandleLinksUiAction(
+    uiAction: Flow<ItemLinksUiAction>,
+    onNavigateToDetail: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    val updatedOnNavigateToDetail by rememberUpdatedState(onNavigateToDetail)
+    LaunchedEffect(Unit) {
+        uiAction.collect { action ->
+            when (action) {
+                is ItemLinksUiAction.NavigateToDetail -> updatedOnNavigateToDetail(action.itemId)
+                is ItemLinksUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,11 +165,14 @@ private fun ItemDetailScreenContent(
     dialogState: ItemDetailDialogState,
     occurrenceState: ItemOccurrenceUiState,
     occurrenceDialogState: ItemOccurrenceDialogState,
+    linksState: ItemLinksUiState,
     onEvent: (ItemDetailEvent) -> Unit,
     onOccurrenceEvent: (ItemOccurrenceEvent) -> Unit,
+    onLinksEvent: (ItemLinksEvent) -> Unit,
     onNavigateBack: (() -> Unit)?,
     onNavigateToHistory: (Long) -> Unit,
     onNavigateToConfig: (Long) -> Unit,
+    onAddLinkType: (ItemType) -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val updatedOnNavigateBack by rememberUpdatedState(onNavigateBack)
@@ -193,6 +228,13 @@ private fun ItemDetailScreenContent(
                 },
                 isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
+                linksSection = {
+                    ItemLinksSection(
+                        uiState = linksState,
+                        onEvent = onLinksEvent,
+                        onAddType = onAddLinkType
+                    )
+                },
             )
         }
     }
@@ -317,11 +359,14 @@ private fun ItemDetailScreenPreview(
             dialogState = ItemDetailDialogState.None,
             occurrenceState = ItemOccurrenceUiState(),
             occurrenceDialogState = ItemOccurrenceDialogState.None,
+            linksState = ItemLinksUiState.Success(),
             onEvent = {},
             onOccurrenceEvent = {},
+            onLinksEvent = {},
             onNavigateBack = {},
             onNavigateToHistory = {},
             onNavigateToConfig = {},
+            onAddLinkType = {},
             snackbarHostState = remember { SnackbarHostState() },
         )
     }

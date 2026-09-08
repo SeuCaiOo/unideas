@@ -19,6 +19,9 @@ class BackupRepositoryImpl(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BackupRepository {
 
+    private val backupFileName: String
+        get() = "${UnideasDatabase.DATABASE_NAME}.${context.packageName}"
+
     override suspend fun uploadBackup(
         driveService: Drive,
         isAutomatic: Boolean
@@ -31,7 +34,7 @@ class BackupRepositoryImpl(
             dbFile.copyTo(tempFile, overwrite = true)
 
             val metadata = File().apply {
-                name = UnideasDatabase.DATABASE_NAME
+                name = backupFileName
                 parents = listOf(APP_DATA_FOLDER)
                 if (isAutomatic) {
                     appProperties = mapOf(APP_PROPERTY_BACKUP_TYPE to APP_PROPERTY_VALUE_AUTO)
@@ -58,7 +61,7 @@ class BackupRepositoryImpl(
             val result = driveService.files().list()
                 .setSpaces(APP_DATA_FOLDER)
                 .setFields("files(id, name, size, createdTime)")
-                .setQ("name = '${UnideasDatabase.DATABASE_NAME}'")
+                .setQ("name = '$backupFileName'")
                 .setOrderBy("createdTime desc")
                 .execute()
 

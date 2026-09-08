@@ -47,6 +47,7 @@ class BackupRepositoryImplTest {
         val cacheDir = tempFolder.newFolder("cache")
         every { context.getDatabasePath(UnideasDatabase.DATABASE_NAME) } returns dbFile
         every { context.cacheDir } returns cacheDir
+        every { context.packageName } returns PACKAGE_NAME
 
         repository = BackupRepositoryImpl(database, context)
     }
@@ -208,5 +209,51 @@ class BackupRepositoryImplTest {
         val result = repository.deleteBackup(driveService, "file-id-1")
 
         assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `uploadBackup names the file scoped by the app's package, not the bare database name`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val createRequest = mockk<Drive.Files.Create>(relaxed = true)
+        val metadataSlot = slot<File>()
+        val uploadedFile = File().apply {
+            id = "remote-file-id"
+            name = "${UnideasDatabase.DATABASE_NAME}.$PACKAGE_NAME"
+            createdTime = DateTime(System.currentTimeMillis())
+            factory = GsonFactory.getDefaultInstance()
+        }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.create(capture(metadataSlot), any()) } returns createRequest
+        every { createRequest.setFields(any()) } returns createRequest
+        every { createRequest.execute() } returns uploadedFile
+
+        repository.uploadBackup(driveService)
+
+        assertEquals("${UnideasDatabase.DATABASE_NAME}.$PACKAGE_NAME", metadataSlot.captured.name)
+    }
+
+    @Test
+    fun `listBackups queries by the file name scoped by the app's package`() = runTest {
+        val driveFiles = mockk<Drive.Files>()
+        val listRequest = mockk<Drive.Files.List>(relaxed = true)
+        val querySlot = slot<String>()
+        val emptyFileList = FileList().apply { files = emptyList() }
+
+        every { driveService.files() } returns driveFiles
+        every { driveFiles.list() } returns listRequest
+        every { listRequest.setSpaces(any()) } returns listRequest
+        every { listRequest.setFields(any()) } returns listRequest
+        every { listRequest.setQ(capture(querySlot)) } returns listRequest
+        every { listRequest.setOrderBy(any()) } returns listRequest
+        every { listRequest.execute() } returns emptyFileList
+
+        repository.listBackups(driveService)
+
+        assertEquals("name = '${UnideasDatabase.DATABASE_NAME}.$PACKAGE_NAME'", querySlot.captured)
+    }
+
+    private companion object {
+        const val PACKAGE_NAME = "com.seucaio.unideas.debug"
     }
 }

@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +31,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownBulletList
 import com.mikepenz.markdown.compose.elements.MarkdownCheckBox
+import com.mikepenz.markdown.compose.elements.MarkdownOrderedList
+import com.mikepenz.markdown.compose.elements.listDepth
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
@@ -196,25 +201,45 @@ private fun DescriptionField(
 }
 
 private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) = markdownComponents(
+    unorderedList = { model ->
+        MarkdownBulletList(
+            content = model.content,
+            node = model.node,
+            style = model.typography.bullet,
+            depth = model.listDepth,
+            markerModifier = { Modifier.align(Alignment.CenterVertically) },
+        )
+    },
+    orderedList = { model ->
+        MarkdownOrderedList(
+            content = model.content,
+            node = model.node,
+            style = model.typography.ordered,
+            depth = model.listDepth,
+            markerModifier = { Modifier.align(Alignment.CenterVertically) },
+        )
+    },
     checkbox = { model ->
         MarkdownCheckBox(
             content = model.content,
             node = model.node,
             style = model.typography.text,
             checkedIndicator = { isChecked, modifier ->
-                Checkbox(
-                    checked = isChecked,
-                    onCheckedChange = {
-                        onCheckboxToggled(
-                            model.content.replaceRange(
-                                model.node.startOffset,
-                                model.node.endOffset,
-                                if (isChecked) "[ ] " else "[x] ",
-                            ),
-                        )
-                    },
-                    modifier = modifier,
-                )
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                    Checkbox(
+                        checked = isChecked,
+                        onCheckedChange = {
+                            onCheckboxToggled(
+                                model.content.replaceRange(
+                                    model.node.startOffset,
+                                    model.node.endOffset,
+                                    if (isChecked) "[ ] " else "[x] ",
+                                ),
+                            )
+                        },
+                        modifier = modifier,
+                    )
+                }
             },
         )
     },

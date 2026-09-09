@@ -208,6 +208,7 @@ private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) =
             style = model.typography.bullet,
             depth = model.listDepth,
             markerModifier = { Modifier.align(Alignment.CenterVertically) },
+            listModifier = { Modifier.align(Alignment.CenterVertically) },
         )
     },
     orderedList = { model ->
@@ -217,6 +218,7 @@ private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) =
             style = model.typography.ordered,
             depth = model.listDepth,
             markerModifier = { Modifier.align(Alignment.CenterVertically) },
+            listModifier = { Modifier.align(Alignment.CenterVertically) },
         )
     },
     checkbox = { model ->

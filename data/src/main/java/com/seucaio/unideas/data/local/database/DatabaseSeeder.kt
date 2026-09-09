@@ -60,7 +60,7 @@ class DatabaseSeeder(
         )
         insertItem(SeedItem(ItemType.TASK, "Ler um livro"))
         insertItem(SeedItem(ItemType.NOTE, "Ideia de projeto", description = "App de anotações com sincronização"))
-        insertItem(SeedItem(ItemType.TASK, "Salve", description = MARKDOWN_EXAMPLE_DESCRIPTION))
+        insertItem(SeedItem(ItemType.TASK, "Exemplo de Markdown", description = MARKDOWN_EXAMPLE_DESCRIPTION))
     }
 
     private suspend fun seedFull() {
@@ -86,11 +86,12 @@ class DatabaseSeeder(
     // Also varies reminderWarning/remindersMuted per item instead of leaving them all identical,
     // so this loop doubles as extra manual-check coverage without needing dedicated items.
     private suspend fun seedFullPriorityTasks(today: LocalDate, sections: FullSections, tags: FullTags) {
-        for (i in 1..Constants.PRIORITY_PANEL_LIMIT) {
+        PRIORITY_TASK_TITLES.forEachIndexed { index, title ->
+            val i = index + 1
             insertItem(
                 SeedItem(
                     ItemType.TASK,
-                    "Prioridade $i",
+                    title,
                     description = "Item de exemplo gerado pra testar o painel cheio",
                     dueDate = today.minusDays(i.toLong()),
                     sectionId = if (i % 2 == 0) sections.workId else sections.homeId,
@@ -278,7 +279,7 @@ class DatabaseSeeder(
         insertItem(
             SeedItem(
                 ItemType.NOTE,
-                "Notas da reunião",
+                "Exemplo de Markdown",
                 description = MARKDOWN_EXAMPLE_DESCRIPTION,
                 sectionId = sections.workId,
             ),
@@ -335,6 +336,15 @@ class DatabaseSeeder(
         const val LONG_DESCRIPTION_OVERDUE_DAYS = 3L
         const val REMINDER_MUTE_DUE_DAYS = 4L
         const val REMINDER_MUTE_WARNING_DAYS = 5L
+
+        /** One distinct title per slot — sized to [Constants.PRIORITY_PANEL_LIMIT]. */
+        val PRIORITY_TASK_TITLES = listOf(
+            "Entregar relatório mensal",
+            "Revisar contrato do fornecedor",
+            "Responder e-mails pendentes",
+            "Atualizar planilha de despesas",
+            "Agendar reunião de alinhamento",
+        )
 
         /**
          * Overflows past 5 lines even expanded — exercises the collapsed/expanded chevron in

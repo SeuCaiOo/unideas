@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.ds.components.chips.DueBadge
 import com.seucaio.unideas.ds.components.lists.model.ListItemUi
 import com.seucaio.unideas.ds.theme.LocalUdsExtendedColors
 import com.seucaio.unideas.ds.theme.Radii
@@ -75,20 +76,30 @@ fun ListItemRow(
             .leftAccentBorder(4.dp, accentColor)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (ui.badgeLabel != null) {
+                DueBadge(
+                    label = ui.badgeLabel,
+                    color = ui.badgeColor,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                )
+            }
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (ui.showCheckbox) {
                 ListItemCheckbox(ui.checked, ui.checkContentDescription, onToggleCheck)
             }
             ListItemTitleAndMeta(ui, modifier = Modifier.weight(1f))
-            if (ui.isSelected != null) {
-                SelectionIndicator(ui.isSelected, onToggle = { onToggleSelection?.invoke() })
-            } else {
-                NormalTrailingContent(ui, onTogglePin)
-            }
+            ListItemSelectionIndicator(ui, onToggleSelection, onTogglePin)
         }
         val description = ui.description
         if (description != null && description.text.isNotBlank()) {
@@ -99,6 +110,19 @@ fun ListItemRow(
                 modifier = Modifier.padding(top = 10.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun ListItemSelectionIndicator(
+    ui: ListItemUi,
+    onToggleSelection: (() -> Unit)?,
+    onTogglePin: (() -> Unit)?
+) {
+    if (ui.isSelected != null) {
+        SelectionIndicator(ui.isSelected, onToggle = { onToggleSelection?.invoke() })
+    } else {
+        NormalTrailingContent(ui, onTogglePin)
     }
 }
 
@@ -179,6 +203,7 @@ private fun ListItemDescription(
 private enum class ListItemRowPreviewScenario {
     Default,
     Pinned,
+    WithLongTitle,
     WithShortDescription,
     WithLongDescription,
     WithFormattedDescription,
@@ -195,10 +220,11 @@ private fun OverdueBillRow(
     isPinned: Boolean = false,
     description: AnnotatedString? = null,
     isSelected: Boolean? = null,
+    title: String = "Pay electricity bill",
 ) {
     ListItemRow(
         ui = ListItemUi(
-            id = 1L, title = "Pay electricity bill", meta = "Home", showCheckbox = true,
+            id = 1L, title = title, meta = "Home", showCheckbox = true,
             checked = false, showRepeatIcon = true, badgeLabel = "6 days overdue",
             badgeColor = MaterialTheme.colorScheme.error, checkContentDescription = "Confirm",
             isPinned = isPinned, description = description, isSelected = isSelected,
@@ -224,8 +250,12 @@ private fun ListItemRowPreview(
             when (scenario) {
                 ListItemRowPreviewScenario.Default -> OverdueBillRow()
                 ListItemRowPreviewScenario.Pinned -> OverdueBillRow(isPinned = true)
+                ListItemRowPreviewScenario.WithLongTitle ->
+                    OverdueBillRow(title = "Renew the annual streaming subscription before it lapses")
+
                 ListItemRowPreviewScenario.WithShortDescription ->
                     OverdueBillRow(description = AnnotatedString("Pay before the due date to avoid a late fee."))
+
                 ListItemRowPreviewScenario.WithLongDescription -> OverdueBillRow(
                     description = AnnotatedString(
                         "Check the meter reading before paying — last month's bill looked unusually " +
@@ -234,6 +264,7 @@ private fun ListItemRowPreview(
                             "without asking any questions.",
                     ),
                 )
+
                 ListItemRowPreviewScenario.WithFormattedDescription -> OverdueBillRow(
                     description = buildAnnotatedString {
                         append("Check the meter reading ")
@@ -243,6 +274,7 @@ private fun ListItemRowPreview(
                         append(".")
                     },
                 )
+
                 ListItemRowPreviewScenario.SelectedInSelectionMode -> OverdueBillRow(isSelected = true)
                 ListItemRowPreviewScenario.UnselectedInSelectionMode -> OverdueBillRow(isSelected = false)
             }

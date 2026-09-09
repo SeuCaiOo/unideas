@@ -73,9 +73,6 @@ internal fun NormalTrailingContent(
     pinIconSize: Dp = 18.dp,
 ) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (ui.badgeLabel != null) {
-            DueBadge(label = ui.badgeLabel, color = ui.badgeColor)
-        }
         if (onTogglePin != null) {
             IconButton(onClick = onTogglePin, modifier = Modifier.size(pinButtonSize)) {
                 Icon(
@@ -95,7 +92,7 @@ internal fun NormalTrailingContent(
 
 private fun previewUi(isPinned: Boolean = false) = ListItemUi(
     id = 1L, title = "Pay electricity bill", meta = null, showCheckbox = false,
-    checked = false, showRepeatIcon = false, badgeLabel = "6 days overdue",
+    checked = false, showRepeatIcon = false, badgeLabel = null,
     badgeColor = Color.Red, checkContentDescription = "Confirm", isPinned = isPinned,
 )
 

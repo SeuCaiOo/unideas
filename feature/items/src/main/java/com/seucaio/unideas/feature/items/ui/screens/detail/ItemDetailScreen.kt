@@ -188,6 +188,7 @@ private fun ItemDetailScreenContent(
         ItemFormFieldsEvents(
             onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
+            onDescriptionCheckboxToggled = { onEvent(ItemDetailEvent.OnDescriptionCheckboxToggled(it)) },
         )
     }
 

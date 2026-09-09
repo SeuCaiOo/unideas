@@ -145,6 +145,13 @@ class ItemDetailViewModel(
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
         updateUiState { it.reduce(event) }
         debounceJob?.cancel()
+        if (event is ItemDetailEvent.OnDescriptionCheckboxToggled) {
+            hasPendingTextSave = false
+            viewModelScope.launch {
+                if (uiState.value.isTitleValid) persist().onFailure { handleFailure(it) }
+            }
+            return
+        }
         hasPendingTextSave = true
         debounceJob = viewModelScope.launch {
             delay(TEXT_DEBOUNCE_MS)

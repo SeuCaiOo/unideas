@@ -274,6 +274,42 @@ class ItemDetailViewModelTest {
     }
 
     @Test
+    fun `when OnDescriptionCheckboxToggled fires should save immediately without waiting for the debounce`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnDescriptionCheckboxToggled("- [x] done"))
+
+            coVerify(exactly = 1) {
+                itemFormUseCase.edit(match { it.id == 1L && it.description == "- [x] done" })
+            }
+        }
+
+    @Test
+    fun `when OnDescriptionCheckboxToggled fires with a pending text debounce should cancel it and save once`() =
+        runTest {
+            val item = ItemStub.task(id = 1L)
+            every { itemFormUseCase.get(1L) } returns flowOf(item)
+            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            val vm = viewModel(itemId = 1L)
+            vm.uiState.test { awaitItem() }
+
+            vm.onEvent(ItemDetailEvent.OnTitleChanged("Título editado"))
+            vm.onEvent(ItemDetailEvent.OnDescriptionCheckboxToggled("- [x] done"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                itemFormUseCase.edit(
+                    match { it.id == 1L && it.title == "Título editado" && it.description == "- [x] done" },
+                )
+            }
+        }
+
+    @Test
     fun `when OnTitleChanged and OnDescriptionChanged fire in sequence should debounce into a single save`() =
         runTest {
             coEvery { itemFormUseCase.create(any()) } returns Result.success(10L)

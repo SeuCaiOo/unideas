@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +28,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownCheckBox
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.model.markdownAnnotator
 import com.mikepenz.markdown.model.markdownAnnotatorConfig
@@ -47,6 +50,7 @@ internal fun TitleDescriptionFields(
     description: String,
     onTitleChanged: (String) -> Unit,
     onDescriptionChanged: (String) -> Unit,
+    onDescriptionCheckboxToggled: (String) -> Unit,
     isEditing: Boolean,
     modifier: Modifier = Modifier,
     titleError: Boolean = false,
@@ -87,6 +91,10 @@ internal fun TitleDescriptionFields(
                 descriptionField = it
                 onDescriptionChanged(it.text)
             },
+            onCheckboxToggled = { newText ->
+                descriptionField = TextFieldValue(newText, selection = descriptionField.selection)
+                onDescriptionCheckboxToggled(newText)
+            },
             onFocusChanged = { isDescriptionFocused = it },
             descriptionFocusRequester = descriptionFocusRequester,
         )
@@ -125,6 +133,7 @@ private fun DescriptionField(
     onPreviewModeToggled: () -> Unit,
     descriptionField: TextFieldValue,
     onDescriptionFieldChanged: (TextFieldValue) -> Unit,
+    onCheckboxToggled: (String) -> Unit,
     onFocusChanged: (Boolean) -> Unit,
     descriptionFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
@@ -161,6 +170,7 @@ private fun DescriptionField(
                     // than a blank line's line-height in the raw edit text — bumped so toggling
                     // edit<->preview doesn't visibly jump in height.
                     padding = markdownPadding(block = 0.dp),
+                    components = descriptionMarkdownComponents(onCheckboxToggled),
                     modifier = Modifier.padding(16.dp),
                 )
             }
@@ -185,6 +195,31 @@ private fun DescriptionField(
     }
 }
 
+private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) = markdownComponents(
+    checkbox = { model ->
+        MarkdownCheckBox(
+            content = model.content,
+            node = model.node,
+            style = model.typography.text,
+            checkedIndicator = { isChecked, modifier ->
+                Checkbox(
+                    checked = isChecked,
+                    onCheckedChange = {
+                        onCheckboxToggled(
+                            model.content.replaceRange(
+                                model.node.startOffset,
+                                model.node.endOffset,
+                                if (isChecked) "[ ] " else "[x] ",
+                            ),
+                        )
+                    },
+                    modifier = modifier,
+                )
+            },
+        )
+    },
+)
+
 @PreviewLightDark
 @Composable
 private fun TitleDescriptionFieldsPreview(
@@ -199,6 +234,7 @@ private fun TitleDescriptionFieldsPreview(
                 description = description,
                 onTitleChanged = { title = it },
                 onDescriptionChanged = { description = it },
+                onDescriptionCheckboxToggled = { description = it },
                 isEditing = previewData.isEditing,
             )
         }

@@ -10,6 +10,8 @@ sealed interface ItemDetailEvent {
 
     data class OnDescriptionChanged(val description: String) : FieldEvent
 
+    data class OnDescriptionCheckboxToggled(val description: String) : FieldEvent
+
     data object OnShareClicked : ItemDetailEvent
 
     data object OnDeleteClicked : ItemDetailEvent

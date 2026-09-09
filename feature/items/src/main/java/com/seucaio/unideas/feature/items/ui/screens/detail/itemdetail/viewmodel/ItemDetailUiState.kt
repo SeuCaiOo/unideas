@@ -99,5 +99,6 @@ data class ItemDetailUiState(
     fun reduce(event: ItemDetailEvent.FieldEvent): ItemDetailUiState = when (event) {
         is ItemDetailEvent.OnTitleChanged -> copy(title = event.title, titleError = false)
         is ItemDetailEvent.OnDescriptionChanged -> copy(description = event.description)
+        is ItemDetailEvent.OnDescriptionCheckboxToggled -> copy(description = event.description)
     }
 }

@@ -98,6 +98,7 @@ fun ItemFormBody(
                 description = state.description,
                 onTitleChanged = events.onTitleChanged,
                 onDescriptionChanged = events.onDescriptionChanged,
+                onDescriptionCheckboxToggled = events.onDescriptionCheckboxToggled,
                 isEditing = state.isEditing,
                 titleError = state.titleError,
             )
@@ -264,6 +265,7 @@ private fun ItemFormBodyPreview(
                 events = ItemFormFieldsEvents(
                     onTitleChanged = {},
                     onDescriptionChanged = {},
+                    onDescriptionCheckboxToggled = {},
                 ),
                 occurrenceState = ItemOccurrenceUiState(),
                 isArchived = previewState.status == ItemStatus.ARCHIVED,

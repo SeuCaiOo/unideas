@@ -188,6 +188,7 @@ private fun ItemDetailScreenContent(
         ItemFormFieldsEvents(
             onTitleChanged = { onEvent(ItemDetailEvent.OnTitleChanged(it)) },
             onDescriptionChanged = { onEvent(ItemDetailEvent.OnDescriptionChanged(it)) },
+            onDescriptionCheckboxToggled = { onEvent(ItemDetailEvent.OnDescriptionCheckboxToggled(it)) },
         )
     }
 
@@ -229,11 +230,13 @@ private fun ItemDetailScreenContent(
                 isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
                 linksSection = {
-                    ItemLinksSection(
-                        uiState = linksState,
-                        onEvent = onLinksEvent,
-                        onAddType = onAddLinkType
-                    )
+                    if (!uiState.isConfidential) {
+                        ItemLinksSection(
+                            uiState = linksState,
+                            onEvent = onLinksEvent,
+                            onAddType = onAddLinkType
+                        )
+                    }
                 },
             )
         }

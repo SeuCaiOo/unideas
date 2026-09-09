@@ -230,11 +230,13 @@ private fun ItemDetailScreenContent(
                 isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
                 linksSection = {
-                    ItemLinksSection(
-                        uiState = linksState,
-                        onEvent = onLinksEvent,
-                        onAddType = onAddLinkType
-                    )
+                    if (!uiState.isConfidential) {
+                        ItemLinksSection(
+                            uiState = linksState,
+                            onEvent = onLinksEvent,
+                            onAddType = onAddLinkType
+                        )
+                    }
                 },
             )
         }

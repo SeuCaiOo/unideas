@@ -176,7 +176,11 @@ ItemDetailScreen  (ItemsRoute.Detail(itemId, initialType))
                              um botão "+" com menu Tarefa/Nota que abre a tela de seleção (ItemsRoute.
                              LinkPicker(itemId, type), já em modo de seleção múltipla, mesmo padrão visual
                              de Arquivados/Confidenciais) — confirmar linka todos os selecionados de uma
-                             vez e volta pro Detalhe (#208)
+                             vez e volta pro Detalhe (#208). Some inteira (sem header, sem lista, sem "+")
+                             em item confidencial (#237) — como o vínculo é simétrico/bidirecional,
+                             deixá-la visível abriria uma brecha pra navegar do item normal linkado direto
+                             pro confidencial sem passar pela biometria (#220); do lado do item normal já
+                             não lista confidenciais como candidato (`GetItemsUseCase` já filtra)
   → "←" → volta
 ```
 

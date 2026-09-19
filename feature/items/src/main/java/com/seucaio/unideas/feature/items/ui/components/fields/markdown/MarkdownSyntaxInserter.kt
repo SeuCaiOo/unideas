@@ -49,12 +49,26 @@ private fun wrapSelection(value: TextFieldValue, marker: String): TextFieldValue
 }
 
 private fun prefixLine(value: TextFieldValue, prefix: String): TextFieldValue {
+    val text = value.text
     val cursor = value.selection.min
-    val lineStart = value.text.lastIndexOf('\n', cursor - 1) + 1
-    val newText = value.text.substring(0, lineStart) + prefix + value.text.substring(lineStart)
-    val shift = prefix.length
+    val lineStart = text.lastIndexOf('\n', cursor - 1) + 1
+    val alreadyPrefixed = text.regionMatches(lineStart, prefix, 0, prefix.length)
+
+    val newText: String
+    val shift: Int
+    if (alreadyPrefixed) {
+        newText = text.substring(0, lineStart) + text.substring(lineStart + prefix.length)
+        shift = -prefix.length
+    } else {
+        newText = text.substring(0, lineStart) + prefix + text.substring(lineStart)
+        shift = prefix.length
+    }
+
     return value.copy(
         text = newText,
-        selection = TextRange(value.selection.start + shift, value.selection.end + shift),
+        selection = TextRange(
+            (value.selection.start + shift).coerceIn(0, newText.length),
+            (value.selection.end + shift).coerceIn(0, newText.length),
+        ),
     )
 }

@@ -122,6 +122,10 @@ fun ItemDetailScreen(
         }
     }
 
+    LaunchedEffect(uiState.itemId) {
+        uiState.itemId?.let { linksViewModel.onEvent(ItemLinksEvent.OnItemIdAssigned(it)) }
+    }
+
     HandleLinksUiAction(linksViewModel.uiAction, onNavigateToDetail, snackbarHostState)
 
     ItemDetailScreenContent(

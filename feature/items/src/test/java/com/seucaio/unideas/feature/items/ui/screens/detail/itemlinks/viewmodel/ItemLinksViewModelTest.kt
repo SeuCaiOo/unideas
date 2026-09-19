@@ -119,4 +119,28 @@ class ItemLinksViewModelTest {
             assertEquals(ItemLinksUiAction.ShowError("boom"), awaitItem())
         }
     }
+
+    @Test
+    fun `when OnItemIdAssigned after starting with a null itemId should load the linked items`() = runTest {
+        val items = listOf(ItemStub.task(id = 2L))
+        every { itemLinkUseCase.getLinkedItems(1L) } returns flowOf(items)
+        val vm = viewModel(null)
+
+        vm.uiState.test {
+            assertEquals(ItemLinksUiState.Success(), awaitItem())
+            vm.onEvent(ItemLinksEvent.OnItemIdAssigned(1L))
+            assertEquals(ItemLinksUiState.Success(items), awaitItem())
+        }
+    }
+
+    @Test
+    fun `when OnUnlinkClicked after OnItemIdAssigned should use the newly assigned item id`() = runTest {
+        coEvery { itemLinkUseCase.unlink(1L, 2L) } returns Result.success(Unit)
+        val vm = viewModel(null)
+
+        vm.onEvent(ItemLinksEvent.OnItemIdAssigned(1L))
+        vm.onEvent(ItemLinksEvent.OnUnlinkClicked(2L))
+
+        coVerify(exactly = 1) { itemLinkUseCase.unlink(1L, 2L) }
+    }
 }

@@ -9,9 +9,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -22,22 +24,23 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ItemLinksViewModel(
-    private val itemId: Long?,
+    initialItemId: Long?,
     private val itemLinkUseCase: ItemLinkUseCase,
 ) : ViewModel() {
 
+    private val itemIdFlow = MutableStateFlow(initialItemId)
     private val retryTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
-    val uiState: StateFlow<ItemLinksUiState> = (
-        itemId?.let { id ->
-            retryTrigger.flatMapLatest {
-                itemLinkUseCase.getLinkedItems(id)
-                    .map<List<Item>, ItemLinksUiState> { ItemLinksUiState.Success(it) }
+    val uiState: StateFlow<ItemLinksUiState> = combine(itemIdFlow, retryTrigger) { id, _ -> id }
+        .flatMapLatest { id ->
+            id?.let {
+                itemLinkUseCase.getLinkedItems(it)
+                    .map<List<Item>, ItemLinksUiState> { items -> ItemLinksUiState.Success(items) }
                     .onStart { emit(ItemLinksUiState.Loading) }
                     .catch { emit(ItemLinksUiState.Error(R.string.item_links_load_error)) }
-            }
-        } ?: flowOf(ItemLinksUiState.Success())
-        ).stateIn(viewModelScope, WhileSubscribed(5_000), ItemLinksUiState.Loading)
+            } ?: flowOf(ItemLinksUiState.Success())
+        }
+        .stateIn(viewModelScope, WhileSubscribed(5_000), ItemLinksUiState.Loading)
 
     private val _uiAction = Channel<ItemLinksUiAction>(Channel.BUFFERED)
     val uiAction: Flow<ItemLinksUiAction> = _uiAction.receiveAsFlow()
@@ -50,11 +53,13 @@ class ItemLinksViewModel(
             is ItemLinksEvent.OnUnlinkClicked -> handleUnlink(event.itemId)
 
             is ItemLinksEvent.OnRetryClicked -> retryTrigger.tryEmit(Unit)
+
+            is ItemLinksEvent.OnItemIdAssigned -> itemIdFlow.value = event.itemId
         }
     }
 
     private fun handleUnlink(otherItemId: Long) {
-        val id = itemId ?: return
+        val id = itemIdFlow.value ?: return
         viewModelScope.launch {
             itemLinkUseCase.unlink(id, otherItemId)
                 .onFailure { sendUiAction(ItemLinksUiAction.ShowError(it.message.orEmpty())) }

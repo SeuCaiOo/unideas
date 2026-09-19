@@ -56,7 +56,7 @@ gh issue view <issue-number> --json body --jq '.body' > /tmp/issue_body.md
 gh issue edit <issue-number> --body-file /tmp/issue_body.md
 ```
 
-DoD no unideas is about the work itself, not release-process state — it no longer carries a "PR aberto/revisado/mergeado" line (removed 2026-08-30: every closed issue was permanently stuck with that box unchecked, since nothing ever went back to check it after the actual merge, and it never made literal sense for an epic sub-issue merging into the epic branch instead of `dev`). "Has it shipped" is tracked separately — the board's `Done`/`Released` columns and the Improvements artifact's `✅ Merged` tag — not inside the issue's own DoD checklist.
+DoD no unideas is about the work itself, not release-process state — it no longer carries a "PR aberto/revisado/mergeado" line (removed 2026-08-30: every closed issue was permanently stuck with that box unchecked, since nothing ever went back to check it after the actual merge, and it never made literal sense for an epic sub-issue merging into the epic branch instead of `dev`). "Has it shipped" is tracked separately — the board's `Done`/`Released` columns — not inside the issue's own DoD checklist.
 
 ### 4. Report — and ask, don't act, on promotion
 
@@ -64,9 +64,7 @@ DoD no unideas is about the work itself, not release-process state — it no lon
 ✅ DoD validado para a issue #N.
 ```
 
-**Don't sync the Improvements artifact yet — that waits for the merge moment, not DoD passing, and not the ready-promotion moment either.** DoD green only means Claude's self-check passed; the user might still ask for changes before agreeing to ship. Marking the artifact "done" now, only to have the user request edits while the PR sits open, would leave it lying about the actual state.
-
-If a PR already exists, ask the user now: "DoD validado — quer que eu marque/mergeie agora, ou prefere olhar o PR primeiro?" Only on an explicit yes to merge, do all of the following together (mechanics in `open-pr` step 7): promote to ready if still Draft, merge (auto or direct depending on whether the target branch has a required check), sync the artifact.
+If a PR already exists, ask the user now: "DoD validado — quer que eu marque/mergeie agora, ou prefere olhar o PR primeiro?" Only on an explicit yes to merge, do all of the following together (mechanics in `open-pr` step 7): promote to ready if still Draft, merge (auto or direct depending on whether the target branch has a required check).
 ```bash
 gh pr ready <pr-number>   # only if still Draft
 gh pr merge <pr-number> --auto --merge
@@ -88,5 +86,3 @@ If no PR exists yet, hand off to `/open-pr` — it asks Draft-vs-ready itself at
 | Treating "ready" as authorization to merge | Ready only means non-draft/visible — merging is always its own separate, explicit ask (step 4 / `open-pr` step 7), even for a PR that's already ready |
 | Closing a parent epic on `subIssuesSummary` alone | Its own body checklist is its DoD too — reconcile it (step 2) before closing |
 | Treating "DoD green" as "move card to Done" | Card movement waits for the actual merge, checked by `/start-feature`'s next run — not by this skill |
-| Syncing the Improvements artifact right after DoD passes, or right after the PR goes ready, but before it's merged | Wait for the user's explicit go-ahead to merge — sync happens together with the actual merge (`open-pr` step 7), not before |
-| Waiting for `/start-feature` to sync the Improvements artifact | Sync it at the merge moment (step 4 / `open-pr` step 7), not at the next `/start-feature` run |

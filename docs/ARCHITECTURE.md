@@ -379,7 +379,7 @@ feature/onboarding/   — flat (uma tela só), mesmo padrão de sections/tags
 - `com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet` (`:core:backup`, não `:feature:settings`) —
   bottom sheet de confirmação de logout, sem lógica de negócio, só UI + callbacks
 
-O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no artifact "unideas — Improvements" e no board do GitHub Project).
+O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no board do GitHub Project).
 
 ## Persistência (Room) — schema
 

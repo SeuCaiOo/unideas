@@ -86,7 +86,7 @@ Coding conventions (MVI contract, ViewModel/use-case rules, testing, naming) liv
 
 ## More docs
 
-- **`docs/BLUEPRINT.md`** — original class/screen inventory + implementation backlog, frozen as planning context. Live issue/PR status lives in the "unideas — Improvements" artifact + the GitHub Project board, not here.
+- **`docs/BLUEPRINT.md`** — original class/screen inventory + implementation backlog, frozen as planning context. Live issue/PR status lives on the GitHub Project board, not here.
 - **`docs/RELEASE.md`** — build variants, signing, release automation, secrets, SemVer.
 - **`docs/RUNNING.md`** — running/inspecting the app (`android` CLI) + git hooks (`./gradlew installGitHooks`).
 - **`docs/QA_MANUAL_TESTING.md`** — manual device-testing runbook (checklists, `android`/`adb` gotchas, DB-inspection recipes) for whoever runs a QA pass on a feature area — Claude, Maestro once configured, or a person. Load it before running the app to validate a change by hand.

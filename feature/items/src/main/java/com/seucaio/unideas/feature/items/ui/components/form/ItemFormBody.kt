@@ -1,10 +1,13 @@
 package com.seucaio.unideas.feature.items.ui.components.form
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,10 +82,12 @@ fun ItemFormBody(
     isSnackbarVisible: Boolean = false,
     onMuteRemindersToggled: (() -> Unit)? = null,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val minHeight = maxHeight
+
         Column(
             modifier = Modifier
-                .weight(1f)
+                .heightIn(min = minHeight)
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
         ) {
@@ -102,32 +107,34 @@ fun ItemFormBody(
                 isEditing = state.isEditing,
                 titleError = state.titleError,
             )
-        }
 
-        if (state.isEditing) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = if (isSnackbarVisible) SNACKBAR_RESERVED_HEIGHT else 0.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ItemFormFooter(
-                    state = state,
-                    occurrenceState = occurrenceState,
-                    onCompleteClicked = onCompleteClicked,
-                    onIgnoreClicked = onIgnoreClicked,
-                    onExtendDeadlineClicked = onExtendDeadlineClicked,
-                    onMuteRemindersToggled = onMuteRemindersToggled,
-                )
+            Spacer(modifier = Modifier.weight(1f))
 
-                HistoryAndConfigCards(
-                    state = state,
-                    occurrenceState = occurrenceState,
-                    onNavigateToConfig = onNavigateToConfig,
-                    onNavigateToHistory = onNavigateToHistory,
-                )
+            if (state.isEditing) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = if (isSnackbarVisible) SNACKBAR_RESERVED_HEIGHT else 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ItemFormFooter(
+                        state = state,
+                        occurrenceState = occurrenceState,
+                        onCompleteClicked = onCompleteClicked,
+                        onIgnoreClicked = onIgnoreClicked,
+                        onExtendDeadlineClicked = onExtendDeadlineClicked,
+                        onMuteRemindersToggled = onMuteRemindersToggled,
+                    )
 
-                linksSection()
+                    HistoryAndConfigCards(
+                        state = state,
+                        occurrenceState = occurrenceState,
+                        onNavigateToConfig = onNavigateToConfig,
+                        onNavigateToHistory = onNavigateToHistory,
+                    )
+
+                    linksSection()
+                }
             }
         }
     }

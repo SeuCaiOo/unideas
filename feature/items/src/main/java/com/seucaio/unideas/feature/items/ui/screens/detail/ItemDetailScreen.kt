@@ -221,7 +221,7 @@ private fun ItemDetailScreenContent(
                 onMuteRemindersToggled = { onOccurrenceEvent(ItemOccurrenceEvent.OnMuteRemindersToggled) },
                 onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
                 onNavigateToHistory = uiState.itemId?.let { savedItemId ->
-                    if (uiState.recurrence != Recurrence.None && occurrenceState.hasHistory) {
+                    if (uiState.recurrence != Recurrence.None) {
                         { onNavigateToHistory(savedItemId) }
                     } else {
                         null

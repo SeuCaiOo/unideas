@@ -23,7 +23,6 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -39,7 +38,6 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
-import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.ItemLinksSection
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksEvent
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiState
@@ -215,34 +213,23 @@ private fun ItemDetailScreenContent(
             else -> ItemFormBody(
                 state = uiState,
                 events = fieldsEvents,
-                occurrenceState = occurrenceState,
                 isArchived = uiState.status == ItemStatus.ARCHIVED,
                 onUnarchiveClicked = { onEvent(ItemDetailEvent.OnUnarchiveChipClicked) },
                 isConfidential = uiState.isConfidential,
-                onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
-                onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
-                onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
-                onMuteRemindersToggled = { onOccurrenceEvent(ItemOccurrenceEvent.OnMuteRemindersToggled) },
-                onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
-                onNavigateToHistory = uiState.itemId?.let { savedItemId ->
-                    if (uiState.recurrence != Recurrence.None) {
-                        { onNavigateToHistory(savedItemId) }
-                    } else {
-                        null
-                    }
-                },
                 isSnackbarVisible = isSnackbarVisible,
                 modifier = Modifier.padding(padding),
-                linksSection = {
-                    if (!uiState.isConfidential) {
-                        ItemLinksSection(
-                            uiState = linksState,
-                            onEvent = onLinksEvent,
-                            onAddType = onAddLinkType
-                        )
-                    }
-                },
-            )
+            ) {
+                ItemDetailSections(
+                    uiState = uiState,
+                    occurrenceState = occurrenceState,
+                    linksState = linksState,
+                    onOccurrenceEvent = onOccurrenceEvent,
+                    onLinksEvent = onLinksEvent,
+                    onNavigateToHistory = onNavigateToHistory,
+                    onNavigateToConfig = onNavigateToConfig,
+                    onAddLinkType = onAddLinkType,
+                )
+            }
         }
     }
 

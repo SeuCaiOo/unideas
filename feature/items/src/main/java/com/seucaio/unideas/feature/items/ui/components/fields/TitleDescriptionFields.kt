@@ -93,8 +93,9 @@ internal fun TitleDescriptionFields(
             onPreviewModeToggled = { isPreviewMode = !isPreviewMode },
             descriptionField = descriptionField,
             onDescriptionFieldChanged = {
+                val textChanged = it.text != descriptionField.text
                 descriptionField = it
-                onDescriptionChanged(it.text)
+                if (textChanged) onDescriptionChanged(it.text)
             },
             onCheckboxToggled = { newText ->
                 descriptionField = TextFieldValue(newText, selection = descriptionField.selection)

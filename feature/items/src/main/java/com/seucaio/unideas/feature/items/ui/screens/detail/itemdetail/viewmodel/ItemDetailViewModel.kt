@@ -143,7 +143,9 @@ class ItemDetailViewModel(
     }
 
     private fun handleFieldEvent(event: ItemDetailEvent.FieldEvent) {
-        updateUiState { it.reduce(event) }
+        val reduced = uiState.value.reduce(event)
+        if (reduced == uiState.value) return
+        updateUiState { reduced }
         debounceJob?.cancel()
         if (event is ItemDetailEvent.OnDescriptionCheckboxToggled) {
             hasPendingTextSave = false

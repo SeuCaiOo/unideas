@@ -105,6 +105,15 @@ class ItemMapperTest {
     }
 
     @Test
+    fun `toEntity and toDomain round-trip preserves updatedAt independently of createdAt`() {
+        val original = ItemStub.task().copy(updatedAt = ItemStub.TODAY.atTime(20, 0))
+
+        val row = ItemWithTags(item = original.toEntity(), tags = emptyList())
+
+        assertEquals(original.updatedAt, row.toDomain().updatedAt)
+    }
+
+    @Test
     fun `toEntity and toDomain round-trip preserves isPinned`() {
         val original = ItemStub.task(isPinned = true)
 

@@ -89,11 +89,13 @@ class ItemLinkDaoTest {
         title = title,
         recurrence = Recurrence.None,
         createdAt = 1_000L,
+        updatedAt = 1_000L,
     )
 
     private fun note(title: String): ItemEntity = ItemEntity(
         type = ItemType.NOTE,
         title = title,
         createdAt = 1_000L,
+        updatedAt = 1_000L,
     )
 }

@@ -287,6 +287,7 @@ class DatabaseSeeder(
     }
 
     private suspend fun insertItem(spec: SeedItem) {
+        val now = LocalDateTime.now().toEpochMilli()
         val entity = ItemEntity(
             type = spec.type,
             title = spec.title,
@@ -295,7 +296,8 @@ class DatabaseSeeder(
             dueDate = spec.dueDate?.toEpochMilli(),
             recurrence = spec.recurrence,
             completedAt = spec.completedAt?.toEpochMilli(),
-            createdAt = LocalDateTime.now().toEpochMilli(),
+            createdAt = now,
+            updatedAt = now,
             lastCompletedScheduledDate = spec.lastCompletedScheduledDate?.toEpochMilli(),
             pendingExtensionOriginalDueDate = spec.pendingExtensionOriginalDueDate?.toEpochMilli(),
             pendingExtensionCount = spec.pendingExtensionCount,

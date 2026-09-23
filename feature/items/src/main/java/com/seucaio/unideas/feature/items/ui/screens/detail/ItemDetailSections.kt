@@ -63,14 +63,6 @@ fun ItemDetailSections(
         modifier = modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (uiState.typeIsTask) {
-            CompletionSection(uiState, occurrenceState, onOccurrenceEvent)
-        }
-
-        if (uiState.recurrence != Recurrence.None) {
-            HistorySection(occurrenceState, onClick = { onNavigateToHistory(itemId) })
-        }
-
         ConfigSummaryNavCard(
             title = stringResource(R.string.item_config_title),
             rows = configSummaryRows(uiState),
@@ -79,6 +71,14 @@ fun ItemDetailSections(
 
         if (!uiState.isConfidential) {
             ItemLinksSection(uiState = linksState, onEvent = onLinksEvent, onAddType = onAddLinkType)
+        }
+
+        if (uiState.recurrence != Recurrence.None) {
+            HistorySection(occurrenceState, onClick = { onNavigateToHistory(itemId) })
+        }
+
+        if (uiState.typeIsTask) {
+            CompletionSection(uiState, occurrenceState, onOccurrenceEvent)
         }
     }
 }

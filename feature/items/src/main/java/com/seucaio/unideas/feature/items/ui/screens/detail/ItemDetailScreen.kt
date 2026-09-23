@@ -98,6 +98,7 @@ fun ItemDetailScreen(
                 is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
                 is ItemDetailUiAction.ShowSnackbar ->
                     snackbarHostState.showSnackbar(resources.getString(action.messageRes))
+
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
                 is ItemDetailUiAction.ItemPersisted ->
@@ -112,19 +113,23 @@ fun ItemDetailScreen(
                 is ItemOccurrenceUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
                     resources.getString(action.messageRes)
                 )
+
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemOccurrenceUiAction.ItemPersisted ->
                     viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
+
                 is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
             }
         }
     }
 
-    LaunchedEffect(uiState.itemId) {
-        uiState.itemId?.let { linksViewModel.onEvent(ItemLinksEvent.OnItemIdAssigned(it)) }
-    }
-
-    HandleLinksUiAction(linksViewModel.uiAction, onNavigateToDetail, snackbarHostState)
+    HandleLinks(
+        itemId = uiState.itemId,
+        uiAction = linksViewModel.uiAction,
+        onLinksEvent = linksViewModel::onEvent,
+        onNavigateToDetail = onNavigateToDetail,
+        snackbarHostState = snackbarHostState
+    )
 
     ItemDetailScreenContent(
         uiState = uiState,
@@ -137,10 +142,31 @@ fun ItemDetailScreen(
         onLinksEvent = linksViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
-        onNavigateToConfig = { configuredItemId -> onNavigateToConfig(configuredItemId, itemId == null) },
+        onNavigateToConfig = { configuredItemId ->
+            onNavigateToConfig(
+                configuredItemId,
+                itemId == null
+            )
+        },
         onAddLinkType = { type -> uiState.itemId?.let { onNavigateToLinkPicker(it, type) } },
         snackbarHostState = snackbarHostState,
     )
+}
+
+@Composable
+private fun HandleLinks(
+    itemId: Long?,
+    uiAction: Flow<ItemLinksUiAction>,
+    onLinksEvent: (ItemLinksEvent) -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    val updatedOnLinksEvent by rememberUpdatedState(onLinksEvent)
+    LaunchedEffect(itemId) {
+        itemId?.let { updatedOnLinksEvent(ItemLinksEvent.OnItemIdAssigned(it)) }
+    }
+
+    HandleLinksUiAction(uiAction, onNavigateToDetail, snackbarHostState)
 }
 
 @Composable
@@ -184,7 +210,8 @@ private fun ItemDetailScreenContent(
         onEvent(ItemDetailEvent.OnBackRequested)
     }
 
-    val topBarNavigateBack = updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
+    val topBarNavigateBack =
+        updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
 
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
@@ -210,6 +237,7 @@ private fun ItemDetailScreenContent(
                 onRetry = { onEvent(ItemDetailEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
+
             else -> ItemFormBody(
                 state = uiState,
                 events = fieldsEvents,

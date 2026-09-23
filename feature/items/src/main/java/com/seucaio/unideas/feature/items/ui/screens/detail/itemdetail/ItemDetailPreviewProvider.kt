@@ -7,6 +7,7 @@ import com.seucaio.unideas.domain.model.Section
 import com.seucaio.unideas.domain.model.Tag
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
 
@@ -35,10 +36,14 @@ class ItemDetailPreviewProvider : PreviewParameterProvider<ItemDetailUiState> {
             dueDate = LocalDate.of(2026, 7, 1),
             availableSections = sections,
             availableTags = tags,
+            createdAt = LocalDateTime.of(2026, 6, 20, 14, 30),
+            updatedAt = LocalDateTime.of(2026, 6, 23, 9, 12),
         ),
         ItemDetailUiState(
             itemId = 2L,
             title = "Renew subscription",
+            createdAt = LocalDateTime.of(2026, 6, 20, 14, 30),
+            updatedAt = LocalDateTime.of(2026, 6, 20, 14, 30),
         ),
         ItemDetailUiState(
             itemId = 3L,

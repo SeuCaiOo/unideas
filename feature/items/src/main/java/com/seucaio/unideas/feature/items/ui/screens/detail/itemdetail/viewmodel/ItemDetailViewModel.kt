@@ -221,17 +221,26 @@ class ItemDetailViewModel(
                     currentItemId = newId
                     val createdItem = newItem.copy(id = newId)
                     originalItem = createdItem
-                    updateUiState { it.copy(itemId = newId) }
+                    updateUiState {
+                        it.copy(
+                            itemId = newId,
+                            createdAt = createdItem.createdAt,
+                            updatedAt = createdItem.updatedAt
+                        )
+                    }
                     sendUiAction(ItemDetailUiAction.ItemPersisted(createdItem))
                 }
                 .map { }
         } else {
             val original = originalItem ?: return Result.failure(IllegalStateException("Item not loaded"))
             val updated = uiState.value.toItem(original)
-            itemFormUseCase.edit(updated).onSuccess {
-                originalItem = updated
-                sendUiAction(ItemDetailUiAction.ItemPersisted(updated))
-            }
+            itemFormUseCase.edit(updated)
+                .onSuccess { saved ->
+                    originalItem = saved
+                    updateUiState { it.copy(updatedAt = saved.updatedAt) }
+                    sendUiAction(ItemDetailUiAction.ItemPersisted(saved))
+                }
+                .map { }
         }
     }
 

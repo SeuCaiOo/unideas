@@ -31,6 +31,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.seucaio.unideas.core.common.extensions.toFormattedDateString
+import com.seucaio.unideas.core.common.extensions.toFormattedTimeString
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
 import com.seucaio.unideas.ds.components.chips.TextBadge
@@ -41,6 +43,7 @@ import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFiel
 import com.seucaio.unideas.feature.items.ui.components.fields.model.ItemFormFieldsState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.ItemDetailPreviewProvider
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
+import java.time.LocalDateTime
 
 private val SNACKBAR_RESERVED_HEIGHT = 72.dp
 
@@ -53,6 +56,8 @@ fun ItemFormBody(
     onUnarchiveClicked: (() -> Unit)? = null,
     isConfidential: Boolean = false,
     isSnackbarVisible: Boolean = false,
+    createdAt: LocalDateTime? = null,
+    updatedAt: LocalDateTime? = null,
     sections: @Composable () -> Unit,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -69,6 +74,8 @@ fun ItemFormBody(
                 isArchived = isArchived,
                 onArchivedChipClicked = onUnarchiveClicked,
                 isConfidential = isConfidential,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
             )
 
             TitleDescriptionFields(
@@ -97,6 +104,8 @@ private fun ItemFormBadges(
     isArchived: Boolean,
     onArchivedChipClicked: (() -> Unit)?,
     isConfidential: Boolean,
+    createdAt: LocalDateTime?,
+    updatedAt: LocalDateTime?,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -142,8 +151,35 @@ private fun ItemFormBadges(
             background = MaterialTheme.colorScheme.primaryContainer,
             content = MaterialTheme.colorScheme.onPrimaryContainer,
         )
+        if (createdAt != null) {
+            ItemTimestamps(createdAt = createdAt, updatedAt = updatedAt)
+        }
     }
 }
+
+@Composable
+private fun ItemTimestamps(createdAt: LocalDateTime, updatedAt: LocalDateTime?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        TimestampText(stringResource(R.string.item_detail_created_at, createdAt.toDateAndTimeString()))
+        if (updatedAt != null && updatedAt != createdAt) {
+            TimestampText(stringResource(R.string.item_detail_updated_at, updatedAt.toDateAndTimeString()))
+        }
+    }
+}
+
+@Composable
+private fun TimestampText(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+private fun LocalDateTime.toDateAndTimeString(): String = "${toFormattedDateString()} ${toFormattedTimeString()}"
 
 @PreviewLightDark
 @Composable
@@ -162,6 +198,8 @@ private fun ItemFormBodyPreview(
                 isArchived = previewState.status == ItemStatus.ARCHIVED,
                 onUnarchiveClicked = {},
                 isConfidential = previewState.isConfidential,
+                createdAt = previewState.createdAt,
+                updatedAt = previewState.updatedAt,
                 sections = {},
             )
         }

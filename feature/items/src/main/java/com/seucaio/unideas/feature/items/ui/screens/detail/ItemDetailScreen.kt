@@ -217,6 +217,8 @@ private fun ItemDetailScreenContent(
                 onUnarchiveClicked = { onEvent(ItemDetailEvent.OnUnarchiveChipClicked) },
                 isConfidential = uiState.isConfidential,
                 isSnackbarVisible = isSnackbarVisible,
+                createdAt = uiState.createdAt,
+                updatedAt = uiState.updatedAt,
                 modifier = Modifier.padding(padding),
             ) {
                 ItemDetailSections(

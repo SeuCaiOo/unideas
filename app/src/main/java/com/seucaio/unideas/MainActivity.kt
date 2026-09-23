@@ -35,7 +35,7 @@ class MainActivity : FragmentActivity() {
             needsOnboarding?.let { resolvedNeedsOnboarding ->
                 AppRoot(
                     needsOnboarding = resolvedNeedsOnboarding,
-                    initialIntent = intent,
+                    initialIntent = intent.takeIf { savedInstanceState == null },
                     onNavControllerReady = { navController = it },
                 )
             }
@@ -52,7 +52,7 @@ class MainActivity : FragmentActivity() {
 @Composable
 private fun AppRoot(
     needsOnboarding: Boolean,
-    initialIntent: Intent,
+    initialIntent: Intent?,
     onNavControllerReady: (NavHostController) -> Unit,
 ) {
     UdsTheme {

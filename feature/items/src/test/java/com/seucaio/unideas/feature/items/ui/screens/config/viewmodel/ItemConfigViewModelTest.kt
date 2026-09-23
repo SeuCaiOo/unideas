@@ -42,7 +42,7 @@ class ItemConfigViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(testDispatcher)
-        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+        coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
     }
 
     @After

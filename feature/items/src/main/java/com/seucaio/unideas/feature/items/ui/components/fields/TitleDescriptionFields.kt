@@ -93,8 +93,9 @@ internal fun TitleDescriptionFields(
             onPreviewModeToggled = { isPreviewMode = !isPreviewMode },
             descriptionField = descriptionField,
             onDescriptionFieldChanged = {
+                val textChanged = it.text != descriptionField.text
                 descriptionField = it
-                onDescriptionChanged(it.text)
+                if (textChanged) onDescriptionChanged(it.text)
             },
             onCheckboxToggled = { newText ->
                 descriptionField = TextFieldValue(newText, selection = descriptionField.selection)
@@ -207,8 +208,8 @@ private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) =
             node = model.node,
             style = model.typography.bullet,
             depth = model.listDepth,
-            markerModifier = { Modifier.align(Alignment.CenterVertically) },
-            listModifier = { Modifier.align(Alignment.CenterVertically) },
+            markerModifier = { Modifier.align(Alignment.Top) },
+            listModifier = { Modifier.align(Alignment.Top) },
         )
     },
     orderedList = { model ->
@@ -217,8 +218,8 @@ private fun descriptionMarkdownComponents(onCheckboxToggled: (String) -> Unit) =
             node = model.node,
             style = model.typography.ordered,
             depth = model.listDepth,
-            markerModifier = { Modifier.align(Alignment.CenterVertically) },
-            listModifier = { Modifier.align(Alignment.CenterVertically) },
+            markerModifier = { Modifier.align(Alignment.Top) },
+            listModifier = { Modifier.align(Alignment.Top) },
         )
     },
     checkbox = { model ->

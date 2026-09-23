@@ -35,7 +35,7 @@ val itemsModule = module {
     }
     viewModel { params ->
         ItemLinksViewModel(
-            itemId = params.getOrNull(),
+            initialItemId = params.getOrNull(),
             itemLinkUseCase = get(),
         )
     }

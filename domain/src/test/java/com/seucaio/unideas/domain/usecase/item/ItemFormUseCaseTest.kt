@@ -45,12 +45,12 @@ class ItemFormUseCaseTest {
     @Test
     fun `edit delegates to EditItemUseCase`() = runTest {
         val item = ItemStub.task()
-        coEvery { editItem(item) } returns Result.success(Unit)
+        coEvery { editItem(item, any()) } returns Result.success(item)
 
         val result = useCase.edit(item)
 
-        assertEquals(Result.success(Unit), result)
-        coVerify(exactly = 1) { editItem(item) }
+        assertEquals(Result.success(item), result)
+        coVerify(exactly = 1) { editItem(item, any()) }
     }
 
     @Test

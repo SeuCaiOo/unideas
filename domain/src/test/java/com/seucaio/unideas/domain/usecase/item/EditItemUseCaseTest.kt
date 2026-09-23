@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -23,7 +24,7 @@ class EditItemUseCaseTest {
 
         val result = useCase(item, now)
 
-        assertTrue(result.isSuccess)
+        assertEquals(expected, result.getOrNull())
         coVerify(exactly = 1) { repository.updateItem(expected) }
     }
 

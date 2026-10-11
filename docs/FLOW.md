@@ -314,8 +314,10 @@ SettingsScreen  (SettingsRoute.Settings)
 
 ```
 Notificação de item individual (título = item, descrição resumida)
-  → toca → deep link `unideas://item/{id}` (ACTION_VIEW, setPackage) → ItemsRoute.Detail(id)
-       → app fechado: MainActivity.onCreate + handleDeepLink alimenta o NavController
+  → toca → deep link `unideas://item?itemId={id}` (ACTION_VIEW, setPackage) → ItemsRoute.Detail(id)
+       → app fechado: MainActivity.onCreate + handleDeepLink alimenta o NavController — o intent inicial só é
+         repassado quando `savedInstanceState == null`; numa recriação (rotação) o back stack restaurado manda,
+         senão o deep link antigo seria reprocessado e abriria o item errado (#241)
        → app em background/aberto: MainActivity.onNewIntent
 
 Notificação de resumo (agrupa os itens de uma tier, setGroupSummary)

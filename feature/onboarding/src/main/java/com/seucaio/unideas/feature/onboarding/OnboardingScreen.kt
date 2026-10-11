@@ -5,14 +5,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.Label
@@ -46,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -232,44 +237,58 @@ private fun OnboardingFeatureRow(icon: ImageVector, text: String, modifier: Modi
 
 @Composable
 private fun OnboardingBody(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            OnboardingIconBadge()
-            Text(
-                text = stringResource(R.string.onboarding_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 24.dp),
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .heightIn(min = maxHeight)
+                .padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            OnboardingBodyContent()
+        }
+    }
+}
+
+@Composable
+private fun OnboardingBodyContent() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        OnboardingIconBadge()
+        Text(
+            text = stringResource(R.string.onboarding_title),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 24.dp),
+        )
+        Text(
+            text = stringResource(R.string.onboarding_intro),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        Column(
+            modifier = Modifier.padding(top = 42.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            OnboardingFeatureRow(
+                icon = Icons.Outlined.LowPriority,
+                text = stringResource(R.string.onboarding_feature_priorities),
             )
-            Text(
-                text = stringResource(R.string.onboarding_intro),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 16.dp),
+            OnboardingFeatureRow(
+                icon = Icons.Outlined.Label,
+                text = stringResource(R.string.onboarding_feature_sections_tags),
             )
-            Column(
-                modifier = Modifier.padding(top = 42.dp).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                OnboardingFeatureRow(
-                    icon = Icons.Outlined.LowPriority,
-                    text = stringResource(R.string.onboarding_feature_priorities),
-                )
-                OnboardingFeatureRow(
-                    icon = Icons.Outlined.Label,
-                    text = stringResource(R.string.onboarding_feature_sections_tags),
-                )
-                OnboardingFeatureRow(
-                    icon = Icons.Outlined.Notifications,
-                    text = stringResource(R.string.onboarding_feature_reminders),
-                )
-                OnboardingFeatureRow(
-                    icon = Icons.Outlined.CloudDone,
-                    text = stringResource(R.string.onboarding_feature_backup),
-                )
-            }
+            OnboardingFeatureRow(
+                icon = Icons.Outlined.Notifications,
+                text = stringResource(R.string.onboarding_feature_reminders),
+            )
+            OnboardingFeatureRow(
+                icon = Icons.Outlined.CloudDone,
+                text = stringResource(R.string.onboarding_feature_backup),
+            )
         }
     }
 }
@@ -280,6 +299,7 @@ private class OnboardingContentPreviewProvider : PreviewParameterProvider<Onboar
     override val values = OnboardingContentPreviewScenario.entries.asSequence()
 }
 
+@PreviewScreenSizes
 @PreviewLightDark
 @Composable
 private fun OnboardingContentPreview(

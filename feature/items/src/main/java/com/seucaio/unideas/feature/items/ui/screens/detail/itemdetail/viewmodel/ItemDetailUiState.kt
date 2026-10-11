@@ -36,6 +36,8 @@ data class ItemDetailUiState(
     override val titleError: Boolean = false,
     val status: ItemStatus = ItemStatus.ACTIVE,
     val isConfidential: Boolean = false,
+    val createdAt: LocalDateTime? = null,
+    val updatedAt: LocalDateTime? = null,
 ) : ItemFormFieldsState, Serializable {
 
     override val isEditing: Boolean get() = itemId != null
@@ -70,6 +72,8 @@ data class ItemDetailUiState(
         loadFailed = false,
         status = item.status,
         isConfidential = item.isConfidential,
+        createdAt = item.createdAt,
+        updatedAt = item.updatedAt,
     )
 
     fun applyExternalOccurrenceUpdate(item: Item): ItemDetailUiState = copy(

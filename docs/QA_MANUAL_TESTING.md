@@ -23,7 +23,7 @@ Preferir a CLI `android` a `adb`/`aapt` cru (ver `RUNNING.md`). Pontos que rende
 
 ## Checklist — Item Detail (form básico)
 
-Roda inteiro sempre que `ItemDetailViewModel`/`ItemFormBody`/`ItemFormFooter`/`ItemDetailScreen` mudarem, mesmo que a mudança pareça isolada — valida que nada no form básico quebrou.
+Roda inteiro sempre que `ItemDetailViewModel`/`ItemFormBody`/`ItemDetailSections`/`ItemDetailScreen` mudarem, mesmo que a mudança pareça isolada — valida que nada no form básico quebrou.
 
 1. **Criar tarefa nova**: preencher título, descrição, seção, tag, ativar lembrete/data, voltar → confirmar que aparece na lista com os campos certos.
 2. **Criar anotação nova**: mesma coisa, sem os campos de data/recorrência.

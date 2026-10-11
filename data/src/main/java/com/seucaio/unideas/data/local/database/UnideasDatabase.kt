@@ -15,6 +15,7 @@ import com.seucaio.unideas.data.local.database.UnideasDatabase.Companion.getInst
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_10_11
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_11_12
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_12_13
+import com.seucaio.unideas.data.local.database.migration.MIGRATION_13_14
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_2_3
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_3_4
 import com.seucaio.unideas.data.local.database.migration.MIGRATION_4_5
@@ -54,7 +55,7 @@ import com.seucaio.unideas.data.local.entity.TagEntity
         ItemCompletionHistoryEntity::class,
         ItemLinkEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -116,6 +117,7 @@ abstract class UnideasDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
+                    MIGRATION_13_14,
                 )
                 .build()
     }

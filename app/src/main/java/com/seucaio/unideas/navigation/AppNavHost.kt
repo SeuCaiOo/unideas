@@ -28,7 +28,7 @@ import com.seucaio.unideas.feature.tags.navigation.tagsNavGraph
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    initialIntent: Intent,
+    initialIntent: Intent?,
     needsOnboarding: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -48,7 +48,7 @@ fun AppNavHost(
         // graph NavHost just attached above is only guaranteed to exist for code that runs in this
         // same slot — handling the deep link from the caller's composition instead races with it
         // and can hit NavController with no graph set yet.
-        LaunchedEffect(Unit) { navController.handleDeepLink(initialIntent) }
+        LaunchedEffect(Unit) { initialIntent?.let(navController::handleDeepLink) }
     }
 }
 

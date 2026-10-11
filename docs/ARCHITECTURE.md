@@ -171,8 +171,8 @@ data/
 │   │   ├── ItemTagCrossRef.kt      — junção N:N Item ↔ Tag
 │   │   └── ItemLinkEntity.kt       — tabela item_link, junção N:N simétrica Item ↔ Item (#208)
 │   ├── dao/          — ItemDao, ItemCompletionHistoryDao, SectionDao, TagDao, ItemLinkDao (retornam Flow)
-│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 13
-│   │                    migration/ — MIGRATION_2_3 até MIGRATION_12_13 (ver seção de persistência)
+│   ├── database/     — UnideasDatabase (singleton @Volatile + Room builder), version 14
+│   │                    migration/ — MIGRATION_2_3 até MIGRATION_13_14 (ver seção de persistência)
 │   │                    DatabaseSeeder.kt — debug-only (#19): semeia via DAO direto (não pelos use cases), pacote excluído do koverVerify
 │   ├── converter/    — TypeConverters (enums; datas ficam como Long, sem converter)
 │   └── relation/     — POJOs @Relation/@Embedded (ItemWithTags; ItemWithTagsAndSection também resolve a seção) — joins no Room, nunca em memória
@@ -238,7 +238,7 @@ Dois formatos, conforme o módulo tem uma tela só ou várias:
 
 **Tipo do item trava após a criação (#160/#162).** Não existe mais seletor de tipo inline no formulário (`TypeSelectorField` foi removido) — Tarefa/Anotação é definida só na criação (`initialType`) e exibida como badge (`TextBadge`) em ambos os modos; trocar Tarefa↔Anotação de um item já existente exige a Config Screen (guardrail com confirmação + reset total, ver `config/` abaixo). `dueDate`/`dueTime`/`recurrence`/`reminderWarning` deixaram de ser exclusivos de Tarefa — `completedAt`/conclusão continua sendo a única diferença estrutural real entre os dois tipos, reforçada em runtime por `CompleteItemUseCase`.
 
-**Tela de Detalhe reestruturada (#162).** `ItemFormBody` mostra o badge de tipo + `TitleDescriptionFields` rolável, e — só quando `state.isEditing` (item já persistido) — dois `NavCard` (`:uds`, com chevron) pra "Configurações" e "Histórico" (cada um com resumo próprio) mais o `ItemFormFooter` (conclusão), fixados fora da área de scroll. Pra item novo ainda não salvo (auto-save ainda não rodou), esse bloco inteiro fica oculto — não só desabilitado — já que `Configurações`/`Histórico`/conclusão não fazem sentido sem um `itemId` real. A antiga seção inline "Mais opções" (`ItemFormOptionsSection`/`ItemFormCommonOptions`/`ItemFormTaskOptions`) foi removida — os campos que ela continha (data/hora, recorrência, aviso, seção, tags) migraram pra Config Screen no #160.
+**Tela de Detalhe reestruturada (#162, #241).** `ItemFormBody` é só a casca: um scroll único (`BoxWithConstraints` + `heightIn(min)`) com badge de tipo, datas de criação/última edição, `TitleDescriptionFields`, um `Spacer(weight(1f))` e as seções recebidas por slot. Com descrição curta o spacer empurra as seções pro rodapé; com descrição longa elas descem e rolam junto com o texto (também resolve o paisagem). As seções vêm de `ItemDetailSections` (`screens/detail/`), único lugar com a ordem e as regras de exibição: configuração sempre, vínculos só se não-confidencial, histórico pra todo item recorrente (mesmo sem registro ainda, pra permitir lançar ocorrência passada), conclusão só pra tarefa. Espaçamento fica só no container; nenhuma seção tem padding externo próprio. Esse bloco de seções só aparece quando `state.isEditing` (item já persistido). Pra item novo ainda não salvo (auto-save ainda não rodou), esse bloco inteiro fica oculto — não só desabilitado — já que `Configurações`/`Histórico`/conclusão não fazem sentido sem um `itemId` real. A antiga seção inline "Mais opções" (`ItemFormOptionsSection`/`ItemFormCommonOptions`/`ItemFormTaskOptions`) foi removida — os campos que ela continha (data/hora, recorrência, aviso, seção, tags) migraram pra Config Screen no #160.
 
 **Divisão `ItemDetailViewModel` × `ItemOccurrenceViewModel` e sincronização no resume (#101/B, #194).** `ItemDetailScreen` sustenta duas ViewModels irmãs, cada uma com seu próprio `originalItem` cacheado: `ItemDetailViewModel` (título/descrição/config, `persist()`/auto-save) e `ItemOccurrenceViewModel` (conclusão/histórico/lembrete, `ItemOccurrenceUseCase`). Elas se mantêm sincronizadas por dois canais — `ItemDetailUiAction.ItemPersisted`/`ItemOccurrenceUiAction.ItemPersisted` relayados uma pra outra via `OnItemUpdatedExternally` (só funciona enquanto ambas estão compostas ao mesmo tempo), e o `LifecycleResumeEffect` da tela, que dispara `OnScreenResumed` em **ambas** desde o #194 — antes disparava só na `ItemDetailViewModel`. A `ItemConfigScreen` (Config Screen, `#160`) é uma terceira ViewModel totalmente independente (`ItemConfigViewModel`) numa rota separada do nav graph; suas mudanças (seção/tags/recorrência/aviso) só chegam de volta às outras duas quando a tela de Detalhe volta a compor e o resume dispara — daí a obrigação de recarregar as duas, não só a principal. `CompleteItemUseCase` decide o branch de conclusão (toggle de ocorrência vs. completar permanente) só olhando `item.recurrence`/`item.dueDate` do objeto recebido, sem reler do banco — um `originalItem` desatualizado nessa borda leva pro branch errado silenciosamente.
 
@@ -260,14 +260,16 @@ feature/items/
     │   │   ├── model/        — ItemFormFields.kt
     │   │   └── recurrence/   — RecurrenceBottomSheet (picker principal, sobre SelectionBottomSheet do :uds),
     │   │                        EveryNDaysBottomSheet, WeekdayBottomSheet, DayOfMonthBottomSheet (sobre GridSelectionBottomSheet) (#130)
-    │   └── form/         — ItemFormBody (badge de tipo + TitleDescriptionFields + NavCards Config/Histórico + footer,
-    │                        só quando state.isEditing — #162), ItemFormFooter (conclusão),
+    │   └── form/         — ItemFormBody (casca de scroll único: badge de tipo + datas + TitleDescriptionFields +
+    │                        Spacer(weight) + slot `sections` — #162/#241),
     │                        OverdueOccurrenceActions (#101/B — botões "Ignorar"/"Aumentar prazo" lado a lado, só p/ vencida)
     │                        — item arquivado (`status == ARCHIVED`) troca o badge de tipo por uma `Column` com um
     │                        `FilterChip` "Arquivado" (ícone `Archive`, empilhado acima do badge) clicável → abre
     │                        `ConfirmationBottomSheet` → confirma → desarquiva (`SetItemArchivedUseCase`, #168)
     └── screens/
         ├── detail/
+        │   ├── ItemDetailSections.kt — seções do Detalhe (config, vínculos, histórico, conclusão) e suas regras de
+        │   │                      exibição, passadas pro slot do ItemFormBody (#241)
         │   ├── itemdetail/     — ItemDetailScreen.kt + ItemDetailPreviewProvider.kt (formulário: título, descrição,
         │   │                      seção, tags, data/recorrência) + viewmodel/ (ItemDetailUiState/UiAction/Event/
         │   │                      ViewModel/DialogState)
@@ -379,7 +381,7 @@ feature/onboarding/   — flat (uma tela só), mesmo padrão de sections/tags
 - `com.seucaio.unideas.core.backup.LogoutConfirmBottomSheet` (`:core:backup`, não `:feature:settings`) —
   bottom sheet de confirmação de logout, sem lógica de negócio, só UI + callbacks
 
-O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no artifact "unideas — Improvements" e no board do GitHub Project).
+O inventário completo de telas/ViewModels/use cases/entidades está em [`BLUEPRINT.md`](BLUEPRINT.md) (congelado como planejamento original — status vivo de cada issue fica no board do GitHub Project).
 
 ## Persistência (Room) — schema
 
@@ -410,6 +412,8 @@ pendingExtensionCount: Int         quantas vezes "aumentar prazo" empurrou dueDa
                                     ambos limpos (null/0) quando a ocorrência resolve (concluída/ignorada) ou é
                                     processada como perdida — carregados pro item_completion_history antes de zerar
 createdAt: Long                    epoch millis, preenchido na criação
+updatedAt: Long                    epoch millis — última edição do usuário (conteúdo/config), carimbado só pelo
+                                    EditItemUseCase; ações de ocorrência, fixar/arquivar e o worker não mexem (#241)
 ```
 
 ### `ItemCompletionHistoryEntity` → tabela `item_completion_history`
@@ -477,6 +481,7 @@ MIGRATION_9_10  adiciona items.status, default 'ACTIVE' (#168)
 MIGRATION_10_11 adiciona items.remindersMuted, default 0 (#196)
 MIGRATION_11_12 adiciona items.isConfidential, default 0 (#220)
 MIGRATION_12_13 cria a tabela item_link (junção N:N simétrica item↔item) + índice em itemIdB (#208)
+MIGRATION_13_14 adiciona items.updatedAt, backfill = createdAt das linhas existentes (#241)
 ```
 Sem `fallbackToDestructiveMigration` — migration faltando falha alto, nunca perde dados silenciosamente (app pré-MVP, mas a regra vale mesmo assim).
 

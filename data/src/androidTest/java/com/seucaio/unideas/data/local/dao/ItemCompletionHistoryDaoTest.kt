@@ -122,6 +122,7 @@ class ItemCompletionHistoryDaoTest {
             title = "Tarefa recorrente",
             recurrence = Recurrence.Weekly,
             createdAt = 0L,
+            updatedAt = 0L,
         ),
     )
 }

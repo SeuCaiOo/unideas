@@ -14,7 +14,7 @@ class ItemFormUseCase(
 
     suspend fun create(item: Item): Result<Long> = createItem(item)
 
-    suspend fun edit(item: Item): Result<Unit> = editItem(item)
+    suspend fun edit(item: Item): Result<Item> = editItem(item)
 
     suspend fun delete(id: Long): Result<Unit> = deleteItem(id)
 }

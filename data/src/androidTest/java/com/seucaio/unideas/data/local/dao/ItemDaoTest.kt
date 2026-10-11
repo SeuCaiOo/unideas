@@ -307,6 +307,7 @@ class ItemDaoTest {
         recurrence = Recurrence.None,
         completedAt = completedAt,
         createdAt = createdAt,
+        updatedAt = createdAt,
         isPinned = isPinned,
         status = status,
     )
@@ -320,6 +321,7 @@ class ItemDaoTest {
         title = title,
         dueDate = dueDate,
         createdAt = 1_000L,
+        updatedAt = 1_000L,
         status = status,
     )
 

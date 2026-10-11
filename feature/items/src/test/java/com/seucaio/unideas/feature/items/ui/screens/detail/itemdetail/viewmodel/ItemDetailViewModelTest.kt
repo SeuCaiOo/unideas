@@ -278,7 +278,7 @@ class ItemDetailViewModelTest {
         runTest {
             val item = ItemStub.task(id = 1L)
             every { itemFormUseCase.get(1L) } returns flowOf(item)
-            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
             val vm = viewModel(itemId = 1L)
             vm.uiState.test { awaitItem() }
 
@@ -294,7 +294,7 @@ class ItemDetailViewModelTest {
         runTest {
             val item = ItemStub.task(id = 1L)
             every { itemFormUseCase.get(1L) } returns flowOf(item)
-            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
             val vm = viewModel(itemId = 1L)
             vm.uiState.test { awaitItem() }
 
@@ -329,7 +329,7 @@ class ItemDetailViewModelTest {
     fun `when OnTitleChanged fires in edit mode should auto-save via edit once the debounce elapses`() = runTest {
         val item = ItemStub.task(id = 1L)
         every { itemFormUseCase.get(1L) } returns flowOf(item)
-        coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+        coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
         val vm = viewModel(itemId = 1L)
         vm.uiState.test { awaitItem() }
 
@@ -346,7 +346,7 @@ class ItemDetailViewModelTest {
         runTest {
             val item = ItemStub.task(id = 1L)
             every { itemFormUseCase.get(1L) } returns flowOf(item)
-            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
             val vm = viewModel(itemId = 1L)
 
             vm.uiState.test { awaitItem() }
@@ -401,7 +401,7 @@ class ItemDetailViewModelTest {
             val item = ItemStub.task(id = 1L)
             val mutedByOccurrence = item.copy(remindersMuted = true)
             every { itemFormUseCase.get(1L) } returns flowOf(item)
-            coEvery { itemFormUseCase.edit(any()) } returns Result.success(Unit)
+            coEvery { itemFormUseCase.edit(any()) } answers { Result.success(firstArg()) }
             val vm = viewModel(itemId = 1L)
             vm.uiState.test { awaitItem() }
 

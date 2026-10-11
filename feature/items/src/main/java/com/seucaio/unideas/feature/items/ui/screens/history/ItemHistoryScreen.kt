@@ -134,39 +134,35 @@ internal fun ItemHistoryContent(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(contentPadding)
             .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        HistorySummaryCard(uiState, modifier = Modifier.padding(vertical = 16.dp))
-        HistoryFilterRow(
-            activeFilter = uiState.activeFilter,
-            onEvent = onEvent,
-            modifier = Modifier.padding(vertical = 16.dp),
-        )
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                HistorySummaryCard(uiState)
+                HistoryFilterRow(activeFilter = uiState.activeFilter, onEvent = onEvent)
 
-        if (uiState.filteredHistory.isEmpty()) {
-            Text(
-                text = stringResource(R.string.item_detail_history_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(uiState.filteredHistory) { entry ->
-                    ItemHistoryCard(
-                        entry = entry,
-                        onEditClick = { onEvent(ItemHistoryEvent.OnEditEntryClicked(it)) },
-                        onDeleteClick = { onEvent(ItemHistoryEvent.OnDeleteEntryClicked(it)) },
+                if (uiState.filteredHistory.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.item_detail_history_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
+        }
+
+        items(uiState.filteredHistory) { entry ->
+            ItemHistoryCard(
+                entry = entry,
+                onEditClick = { onEvent(ItemHistoryEvent.OnEditEntryClicked(it)) },
+                onDeleteClick = { onEvent(ItemHistoryEvent.OnDeleteEntryClicked(it)) },
+            )
         }
     }
 }

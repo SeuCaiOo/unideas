@@ -43,6 +43,7 @@ data class ItemEntity(
     val reminderWarning: ReminderWarning = ReminderWarning.None,
     val completedAt: Long? = null,
     val createdAt: Long,
+    val updatedAt: Long,
     val lastCompletedScheduledDate: Long? = null,
     val isPinned: Boolean = false,
     val pendingExtensionOriginalDueDate: Long? = null,

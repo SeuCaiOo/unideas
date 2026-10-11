@@ -96,4 +96,35 @@ class MarkdownSyntaxInserterTest {
         assertEquals("- [ ] call dentist", result.text)
         assertEquals(TextRange(6), result.selection)
     }
+
+    @Test
+    fun `when bullet list applied to a line already prefixed should remove the prefix`() {
+        val value = TextFieldValue(text = "- buy milk", selection = TextRange(5))
+
+        val result = applyMarkdownFormat(value, MarkdownFormat.BULLET_LIST)
+
+        assertEquals("buy milk", result.text)
+        assertEquals(TextRange(3), result.selection)
+    }
+
+    @Test
+    fun `when numbered list applied twice to the same line should not stack prefixes`() {
+        val value = TextFieldValue(text = "buy milk", selection = TextRange(3))
+
+        val firstClick = applyMarkdownFormat(value, MarkdownFormat.NUMBERED_LIST)
+        val secondClick = applyMarkdownFormat(firstClick, MarkdownFormat.NUMBERED_LIST)
+
+        assertEquals("buy milk", secondClick.text)
+        assertEquals(TextRange(3), secondClick.selection)
+    }
+
+    @Test
+    fun `when checklist applied to a line already prefixed should remove the prefix`() {
+        val value = TextFieldValue(text = "- [ ] call dentist", selection = TextRange(6))
+
+        val result = applyMarkdownFormat(value, MarkdownFormat.CHECKLIST)
+
+        assertEquals("call dentist", result.text)
+        assertEquals(TextRange(0), result.selection)
+    }
 }

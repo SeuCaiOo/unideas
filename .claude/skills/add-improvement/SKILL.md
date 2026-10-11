@@ -1,16 +1,14 @@
 ---
 name: add-improvement
 description: >
-  Use when the user brings a new idea, improvement, complaint, or observation about the unideas app — UI, UX, flow, architecture, or anything else. This skill guides the full refinement-to-issue flow: listen, refine conversationally, validate the summary with the user, document it in the "unideas — Improvements" artifact, then create the GitHub issue and move it to Backlog on the project board. Use this skill whenever the user says "tenho uma ideia", "quero melhorar", "está feio", "percebi um problema", "quero mudar", or describes anything that would become a new improvement item — even if they don't say "add-improvement" explicitly.
+  Use when the user brings a new idea, improvement, complaint, or observation about the unideas app — UI, UX, flow, architecture, or anything else. This skill guides the full refinement-to-issue flow: listen, refine conversationally, validate the summary with the user, then create the GitHub issue directly and move it to Backlog on the project board. Use this skill whenever the user says "tenho uma ideia", "quero melhorar", "está feio", "percebi um problema", "quero mudar", or describes anything that would become a new improvement item — even if they don't say "add-improvement" explicitly.
 ---
 
 # Add Improvement — unideas Workflow
 
 Fluxo completo para transformar uma ideia bruta em um item documentado e rastreado no GitHub.
 
-O unideas guarda esse guia em um **Artifact online**, não em arquivo versionado — edições acontecem fora do fluxo normal de commits de feature, então não fica preso a nenhuma branch específica.
-
-**Artifact "unideas — Improvements":** https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667
+O GitHub (issues + board) é a única fonte da verdade para ideias/melhorias — não existe mais um artifact intermediário. Uma ideia só passa a existir de forma rastreável no momento em que vira issue (etapa 4 abaixo); antes disso ela vive só na conversa.
 
 ## Etapas
 
@@ -28,33 +26,7 @@ Após entender a ideia, liste tudo que o usuário disse — em tópicos curtos e
 
 Aguarde confirmação explícita antes de avançar. Se o usuário corrigir ou acrescentar algo, atualize a lista e confirme novamente.
 
-### 4. Ler e atualizar o Artifact
-
-O Artifact é a fonte da verdade — sempre leia o estado atual antes de editar, nunca assuma o conteúdo de memória (outra sessão pode ter atualizado):
-
-```
-WebFetch da URL do artifact acima, pedindo o conteúdo markdown completo
-```
-
-Adicione a nova entrada na seção **"Novas ideias (sem issue)"**, no formato:
-
-```markdown
-### [ideia em poucas palavras — sem número ainda]
-
-**Contexto:** [o que motivou a ideia e qual o problema observado]
-
-**Mudanças previstas:**
-- [ponto 1]
-- [ponto 2]
-
-**Áreas afetadas:** [telas/componentes/módulos impactados — opcional]
-```
-
-Escreva o markdown completo (com a nova entrada) em um arquivo local no scratchpad e republique no mesmo `file_path` usado da última vez, passando `url` igual à URL acima para atualizar o artifact existente em vez de criar um novo.
-
-Mostre o resultado ao usuário. Se pedir ajuste, corrija antes de avançar.
-
-### 5. Criar a issue no GitHub
+### 4. Criar a issue no GitHub
 
 Use `/new-issue` para criar a issue com:
 - Título em inglês, formato Conventional Commits (`ui:`, `feat:`, `refactor:`, etc.)
@@ -64,7 +36,7 @@ Use `/new-issue` para criar a issue com:
 
 `new-issue` já cuida de vincular ao GitHub Project (#4) — não repita esse passo aqui.
 
-### 6. Mover a issue para "Backlog"
+### 5. Mover a issue para "Backlog"
 
 O board tem dois níveis de espera: **Backlog** (tudo que é capturado e especificado) e **Todo** (o subconjunto priorizado, o que vem a seguir — promovido manualmente quando vira prioridade). Um item novo entra via `new-issue` sem status (fica em branco) e deve ir para **Backlog**:
 
@@ -82,23 +54,12 @@ mutation {
 
 (Status field ID e opção "Backlog" do projeto #4. Promover Backlog→Todo é manual, quando o item vira prioridade — não é responsabilidade desta skill.)
 
-### 7. Mover a entrada no Artifact para "Issues criadas (Backlog)"
-
-Repita o passo 4 (ler o estado atual via WebFetch, editar, republicar): mova a entrada da seção **"Novas ideias (sem issue)"** para **"Issues criadas (Backlog)"**, adicionando o número da issue ao título:
-
-```markdown
-### #<N> — [mesmo título de antes]
-```
-
-O conteúdo da entrada não muda — só o título ganha o número e a entrada muda de seção.
-
-**Estágios seguintes** (mover a entrada para "Em andamento" e depois "Finalizadas") são responsabilidade do `/start-feature` — ele já lê a URL deste artifact diretamente (documentada aqui) e sincroniza sozinho: ao iniciar uma issue (passo 9) e, principalmente, ao varrer PRs mesclados no início da próxima execução (passo 0). Não é preciso pedir isso nem colar o link de novo — `start-feature` já sabe onde o artifact está.
+**Estágios seguintes** (In Progress, Done, Released) são responsabilidade do `/start-feature` (ao iniciar a issue) e do `/finish-issue`/`/open-pr` (ao mergear) — nada precisa ser feito aqui além de deixar a issue em Backlog.
 
 ---
 
 ## Referências do projeto
 
-- Artifact de melhorias: https://claude.ai/code/artifact/ee42af85-d23b-4c39-aa3a-ded2829a2667
 - Projeto GitHub: `PVT_kwHOAVNuW84Bcrp8` (https://github.com/users/SeuCaiOo/projects/4), field Status: `PVTSSF_lAHOAVNuW84Bcrp8zhXSou4`
 - Opções de Status: Backlog `19386e88` · Todo `f75ad846` · In Progress `47fc9ee4` · Done `98236657`
 - Assignee padrão: `@me`
@@ -107,7 +68,6 @@ O conteúdo da entrada não muda — só o título ganha o número e a entrada m
 
 | Mistake | Fix |
 |---|---|
-| Editar o Artifact sem ler o estado atual antes | Sempre `WebFetch` a URL primeiro — outra sessão pode ter mudado o conteúdo |
-| Criar uma issue sem passar pelo Artifact primeiro | Sempre documentar a ideia antes de criar a issue — é o registro histórico da decisão |
-| Deixar a issue sem mover para "Backlog" | `new-issue` não define status sozinho — sempre rodar o passo 6 |
+| Criar uma issue sem validar o resumo com o usuário primeiro | Sempre confirmar a lista consolidada (passo 3) antes de abrir a issue |
+| Deixar a issue sem mover para "Backlog" | `new-issue` não define status sozinho — sempre rodar o passo 5 |
 | Assumir que screenshots existem | O unideas não tem `docs/screenshots/` ainda — rode o app ao vivo se precisar de referência visual |

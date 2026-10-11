@@ -23,7 +23,6 @@ import com.seucaio.unideas.core.common.extensions.toFormattedDateString
 import com.seucaio.unideas.domain.model.Item
 import com.seucaio.unideas.domain.model.ItemStatus
 import com.seucaio.unideas.domain.model.ItemType
-import com.seucaio.unideas.domain.model.Recurrence
 import com.seucaio.unideas.ds.components.legacy.ConfirmationBottomSheet
 import com.seucaio.unideas.ds.components.legacy.UnideasErrorContent
 import com.seucaio.unideas.ds.components.legacy.UnideasLoadingContent
@@ -39,7 +38,6 @@ import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailUiState
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemdetail.viewmodel.ItemDetailViewModel
-import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.ItemLinksSection
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksEvent
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiAction
 import com.seucaio.unideas.feature.items.ui.screens.detail.itemlinks.viewmodel.ItemLinksUiState
@@ -100,6 +98,7 @@ fun ItemDetailScreen(
                 is ItemDetailUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
                 is ItemDetailUiAction.ShowSnackbar ->
                     snackbarHostState.showSnackbar(resources.getString(action.messageRes))
+
                 is ItemDetailUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemDetailUiAction.ShareText -> context.shareText(action.item.toShareText())
                 is ItemDetailUiAction.ItemPersisted ->
@@ -114,15 +113,23 @@ fun ItemDetailScreen(
                 is ItemOccurrenceUiAction.ShowSnackbar -> snackbarHostState.showSnackbar(
                     resources.getString(action.messageRes)
                 )
+
                 is ItemOccurrenceUiAction.ShowError -> snackbarHostState.showSnackbar(action.message)
                 is ItemOccurrenceUiAction.ItemPersisted ->
                     viewModel.onEvent(ItemDetailEvent.OnItemUpdatedExternally(action.item))
+
                 is ItemOccurrenceUiAction.NavigateBack -> updatedOnNavigateBack?.invoke()
             }
         }
     }
 
-    HandleLinksUiAction(linksViewModel.uiAction, onNavigateToDetail, snackbarHostState)
+    HandleLinks(
+        itemId = uiState.itemId,
+        uiAction = linksViewModel.uiAction,
+        onLinksEvent = linksViewModel::onEvent,
+        onNavigateToDetail = onNavigateToDetail,
+        snackbarHostState = snackbarHostState
+    )
 
     ItemDetailScreenContent(
         uiState = uiState,
@@ -135,10 +142,31 @@ fun ItemDetailScreen(
         onLinksEvent = linksViewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNavigateToHistory = onNavigateToHistory,
-        onNavigateToConfig = { configuredItemId -> onNavigateToConfig(configuredItemId, itemId == null) },
+        onNavigateToConfig = { configuredItemId ->
+            onNavigateToConfig(
+                configuredItemId,
+                itemId == null
+            )
+        },
         onAddLinkType = { type -> uiState.itemId?.let { onNavigateToLinkPicker(it, type) } },
         snackbarHostState = snackbarHostState,
     )
+}
+
+@Composable
+private fun HandleLinks(
+    itemId: Long?,
+    uiAction: Flow<ItemLinksUiAction>,
+    onLinksEvent: (ItemLinksEvent) -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    val updatedOnLinksEvent by rememberUpdatedState(onLinksEvent)
+    LaunchedEffect(itemId) {
+        itemId?.let { updatedOnLinksEvent(ItemLinksEvent.OnItemIdAssigned(it)) }
+    }
+
+    HandleLinksUiAction(uiAction, onNavigateToDetail, snackbarHostState)
 }
 
 @Composable
@@ -182,7 +210,8 @@ private fun ItemDetailScreenContent(
         onEvent(ItemDetailEvent.OnBackRequested)
     }
 
-    val topBarNavigateBack = updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
+    val topBarNavigateBack =
+        updatedOnNavigateBack?.let { { onEvent(ItemDetailEvent.OnBackRequested) } }
 
     val fieldsEvents = remember(onEvent) {
         ItemFormFieldsEvents(
@@ -208,37 +237,29 @@ private fun ItemDetailScreenContent(
                 onRetry = { onEvent(ItemDetailEvent.OnRetryClicked) },
                 modifier = Modifier.padding(padding),
             )
+
             else -> ItemFormBody(
                 state = uiState,
                 events = fieldsEvents,
-                occurrenceState = occurrenceState,
                 isArchived = uiState.status == ItemStatus.ARCHIVED,
                 onUnarchiveClicked = { onEvent(ItemDetailEvent.OnUnarchiveChipClicked) },
                 isConfidential = uiState.isConfidential,
-                onCompleteClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnCompleteClicked) },
-                onIgnoreClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnIgnoreClicked) },
-                onExtendDeadlineClicked = { onOccurrenceEvent(ItemOccurrenceEvent.OnExtendDeadlineClicked) },
-                onMuteRemindersToggled = { onOccurrenceEvent(ItemOccurrenceEvent.OnMuteRemindersToggled) },
-                onNavigateToConfig = { onNavigateToConfig(requireNotNull(uiState.itemId)) },
-                onNavigateToHistory = uiState.itemId?.let { savedItemId ->
-                    if (uiState.recurrence != Recurrence.None && occurrenceState.hasHistory) {
-                        { onNavigateToHistory(savedItemId) }
-                    } else {
-                        null
-                    }
-                },
                 isSnackbarVisible = isSnackbarVisible,
+                createdAt = uiState.createdAt,
+                updatedAt = uiState.updatedAt,
                 modifier = Modifier.padding(padding),
-                linksSection = {
-                    if (!uiState.isConfidential) {
-                        ItemLinksSection(
-                            uiState = linksState,
-                            onEvent = onLinksEvent,
-                            onAddType = onAddLinkType
-                        )
-                    }
-                },
-            )
+            ) {
+                ItemDetailSections(
+                    uiState = uiState,
+                    occurrenceState = occurrenceState,
+                    linksState = linksState,
+                    onOccurrenceEvent = onOccurrenceEvent,
+                    onLinksEvent = onLinksEvent,
+                    onNavigateToHistory = onNavigateToHistory,
+                    onNavigateToConfig = onNavigateToConfig,
+                    onAddLinkType = onAddLinkType,
+                )
+            }
         }
     }
 

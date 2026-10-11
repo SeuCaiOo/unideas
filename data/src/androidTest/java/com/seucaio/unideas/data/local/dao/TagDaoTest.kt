@@ -100,5 +100,6 @@ class TagDaoTest {
         title = "tarefa",
         recurrence = Recurrence.None,
         createdAt = 1_000L,
+        updatedAt = 1_000L,
     )
 }
